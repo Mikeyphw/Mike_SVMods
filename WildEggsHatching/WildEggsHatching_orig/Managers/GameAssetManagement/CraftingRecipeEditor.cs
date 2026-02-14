@@ -1,5 +1,5 @@
-using BirdsOfAFeather.Helpers;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Helpers;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Enums;
 using static WildEggsHatching.EnumsAndStrings.Strings;
 using static WildEggsHatching.ModEntry;

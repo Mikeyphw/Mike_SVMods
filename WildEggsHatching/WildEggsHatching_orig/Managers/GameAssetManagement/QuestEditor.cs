@@ -1,5 +1,5 @@
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using WildEggsHatching.Framework;
 using WildEggsHatching.Helpers;
 using WildEggsHatching.Models;

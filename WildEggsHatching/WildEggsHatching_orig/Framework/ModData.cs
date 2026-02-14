@@ -1,6 +1,6 @@
 using StardewValley;
 using StardewValley.Buildings;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using WildEggsHatching.Models;
 using static WildEggsHatching.EnumsAndStrings.Strings;
 using static WildEggsHatching.ModEntry;

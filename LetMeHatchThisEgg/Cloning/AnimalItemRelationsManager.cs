@@ -9,7 +9,9 @@ using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 using Object = StardewValley.Object;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Cloning
 {
     public class AnimalItemRelationsManager
     {

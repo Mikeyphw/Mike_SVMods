@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework;
+using Mikew.BirdsOfAFeather.Framework;
 using RoosterAddon.Helpers;
 using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;

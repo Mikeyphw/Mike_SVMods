@@ -1,41 +1,23 @@
+<?xml version='1.0' encoding='utf-8'?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GamePath>/home/mike/Games/gog/stardew-valley/game</GamePath>
   </PropertyGroup>
-  <ItemGroup></ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Reference
-      Include="BirdsOfAFeather"
-      HintPath="..\BirdsOfAFeather\bin\Debug\net6.0\BirdsOfAFeather.dll"
-      Private="False"
-    />
-  </ItemGroup>
+    </ItemGroup>
   <ItemGroup>
-    <Reference
-      Include="BossBattles"
-      HintPath="/home/mike/Games/gog/stardew-valley/game/Mods/Stardrop Installed Mods/BossBattlesGen/BossBattles/BossBattles.dll"
-      Private="False"
-    />
-    <Reference
-      Include="AdditionalMineMaps"
-      HintPath="/home/mike/Games/gog/stardew-valley/game/Mods/Stardrop Installed Mods/AdditionalMineMaps/AdditionalMineMaps.dll"
-      Private="False"
-    />
-    <Reference
-      Include="BETAS"
-      HintPath="/home/mike/Games/gog/stardew-valley/game/Mods/Stardrop Installed Mods/BETAS/BETAS.dll"
-      Private="False"
-    />
-  </ItemGroup>
+    </ItemGroup>
   <ItemGroup>
     <None Include="ModData/**/*" CopyToOutputDirectory="PreserveNewest" />
-    <!-- Add the extra folder here -->
   </ItemGroup>
-  <ItemGroup></ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\BirdsOfAFeather\BirdsOfAFeather.csproj" />
   </ItemGroup>
 </Project>

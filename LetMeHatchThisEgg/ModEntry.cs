@@ -1,12 +1,10 @@
 using System.Text.RegularExpressions;
-using BirdsOfAFeather.Helpers;
-using ContentPatcher;
+using Mikew.BirdsOfAFeather.Helpers;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.GameAssetManagement;
 using LetMeHatchThisEgg.UI;
 using Mikew.BirdsOfAFeather.Framework;
-using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -282,7 +280,7 @@ namespace LetMeHatchThisEgg
 
         private void HandleAdditionalFarmAnimalsLogic(AssetRequestedEventArgs e)
         {
-            if (ModIdEvaluator.Evaluate("cantabilechaos.BFAVChickens") && Config.CloneVanillaEggs)
+            if (ModIdEvaluator.Evaluate("cantabilechaos.BFAVChickens", ModEntry.HelperInstance.ModRegistry) && Config.CloneVanillaEggs)
             {
                 // EditAssetWithFancyChickensEggs(e, AssetEditPriority.Late);
             }

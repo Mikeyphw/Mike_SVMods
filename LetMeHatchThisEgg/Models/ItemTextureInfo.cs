@@ -3,7 +3,9 @@ using Mikew.BirdsOfAFeather.Helpers;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Models
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Models
 {
     public class ItemTextureInfo
     {

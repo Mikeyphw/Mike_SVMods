@@ -8,6 +8,8 @@ using Netcode;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework;
+using Mikew.BirdsOfAFeather.Framework;
+using Mikew.BirdsOfAFeather.Helpers;
 using RoosterAddon.Helpers;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -40,7 +42,7 @@ namespace RoosterAddon
         internal static IContentPatcherAPI? ContentPatcher; // Static reference to the Content Patcher API, which allows modifying game content
 
         // Conditions used by the Content Patcher API
-        ContentPatcher.IManagedConditions? conditionSuperUnlucky, // Condition for super unlucky state
+        ManagedConditions? conditionSuperUnlucky, // Condition for super unlucky state
             conditionUnlucky, // Condition for unlucky state
             conditionNeutral, // Condition for neutral state
             conditionLucky, // Condition for lucky state
@@ -216,50 +218,50 @@ namespace RoosterAddon
             };
 
             // Parse the raw conditions into managed conditions using ContentPatcher
-            conditionSuperUnlucky = ContentPatcher!.ParseConditions(
+            conditionSuperUnlucky = new ManagedConditions(ContentPatcher!.ParseConditions(
                 manifest: ModManifest,
                 rawConditions: rawSuperUnlucky,
                 formatVersion: new SemanticVersion("2.0.0")
-            );
-            conditionUnlucky = ContentPatcher.ParseConditions(
+            ));
+            conditionUnlucky = new ManagedConditions(ContentPatcher.ParseConditions(
                 manifest: ModManifest,
                 rawConditions: rawUnlucky,
                 formatVersion: new SemanticVersion("2.0.0")
-            );
-            conditionNeutral = ContentPatcher.ParseConditions(
+            ));
+            conditionNeutral = new ManagedConditions(ContentPatcher.ParseConditions(
                 manifest: ModManifest,
                 rawConditions: rawNeutral,
                 formatVersion: new SemanticVersion("2.0.0")
-            );
-            conditionLucky = ContentPatcher.ParseConditions(
+            ));
+            conditionLucky = new ManagedConditions(ContentPatcher.ParseConditions(
                 manifest: ModManifest,
                 rawConditions: rawLucky,
                 formatVersion: new SemanticVersion("2.0.0")
-            );
-            conditionSuperLucky = ContentPatcher.ParseConditions(
+            ));
+            conditionSuperLucky = new ManagedConditions(ContentPatcher.ParseConditions(
                 manifest: ModManifest,
                 rawConditions: rawSuperLucky,
                 formatVersion: new SemanticVersion("2.0.0")
-            );
-            conditionStuckInsideSeason = ContentPatcher.ParseConditions(
+            ));
+            conditionStuckInsideSeason = new ManagedConditions(ContentPatcher.ParseConditions(
                 manifest: ModManifest,
                 rawConditions: rawStuckInsideSeason,
                 formatVersion: new SemanticVersion("2.0.0")
-            );
-            conditionStuckInsideWeather = ContentPatcher.ParseConditions(
+            ));
+            conditionStuckInsideWeather = new ManagedConditions(ContentPatcher.ParseConditions(
                 manifest: ModManifest,
                 rawConditions: rawStuckInsideWeather,
                 formatVersion: new SemanticVersion("2.0.0")
-            );
+            ));
 
             // Update the context for each condition
-            _ = conditionSuperUnlucky.UpdateContext();
-            _ = conditionUnlucky.UpdateContext();
-            _ = conditionNeutral.UpdateContext();
-            _ = conditionLucky.UpdateContext();
-            _ = conditionSuperLucky.UpdateContext();
-            _ = conditionStuckInsideSeason.UpdateContext();
-            _ = conditionStuckInsideWeather.UpdateContext();
+            conditionSuperUnlucky.UpdateContext();
+            conditionUnlucky.UpdateContext();
+            conditionNeutral.UpdateContext();
+            conditionLucky.UpdateContext();
+            conditionSuperLucky.UpdateContext();
+            conditionStuckInsideSeason.UpdateContext();
+            conditionStuckInsideWeather.UpdateContext();
 
             // Check if the player is stuck inside
             isStuckInside =

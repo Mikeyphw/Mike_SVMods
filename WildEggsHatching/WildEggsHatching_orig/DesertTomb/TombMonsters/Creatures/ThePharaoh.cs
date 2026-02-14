@@ -5,7 +5,7 @@ using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.Locations;
 using StardewValley.Monsters;
 using StardewValley.Pathfinding;

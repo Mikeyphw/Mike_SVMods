@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using StardewModdingAPI;
 
-namespace BirdsOfAFeather.Helpers
+namespace Mikew.BirdsOfAFeather.Helpers
 {
     public static class DataManager
     {

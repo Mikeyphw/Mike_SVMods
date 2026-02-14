@@ -4,7 +4,9 @@ using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integrations
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Integrations
 {
     public class RoosterControlAddonIntegration
     {
@@ -17,7 +19,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integration
             var goldChicken = GetFemaleBreedingDataGroup();
             var transRooster = GetFemaleBreedingDataGroup();
 
-            if (ModIdEvaluator.Evaluate("Meara.Roosters"))
+            if (ModIdEvaluator.Evaluate("Meara.Roosters", ModEntry.HelperInstance.ModRegistry))
             {
                 AddMales(
                     whiteChicken,
@@ -91,7 +93,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integration
                 );
             }
 
-            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster"))
+            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster", ModEntry.HelperInstance.ModRegistry))
             {
                 AddMales(
                     whiteChicken,
@@ -179,7 +181,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integration
                 },
             };
 
-            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster"))
+            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster", ModEntry.HelperInstance.ModRegistry))
             {
                 data["Trans Rooster"] =  transRooster ;
             }

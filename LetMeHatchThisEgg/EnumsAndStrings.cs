@@ -1,6 +1,8 @@
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.EnumsAndStrings;
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.EnumsAndStrings;
 
 public static class Enums
 {

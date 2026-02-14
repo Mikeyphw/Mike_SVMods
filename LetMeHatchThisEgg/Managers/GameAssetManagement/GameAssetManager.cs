@@ -1,4 +1,4 @@
-// using BirdsOfAFeather.Helpers;
+// using Mikew.BirdsOfAFeather.Helpers;
 // using ContentPatcher;
 // using LetMeHatchThisEgg.Breeding;
 // using LetMeHatchThisEgg.Cloning;
@@ -356,7 +356,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Helpers;
 using ContentPatcher;
 using LetMeHatchThisEgg.Breeding;
 using LetMeHatchThisEgg.Cloning;
@@ -374,7 +374,9 @@ using StardewValley.GameData.Machines;
 using StardewValley.GameData.Objects;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.GameAssetManagement
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.GameAssetManagement
 {
     public class GameAssetManager
     {

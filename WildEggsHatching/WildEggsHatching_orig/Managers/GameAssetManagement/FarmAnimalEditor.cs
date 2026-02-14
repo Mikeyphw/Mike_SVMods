@@ -2,7 +2,7 @@ using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.GameData.FarmAnimals;
 using WildEggsHatching.Framework;
 using WildEggsHatching.Models;

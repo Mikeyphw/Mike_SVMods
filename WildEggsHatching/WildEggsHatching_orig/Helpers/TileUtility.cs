@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.Locations;
 using xTile;
 using static WildEggsHatching.EnumsAndStrings.Enums;

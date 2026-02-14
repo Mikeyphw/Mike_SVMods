@@ -1,9 +1,9 @@
-using BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Helpers;
 using Microsoft.Xna.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using WildEggsHatching.DesertTomb;
 using WildEggsHatching.DesertTomb.Configuration;
 using WildEggsHatching.EnumsAndStrings;
@@ -96,7 +96,7 @@ public class EggSpawning
         );
         return packs != null
             ? packs
-                .Where(p => ModIdEvaluator.Evaluate(p.Key))
+                .Where(p => ModIdEvaluator.Evaluate(p.Key, ModEntry.HelperInstance.ModRegistry))
                 .ToDictionary(x => x.Key, y => y.Value)
             : JsonGenerator.GenerateLocationPacks();
     }

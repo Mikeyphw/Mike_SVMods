@@ -1,6 +1,6 @@
 using Mikew.BirdsOfAFeather.Helpers.GameStateQueries;
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using WildEggsHatching.Framework;
 using static WildEggsHatching.EnumsAndStrings.Strings;
 using static WildEggsHatching.ModEntry;

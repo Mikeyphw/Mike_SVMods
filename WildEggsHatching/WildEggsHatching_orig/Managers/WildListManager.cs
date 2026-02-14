@@ -2,7 +2,7 @@ using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using WildEggsHatching.EnumsAndStrings;
 using WildEggsHatching.Models;
 using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
@@ -75,7 +75,7 @@ namespace WildEggsHatching.Managers
         {
             LoggerHelper.Log("Filtering out not loaded mods.");
             var validWildAnimals = WildAnimals
-                .Where(animalEntry => ModIdEvaluator.Evaluate(animalEntry.ModID))
+                .Where(animalEntry => ModIdEvaluator.Evaluate(animalEntry.ModID, ModEntry.HelperInstance.ModRegistry))
                 .ToHashSet();
 
             LoggerHelper.Log($"Found {validWildAnimals.Count} valid wild animals after filtering.");
@@ -85,7 +85,7 @@ namespace WildEggsHatching.Managers
                 wildAnimal.FarmAnimalKeys.Clear();
                 foreach (
                     var (modId, animalKeys) in wildAnimal.ExtraModAnimalKeys.Where(x =>
-                        ModIdEvaluator.Evaluate(x.Key)
+                        ModIdEvaluator.Evaluate(x.Key, ModEntry.HelperInstance.ModRegistry)
                     )
                 )
                 {
@@ -97,7 +97,7 @@ namespace WildEggsHatching.Managers
 
                     // Log skipped animal keys
                     var skippedAnimalKeys = animalKeys.FarmAnimalKeysSameWeight.Where(k =>
-                        !ModIdEvaluator.Evaluate(modId)
+                        !ModIdEvaluator.Evaluate(modId, ModEntry.HelperInstance.ModRegistry)
                     );
                     foreach (var skippedKey in skippedAnimalKeys)
                     {
@@ -110,7 +110,7 @@ namespace WildEggsHatching.Managers
 
             // Log skipped animals
             var skippedAnimals = WildAnimals
-                .Where(animalEntry => !ModIdEvaluator.Evaluate(animalEntry.ModID))
+                .Where(animalEntry => !ModIdEvaluator.Evaluate(animalEntry.ModID, ModEntry.HelperInstance.ModRegistry))
                 .Select(animalEntry =>
                     $"{animalEntry.Name} because {animalEntry.ModID} is not installed."
                 );

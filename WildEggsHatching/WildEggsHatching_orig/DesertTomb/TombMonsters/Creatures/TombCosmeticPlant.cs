@@ -1,5 +1,5 @@
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.TerrainFeatures;
 using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
 using static WildEggsHatching.EnumsAndStrings.Enums.Assets;

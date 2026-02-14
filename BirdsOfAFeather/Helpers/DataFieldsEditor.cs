@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using StardewModdingAPI;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Enums;
 
-namespace BirdsOfAFeather.Helpers
+namespace Mikew.BirdsOfAFeather.Helpers
 {
     public static class DataFieldsEditor
     {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using StardewModdingAPI;
 
-namespace BirdsOfAFeather.Helpers
+namespace Mikew.BirdsOfAFeather.Helpers
 {
     /// <summary>
     /// Enhanced translation helper with caching, thread safety, and convenience methods.

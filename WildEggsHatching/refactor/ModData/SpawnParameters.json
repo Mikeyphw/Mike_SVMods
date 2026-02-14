@@ -1,0 +1,31 @@
+{
+  "MaxSpawningTries": 400,
+  "MaxEggPerMap_Any": 3,
+  "MaxEggPerMap_Magic": 1,
+  "MaxEggPerMap_Large": 2,
+  "BaseRandomChance": 0.15,
+  "MaxWorldEggs": {
+    "wildEgg": 99,
+    "largeWildEgg": 10,
+    "magicWildEgg": 3,
+    "largeMagicWildEgg": 2
+  },
+  "Parameters_Packs": {
+    "MinEggArea": 1,
+    "MaxEggArea": 1,
+    "MaxEggPack": 3,
+    "CertainEggs": 1,
+    "UseJsonValues": true,
+    "MaxEggs_All": 5,
+    "MinEggs": 0
+  },
+  "Parameters_Vanilla": {
+    "MinEggArea": 1,
+    "MaxEggArea": 2,
+    "MaxEggPack": 5,
+    "CertainEggs": 2,
+    "UseJsonValues": true,
+    "MaxEggs_All": 5,
+    "MinEggs": 1
+  }
+}

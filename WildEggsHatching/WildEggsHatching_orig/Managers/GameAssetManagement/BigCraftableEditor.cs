@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.GameData.BigCraftables;
 using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
 using static WildEggsHatching.EnumsAndStrings.Enums.Assets;

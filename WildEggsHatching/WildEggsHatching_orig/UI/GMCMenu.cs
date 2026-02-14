@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using WildEggsHatching.Framework;
 using WildEggsHatching.Managers;
 using WildEggsHatching.Managers.GameAssetManagement;
@@ -95,7 +95,7 @@ namespace WildEggsHatching.UI
                 getValue: () => ModEntry.Config.UpdateRate,
                 setValue: value => ModEntry.Config.UpdateRate = value
             );
-            if (ModIdEvaluator.Evaluate("Mikew.lmh"))
+            if (ModIdEvaluator.Evaluate("Mikew.lmh", ModEntry.HelperInstance.ModRegistry))
             {
                 ConfigMenu.AddEnumOption(
                     optionName: "BirthText",

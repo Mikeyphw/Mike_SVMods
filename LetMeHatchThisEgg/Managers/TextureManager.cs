@@ -550,7 +550,9 @@ using static LetMeHatchThisEgg.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.GameAssetManagement
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.GameAssetManagement
 {
     public class TextureManager
     {

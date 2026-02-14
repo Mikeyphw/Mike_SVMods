@@ -1,4 +1,4 @@
-using BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Helpers;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.GameAssetManagement;

@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.Locations;
 using StardewValley.Monsters;
 using WildEggsHatching.DesertTomb.Configuration;

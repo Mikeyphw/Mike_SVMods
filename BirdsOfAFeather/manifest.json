@@ -4,9 +4,8 @@
   "Version": "1.0.1",
   "Description": "A core mod for Mikew mods.",
   "UniqueID": "Mikew.birdsofafeather",
-  "MinimumApiVersion": "2.5",
-  "UpdateKeys": ["nexus:"],
-  "Dependencies": [
-  ],
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [],
+  "Dependencies": [],
   "EntryDll": "BirdsOfAFeather.dll"
 }

@@ -1,6 +1,6 @@
 // using LetMeHatchThisEgg.Models;
 // using StardewModdingAPI;
-// using StardewValley.Extensions;
+// using Mikew.BirdsOfAFeather.Helpers;
 // using StardewValley.GameData.Machines;
 // using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
@@ -259,11 +259,13 @@ using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Models;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.GameData.Machines;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.GameAssetManagement
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.GameAssetManagement
 {
     public class MachineEditor
     {

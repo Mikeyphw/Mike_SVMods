@@ -1,95 +1,67 @@
-﻿using BirdsOfAFeather.Helpers;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
-namespace Mikew.BirdsOfAFeather
+namespace Mikew.BirdsOfAFeather;
+
+/// <summary>The mod entry point.</summary>
+internal sealed class ModEntry : Mod
 {
-    /// <summary>The mod entry point.</summary>
-    ///
-    internal sealed partial class ModEntry : Mod
+    internal static IModHelper HelperInstance { get; private set; } = null!;
+    public static IMonitor MonitorInstance { get; private set; } = null!;
+    public static IManifest ModManifestInstance { get; private set; } = null!;
+
+    internal static CoreModConfig ModCfg { get; private set; } = new();
+    internal static CoreContext Context { get; private set; } = null!;
+
+    private IGMCMOptionsHelper _gmcm = null!;
+
+    public override void Entry(IModHelper helper)
     {
-        internal static IModHelper HelperInstance;
-        internal IGMCMOptionsHelper configMenuExt = null!;
-        internal static CoreModConfig ModCfg { get; private set; } = new();
-        public static IMonitor? MonitorInstance { get; private set; }
-        public static IManifest? ModManifestInstance { get; private set; }
+        HelperInstance = helper;
+        MonitorInstance = Monitor;
+        ModManifestInstance = ModManifest;
 
-        public override void Entry(IModHelper helper)
+        ModCfg = helper.ReadConfig<CoreModConfig>();
+        var translation = new I18TranslationHelper(helper);
+        Context = new CoreContext(helper, Monitor, ModManifest, translation);
+
+        helper.Events.GameLoop.GameLaunched += OnGameLaunched;
+    }
+
+    private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+    {
+        var gmcmApi = HelperInstance.ModRegistry.GetApi<IGenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
+        if (gmcmApi is null)
         {
-            SetStaticFields(Monitor, Helper, ModManifest, Helper.ReadConfig<CoreModConfig>());
-            Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
-            Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
-            Helper.Events.GameLoop.DayStarted += OnDayStart;
-            Helper.Events.Player.Warped += OnWarped;
-            Helper.Events.Content.AssetRequested += OnAssetRequested;
+            return;
         }
 
-        private static void SetStaticFields(
-            IMonitor monitor,
-            IModHelper helper,
-            IManifest manifest,
-            CoreModConfig config
-        )
-        {
-            ModManifestInstance = manifest;
-            ModCfg = config;
-            HelperInstance = helper;
-            MonitorInstance = monitor;
-        }
+        _gmcm = new IGMCMOptionsHelper(extraOptionsAPI: null, configMenuAPI: gmcmApi, translationHelper: Context.Translation, manifest: ModManifest);
 
-        private void OnWarped(object? sender, WarpedEventArgs e) { }
+        _gmcm.Register(
+            reset: () => ModCfg = new CoreModConfig(),
+            save: () => HelperInstance.WriteConfig(ModCfg)
+        );
 
-        /// <summary>The method called after a new day starts.</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event arguments.</param>
-        private void OnDayStart(object? sender, DayStartedEventArgs e) { }
+        SetupGmcm();
+    }
 
-        private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) { }
+    private void SetupGmcm()
+    {
+        _gmcm.AddBoolOption(
+            optionName: "ExtraDebugInfo",
+            tooltip: true,
+            getValue: () => ModCfg.VerboseLogging,
+            setValue: value => ModCfg.VerboseLogging = value
+        );
 
-        private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) { }
-
-        private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
-        {
-            if (e.Ticks <= 4)
-            {
-                return;
-            }
-            HelperInstance.Events.GameLoop.UpdateTicked -= OnUpdateTicked;
-            var configMenuAPI = HelperInstance.ModRegistry.GetApi<IGenericModConfigMenuAPI>(
-                "spacechase0.GenericModConfigMenu"
-            );
-
-            if (configMenuAPI == null)
-            {
-                return;
-            }
-            var translationHelper = new I18TranslationHelper(Helper);
-            configMenuExt = new(null, configMenuAPI,translationHelper, ModManifest);
-
-            // register mod
-            configMenuExt.Register(
-                reset: () => ModCfg = new CoreModConfig(),
-                save: () => HelperInstance.WriteConfig(ModCfg)
-            );
-            GMCMSetup();
-        }
-
-        private void GMCMSetup()
-        {
-            configMenuExt.AddBoolOption(
-                optionName: "ExtraDebugInfo",
-                tooltip: true,
-                getValue: () => ModCfg.VerboseLogging,
-                setValue: value => ModCfg.VerboseLogging = value
-            );
-            configMenuExt.AddBoolOption(
-                optionName: "Testing",
-                tooltip: true,
-                getValue: () => ModCfg.TestingLogging,
-                setValue: value => ModCfg.TestingLogging = value
-            );
-        }
+        _gmcm.AddBoolOption(
+            optionName: "Testing",
+            tooltip: true,
+            getValue: () => ModCfg.TestingLogging,
+            setValue: value => ModCfg.TestingLogging = value
+        );
     }
 }

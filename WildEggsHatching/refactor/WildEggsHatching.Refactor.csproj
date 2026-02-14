@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Phase 0: compile only the refactor surface under src/ for clean boundaries. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+
+    <!-- Keep assembly name stable for EntryDll -->
+    <AssemblyName>WildEggsHatching</AssemblyName>
+    <RootNamespace>WildEggsHatching</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="src/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="manifest.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="i18n/**/*" CopyToOutputDirectory="PreserveNewest" />
+      <None Include="ModData/**/*" CopyToOutputDirectory="PreserveNewest" />
+</ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BirdsOfAFeather\BirdsOfAFeather.csproj" />
+  </ItemGroup>
+
+</Project>

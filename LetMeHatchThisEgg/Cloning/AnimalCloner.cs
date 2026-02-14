@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
-using ContentPatcher;
 using LetMeHatchThisEgg.Models;
 using Mikew.BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
@@ -10,7 +10,9 @@ using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 using Object = StardewValley.Object;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Cloning
 {
     public class AnimalCloner
     {
@@ -560,11 +562,11 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
             string predeterminedValue
         )
         {
-            var tokenString = ContentPatcherAPI.ParseTokenString(
+            var tokenString = new ManagedTokenString(ContentPatcherAPI.ParseTokenString(
                 manifest: ModEntry.ModManifestInstance,
                 rawValue: currentValue,
                 formatVersion: new SemanticVersion("2.3.0")
-            );
+            ));
             tokenString.UpdateContext();
             var currentValueTokenString = tokenString.Value ?? currentValue;
             if (currentValue == predeterminedValue)

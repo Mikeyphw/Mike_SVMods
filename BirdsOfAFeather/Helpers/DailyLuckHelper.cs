@@ -1,7 +1,7 @@
 using StardewValley;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Enums;
 
-namespace BirdsOfAFeather.Helpers
+namespace Mikew.BirdsOfAFeather.Helpers
 {
     public static class DailyLuckHelper
     {

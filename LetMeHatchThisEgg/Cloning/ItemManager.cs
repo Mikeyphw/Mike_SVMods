@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Helpers;
 using LetMeHatchThisEgg.GameAssetManagement;
 using LetMeHatchThisEgg.Breeding;
 using LetMeHatchThisEgg.Config;
@@ -9,7 +9,7 @@ using LetMeHatchThisEgg.Models;
 using LetMeHatchThisEgg.UI;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Objects;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
@@ -19,7 +19,9 @@ using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 using Object = StardewValley.Object;
 using Mikew.BirdsOfAFeather.Helpers;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Cloning
 {
     public class ItemManager
     {

@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using Mikew.BirdsOfAFeather.Helpers.GameStateQueries;
 using StardewValley;
-using StardewValley.Extensions;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.GameData.SpecialOrders;
 using static WildEggsHatching.EnumsAndStrings.Strings;
 using static WildEggsHatching.ModEntry;

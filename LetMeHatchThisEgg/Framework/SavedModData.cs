@@ -1,7 +1,9 @@
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Framework
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Framework
 {
     public class SavedItemsData
     {

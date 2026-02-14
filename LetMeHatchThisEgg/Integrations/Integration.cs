@@ -1,7 +1,9 @@
 using LetMeHatchThisEgg.Models;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integrations
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Integrations
 {
     public class Integration
     {

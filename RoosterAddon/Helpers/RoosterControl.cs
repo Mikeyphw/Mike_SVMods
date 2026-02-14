@@ -2,6 +2,7 @@ using System.Reflection;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework;
+using Mikew.BirdsOfAFeather.Framework.Random;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
@@ -363,27 +364,32 @@ namespace RoosterAddon.Helpers
             foreach (var roosterType in Roosters)
             {
                 var roosterData = roosterType.Value;
-                var picker = new WeightedRandomPicker(rnd);
-                foreach (var item in roosterData.AllProduces[ProduceTypeEntries.Produce])
-                {
-                    if (item.Key != ProduceEntries.Chosen)
-                    {
-                        picker.AddItem(item.Value);
-                    }
-                }
-                roosterData.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen] =
-                    picker.GetRandomItem();
-                foreach (var item in roosterData.AllProduces[ProduceTypeEntries.Deluxe])
-                {
-                    if (item.Key != ProduceEntries.Chosen)
-                    {
-                        picker.AddItem(item.Value);
-                    }
-                }
-                roosterData.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen] =
-                    picker.GetRandomItem();
+                var rng = new SystemRandomProvider(rnd);
 
-                var FertilizedEggProbability = roosterData.Eggs[EggTypeEntries.Fertilized][
+var produceTable = new WeightedTable<Dictionary<RoosterItemDataEntries, string>>(rng);
+foreach (var item in roosterData.AllProduces[ProduceTypeEntries.Produce])
+{
+    if (item.Key != ProduceEntries.Chosen)
+    {
+        _ = int.TryParse(item.Value[RoosterItemDataEntries.Probability], out var weight);
+        produceTable.Add(item.Value, weight);
+    }
+}
+roosterData.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen] =
+    produceTable.RollOrDefault(new Dictionary<RoosterItemDataEntries, string>());
+
+var deluxeTable = new WeightedTable<Dictionary<RoosterItemDataEntries, string>>(rng);
+foreach (var item in roosterData.AllProduces[ProduceTypeEntries.Deluxe])
+{
+    if (item.Key != ProduceEntries.Chosen)
+    {
+        _ = int.TryParse(item.Value[RoosterItemDataEntries.Probability], out var weight);
+        deluxeTable.Add(item.Value, weight);
+    }
+}
+roosterData.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen] =
+    deluxeTable.RollOrDefault(new Dictionary<RoosterItemDataEntries, string>());
+var FertilizedEggProbability = roosterData.Eggs[EggTypeEntries.Fertilized][
                     RoosterItemDataEntries.Probability
                 ];
                 roosterData.Eggs[EggTypeEntries.Fertilized][RoosterItemDataEntries.Probability] =

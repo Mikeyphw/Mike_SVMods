@@ -1,5 +1,5 @@
 using System.Threading;
-using BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.BirdsOfAFeather.Framework;
@@ -29,37 +29,50 @@ namespace Mikew.BirdsOfAFeather.Helpers
             ModManifest = manifest;
         }
 
-        private Func<string> GetName(string optionName)
+                private Func<string> GetName(string optionName)
         {
-            return () => _translationHelper.Get($"config.{optionName}.name");
+            return () => _translationHelper.GetString($"config.{optionName}.name");
         }
 
-        private Func<string> GetPageElement(string optionName, string type = "page")
+                private Func<string> GetPageElement(string optionName, string type = "page")
         {
-            return () => ($"config.{type}.{optionName}.name");
+            return () => _translationHelper.GetString($"config.{type}.{optionName}.name");
         }
 
-        private Func<string> GetText(string optionName, string? type = null)
+                private Func<string> GetText(string optionName, string? type = null)
         {
             return () =>
-                ($"config.{(string.IsNullOrEmpty(type) ? "" : $"{type}.")}{optionName}.text");
+            {
+                var prefix = string.IsNullOrWhiteSpace(type) ? string.Empty : type + ".";
+                return _translationHelper.GetString($"config.{prefix}{optionName}.text");
+            };
         }
 
-        private Func<string>? GetDescription(string? optionName)
+                private Func<string>? GetDescription(string? optionName)
         {
-            if (optionName == null)
+            if (optionName is null)
             {
                 return null;
             }
+
+            return () => _translationHelper.GetString($"config.{optionName}.description");
+        }
             return () => ($"config.{optionName}.description");
         }
 
-        private Func<string>? GetDescription(string? optionName, string? type = null)
+                private Func<string>? GetDescription(string? optionName, string? type = null)
         {
-            if (optionName == null)
+            if (optionName is null)
             {
                 return null;
             }
+
+            return () =>
+            {
+                var prefix = string.IsNullOrWhiteSpace(type) ? string.Empty : type + ".";
+                return _translationHelper.GetString($"config.{prefix}{optionName}.description");
+            };
+        }
             return () => ($"config.{$"{type}." ?? ""}{optionName}.description");
         }
 
