@@ -1,0 +1,49 @@
+{
+    "whiteChickenClone.displayName": "Male White Chicken",
+    "whiteChickenClone.shopDisplayName": "Male White Chicken",
+    "whiteChickenClone.shopDescription": "A male white chicken.",
+    "whiteChickenClone.shopMissingBuildingDescription": "Build a Coop to unlock this animal.",
+    "whiteChickenClone.birthText": "A baby chicken has hatched!",
+    
+    "brownChickenClone.displayName": "Male Brown Chicken",
+    "brownChickenClone.shopDisplayName": "Male Brown Chicken",
+    "brownChickenClone.shopDescription": "A male brown chicken.",
+    "brownChickenClone.shopMissingBuildingDescription": "Build a Coop to unlock this animal.",
+    "brownChickenClone.birthText": "A baby chicken has hatched!",
+    
+    "blueChickenClone.displayName": "Male Blue Chicken",
+    "blueChickenClone.shopDisplayName": "Male Blue Chicken",
+    "blueChickenClone.shopDescription": "A male blue chicken.",
+    "blueChickenClone.shopMissingBuildingDescription": "Build a Coop to unlock this animal.",
+    "blueChickenClone.birthText": "A baby chicken has hatched!",
+    
+    "voidChickenClone.displayName": "Male Void Chicken",
+    "voidChickenClone.shopDisplayName": "Male Void Chicken",
+    "voidChickenClone.shopDescription": "A male void chicken.",
+    "voidChickenClone.shopMissingBuildingDescription": "Build a Coop to unlock this animal.",
+    "voidChickenClone.birthText": "A baby chicken has hatched! It looks odd...",
+    
+    "goldenChickenClone.displayName": "Male Golden Chicken",
+    "goldenChickenClone.shopDisplayName": "Male Golden Chicken",
+    "goldenChickenClone.shopDescription": "A male golden chicken.",
+    "goldenChickenClone.shopMissingBuildingDescription": "Build a Coop to unlock this animal.",
+    "goldenChickenClone.birthText": "A baby chicken has hatched! It's shiny!",
+    
+    "duckClone.displayName": "Male Duck",
+    "duckClone.shopDisplayName": "Male Duck",
+    "duckClone.shopDescription": "A male duck.",
+    "duckClone.shopMissingBuildingDescription": "Build a Coop to unlock this animal.",
+    "duckClone.birthText": "A baby duck has hatched!",
+    
+    "dinosaurClone.displayName": "Male Dinosaur",
+    "dinosaurClone.shopDisplayName": "Male Dinosaur",
+    "dinosaurClone.shopDescription": "A male dinosaur.",
+    "dinosaurClone.shopMissingBuildingDescription": "Build a Coop to unlock this animal.",
+    "dinosaurClone.birthText": "A baby dinosaur has hatched?!",
+    
+    "ostrichClone.displayName": "Male Ostrich",
+    "ostrichClone.shopDisplayName":  "Male Ostrich",
+    "ostrichClone.shopDescription": "A malen ostrich.",
+    "ostrichClone.shopMissingBuildingDescription": "Build a Coop to unlock this animal.",
+    "ostrichClone.birthText": "A baby ostrich has hatched!"
+  }

@@ -1,0 +1,682 @@
+using LetMeHatchThisEgg.Framework;
+using LetMeHatchThisEgg.Helpers;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Mikew.BirdsOfAFeather.Framework;
+using StardewModdingAPI;
+using StardewValley;
+using StardewValley.TokenizableStrings;
+using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
+using static LetMeHatchThisEgg.EnumsAndStrings.Strings;
+using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
+
+using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg
+{
+    /// <summary>The mod entry point.</summary>
+    ///
+    internal sealed partial class ModEntry : Mod
+    {
+        private const float MAX_CHANCE = 1f;
+        private const float MIN_CHANCE = 0f;
+        private const float CHANCE_INTERVAL = 0.1f;
+
+        private void GMCMSetup()
+        {
+            MenuUpdate();
+            AddGeneralSection();
+            LoggerHelper.VerboseLog("Ended general section!");
+            AddHorizontalSeparator();
+            AddBreedingSystemSection();
+            LoggerHelper.VerboseLog("Ended breedingSystem section!");
+            AddHorizontalSeparator();
+            AddEggListEditsSection();
+            AddHorizontalSeparator();
+            AddBirthTextEditsSection();
+            AddHorizontalSeparator();
+            AddClonedEggsEditsSection();
+            AddHorizontalSeparator();
+            // AddBreedingSystemSection();
+            AddEggsSection();
+            AddFemalePages();
+            AddEggRelationsPage();
+            AddEditedListsPage(EditType.EggList);
+            AddEditedListsPage(EditType.BirthText);
+            //AddEditedListsPage(EditType.BirthText, true);
+            AddEggColorsPage();
+            AddEggTypePages();
+        }
+
+        private void AddEggsSection()
+        {
+            configMenuExt.AddPageLink(pageName: "eggsenabled");
+            configMenuExt.AddPageLink(pageName: "eggcolors");
+            /* if (Game1.hasStartedDay)
+             {*/
+            configMenuExt.AddPageLink(pageName: "eggRelations");
+            /*}
+            else
+            {
+                configMenuExt.AddParagraph(
+                    text: () =>
+                        $"{TranslationModEntry.HelperInstance?.Get("config.pagelink.cloneEggs.name")} {TranslationModEntry.HelperInstance?.Get("config.notavaliable")}"
+                );
+            }*/
+        }
+
+        private void AddEggTypePages()
+        {
+            foreach (var egg in Config.EggColors.Keys)
+            {
+                configMenuExt.AddPage(
+                    pageId: $"egg.{egg}",
+                    pageTitle: () => GetObjectDisplayName(egg)
+                );
+                configMenuExt.AddSectionTitle(sectionName: "colors");
+                foreach (
+                    var colorName in Saved_Colors._colorDictionary.Keys.Where(c =>
+                        c != ColorNames.Gold
+                    )
+                )
+                {
+                    configMenuExt.AddBoolOption(
+                        optionName: $"color.{colorName}",
+                        getValue: () => Config!.EggColors[egg][colorName],
+                        setValue: value => Config!.EggColors[egg][colorName] = value
+                    );
+                }
+            }
+        }
+
+        private void AddEggColorsPage()
+        {
+            configMenuExt.AddPage(pageTitle: "eggcolors");
+            configMenuExt.AddPageLink(pageName: "managechosencolors");
+            configMenuExt.AddSimpleHorizontalSeparator();
+            configMenuExt.AddSectionTitle(sectionName: "randomization");
+            foreach (var egg in Config.EggColors.Keys)
+            {
+                configMenuExt.AddPageLink(
+                    pageId: $"egg.{egg}",
+                    text: () => GetObjectDisplayName(egg)
+                );
+            }
+            configMenuExt.AddPage(pageTitle: "managechosencolors");
+            foreach (var colorKey in Saved_Colors.ItemColors.Keys.OrderBy(e => e.Split(' ').Last()))
+            {
+                configMenuExt.AddColorOption(
+                    getValue: () => Colors.HexToColor(Saved_Colors.ItemColors[colorKey]),
+                    setValue: value => Saved_Colors.ItemColors[colorKey] = Colors.ColorToHex(value),
+                    name: () => colorKey,
+                    showAlpha: false,
+                    colorPickerStyle: 0b00000100
+                );
+            }
+        }
+
+        private void AddBreedingSystemSection()
+        {
+            configMenuExt.AddSectionTitle("LoadedBreedingSystems");
+            AddFemalePageLinks();
+        }
+
+        private void AddFemalePageLinks()
+        {
+            foreach (var contentPackID in LoadedFemaleBreedingData.Keys)
+            {
+                configMenuExt.AddPageLink(
+                    pageId: contentPackID,
+                    text: () => GetContentPackName(contentPackID)
+                );
+            }
+        }
+
+        private void AddFemalePages()
+        {
+            foreach (var (contentPackID, femaleBreedingData) in LoadedFemaleBreedingData)
+            {
+                configMenuExt.AddPage(
+                    pageId: contentPackID,
+                    pageTitle: () => GetContentPackName(contentPackID),
+                    true
+                );
+                configMenuExt.AddSectionTitle("Females");
+                foreach (var (femaleKey, breedingDataGroupList) in femaleBreedingData)
+                {
+                    configMenuExt.AddPageLink(
+                        pageId: $"{contentPackID}_{femaleKey}",
+                        text: () => femaleKey
+                    );
+                }
+                foreach (var (femaleKey, breedingData) in femaleBreedingData)
+                {
+                    var contentPackConfig = BreedingConfigsByPack[contentPackID][femaleKey];
+                    configMenuExt.AddPage(
+                        pageId: $"{contentPackID}_{femaleKey}",
+                        pageTitle: () => femaleKey,
+                        true
+                    );
+                    configMenuExt.AddBoolOption(
+                        getValue: () => breedingData.ApplyDailyLuckBoost,
+                        setValue: value => breedingData.ApplyDailyLuckBoost = value,
+                        optionName: "ApplyDailyBoost",
+                        tooltip: true
+                    );
+                    if (breedingData.AdjustableEggChances)
+                    {
+                        configMenuExt.AddSectionTitle("NormalHatching");
+                        foreach (
+                            var eggType in contentPackConfig.EggChances.Keys.Where(e =>
+                                e != ItemOrEggType.Fertilized
+                            )
+                        )
+                        {
+                            configMenuExt.AddFloatNumberOption(
+                                getValue: () => contentPackConfig.EggChances[eggType],
+                                setValue: value => contentPackConfig.EggChances[eggType] = value,
+                                optionName: $"{eggType}eggChance",
+                                tooltip: true,
+                                min: MIN_CHANCE,
+                                max: MAX_CHANCE,
+                                interval: CHANCE_INTERVAL
+                            );
+                        }
+                        configMenuExt.AddSectionTitle("FertilizedHatching");
+                        configMenuExt.AddFloatNumberOption(
+                            getValue: () => contentPackConfig.EggChances[ItemOrEggType.Fertilized],
+                            setValue: value =>
+                                contentPackConfig.EggChances[ItemOrEggType.Fertilized] = value,
+                            optionName: $"{ItemOrEggType.Fertilized}eggChance",
+                            tooltip: true,
+                            min: MIN_CHANCE,
+                            max: MAX_CHANCE,
+                            interval: CHANCE_INTERVAL
+                        );
+                    }
+                    configMenuExt.AddSectionTitle("Males");
+                    foreach (var (maleKey, maleData) in breedingData.Males)
+                    {
+                        string maleChosenKey = maleKey.EndsWith("_Male") ? $"Cloned Male" : maleKey;
+                        configMenuExt.AddSectionTitle(() => $"{maleChosenKey}");
+
+                        if (Game1.farmAnimalData.ContainsKey(maleKey))
+                        {
+                            var rectangle = Game1
+                                .farmAnimalData[maleKey]
+                                .House.Contains("coop", StringComparison.OrdinalIgnoreCase)
+                                ? new Rectangle(0, 0, 16, 16)
+                                : new Rectangle(0, 0, 32, 32);
+                            configMenuExt.RegisterImage(
+                                texPath: Game1.farmAnimalData[maleKey].Texture,
+                                texRect: rectangle,
+                                scale: 4
+                            );
+                        }
+                        else if (maleKey.EndsWith("_Male"))
+                        {
+                            var rectangle = Game1
+                                .farmAnimalData[femaleKey]
+                                .House.Contains("coop", StringComparison.OrdinalIgnoreCase)
+                                ? new Rectangle(0, 0, 16, 16)
+                                : new Rectangle(0, 0, 32, 32);
+                            configMenuExt.RegisterImage(
+                                texPath: Game1.farmAnimalData[femaleKey].Texture,
+                                texRect: rectangle,
+                                scale: 4
+                            );
+                        }
+                        configMenuExt.AddBoolOption(
+                            getValue: () => contentPackConfig.Enabled[maleKey],
+                            setValue: value => contentPackConfig.Enabled[maleKey] = value,
+                            optionName: "EnableMale",
+                            tooltip: true
+                        );
+                        if (IsAClonedAnimal(maleKey))
+                        {
+                            configMenuExt.AddBoolOption(
+                                getValue: () => contentPackConfig.MaleConfig.AddAsAlternatePurchase,
+                                setValue: value =>
+                                    contentPackConfig.MaleConfig.AddAsAlternatePurchase = value,
+                                optionName: "AddAsAlternatePurchase",
+                                tooltip: true
+                            );
+                        }
+                        string output = string.Join(
+                            Environment.NewLine,
+                            maleData.GetEggIDs().Select(egg => $"Type: {egg.Key}, ID: {egg.Value}")
+                        );
+                        configMenuExt.AddParagraph(() => $"Eggs:\n{output}");
+
+                        if (maleData.AdjustableMaleChances)
+                        {
+                            configMenuExt.AddFloatNumberOption(
+                                getValue: () => contentPackConfig.BoostByMale[maleKey],
+                                setValue: value => contentPackConfig.BoostByMale[maleKey] = value,
+                                optionName: "BoostByMale",
+                                tooltip: true,
+                                min: MIN_CHANCE,
+                                max: MAX_CHANCE,
+                                interval: CHANCE_INTERVAL
+                            );
+
+                            configMenuExt.AddFloatNumberOption(
+                                getValue: () => contentPackConfig.MaleChance[maleKey],
+                                setValue: value => contentPackConfig.MaleChance[maleKey] = value,
+                                optionName: "MaleChance",
+                                tooltip: true,
+                                min: MIN_CHANCE,
+                                max: MAX_CHANCE,
+                                interval: CHANCE_INTERVAL
+                            );
+                        }
+                        configMenuExt.AddHorizontalSeparator();
+                    }
+                }
+            }
+        }
+
+        private void AddClonedEggsEditsSection()
+        {
+            configMenuExt.AddSectionTitle(sectionName: "clonedeggsedits");
+            configMenuExt.AddBoolOption(
+                optionName: "clonevanillaeggs",
+                tooltip: true,
+                getValue: () => Config!.CloneVanillaEggs,
+                setValue: value => Config!.CloneVanillaEggs = value
+            );
+            configMenuExt.AddBoolOption(
+                optionName: "dinoeggsasartifact",
+                tooltip: true,
+                getValue: () => Config!.DinoEggAsArtifact,
+                setValue: value => Config!.DinoEggAsArtifact = value
+            );
+            configMenuExt.AddBoolOption(
+                optionName: "clonemachinerules",
+                tooltip: true,
+                getValue: () => Config!.CloneMachineRules,
+                setValue: value => Config!.CloneMachineRules = value
+            );
+            configMenuExt.AddBoolOption(
+                optionName: "changeeggcolors",
+                tooltip: true,
+                getValue: () => Config!.ChangeEggColors,
+                setValue: value => Config!.ChangeEggColors = value
+            );
+            configMenuExt.AddBoolOption(
+                optionName: "linkanimalcolortoeggs",
+                tooltip: true,
+                getValue: () => Config!.LinkAnimalColorToEgg,
+                setValue: value => Config!.LinkAnimalColorToEgg = value
+            );
+        }
+
+        private void AddHorizontalSeparator()
+        {
+            configMenuExt.AddSimpleHorizontalSeparator();
+        }
+
+        private void AddBirthTextEditsSection()
+        {
+            configMenuExt.AddSectionTitle(sectionName: "birthtextedits");
+            configMenuExt.AddBoolOption(
+                optionName: "editbirthtext",
+                tooltip: true,
+                getValue: () => Config!.EditBirthText,
+                setValue: value => Config!.EditBirthText = value
+            );
+            configMenuExt.AddBoolOption(
+                optionName: "AlternateBirthText",
+                tooltip: true, //"Show all edits made to animal names and birth texts",
+                getValue: () => Config!.AlternateBirthText,
+                setValue: value => Config!.AlternateBirthText = value
+            );
+            if (Game1.hasStartedDay)
+            {
+                configMenuExt.AddPageLink(pageName: $"{EditType.BirthText}");
+            }
+            else
+            {
+                configMenuExt.AddParagraph(
+                    text: () =>
+                        $"{ModEntry.HelperInstance?.Translation.Get($"config.pagelink.{EditType.BirthText}.name")} {ModEntry.HelperInstance?.Translation.Get("config.notavaliable")}"
+                );
+            }
+        }
+
+        private void AddEggListEditsSection()
+        {
+            configMenuExt.AddSectionTitle(sectionName: "egglistedits");
+
+            configMenuExt.AddBoolOption(
+                optionName: "editegglistbyname",
+                tooltip: true,
+                getValue: () => Config!.EditEggListByName,
+                setValue: value => Config!.EditEggListByName = value
+            );
+            if (Game1.hasStartedDay)
+            {
+                configMenuExt.AddPageLink(pageName: $"{EditType.EggList}");
+            }
+            else
+            {
+                configMenuExt.AddParagraph(
+                    text: () =>
+                        $"{ModEntry.HelperInstance?.Translation.Get($"config.pagelink.{EditType.EggList}.name")} {ModEntry.HelperInstance?.Translation.Get("config.notavaliable")}"
+                );
+            }
+        }
+
+        private void AddGeneralSection()
+        {
+            configMenuExt.AddSectionTitle(sectionName: "general");
+            configMenuExt.AddBoolOption(
+                optionName: "showedits",
+                tooltip: true,
+                getValue: () => Config.ShowEdits,
+                setValue: value => Config.ShowEdits = value
+            );
+            configMenuExt.AddBoolOption(
+                optionName: "ShowAnimalKeys",
+                tooltip: true,
+                getValue: () => Config.ShowAnimalKeys,
+                setValue: value => Config.ShowAnimalKeys = value
+            );
+            configMenuExt.AddBoolOption(
+                getValue: () => Config.OnlyFertilizedEggs,
+                setValue: value => Config.OnlyFertilizedEggs = value,
+                optionName: "OnlyFertilizedEggs",
+                tooltip: true
+            );
+        }
+
+        private void AddEditedListsPage(EditType editType)
+        {
+            var EditedList = Config.EditedAnimals[editType];
+
+            configMenuExt.AddPage(pageTitle: editType.ToString());
+
+            var enumerable = EditedList
+                .Where(e => !VanillaAnimals.AnimalKeys.Contains(e.Key))
+                .OrderBy(e => e.Key.Split(' ').Last());
+            foreach (var entry in enumerable)
+            {
+                configMenuExt.AddBoolOption(
+                    name: () => entry.Key,
+                    getValue: () => EditedList[entry.Key], // Use the original dictionary
+                    setValue: value => EditedList[entry.Key] = value // Use the original dictionary
+                );
+            }
+        }
+
+        private void AddEggRelationsPage()
+        {
+            var cloneItemTypes = new CloneItemType[]
+            {
+                CloneItemType.Egg,
+                CloneItemType.Milk,
+                CloneItemType.Misc
+            };
+            configMenuExt.AddPage(pageTitle: "eggRelations");
+            foreach (var itemType in cloneItemTypes)
+            {
+                configMenuExt.AddPageLink(itemType.ToString());
+            }
+            foreach (var itemType in cloneItemTypes)
+            {
+                AddEggRelationsByTypePage(itemType);
+            }
+        }
+
+        private void AddEggRelationsByTypePage(CloneItemType itemType)
+        {
+            configMenuExt.AddPage(itemType.ToString(), true);
+            foreach (
+                var (animal, items) in ModEntry.ModEntry.SavedItemsData.AnimalVanillaItemRelation.Where(k =>
+                        Game1.farmAnimalData.ContainsKey(k.Key) && k.Value[itemType] != null
+                    )
+                    .OrderBy(x => AnimalVanillaItemRelationOrder[itemType].IndexOf(x.Key)).Select(x=>(x.Key, x.Value[itemType]!))
+            )
+            {
+                if (!Config.ItemToClone.ContainsKey(animal))
+                {
+                    Config.ItemToClone[animal] = new()
+                    {
+                        [itemType] = new()
+                        {
+                            [ItemOrEggType.Normal] = items[ItemOrEggType.Normal],
+                            [ItemOrEggType.Large] = items[ItemOrEggType.Large],
+                        }
+                    };
+                }
+                else if (!Config.ItemToClone[animal].ContainsKey(itemType))
+                {
+                    Config.ItemToClone[animal][itemType] = new()
+                    {
+                        [ItemOrEggType.Normal] = items[ItemOrEggType.Normal],
+                        [ItemOrEggType.Large] = items[ItemOrEggType.Large],
+                    };
+                }
+                configMenuExt.AddSectionTitle(() => animal);
+
+                List<(Func<string?> label, Texture2D texture, Rectangle? rect)> testImageData =
+                    new();
+                foreach (var item in ModEntry.SavedItemsData.FoundItems[itemType])
+                {
+                    string label;
+                    string texturePath;
+                    Texture2D image;
+                    Rectangle rec;
+                    if (string.IsNullOrEmpty(item))
+                    {
+                        label = TranslationModEntry.HelperInstance?.Get("Config.Off");
+                        texturePath = "loosesprites/cursors";
+                        image = ModEntry.HelperInstance?.GameContent.Load<Texture2D>(texturePath);
+                        rec = new Rectangle(320, 496, 16, 16);
+                        testImageData.Insert(
+                            ModEntry.SavedItemsData.FoundItems[itemType].IndexOf(item),
+                            new(() => label, image, rec)
+                        );
+                    }
+                    else
+                    {
+                        label = GetObjectDisplayName(item);
+                        texturePath = Game1.objectData[item].Texture ?? "maps/springobjects";
+                        image = ModEntry.HelperInstance?.GameContent.Load<Texture2D>(texturePath);
+                        rec = GetCropRectangle(image.Width, Game1.objectData[item].SpriteIndex);
+                        testImageData.Insert(
+                            ModEntry.SavedItemsData.FoundItems[itemType].IndexOf(item),
+                            new(() => label, image, rec)
+                        );
+                    }
+                }
+                var test = testImageData.ToArray();
+                configMenuExt.AddImageOption(
+                    getValue: () => GetValueMethod(animal, itemType, ItemOrEggType.Normal),
+                    setValue: v => SetValueMethod(v, animal, itemType, ItemOrEggType.Normal),
+                    optionName: "NormalEgg",
+                    getMaxValue: () => (uint)(test.Length - 1),
+                    maxImageHeight: () => 64,
+                    maxImageWidth: () => 64,
+                    drawImage: (v, b, pos) =>
+                    {
+                        b.Draw(
+                            test[v].texture,
+                            pos,
+                            test[v].rect,
+                            Color.White,
+                            0,
+                            Vector2.Zero,
+                            4,
+                            SpriteEffects.None,
+                            0
+                        );
+                    },
+                    label: (v) => test[v].label(),
+                    imageTooltipText: null,
+                    arrowLocation: (int)IGMCMOptionsAPI.ImageOptionArrowLocation.Bottom,
+                    labelLocation: (int)IGMCMOptionsAPI.ImageOptionLabelLocation.Top
+                );
+                configMenuExt.AddImageOption(
+                    getValue: () => GetValueMethod(animal, itemType, ItemOrEggType.Large),
+                    setValue: v => SetValueMethod(v, animal, itemType, ItemOrEggType.Large),
+                    optionName: "LargeEgg",
+                    getMaxValue: () => (uint)(test.Length - 1),
+                    maxImageHeight: () => 64,
+                    maxImageWidth: () => 64,
+                    drawImage: (v, b, pos) =>
+                    {
+                        b.Draw(
+                            test[v].texture,
+                            pos,
+                            test[v].rect,
+                            Color.White,
+                            0,
+                            Vector2.Zero,
+                            4,
+                            SpriteEffects.None,
+                            0
+                        );
+                    },
+                    label: (v) => test[v].label(),
+                    imageTooltipText: null,
+                    arrowLocation: (int)IGMCMOptionsAPI.ImageOptionArrowLocation.Bottom,
+                    labelLocation: (int)IGMCMOptionsAPI.ImageOptionLabelLocation.Top
+                );
+            }
+        }
+
+        private uint GetValueMethod(string key, CloneItemType itemType, ItemOrEggType eggType)
+        {
+            var saved = Config.ItemToClone[key][itemType][eggType];
+            var index = ModEntry.SavedItemsData.FoundItems[itemType].IndexOf(saved);
+            if (index == -1)
+            {
+                Config.ItemToClone[key][itemType][eggType] = string.Empty;
+                return 0;
+            }
+            return (uint)index;
+        }
+
+        private void SetValueMethod(
+            uint value,
+            string key,
+            CloneItemType itemType,
+            ItemOrEggType eggType
+        )
+        {
+            if (value > ModEntry.SavedItemsData.FoundItems[itemType].Count)
+            {
+                ModEntry.SavedItemsData.AnimalVanillaItemRelation[key][itemType] ??= new();
+                ModEntry.SavedItemsData.AnimalVanillaItemRelation[key][itemType]![eggType] = string.Empty;
+            }
+            else
+            {
+                ModEntry.SavedItemsData.AnimalVanillaItemRelation[key][itemType] ??= new();
+                ModEntry.SavedItemsData.AnimalVanillaItemRelation[key][itemType]![eggType] =
+                    ModEntry.SavedItemsData.FoundItems[itemType][(int)value];
+                Config.ItemToClone[key][itemType][eggType] = ModEntry.SavedItemsData.FoundItems[itemType][
+                    (int)value
+                ];
+            }
+        }
+
+        internal Rectangle GetCropRectangle(int imageWidth, int spriteIndex)
+        {
+            int cropX = 0;
+            int cropY = 0;
+
+            int spriteWidth = Math.Min(imageWidth, 16);
+            int spriteHeight = Math.Min(imageWidth, 16); // assuming image is square
+
+            try
+            {
+                cropX = (spriteIndex % (imageWidth / spriteWidth)) * spriteWidth;
+                cropY = (spriteIndex / (imageWidth / spriteWidth)) * spriteHeight;
+            }
+            catch (System.Exception)
+            {
+                LoggerHelper.VerboseLog($"Error, width: {imageWidth}");
+            }
+
+            // Check if cropX is outside the image bounds
+            if (cropX + spriteWidth > imageWidth)
+            {
+                cropX = (cropX + spriteWidth) % imageWidth;
+                cropY += spriteHeight; // Move to the next row
+            }
+
+            return new Rectangle(cropX, cropY, spriteWidth, spriteHeight);
+        }
+
+        private string GetObjectDisplayName(string objectID)
+        {
+            var objectData = Game1.objectData[objectID];
+            if (objectData.DisplayName.StartsWith('['))
+            {
+                return TokenParser.ParseText(objectData.DisplayName);
+            }
+            else
+            {
+                return objectData.DisplayName;
+            }
+        }
+
+        private void MenuUpdate()
+        {
+            GMCM_save();
+            configMenuExt.Unregister(ModManifest);
+            configMenuExt.Register(reset: () => GMCM_reset(), save: () => GMCM_save());
+        }
+
+        private void GMCM_save()
+        {
+            ModEntry.HelperInstance?.WriteConfig(Config!);
+            SaveModData();
+            foreach (var clonedAnimalInfo in ClonedAnimalsInfoList)
+            {
+                var maleConfig = BreedingConfigsByPack[clonedAnimalInfo.ContentPackID][
+                    clonedAnimalInfo.FemaleKey
+                ].MaleConfig;
+                clonedAnimalInfo.AddAsAlternatePurchase = maleConfig.AddAsAlternatePurchase;
+            }
+            LetMeHatchApi.Instance.SetClonedAnimalsInfo(ClonedAnimalsInfoList);
+        }
+
+        private void GMCM_reset()
+        {
+            Config = new ModConfig();
+            Config.EditedAnimals = new()
+            {
+                { EditType.BirthText, new() },
+                { EditType.EggList, new() },
+                { EditType.CloneEggs, new() },
+            };
+            foreach (var (contentPackID, breedingConfigDic) in BreedingConfigsByPack)
+            {
+                foreach (var femaleKey in breedingConfigDic.Keys)
+                {
+                    var contentPackData = LoadedFemaleBreedingData.FirstOrDefault(d =>
+                        d.Key == contentPackID
+                    );
+                    if (contentPackData.Value == null)
+                    {
+                        LoggerHelper.VerboseLog("Did not found content pack data", LogLevel.Error);
+                        break;
+                    }
+                    var loadedFemaleData = contentPackData.Value[femaleKey];
+                    breedingConfigDic[femaleKey] = new(loadedFemaleData);
+                }
+            }
+            this.ModEntry.HelperInstance?.Data.WriteJsonFile("data/savedModData.json", ModEntry.SavedItemsData);
+        }
+
+        private string GetContentPackName(string contentPackID)
+        {
+            var contentPack = LoadedContentPacks.Find(cp => cp.Manifest.UniqueID == contentPackID);
+            if (contentPack != null)
+            {
+                return contentPack.Manifest.Name;
+            }
+            return contentPackID;
+        }
+    }
+}

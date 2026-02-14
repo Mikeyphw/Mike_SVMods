@@ -1,0 +1,268 @@
+using Netcode;
+using StardewModdingAPI;
+using StardewValley;
+using StardewValley.Monsters;
+using WildEggsHatching.DesertTomb.TombMonsters.Base;
+using WildEggsHatching.Management;
+using static Mikew.BirdsOfAFeather.EnumsAndStrings.Enums;
+using static WildEggsHatching.EnumsAndStrings.Enums;
+using static WildEggsHatching.EnumsAndStrings.Enums.TextOptionValues;
+using static WildEggsHatching.ModEntry;
+
+namespace WildEggsHatching.DesertTomb.Generation
+{
+    internal class DifficultyManager
+    {
+        private readonly double barrelInsteadOfPlantChance = 0.33;
+
+        internal double MineMultiplier { get; private set; }
+        private readonly TombDifficulty _tombDifficulty;
+        internal double ChanceToReduceAreaMax { get; set; }
+        internal int MinCapacityToReduceArea { get; set; }
+        internal double MultiplierToReduceAreaMax { get; set; }
+        internal double ChanceToDoubleDropItem { get; private set; }
+        internal double DropItemChanceMultiplier { get; private set; }
+        internal double DropItemChanceMultiplierTheTombPharaoh { get; private set; }
+
+        private static double ReduceMultiplierIfNecessary(double multiplier) =>
+            ProgressionManager.HasScrollOrCompletedQuest ? multiplier * 0.5 : multiplier;
+
+        internal DifficultyManager(TombDifficulty tombDifficulty)
+        {
+            _tombDifficulty = tombDifficulty;
+            ChanceToReduceAreaMax = 0;
+            MinCapacityToReduceArea = 3;
+            MultiplierToReduceAreaMax = 0.6;
+            MineMultiplier = 1;
+            ChanceToDoubleDropItem = 0.4;
+            DropItemChanceMultiplier = 1.05;
+            DropItemChanceMultiplierTheTombPharaoh = 1.1;
+            ApplyDifficultyToMultipliers();
+        }
+
+        private void ApplyDifficultyToMultipliers()
+        {
+            MineMultiplier =
+                GetMineMultiplier(MineMultiplier)
+                * Configuration.MonsterBalanceConfig.GlobalDamageMultiplier;
+            ChanceToDoubleDropItem =
+                GetMonsterDifficultyMultipliers(ChanceToDoubleDropItem, 0.02)
+                * Configuration.MonsterBalanceConfig.DropRateMultiplier;
+            DropItemChanceMultiplier =
+                GetMonsterDifficultyMultipliers(DropItemChanceMultiplier, 0.05)
+                * Configuration.MonsterBalanceConfig.DropRateMultiplier;
+            DropItemChanceMultiplierTheTombPharaoh =
+                GetMonsterDifficultyMultipliers(DropItemChanceMultiplierTheTombPharaoh, 0.05)
+                * Configuration.MonsterBalanceConfig.DropRateMultiplier;
+        }
+
+        internal double GetBarrelPlantChance()
+        {
+            return GetMineMultiplier(barrelInsteadOfPlantChance);
+        }
+
+        private double GetMineMultiplier(double multiplier, bool reduction = false)
+        {
+            var baseMultiplier = reduction ? 0.8 : 1.1;
+            var adjustment = GetDifficultyAdjustment();
+            var newMultiplier = adjustment(baseMultiplier);
+            newMultiplier = ReduceMultiplierIfNecessary(newMultiplier);
+            return newMultiplier * multiplier;
+        }
+
+        internal static double LuckyBonusCalculator(double originalValue)
+        {
+            var currentLuck = GetLuckyType(Game1.player.DailyLuck);
+            Func<double, double> luckyBonus_1 = currentLuck switch
+            {
+                LuckyTypes.SuperUnlucky => (value) => value * 0,
+                LuckyTypes.Unlucky => (value) => value - 0.001,
+                LuckyTypes.Neutral => (value) => value,
+                LuckyTypes.Lucky => (value) => value + 0.001,
+                LuckyTypes.SuperLucky => (value) => value + 0.01,
+                _ => (value) => value * 0,
+            };
+            var luckyBonus_2 = originalValue * (1 + Game1.player.team.AverageDailyLuck());
+            return Math.Clamp(Math.Min(luckyBonus_1(originalValue), luckyBonus_2), 0, 1);
+        }
+
+        private static LuckyTypes GetLuckyType(double dailyLuck)
+        {
+            return dailyLuck switch
+            {
+                < -0.07 => LuckyTypes.SuperUnlucky,
+                >= -0.07 and <= -0.02 => LuckyTypes.Unlucky,
+                > -0.02 and <= 0.02 => LuckyTypes.Neutral,
+                > 0.02 and <= 0.07 => LuckyTypes.Lucky,
+                > 0.07 => LuckyTypes.SuperLucky,
+                _ => LuckyTypes.Neutral,
+            };
+        }
+
+        private Func<double, double> GetDifficultyAdjustment()
+        {
+            return _tombDifficulty switch
+            {
+                TombDifficulty.Easy => multiplier => multiplier - 0.2,
+                TombDifficulty.Moderate => multiplier => multiplier,
+                TombDifficulty.Hard => multiplier => multiplier + 0.1,
+                _ => multiplier => 0.0,
+            };
+        }
+
+        internal double GetMonsterDifficultyMultipliers(double multiplier, double modifier)
+        {
+            var adjustment = GetDifficultyAdjustmentMonster(modifier);
+            var newMultiplier = adjustment(multiplier);
+            return ReduceMultiplierIfNecessary(newMultiplier);
+        }
+
+        private Func<double, double> GetDifficultyAdjustmentMonster(double modifier)
+        {
+            return _tombDifficulty switch
+            {
+                TombDifficulty.Easy => value => value - modifier,
+                TombDifficulty.Moderate => value => value,
+                TombDifficulty.Hard => value => value + modifier,
+                _ => multiplier => 0.0,
+            };
+        }
+
+        internal static Dictionary<TombMonsterType, int> GetMaxMonsterInTomb()
+        {
+            return new Dictionary<TombMonsterType, int>()
+            {
+                { TombMonsterType.AssassinBug, 5 },
+                { TombMonsterType.ArmoredBug, 5 },
+                { TombMonsterType.Bat, 2 },
+                { TombMonsterType.BruteMummy, 6 },
+                { TombMonsterType.Duggy, 5 },
+                { TombMonsterType.RoyalSerpent, 1 },
+                { TombMonsterType.HauntedSkull, 1 },
+                { TombMonsterType.Ghost, 2 },
+                { TombMonsterType.Mummy, 50 },
+                { TombMonsterType.Skeleton, 6 },
+                { TombMonsterType.SkeletonMage, 3 },
+                { TombMonsterType.Spider, 2 },
+                { TombMonsterType.TheTombPharaoh, 1 },
+            };
+        }
+
+        private double GetAreaPopulationControlModifier(double multiplier)
+        {
+            var modifier = _tombDifficulty switch
+            {
+                TombDifficulty.Easy => 0.1,
+                TombDifficulty.Moderate => 0,
+                TombDifficulty.Hard => -0.1,
+                _ => 1,
+            };
+            return ProgressionManager.HasScrollOrCompletedQuest
+                ? (modifier + multiplier) * 1.5
+                : multiplier + modifier;
+        }
+
+        private int GetAreaPopulationControlModifier(int value)
+        {
+            var modifier = _tombDifficulty switch
+            {
+                TombDifficulty.Easy => -1,
+                TombDifficulty.Moderate => 0,
+                TombDifficulty.Hard => 2,
+                _ => 0,
+            };
+            return ProgressionManager.HasScrollOrCompletedQuest
+                ? modifier + value + -1
+                : modifier + value;
+        }
+
+        internal void DoubleDropItems(NetStringList drops)
+        {
+            var chance = LuckyBonusCalculator(ChanceToDoubleDropItem);
+            var dropsToAdd = new List<string>();
+            foreach (
+                var drop in drops.Where(drop =>
+                    drop != null
+                    && !(
+                        TombMonsterUtilities.ItemsToNotDouble.Contains(drop.Replace("(O)", ""))
+                        || TombMonsterUtilities.ItemsToNotDouble.Contains(drop.Replace("(H)", ""))
+                    )
+                )
+            )
+            {
+                // additional random chance for each item
+                var itemRoll = Game1.random.NextDouble();
+                if (itemRoll < chance)
+                {
+                    dropsToAdd.Add(drop);
+                }
+            }
+            drops.AddRange(dropsToAdd);
+        }
+
+        internal List<(string, double)> GetExtraItemsList(string itemsString)
+        {
+            var parts = itemsString.Split(' ');
+
+            var list = new List<(string, double)>();
+
+            for (int i = 0; i < parts.Length; i += 2)
+            {
+                var key = parts[i];
+
+                var value = double.Parse(parts[i + 1]);
+
+                list.Add((key, value));
+            }
+            return list.OrderBy(x => Game1.random.Next()).ToList();
+        }
+
+        internal List<string> GetModifiedMonsterItems(Monster monster, string? extraItems = null)
+        {
+            var monsterType = TombMonsterUtilities.GetMonsterType(monster);
+            return GetModifiedMonsterItems(monsterType, extraItems);
+        }
+
+        internal List<string> GetModifiedMonsterItems(
+            TombMonsterType monsterType,
+            string? extraItems = null
+        )
+        {
+            var ItemsWithChance = TombMonsterUtilities.MonsterDropItems[monsterType];
+            if (extraItems != null)
+            {
+                ItemsWithChance = $"{ItemsWithChance} {extraItems}";
+            }
+            var chosenItems = GetExtraItemsList(ItemsWithChance);
+            var items = new List<string>();
+            AddExtraItemsWithLuckyBonus(items, chosenItems);
+            items = items.Take(3 + 1).ToList();
+            return items;
+        }
+
+        internal List<string> AddExtraItemsWithLuckyBonus(
+            List<string> items,
+            List<(string, double)> extraItems,
+            bool useTheTombPharaohMultiplier = false
+        )
+        {
+            var multiplier = useTheTombPharaohMultiplier
+                ? DropItemChanceMultiplier
+                : DropItemChanceMultiplierTheTombPharaoh;
+            foreach (var (item, chance) in extraItems)
+            {
+                var roll = Game1.random.NextDouble();
+
+                var newChance = LuckyBonusCalculator(chance);
+
+                newChance *= multiplier;
+
+                if (roll < newChance)
+                {
+                    items.Add(item);
+                }
+            }
+            return items;
+        }
+    }
+}

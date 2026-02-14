@@ -1,0 +1,394 @@
+{
+  "White Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "White Chicken": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": true,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+      "ContentPackID": "",
+      "FemaleKey": "",
+      "MaleKey": "",
+      "Textures": {},
+      "AnimalData": {
+        "DisplayName": "{{i18n: whiteChickenClone.displayName}}",
+        "ShopTexture": "cp",
+        "ShopDisplayName": "{{i18n: whiteChickenClone.shopDisplayName}}",
+        "ShopDescription": "{{i18n: whiteChickenClone.shopDescription}}",
+        "ShopMissingBuildingDescription": "{{i18n: whiteChickenClone.shopMissingBuildingDescription}}",
+        "ShopSourceRect": {
+          "X": 0,
+          "Y": 0,
+          "Width": 32,
+          "Height": 16
+        },
+        "BirthText": "{{i18n: whiteChickenClone.birthText}}",
+        "ProduceItemIds": [],
+        "DeluxeProduceItemIds": [],
+        "Texture": "cp",
+        "BabyTexture": "cp",
+        "Skins": [],
+        "CustomFields": null
+      },
+      "AddAsAlternatePurchase": true
+    }
+  },
+  "Brown Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "Brown Chicken": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": true,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+      "ContentPackID": "",
+      "FemaleKey": "",
+      "MaleKey": "",
+      "Textures": {},
+      "AnimalData": {
+        "DisplayName": "{{i18n: brownChickenClone.displayName}}",
+        "ShopTexture": "cp",
+        "ShopDisplayName": "{{i18n: brownChickenClone.shopDisplayName}}",
+        "ShopDescription": "{{i18n: brownChickenClone.shopDescription}}",
+        "ShopMissingBuildingDescription": "{{i18n: brownChickenClone.shopMissingBuildingDescription}}",
+        "ShopSourceRect": {
+          "X": 0,
+          "Y": 0,
+          "Width": 32,
+          "Height": 16
+        },
+        "BirthText": "{{i18n: brownChickenClone.birthText}}",
+        "ProduceItemIds": [],
+        "DeluxeProduceItemIds": [],
+        "Texture": "cp",
+        "BabyTexture": "cp",
+        "Skins": [],
+        "CustomFields": null
+      },
+      "AddAsAlternatePurchase": true
+    }
+  },
+  "Blue Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "Blue Chicken": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": true,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+      "ContentPackID": "",
+      "FemaleKey": "",
+      "MaleKey": "",
+      "Textures": {},
+      "AnimalData": {
+        "DisplayName": "{{i18n: blueChickenClone.displayName}}",
+        "ShopTexture": "cp",
+        "ShopDisplayName": "{{i18n: blueChickenClone.shopDisplayName}}",
+        "ShopDescription": "{{i18n: blueChickenClone.shopDescription}}",
+        "ShopMissingBuildingDescription": "{{i18n: blueChickenClone.shopMissingBuildingDescription}}",
+        "ShopSourceRect": {
+          "X": 0,
+          "Y": 0,
+          "Width": 32,
+          "Height": 16
+        },
+        "BirthText": "{{i18n: blueChickenClone.birthText}}",
+        "ProduceItemIds": [],
+        "DeluxeProduceItemIds": [],
+        "Texture": "cp",
+        "BabyTexture": "cp",
+        "Skins": [],
+        "CustomFields": null
+      },
+      "AddAsAlternatePurchase": true
+    }
+  },
+  "Void Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "Void Chicken": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": true,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+      "ContentPackID": "",
+      "FemaleKey": "",
+      "MaleKey": "",
+      "Textures": {},
+      "AnimalData": {
+        "DisplayName": "{{i18n: voidChickenClone.displayName}}",
+        "ShopTexture": "cp",
+        "ShopDisplayName": "{{i18n: voidChickenClone.shopDisplayName}}",
+        "ShopDescription": "{{i18n: voidChickenClone.shopDescription}}",
+        "ShopMissingBuildingDescription": "{{i18n: voidChickenClone.shopMissingBuildingDescription}}",
+        "ShopSourceRect": {
+          "X": 0,
+          "Y": 0,
+          "Width": 32,
+          "Height": 16
+        },
+        "BirthText": "{{i18n: voidChickenClone.birthText}}",
+        "ProduceItemIds": [],
+        "DeluxeProduceItemIds": [],
+        "Texture": "cp",
+        "BabyTexture": "cp",
+        "Skins": [],
+        "CustomFields": null
+      },
+      "AddAsAlternatePurchase": true
+    }
+  },
+  "Golden Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "Golden Chicken": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": true,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+      "ContentPackID": "",
+      "FemaleKey": "",
+      "MaleKey": "",
+      "Textures": {},
+      "AnimalData": {
+        "DisplayName": "{{i18n: goldenChickenClone.displayName}}",
+        "ShopTexture": "cp",
+        "ShopDisplayName": "{{i18n: goldenChickenClone.shopDisplayName}}",
+        "ShopDescription": "{{i18n: goldenChickenClone.shopDescription}}",
+        "ShopMissingBuildingDescription": "{{i18n: goldenChickenClone.shopMissingBuildingDescription}}",
+        "ShopSourceRect": {
+          "X": 0,
+          "Y": 0,
+          "Width": 32,
+          "Height": 16
+        },
+        "BirthText": "{{i18n: goldenChickenClone.birthText}}",
+        "ProduceItemIds": [],
+        "DeluxeProduceItemIds": [],
+        "Texture": "cp",
+        "BabyTexture": "cp",
+        "Skins": [],
+        "CustomFields": null
+      },
+      "AddAsAlternatePurchase": true
+    }
+  },
+  "Ostrich": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "Ostrich": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": true,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+      "ContentPackID": "",
+      "FemaleKey": "",
+      "MaleKey": "",
+      "Textures": {},
+      "AnimalData": {
+        "DisplayName": "{{i18n: ostrichClone.displayName}}",
+        "ShopTexture": "cp",
+        "ShopDisplayName": "{{i18n: ostrichClone.shopDisplayName}}",
+        "ShopDescription": "{{i18n: ostrichClone.shopDescription}}",
+        "ShopMissingBuildingDescription": "{{i18n: ostrichClone.shopMissingBuildingDescription}}",
+        "ShopSourceRect": {
+          "X": 0,
+          "Y": 0,
+          "Width": 32,
+          "Height": 16
+        },
+        "BirthText": "{{i18n: ostrichClone.birthText}}",
+        "ProduceItemIds": [],
+        "DeluxeProduceItemIds": [],
+        "Texture": "cp",
+        "BabyTexture": "cp",
+        "Skins": [],
+        "CustomFields": null
+      },
+      "AddAsAlternatePurchase": true
+    }
+  },
+  "Dinosaur": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "Dinosaur": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": true,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+      "ContentPackID": "",
+      "FemaleKey": "",
+      "MaleKey": "",
+      "Textures": {},
+      "AnimalData": {
+        "DisplayName": "{{i18n: dinosaurClone.displayName}}",
+        "ShopTexture": "cp",
+        "ShopDisplayName": "{{i18n: dinosaurClone.shopDisplayName}}",
+        "ShopDescription": "{{i18n: dinosaurClone.shopDescription}}",
+        "ShopMissingBuildingDescription": "{{i18n: dinosaurClone.shopMissingBuildingDescription}}",
+        "ShopSourceRect": {
+          "X": 0,
+          "Y": 0,
+          "Width": 32,
+          "Height": 16
+        },
+        "BirthText": "{{i18n: dinosaurClone.birthText}}",
+        "ProduceItemIds": [],
+        "DeluxeProduceItemIds": [],
+        "Texture": "cp",
+        "BabyTexture": "cp",
+        "Skins": [],
+        "CustomFields": null
+      },
+      "AddAsAlternatePurchase": true
+    }
+  },
+  "Duck": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "Duck": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": true,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+      "ContentPackID": "",
+      "FemaleKey": "",
+      "MaleKey": "",
+      "Textures": {},
+      "AnimalData": {
+        "DisplayName": "{{i18n: duckClone.displayName}}",
+        "ShopTexture": "cp",
+        "ShopDisplayName": "{{i18n: duckClone.shopDisplayName}}",
+        "ShopDescription": "{{i18n: duckClone.shopDescription}}",
+        "ShopMissingBuildingDescription": "{{i18n: duckClone.shopMissingBuildingDescription}}",
+        "ShopSourceRect": {
+          "X": 0,
+          "Y": 0,
+          "Width": 32,
+          "Height": 16
+        },
+        "BirthText": "{{i18n: duckClone.birthText}}",
+        "ProduceItemIds": [],
+        "DeluxeProduceItemIds": [],
+        "Texture": "cp",
+        "BabyTexture": "cp",
+        "Skins": [],
+        "CustomFields": null
+      },
+      "AddAsAlternatePurchase": true
+    }
+  }
+}

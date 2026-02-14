@@ -1,0 +1,744 @@
+using WildEggsHatching.EnumsAndStrings;
+using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
+
+using static WildEggsHatching.ModEntry; namespace WildEggsHatching.Helpers
+{
+    public partial class WildAnimalManager
+    {
+        public HashSet<InputWildAnimalData> CreateWildAnimalsList()
+        {
+            return new HashSet<InputWildAnimalData>
+            {
+                AddAnimalToList(
+                    Strings.Vanilla,
+                    "Chicken",
+                    800,
+                    new HashSet<string>
+                    {
+                        VanillaAnimals.WhiteChicken,
+                        VanillaAnimals.BrownChicken,
+                        VanillaAnimals.BlueChicken
+                    }
+                ),
+                AddAnimalToList(
+                    Strings.Vanilla,
+                    "Void Chicken",
+                    Config.GetVoidChickenPurchasePrice() * 2,
+                    new HashSet<string> { VanillaAnimals.VoidChicken },
+                    isMagic: true
+                ),
+                AddAnimalToList(Strings.Vanilla, "Duck", 1200, new HashSet<string> { "Duck" }),
+                AddAnimalToList(
+                    Strings.Vanilla,
+                    "Dinosaur",
+                    Config.GetDinoPurchasePrice() * 2,
+                    new HashSet<string> { "Dinosaur" }
+                ),
+                AddAnimalToList(
+                    "Arrbyte.Canaries",
+                    "Canary",
+                    4000,
+                    new HashSet<string> { "Arrbyte.Canaries_Canary" }
+                ),
+                AddAnimalToList("stardewforest.crows", "Crow", 1200, new HashSet<string> { "Crow" }),
+                AddAnimalToList(
+                    "cantabilechaos.BFAVChickens",
+                    "Fancy Chicken",
+                    5000,
+                    new HashSet<string>
+                    {
+                        "Cuckoo Bluebar",
+                        "Asil",
+                        "Black Silkie",
+                        "Black Maran",
+                        "Buff Orpington",
+                        "Buff Silkie",
+                        "Cream Legbar",
+                        "Easter Egger",
+                        "Gold Laced Cochin",
+                        "Lakenvelder",
+                        "Lavender Americauna",
+                        "Lavender Orpington",
+                        "Light Sussex",
+                        "Olive Egger",
+                        "Rhode Island Red",
+                        "Salmon Faverolle",
+                        "White Crested Black Polish",
+                        "White Legbar",
+                        "White Silkie"
+                    }
+                ),
+                AddAnimalToList(
+                    "cantabilechaos.BFAVDucks",
+                    "Fancy Duck",
+                    8000,
+                    new HashSet<string>
+                    {
+                        "Black Runner",
+                        "Black Swedish",
+                        "Blue Swedish",
+                        "Buff Duck",
+                        "Cayuga Duck",
+                        "Chocolate Duck",
+                        "Muscovy Duck",
+                        "Pekin Duck"
+                    }
+                ),
+                AddAnimalToList(
+                    "Luzze.RegularGoose",
+                    "Goose",
+                    5000,
+                    new HashSet<string> { "Wild Goose" }
+                ),
+                AddAnimalToList(
+                    "mazzon.parrots",
+                    "Parrot",
+                    1600,
+                    new HashSet<string> { "Blue Parrot", "White Parrot", "Void Parrot", "Red Parrot" }
+                ),
+                AddAnimalToList(
+                    "cantabilechaos.BFAVPeafowl",
+                    "Peafowl",
+                    12000,
+                    new HashSet<string>
+                    {
+                        "Blue Peacock",
+                        "Cameo Peacock",
+                        "Pied Peacock",
+                        "Purple Peacock",
+                        "White Peacock"
+                    }
+                ),
+                AddAnimalToList(
+                    "birdb.CP.Pigeons",
+                    "Pigeon",
+                    5000,
+                    new HashSet<string>
+                    {
+                        "Racing Pigeon",
+                        "Pioneer Pigeon",
+                        "Modena Pigeon",
+                        "Mourning Dove",
+                        "White Dove"
+                    }
+                ),
+                AddAnimalToList(
+                    "UncleArya.ResourceChickens",
+                    "Resource Chicken",
+                    20000,
+                    new HashSet<AnimalKeyData>()
+                    {
+                        //Lvl 1
+                        new("UncleArya.ResourceChickens.ClayChicken", 1f),
+                        new("UncleArya.ResourceChickens.StoneChicken", 1f),
+                        new("UncleArya.ResourceChickens.CoalChicken", 1f),
+                        new("UncleArya.ResourceChickens.WoodChicken", 1f),
+                        //Lvl 2
+                        new("UncleArya.ResourceChickens.BaitChicken", 0.8f),
+                        new("UncleArya.ResourceChickens.SapChicken", 0.8f),
+                        new("UncleArya.ResourceChickens.FiberChicken", 0.8f),
+                        //Lvl 3
+                        new("UncleArya.ResourceChickens.MossChicken", 0.6f),
+                        new("UncleArya.ResourceChickens.GeodeChicken", 0.6f),
+                        //Lvl 4
+                        new("UncleArya.ResourceChickens.BoneChicken", 0.4f),
+                    }
+                ),
+                AddAnimalToList(
+                    "Meara.Roosters",
+                    "Rooster",
+                    1200,
+                    new HashSet<string> { "cockwhite", "cockbrown" }
+                ),
+                AddAnimalToList(
+                    "stardewforest.seagulls",
+                    "Seagull",
+                    1200,
+                    new HashSet<string> { "Seagull" }
+                ),
+                AddAnimalToList(
+                    "Paperkoopa.Tortoise",
+                    "Tortoise",
+                    1600,
+                    new HashSet<string> { "Paperkoopa.Tortoise_Tortoise" }
+                ),
+                AddAnimalToList(
+                    "Syanide23.BFAVTurkey",
+                    "Turkey",
+                    8000,
+                    new HashSet<string> { "Turkey" }
+                ),
+                AddAnimalToList(
+                    "mazzon.Velociraptors",
+                    "Velociraptor",
+                    3600,
+                    new HashSet<string>
+                    {
+                        "Brown Velociraptor",
+                        "Albino Velociraptor",
+                        "Green Velociraptor",
+                        "Pink Velociraptor",
+                        "Tan Velociraptor"
+                    }
+                ),
+                AddAnimalToList(
+                    "Arrbyte.Zebrafinches",
+                    "Zebrafinch",
+                    2000,
+                    new HashSet<string> { "Arrbyte.Zebrafinches_Zebrafinch" }
+                ),
+                AddAnimalToList(
+                    Strings.Vanilla,
+                    "Ostrich",
+                    Config.GetOstrichPurchasePrice() * 2,
+                    new HashSet<string> { "Ostrich" }
+                ),
+                AddAnimalToList(
+                    "ilucie.EmuBarnAnimal",
+                    "Emu",
+                    20000,
+                    new HashSet<string> { "Emu", "RealisticEmu" }
+                ),
+                AddAnimalToList(
+                    "Renesh.EveriaDragons",
+                    "Everia Dragon",
+                    40000,
+                    new HashSet<string>
+                    {
+                        "Shadow Dragon",
+                        "Aqua Dragon",
+                        "Lavender Dragon",
+                        "Rose Dragon",
+                        "Forest Dragon",
+                        "Saffron Dragon",
+                        "Emerald Dragon",
+                        "Chestnut Dragon",
+                        "Chocolate Dragon",
+                        "Crimson Dragon",
+                        "Sea Dragon",
+                        "Violet Dragon"
+                    },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "neo.griffins",
+                    "Griffin",
+                    20000,
+                    new HashSet<string> { "Forest Griffin", "Arctic Griffin", "Desert Griffin" },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "stormdrakon.LungDragons",
+                    "Lung Dragon",
+                    40000,
+                    new HashSet<string>
+                    {
+                        "River Lung",
+                        "Mountain Lung",
+                        "Lava Lung",
+                        "Storm Lung",
+                        "Pond Lung",
+                        "Creek Lung",
+                        "Sky Lung",
+                        "Forest Lung",
+                        "Flower Lung",
+                        "Spectre Lung",
+                        "Abyss Lung",
+                        "Celestial Lung",
+                        "Time Lung",
+                        "Crystal Lung",
+                        "Phase Lung",
+                        "Radioactive Lung",
+                        "Pygmy Lung",
+                        "Meadowlands Lung",
+                        "Dune Lung"
+                    },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "ilucie.PepperRexBarnAnimal",
+                    "Pepper Rex",
+                    20000,
+                    new HashSet<string> { "PepperRex", "RedPepperRex", "MintPepperRex" }
+                ),
+                AddAnimalToList(
+                    "wildflour.witchfamiliars",
+                    "Wildflour Crow",
+                    8000,
+                    new HashSet<string>() { "wildflour.witchfamiliars_Crow" }
+                ),
+                AddAnimalToList(
+                    "hiyajules98.DesertChickenCP",
+                    "Desert Chicken",
+                    1000,
+                    new HashSet<string>()
+                    {
+                        "hiyajules98.DesertChickenCP_DesertChicken",
+                        "Purple",
+                        "Pink"
+                    }
+                ),
+                AddAnimalToList(
+                    "ilucie.smolchicken",
+                    "Smol Chicken",
+                    1600,
+                    new HashSet<string>() { "SmolWhiteChicken", "SmolBlueChicken", "SmolRedChicken" }
+                ),
+                AddAnimalToList(
+                    "CiriunAlleyKitsu.BFAVDodos",
+                    "Dodo",
+                    5000,
+                    new HashSet<string>() { "Brown Dodo", "White Dodo" }
+                ),
+                AddAnimalToList(
+                    "Thylak.GartenofBanban",
+                    "Garten",
+                    18000,
+                    new HashSet<string>()
+                    {
+                        "Thylak.GartenofBanbanOpilaBird",
+                        "Thylak.GartenofBanbanTartaBird"
+                    },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "balverines.pheasatbfav",
+                    "Amhersts Pheasants",
+                    3000,
+                    new HashSet<string>() { "Lady Amherst's Pheasant", }
+                ),
+                AddAnimalToList(
+                    "balverines.chabochickens",
+                    "Chabo Chicken",
+                    2500,
+                    new HashSet<string>() { "Chabo Chicken", }
+                ),
+                AddAnimalToList(
+                    "balverines.mandarinbfav",
+                    "Mandarin Duck",
+                    2500,
+                    new HashSet<string>() { "Hen Mandarin Duck", "Drake Mandarin Duck" }
+                ),
+                AddAnimalToList(
+                    "balverines.onadagoribfav",
+                    "Onagadori Chicken",
+                    2500,
+                    new HashSet<string> { "Onadagori Chicken" }
+                ),
+                AddAnimalToList(
+                    "balverines.indianbfav",
+                    "Asil Chicken",
+                    2500,
+                    new HashSet<string>() { "Asil Chicken" }
+                ),
+                AddAnimalToList(
+                    "balverines.indianbfav",
+                    "DomesticGuineaFowl",
+                    3000,
+                    new HashSet<string>() { "Domestic Guinea Fowl" }
+                ),
+                AddAnimalToList(
+                    "balverines.indianbfav",
+                    "Black Spanish Chicken",
+                    2500,
+                    new HashSet<string>() { "White-Faced Black Spanish Chicken" }
+                ),
+                AddAnimalToList(
+                    "balverines.indianbfav",
+                    "Runner Duck",
+                    2500,
+                    new HashSet<string>() { "Runner Duck" }
+                ),
+                AddAnimalToList(
+                    "balverines.indianbfav",
+                    "Kadaknath Chicken",
+                    2500,
+                    new HashSet<string>() { "Kadaknath Chicken" }
+                ),
+                AddAnimalToList(
+                    "Mizu.Turkey",
+                    "Mizu Turkey",
+                    2500,
+                    new HashSet<string>()
+                    {
+                        "Mizu.Turkey_BrownTurkey",
+                        "Mizu.Turkey_WhiteTurkey",
+                        "Mizu.Turkey_GrayTurkey"
+                    }
+                ),
+                AddAnimalToList(
+                    "birdb.Goose",
+                    "Birdb Goose",
+                    5000,
+                    new HashSet<string>() { "WildGoose" }
+                ),
+                AddAnimalToList(
+                    "silvermoonchan.CPLoons",
+                    "Loon",
+                    8000,
+                    new HashSet<string>() { "Loon" }
+                ),
+                AddAnimalToList(
+                    "gyftin.birds",
+                    "Gyftins Bird",
+                    1000,
+                    new HashSet<string>() { "Budgie", "Cockatiel", "Green Cheeked Conure" }
+                ),
+                AddAnimalToList(
+                    "jekks.Dino",
+                    "Jekks Dino",
+                    2000,
+                    new HashSet<string>() { "Green Bronto", "Orange Bronto", "Pink Bronto" }
+                ),
+                AddAnimalToList(
+                    "livipup.Dino",
+                    "Livipup Dino",
+                    8000,
+                    new HashSet<string>()
+                    {
+                        "Green Spiked Stego",
+                        "Teal Spiked Stego",
+                        "Blue Spiked Stego",
+                        "Purple Spiked Stego",
+                        "Red Spiked Stego",
+                        "Orange Spiked Stego",
+                        "Mossy Spiked Stego",
+                        "Green Stego",
+                        "Teal Stego",
+                        "Blue Stego",
+                        "Purple Stego",
+                        "Red Stego",
+                        "Orange Stego",
+                        "Mossy Stego",
+                        "Green Throated Stego",
+                        "Teal Throated Stego",
+                        "Blue Throated Stego",
+                        "Purple Throated Stego",
+                        "Red Throated Stego",
+                        "Orange Throated Stego",
+                        "Mossy Throated Stego",
+                        "Green Brachio",
+                        "Teal Brachio",
+                        "Blue Brachio",
+                        "Purple Brachio",
+                        "Red Brachio",
+                        "Orange Brachio",
+                        "Mossy Brachio",
+                    }
+                ),
+                AddAnimalToList(
+                    "starmops.puffins",
+                    "Puffin",
+                    8000,
+                    new HashSet<string>() { "Black Puffin", "Gray Puffin", "Blue Puffin" }
+                ),
+                AddAnimalToList(
+                    "GZhynko.Pufferfish_Chickens",
+                    "Pufferchick",
+                    100,
+                    new HashSet<string>() { "Pufferchick" }
+                ),
+                AddAnimalToList(
+                    "NukaColaPrime.penguin",
+                    "Penguin",
+                    8000,
+                    new HashSet<string>() { "Penguin" }
+                ),
+                AddAnimalToList(
+                    "rowang.kiwis",
+                    "Kiwi",
+                    3000,
+                    new HashSet<string>()
+                    {
+                        "rowang_brownkiwi",
+                        "rowang_albinokiwi",
+                        "rowang_spottedkiwi",
+                        "rowang_maskkiwi",
+                    }
+                ),
+                AddAnimalToList(
+                    "ChefRude.MIM",
+                    "Desi Murga Chicken",
+                    5000,
+                    new HashSet<string>() { "Desi Murga Chicken" }
+                ),
+                AddAnimalToList(
+                    "ChefRude.MIM",
+                    "Gallus Varius Chicken",
+                    5000,
+                    new HashSet<string>() { "Gallus Varius Chicken" }
+                ),
+                AddAnimalToList(
+                    "ChefRude.MIM",
+                    "Orpington Chicken",
+                    5000,
+                    new HashSet<string>() { "Lavender Orpington", "Blue Orpington" }
+                ),
+                AddAnimalToList(
+                    "ChefRude.MIM",
+                    "Cayuga Duck",
+                    5000,
+                    new HashSet<string>() { "Cayuga Duck" }
+                ),
+                AddAnimalToList(
+                    "HH.Tortoise",
+                    "HohenHeizens Tortoise",
+                    6000,
+                    new HashSet<string>() { "Tortoise" }
+                ),
+                AddAnimalToList(
+                    "tokiri.animals",
+                    "Hippogriff",
+                    20000,
+                    new HashSet<string>() { "Hippogriff" },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "murrthecat.BFAVwyverns",
+                    "Wyvern",
+                    20000,
+                    new HashSet<string>()
+                    {
+                        "Standard",
+                        "Batlike",
+                        "Devil",
+                        "Gargoyle",
+                        "Ice",
+                        "Starry"
+                    },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "beelzebard.BFAV.turtles",
+                    "Turtle",
+                    10000,
+                    new HashSet<string>()
+                    {
+                        "Blue Turtle",
+                        "Orange Turtle",
+                        "Purple Turtle",
+                        "Red Turtle"
+                    }
+                ),
+                AddAnimalToList(
+                    "beelzebard.BFAV.RobotChicken",
+                    "Robot Chicken",
+                    4000,
+                    new HashSet<string>() { "Robot Chicken" },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "Merc931.newducks",
+                    "Merc931_Duck",
+                    8000,
+                    new HashSet<string>() { "Black Duck", "White Duck" }
+                ),
+                AddAnimalToList(
+                    "MythicPhoenix.ThereBeDragons",
+                    "Mythic Dragon",
+                    30000,
+                    new HashSet<string>()
+                    {
+                        "Black Mythic Dragon",
+                        "Blue Mythic Dragon",
+                        "Copper Mythic Dragon",
+                        "Gold Mythic Dragon",
+                        "Green Mythic Dragon",
+                        "Iridium Mythic Dragon",
+                        "Iron Mythic Dragon",
+                        "Purple Mythic Dragon",
+                        "Red Mythic Dragon"
+                    },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "beelzebard.BFAV.JojaBeasts",
+                    "Joja Beast",
+                    2000,
+                    new HashSet<string>() { "Bluu Beast", "Lite Beast", "Glo Beast", "Ziing Beast", },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "relaexo.SlowlaxFarm",
+                    "Munchlax",
+                    6000,
+                    new HashSet<string>() { "Munchlax", },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "relaexo.SlowlaxFarm",
+                    "Psyduck",
+                    6000,
+                    new HashSet<string>() { "Psyduck", },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "relaexo.SlowlaxFarm",
+                    "Slowbro",
+                    6000,
+                    new HashSet<string>() { "Slowbro", },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "relaexo.SlowlaxFarm",
+                    "Slowking",
+                    6000,
+                    new HashSet<string>() { "Slowking", },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "relaexo.SlowlaxFarm",
+                    "Slowpoke",
+                    6000,
+                    new HashSet<string>() { "Slowpoke", },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "relaexo.SlowlaxFarm",
+                    "Snorlax",
+                    6000,
+                    new HashSet<string>() { "Snorlax", },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "Dora.GachaChickens",
+                    "Kinder Chicken",
+                    1200,
+                    new HashSet<AnimalKeyData>()
+                    {
+                        new("Dora.GachaChickens_Chicken", 1),
+                        new("Dora.GachaChickens_SweetChicken", 0.8f),
+                        new("Dora.GachaChickens_HardyChicken", 0.6f),
+                        new("Dora.GachaChickens_TranquilChicken", 0.2f)
+                    }
+                ),
+                AddAnimalToList(
+                    "Paritee.BabaYaga",
+                    "Baba Yaga",
+                    3600,
+                    new HashSet<string>() { "Baba Yaga", },
+                    isMagic: true
+                ),
+                AddAnimalToList(
+                    "Zexu2K.BatteryRobot",
+                    "Battery Robot",
+                    10000,
+                    new HashSet<string>() { "Zexu2K.BatteryRobot_Battery_Robot", },
+                    isMagic: true
+                ),
+            };
+        }
+/*
+        public HashSet<MultModWildAnimalData> CreateWildAnimalsListMultipleMods()
+        {
+            return new()
+            {
+                new(
+                    "Swan",
+                    8000,
+                    new Dictionary<string, HashSet<AnimalKeyData>>
+                    {
+                        {
+                            "CiriunKitsu.BFAVSwans",
+                            new HashSet<AnimalKeyData>
+                            {
+                                new("Mute Swan"),
+                                new("Black Swan"),
+                                new("Trumpeter Swan")
+                            }
+                        },
+                        {
+                            "DRIJUCE.Swan",
+                            new HashSet<AnimalKeyData>
+                            {
+                                new("Mute Swan"),
+                                new("Black Swan"),
+                                new("Black-neck Swan"),
+                                new("Whooper Swan"),
+                            }
+                        }
+                    }
+                ),
+                new(
+                    "Lovebird",
+                    4000,
+                    new Dictionary<string, HashSet<AnimalKeyData>>
+                    {
+                        {
+                            "Arrbyte.Lovebird",
+                            new HashSet<AnimalKeyData> { new("Arrbyte.Lovebirds_Lovebird") }
+                        },
+                        {
+                            "Vyranity.Lovebirds",
+                            new HashSet<AnimalKeyData>
+                            {
+                                new("Green Lovebird"),
+                                new("Blue Lovebird"),
+                                new("Yellow Lovebird")
+                            }
+                        }
+                    }
+                ),
+                new(
+                    "Quail",
+                    1000,
+                    new Dictionary<string, HashSet<AnimalKeyData>>
+                    {
+                        {
+                            "Alazdriel.Quails",
+                            new HashSet<AnimalKeyData>
+                            {
+                                new("Alazdriel.Quails_CommonQuail"),
+                                new("Alazdriel.Quails_ValleyQuail")
+                            }
+                        },
+                        {
+                            "Stupiddullhans.BFAVquails",
+                            new HashSet<AnimalKeyData> { new("Japanese Quail"), new("Button Quail") }
+                        },
+                        {
+                            "Mizu.Quail",
+                            new HashSet<AnimalKeyData>
+                            {
+                                new("Mizu.Quail_PlumedQuail"),
+                                new("Mizu.Quail_BobwhiteQuail"),
+                                new("Mizu.Quail_CommonQuail"),
+                                new("Mizu.Quail_ScaledQuail")
+                            }
+                        }
+                    }
+                ),
+                new(
+                    "Owl",
+                    2000,
+                    new Dictionary<string, HashSet<AnimalKeyData>>
+                    {
+                        {
+                            "(wildflour.witchfamiliars && wildflour.ateliercrops)",
+                            new HashSet<AnimalKeyData> { new("wildflour.witchfamiliars_Owl") }
+                        },
+                        {
+                            "Syanide23.BFAVOwl",
+                            new HashSet<AnimalKeyData> { new("Owl") }
+                        }
+                    }
+                ),
+                new(
+                    "Peacock",
+                    40000,
+                    new Dictionary<string, HashSet<AnimalKeyData>>
+                    {
+                        {
+                            "Trent.NewAnimals",
+                            new HashSet<AnimalKeyData> { new("Blue Peacock"), new("Peahen") }
+                        },
+                        {
+                            "Syanide.BFAVPeacock",
+                            new HashSet<AnimalKeyData> { new("Peacock") }
+                        }
+                    }
+                )
+            };
+        }
+   */ }
+}

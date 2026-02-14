@@ -1,0 +1,27 @@
+{
+  "EggListsExclusions": [
+    "Clay Chicken, Coal Chicken, Stone Chicken, Wood Chicken",
+    "Bait Chicken",
+    "Copper Chicken",
+    "Fiber Chicken",
+    "Hardwood Chicken",
+    "Sap Chicken",
+    "Aquatic Chicken",
+    "Iron Chicken",
+    "Farmer Chicken",
+    "Geode Chicken",
+    "Moss Chicken",
+    "Quartz Chicken",
+    "Bomb Chicken",
+    "Bone Chicken",
+    "Gold Chicken",
+    "Monster Chicken",
+    "Artifact Chicken",
+    "Iridium Chicken",
+    "Radioactive Chicken",
+    "Volcano Chicken"
+  ],
+  "BirthTextExclusions": [
+    "None"
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "White Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "cockwhite": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "176",
+          "Large": "174",
+          "FertilizedEgg": "Meara.Roosters_FertEggWhite"
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      },
+      "White Rooster": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "176",
+          "Large": "174",
+          "FertilizedEgg": ""
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+    }
+  },
+  "Brown Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "cockbrown": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "180",
+          "Large": "182",
+          "FertilizedEgg": "Meara.Roosters_FertEggBrown"
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      },
+      "Rooster": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "180",
+          "Large": "182",
+          "FertilizedEgg": ""
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+    }
+  },
+  "Blue Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "cockblue": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "Meara.RoostersBlueEgg",
+          "Large": "Meara.RoostersLargeBlueEgg",
+          "FertilizedEgg": "Meara.Roosters_FertEggBlue"
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      },
+      "Blue Rooster": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+    }
+  },
+  "Void Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "cockvoid": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "305",
+          "Large": "Meara.RoostersLargevoidEgg",
+          "FertilizedEgg": "Meara.Roosters_FertEggVoid"
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      },
+      "Cockatrice": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+    }
+  },
+  "Golden Chicken": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "cockgold": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "928",
+          "Large": "Meara.RoostersLargegoldEgg",
+          "FertilizedEgg": "Meara.Roosters_FertEggGold"
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+    }
+  },
+  "Trans Rooster": {
+    "ApplyDailyLuckBoost": true,
+    "AdjustableEggChances": true,
+    "EggChances": {
+      "Normal": 0.4,
+      "Large": 0.6,
+      "FertilizedEgg": 0.4
+    },
+    "Males": {
+      "cockwhite": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      },
+      "cockbrown": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      },
+      "White Rooster": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      },
+      "Rooster": {
+        "MaleChance": 0.4,
+        "BoostByMale": 0.1,
+        "EggsIDs": {
+          "Normal": "",
+          "Large": "",
+          "FertilizedEgg": ""
+        },
+        "Enabled": false,
+        "AdjustableMaleChances": true
+      }
+    },
+    "CloneConfig": {
+    }
+  }
+}

@@ -1,0 +1,4069 @@
+using System.Text.RegularExpressions;
+using BirdsOfAFeather.Helpers;
+using ContentPatcher;
+using Force.DeepCloner;
+using LetMeHatchThisEgg.Breeding;
+using LetMeHatchThisEgg.Framework;
+using LetMeHatchThisEgg.Helpers;
+using LetMeHatchThisEgg.HelpersW;
+using LetMeHatchThisEgg.Integrations;
+using Microsoft.Xna.Framework.Graphics;
+using Mikew.BirdsOfAFeather.Framework;
+using Mikew.BirdsOfAFeather.Helpers;
+using StardewModdingAPI;
+using StardewModdingAPI.Events;
+using StardewValley;
+using StardewValley.Extensions;
+using StardewValley.GameData.FarmAnimals;
+using StardewValley.GameData.Machines;
+using StardewValley.GameData.Objects;
+using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
+using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
+using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
+using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
+using Object = StardewValley.Object;
+
+using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg
+{
+    /// <summary>The mod entry point.</summary>
+    ///
+
+
+    internal sealed partial class ModEntry : Mod
+    {
+        public override object GetApi()
+        {
+            return LetMeHatchApi.Instance;
+        }
+
+        public List<string> AssetsRequested = new();
+        internal List<string> FullEditedEggList { get; set; } = new();
+        internal List<string> FullEditedBirthText { get; set; } = new();
+        internal List<string> FullClonedAnimalsVanillaEggs { get; set; } = new();
+        internal Dictionary<
+            string,
+            Dictionary<CloneItemType, Dictionary<string, ObjectData>>
+        > ItemsToAdd { get; set; } = new();
+        internal Dictionary<string, ObjectData> FertilizedEggsToAdd { get; set; } = new();
+        internal Dictionary<
+            string,
+            Dictionary<TextureInfoType, ItemTextureInfo>
+        > ClonedItemsTextureInfo { get; set; } = new();
+        public List<(
+            string InputItem,
+            string OutputItemOriginalID,
+            string OutputItemClonedID
+        )> OutpuItemsToClone = new();
+        public List<(
+            string MachineKey,
+            string OutputRuleId,
+            List<MachineOutputTriggerRule> Triggers,
+            string OutputItemRuleID,
+            string OutputItemId
+        )> MachineRules = new();
+        public static Dictionary<
+            string,
+            Dictionary<string, BreedingDataFemale>
+        > LoadedFemaleBreedingData = new();
+        public List<IContentPack> LoadedContentPacks = new();
+        private HashSet<string> ClonedItems =>
+            Game1.objectData.Keys.Where(k => IsClonedItem(k)).ToHashSet();
+        public List<ClonedAnimalInfo> ClonedAnimalsInfoList = new();
+        internal IRoosterHatchingAPI roosterHatching = null!;
+        internal IGMCMOptionsHelper configMenuExt = null!;
+        internal IContentPatcherAPI ContentPatcherAPI = null!;
+        public static ModAssetHandler AssetHandler { get; private set; } = null!;
+        public static TranslationHelper TranslationHelper { get; private set; } = null!;
+        public static LoggerHelper.LoggerHelper.elper { get; private set; } = null!;
+        internal IWildEggsApi wildEggs = null!;
+        internal static ModConfig Config { get; set; } = new();
+        public static IMonitor? MonitorInstance { get; private set; }
+        public static IModHelper? HelperInstance { get; private set; }
+        public static IManifest? ModManifestInstance { get; private set; }
+        internal static SavedItemsData SavedItemsData { get; set; }
+        internal static SavedColors Saved_Colors { get; set; }
+        public static Dictionary<string, Dictionary<string, BreedingConfig>> BreedingConfigsByPack =
+            new();
+        public Dictionary<CloneItemType, List<string>> AnimalVanillaItemRelationOrder = new();
+        public HashSet<string> VanillaObjectKeys = new();
+        public Dictionary<string, int> ItemIndexMap = new();
+        public Dictionary<string, Dictionary<string, Texture2D?>> GrayTextures = new();
+
+        //   internal SavedColors SavedColors = new();
+        // public Dictionary<string, Dictionary<EggType, string>> AnimalVanillaEggRelation = new();
+        internal int clonedEggsSpriteIndex = 0;
+        public Texture2D? ClonedEggsImageCached = null;
+
+        //  internal EditedOptions Edited = new();
+        private const int FertilizedPriceMultiplier = 2;
+        private const int FertilizedEdibilityIncrement = 4;
+
+        private const int BASE_PRIORITY = 10000;
+        public const string BREEDING_DATA = @"Mods/Mikew.lmh/Data";
+        private readonly int EDIT_BIRTH_TEXT_PRIORITY = BASE_PRIORITY + 3000;
+        private readonly int EDIT_EGG_LIST_PRIORITY = BASE_PRIORITY + 2000;
+        private readonly int BREEDING_SYSTEM_PRIORITY = BASE_PRIORITY + 2500;
+        private readonly int CLONED_EGGS_PRIORITY = BASE_PRIORITY;
+        private readonly int NEW_EGGS_ADD_PRIORITY = BASE_PRIORITY;
+        internal List<string> GameColorTags { get; set; } = new();
+
+        /**********
+        ** Public methods
+        *********/
+
+        /// <summary>The mod entry point, called after the mod is first loaded.</summary>
+        /// <param name="helper">Provides simplified APIs for writing mods.</param>
+        ///
+        public override void Entry(IModHelper helper)
+        {
+            TranslationHelper = new(Helper);
+            LoggerHelper.elper = new(Monitor);
+            AssetHandler = new(ModManifest.UniqueID, Monitor);
+            MonitorInstance = Monitor;
+            HelperInstance = Helper;
+            ModManifestInstance = ModManifest;
+            LetMeHatchApi.Instance.SetPriorities(
+                EDIT_BIRTH_TEXT_PRIORITY,
+                EDIT_EGG_LIST_PRIORITY,
+                CLONED_EGGS_PRIORITY,
+                NEW_EGGS_ADD_PRIORITY
+            );
+            Config = Helper.ReadConfig<ModConfig>();
+            Saved_Colors = LoadData<SavedColors>();
+            SavedItemsData = LoadData<SavedItemsData>();
+            BreedingConfigsByPack = LoadData<
+                Dictionary<string, Dictionary<string, BreedingConfig>>
+            >();
+
+            ClonedEggsImageCached = null;
+            AnimalVanillaItemRelationOrder = new()
+            {
+                { CloneItemType.Egg, new() },
+                { CloneItemType.Milk, new() },
+                { CloneItemType.Misc, new() },
+            };
+            SetUpModAssets();
+            AddCustomCommands();
+            ItemIndexMap = GetItemIndexMap();
+            this.Helper.Events.GameLoop.DayStarted += OnDayStart;
+            this.Helper.Events.GameLoop.DayEnding += OnDayEnding;
+            Helper.Events.GameLoop.UpdateTicked += HandleEarlyActions;
+            Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
+            Helper.Events.Player.Warped += OnWarped;
+
+            //UpdateApi();
+        }
+
+        private void OnWarped(object? sender, WarpedEventArgs e)
+        {
+            Helper.GameContent.InvalidateCache(AssetNames.Machines);
+        }
+
+        private Dictionary<string, int> GetItemIndexMap()
+        {
+            var items = new List<string>();
+            foreach (var egg in AnimalProducts.VanillaEggs.OrderBy(x => int.Parse(x)))
+            {
+                items.Add(egg);
+            }
+            foreach (var milk in AnimalProducts.VanillaMilk.OrderBy(x => int.Parse(x)))
+            {
+                items.Add(milk);
+            }
+            items.Add(ArtisanGoods.Cloth);
+            items.Add(AnimalProducts.Wool);
+            items.Add(AnimalProducts.DuckFeather);
+            items.Add(AnimalProducts.RabbitFoot);
+
+            foreach (var item in items)
+            {
+                ItemIndexMap[item] = items.IndexOf(item);
+            }
+            // clonedEggsSpriteIndex = items.Count;
+            return ItemIndexMap;
+        }
+
+        public void AddCustomCommands()
+        {
+            Helper.ConsoleCommands.Add(
+                "lmh_reloadcp",
+                "Reloads the content packs for Let Me Hatch This Egg.\n\nUsage: lmh_reloadcp.",
+                ReloadContentPacks
+            );
+            Helper.ConsoleCommands.Add(
+                "lmh_checki18n",
+                "Reloads the content packs for Let Me Hatch This Egg.\n\nUsage: lmh_reloadcp.",
+                CheckI18n
+            );
+        }
+
+        public void ReloadContentPacks(string command, string[] args)
+        {
+            Helper.Events.GameLoop.UpdateTicked += HandleEarlyActions;
+            Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+        }
+
+        public void CheckI18n(string command, string[] args)
+        {
+            var jsonFile =
+                Helper.Data.ReadJsonFile<Dictionary<string, string>>("i18n/default.json") ?? new();
+            Helper.Data.WriteJsonFile("i18n/default.json.bak", jsonFile);
+            TranslationHelper?.Checki18nKeys(Monitor);
+        }
+
+        private void SetUpModAssets()
+        {
+            if (AssetHandler == null)
+            {
+                return;
+            }
+            AssetHandler.AssetsData = new()
+            {
+                new(typeof(Assets.Object), AssetFolder.Objects, FileExtension.Png, null),
+            };
+            AssetHandler.SetUpAssets();
+        }
+
+        private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+        {
+            ContentPatcherAPI = this.Helper.ModRegistry.GetApi<ContentPatcher.IContentPatcherAPI>(
+                "Pathoschild.ContentPatcher"
+            )!;
+            roosterHatching = Helper.ModRegistry.GetApi<IRoosterHatchingAPI>(
+                "Mikew.roostersaddon.smapi"
+            )!;
+            if (roosterHatching == null)
+            {
+                LoggerHelper.elper.TestLog("No rooster api found.", LogLevel.Trace);
+            }
+            wildEggs = Helper.ModRegistry.GetApi<IWildEggsApi>("Mikew.wildeggshatching")!;
+            if (wildEggs == null)
+            {
+                LoggerHelper.elper.TestLog("No wild eggs api found.", LogLevel.Trace);
+            }
+            var configMenuAPI = Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>(
+                "spacechase0.GenericModConfigMenu"
+            );
+
+            if (configMenuAPI == null)
+            {
+                return;
+            }
+            var configExt = Helper.ModRegistry.GetApi<IGMCMOptionsAPI>("jltaylor-us.GMCMOptions");
+            configMenuExt = new(configExt, configMenuAPI, ModManifest, TranslationHelper);
+            // register mod
+            configMenuExt.Register(reset: () => GMCM_reset(), save: () => GMCM_save());
+            VanillaObjectKeys = Game1.objectData.Keys.ToHashSet();
+            // Helper.GameContent.Load<Dictionary<string, ObjectData>>(AssetNames.Objects).Keys.ToHashSet();
+        }
+
+        /// <summary>The method called after a new day starts.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void OnDayStart(object? sender, DayStartedEventArgs e)
+        {
+            //ClonedEggsToAdd.Clear();
+            if (Config.CloneVanillaEggs && ItemsToAdd.Count <= 0)
+            {
+                Helper.Events.GameLoop.UpdateTicked += HandleEarlyActions;
+                CloneItemsFromGame();
+            }
+
+            Helper.Data.WriteJsonFile($"data/gray.json", GrayTextures.Keys);
+            Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+            LetMeHatchApi.Instance.SetCloneEggs(Config!.CloneVanillaEggs);
+            this.Helper.GameContent.InvalidateCache(AssetNames.FarmAnimals);
+            this.Helper.GameContent.InvalidateCache(AssetNames.Objects);
+            this.Helper.GameContent.InvalidateCache(AssetNames.SpringObjects);
+        }
+
+        private void OnDayEnding(object? sender, DayEndingEventArgs e)
+        {
+            ItemsToAdd.Clear();
+            FertilizedEggsToAdd.Clear();
+        }
+
+        private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
+        {
+            // get Generic Mod Config Menu's API (if it's installed)
+            Helper.Events.GameLoop.UpdateTicked -= OnUpdateTicked;
+            var configMenuAPI = Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>(
+                "spacechase0.GenericModConfigMenu"
+            );
+            var configExt = Helper.ModRegistry.GetApi<IGMCMOptionsAPI>("jltaylor-us.GMCMOptions");
+
+            if (configMenuAPI == null)
+            {
+                return;
+            }
+            configMenuExt = new(configExt, configMenuAPI, ModManifest, TranslationHelper);
+
+            GMCMSetup();
+        }
+
+        private void HandleEarlyActions(object? sender, UpdateTickedEventArgs e)
+        {
+            if (e.Ticks < 5)
+            {
+                return;
+            }
+            Helper.Events.GameLoop.UpdateTicked -= HandleEarlyActions;
+            this.Helper.Events.Content.AssetRequested += OnAssetRequested;
+            Helper.GameContent.InvalidateCache(AssetNames.FarmAnimals);
+            Helper.GameContent.InvalidateCache(AssetNames.Objects);
+            HandleAnimalEggRelations();
+
+            SaveModData();
+            CloneItemsFromGame();
+
+            LoadBreedingData();
+            FilterOutDuplicateClones();
+            LetMeHatchApi.Instance.SetClonedAnimalsInfo(ClonedAnimalsInfoList);
+            foreach (var (contentPackID, breedingDataFemaleDic) in LoadedFemaleBreedingData)
+            {
+                BreedingConfigsByPack.TryAdd(contentPackID, new());
+                foreach (var (femaleKey, femaleBredingData) in breedingDataFemaleDic)
+                {
+                    BreedingConfigsByPack[contentPackID].TryAdd(femaleKey, new(femaleBredingData));
+                    foreach (var male in femaleBredingData.Males)
+                    {
+                        BreedingConfigsByPack[contentPackID]
+                            [femaleKey]
+                            .BoostByMale.TryAdd(male.Key, male.Value.BoostByMale);
+                        BreedingConfigsByPack[contentPackID]
+                            [femaleKey]
+                            .MaleChance.TryAdd(male.Key, male.Value.MaleChance);
+                        BreedingConfigsByPack[contentPackID]
+                            [femaleKey]
+                            .Enabled.TryAdd(male.Key, male.Value.Enabled);
+                    }
+                }
+            }
+            //Helper.Data.WriteJsonFile("LoadedData.json", LoadedFemaleBreedingData);
+            Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+        }
+
+        private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+        {
+            string assetName = e.NameWithoutLocale.BaseName.ToLower();
+            if (!AssetsRequested.Contains(assetName))
+            {
+                AssetsRequested.Add(assetName);
+            }
+            Helper.Data.WriteJsonFile("assetsRequested.json", AssetsRequested);
+            if (Regex.IsMatch(assetName, @"^Animals/MaleClones", RegexOptions.IgnoreCase))
+            {
+                LoadTextureFromContentPack(assetName, e, AssetLoadPriority.Exclusive);
+            }
+            if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.FarmAnimals))
+            {
+                var exclusions = GetExclusions();
+                if (ClonedAnimalsInfoList.Count > 0)
+                {
+                    CreateClonePlaceholders(e, AssetEditPriority.Early);
+                }
+                CreateAndAddAnimalClonesDebug(e, AssetEditPriority.Late);
+                // OrderShopEntries(e, AssetEditPriority.Late + 1000000);
+                if (
+                    ModIdEvaluator.Evaluate("cantabilechaos.BFAVChickens")
+                    && Config!.CloneVanillaEggs
+                )
+                {
+                    // EditAssetWithFancyChickensEggs(e, AssetEditPriority.Late);
+                }
+                if (ItemsToAdd.Count > 0)
+                {
+                    ReplaceOriginalItemForClone(e, AssetEditPriority.Late + NEW_EGGS_ADD_PRIORITY);
+                }
+                if (Config!.EditEggListByName)
+                {
+                    EditEggListByName(e, AssetEditPriority.Late + EDIT_EGG_LIST_PRIORITY);
+                }
+                if (Config.EditBirthText)
+                {
+                    EditBirthTexts(e, AssetEditPriority.Late + EDIT_BIRTH_TEXT_PRIORITY);
+                }
+                if (Config.BreedingSystemEnabled)
+                {
+                    RunBreedingSystem(e, AssetEditPriority.Late + BREEDING_SYSTEM_PRIORITY);
+                }
+            }
+            if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.Objects) && ItemsToAdd.Count > 0)
+            {
+                EditAssetWithNewClonedEggs(e, AssetEditPriority.Late + NEW_EGGS_ADD_PRIORITY);
+            }
+
+            if (
+                e.NameWithoutLocale.IsEquivalentTo(AssetNames.Machines)
+                && (
+                    (Config.OnlyFertilizedEggs && HasAddedFertilizedEggs)
+                    || (!Config.OnlyFertilizedEggs && HasAddedClonedItems)
+                )
+                && Config!.CloneMachineRules
+            )
+            {
+                e.Edit(
+                    asset =>
+                    {
+                        var data = asset.AsDictionary<string, MachineData>().Data;
+                        CloneMachineData((Dictionary<string, MachineData>)data);
+                    },
+                    AssetEditPriority.Late + BASE_PRIORITY
+                );
+            }
+            if (
+                AssetHandler.GamePaths.Contains(assetName)
+                && assetName != AssetHandler.GetAssetPath("ClonedEggs", AssetPathType.GamePath)
+            )
+            {
+                AssetHandler.LoadModAssets(e);
+            }
+            else if (assetName == AssetHandler.GetAssetPath("ClonedEggs", AssetPathType.GamePath))
+            {
+                Monitor.Log($"Is Image Cached: {ClonedEggsImageCached != null}", LogLevel.Info);
+                if (GrayTextures.Count > 0)
+                {
+                    e.LoadFromModFile<Texture2D>(
+                        "assets/Objects/clonedeggs.png",
+                        AssetLoadPriority.Exclusive
+                    );
+                    e.Edit(
+                        asset =>
+                        {
+                            var editor = asset.AsImage();
+                            Helper.Data.WriteJsonFile(
+                                "clonedeggtextureinfo.json",
+                                ClonedItemsTextureInfo
+                            );
+                            foreach (
+                                var info in ClonedItemsTextureInfo
+                                    .Where(t => t.Value[TextureInfoType.Cloned].IsColored)
+                                    .Select(ti => ti.Value)
+                            )
+                            {
+                                var clonedItemID = info[TextureInfoType.Cloned].ID;
+                                var textureName = info[TextureInfoType.Original].TextureName;
+                                /*if (
+                                                    textureName
+                                                    == AssetNames.SpringObjects.ToLower()
+                                                )
+                                                {
+                                                    continue;
+                                                }*/
+                                Texture2D? grayTexture;
+                                if (!GrayTextures.ContainsKey(textureName))
+                                {
+                                    var objectsWithTexture = Game1
+                                        .objectData.Where(o =>
+                                            o.Value.Texture != null
+                                            && o.Value.Texture == textureName
+                                        )
+                                        .Select(o => o.Key);
+                                    Monitor.Log(
+                                        $"Missing gray texture for texture {textureName}. Objects with this texture:\n{string.Join(", \n", objectsWithTexture)}",
+                                        LogLevel.Error
+                                    );
+                                    continue;
+                                }
+                                grayTexture = GrayTextures[textureName][clonedItemID];
+
+                                if (grayTexture == null)
+                                {
+                                    Monitor.Log(
+                                        $"Null gray texture for {textureName}!",
+                                        LogLevel.Error
+                                    );
+                                    return;
+                                }
+                                var targetRectangle = info[TextureInfoType.Cloned]
+                                    .GetCropRectangle(editor.Data.Width);
+                                Monitor.Log(
+                                    $"Target Rectangle: {targetRectangle.X}, {targetRectangle.Y}, {targetRectangle.Width}, {targetRectangle.Height}"
+                                );
+
+                                var sourceRectangle = info[TextureInfoType.Original]
+                                    .GetCropRectangle(grayTexture.Width);
+                                Monitor.Log(
+                                    $"Source Rectangle: {sourceRectangle.X}, {sourceRectangle.Y}, {sourceRectangle.Width}, {sourceRectangle.Height}"
+                                );
+                                targetRectangle.Width = sourceRectangle.Width;
+                                targetRectangle.Height = sourceRectangle.Height;
+                                editor.ExtendImage(
+                                    editor.Data.Width,
+                                    Math.Max(editor.Data.Height, targetRectangle.Y + 16)
+                                );
+
+                                try
+                                {
+                                    editor.PatchImage(
+                                        grayTexture,
+                                        null,
+                                        targetRectangle,
+                                        PatchMode.Replace
+                                    );
+                                }
+                                catch (Exception ex)
+                                {
+                                    Monitor.Log(
+                                        $"tagetRec: ({targetRectangle.X},{targetRectangle.Y})"
+                                    );
+                                }
+                            }
+                            ClonedEggsImageCached = Colors.CloneTexture(editor.Data);
+                        },
+                        AssetEditPriority.Late
+                    );
+                    Helper.GameContent.InvalidateCache(assetName);
+                }
+                Monitor.Log($"Is Image Cached: {ClonedEggsImageCached != null}", LogLevel.Info);
+            }
+        }
+
+        private void CopyOriginalTexturesGray(IDictionary<string, ObjectData> objectData)
+        {
+            foreach (
+                var (clonedTextureInfo, originalTextureInfo) in ClonedItemsTextureInfo
+                    .Values.Select(t => (t[TextureInfoType.Cloned], t[TextureInfoType.Original]))
+                    .Where(t =>
+                        t.Item2.TextureName != string.Empty
+                        && t.Item1.IsColored
+                        && !GrayTextures.SelectMany(x => x.Value.Keys).Contains(t.Item1.ID)
+                    )
+            )
+            {
+                var textureName = originalTextureInfo.TextureName;
+                var clonedItemID = clonedTextureInfo.ID;
+                //  Helper.GameContent.InvalidateCache(textureName);
+                var originalTexture = Helper.GameContent.Load<Texture2D>(textureName);
+                var croppedImage = Colors.CropTexture(
+                    originalTexture,
+                    originalTextureInfo.GetCropRectangle(originalTexture.Width),
+                    Monitor
+                );
+                GrayTextures.TryAdd(textureName, new());
+                GrayTextures[textureName].TryAdd(clonedItemID, null);
+                //GrayTextures[textureName][clonedItemID] = originalTextureInfo.IsColored
+                //    ? Colors.ConvertToGrayscale(croppedImage)
+                //    : croppedImage;
+
+                if (
+                    objectData.TryGetValue(clonedItemID, out var obj)
+                    && obj.CustomFields != null
+                    && obj.CustomFields.ContainsKey("JollyLlama.PrismaticValleyFramework/Color")
+                )
+                {
+                    var hexCode = obj.CustomFields["JollyLlama.PrismaticValleyFramework/Color"];
+                    GrayTextures[textureName][clonedItemID] = Colors.ColorImage(
+                        Colors.ConvertToGrayscale(croppedImage),
+                        hexCode
+                    );
+                }
+                else
+                {
+                    GrayTextures[textureName][clonedItemID] = null;
+                }
+                Helper.Data.WriteJsonFile("grayKeys.json", GrayTextures.Keys);
+            }
+        }
+
+        internal void LoadBreedingData()
+        {
+            LoadedContentPacks = this.Helper.ContentPacks.GetOwned().ToList();
+            var roosterIntegration = CreateIntegration(
+                "Mikew.roostersaddon.smapi",
+                "Roosters Hatching and Control Addon",
+                IntegrationName.RoosterControlAddon
+            );
+            var vanillaIntegration = CreateIntegration(
+                "Vanilla",
+                "Vanilla Game",
+                IntegrationName.VanillaGame
+            );
+            LoadedContentPacks.Add(roosterIntegration);
+            LoadedContentPacks.Add(vanillaIntegration);
+            foreach (IContentPack contentPack in LoadedContentPacks)
+            {
+                Monitor.Log(
+                    $"Reading content pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} from {contentPack.DirectoryPath}"
+                );
+                if (!contentPack.HasFile("content.json"))
+                {
+                    Monitor.Log($"Missing content.json file in content pack", LogLevel.Warn);
+                    continue;
+                }
+                LoadBreedingDataFromContentPack(contentPack);
+            }
+        }
+
+        private IContentPack CreateIntegration(
+            string contentPackID,
+            string contentPackName,
+            IntegrationName integrationName
+        )
+        {
+            var integration = new Integration(integrationName);
+            Monitor.Log($"Creating CP for {integrationName} Integration.");
+            return this.Helper.ContentPacks.CreateTemporary(
+                directoryPath: Path.Combine(
+                    this.Helper.DirectoryPath,
+                    $"data/Integrations/{contentPackName}"
+                ),
+                id: contentPackID,
+                name: contentPackName,
+                description: "...",
+                author: "...",
+                version: new SemanticVersion(1, 0, 0)
+            );
+        }
+
+        private void LoadBreedingDataFromContentPack(IContentPack contentPack)
+        {
+            var breedingDataDic = contentPack.ReadJsonFile<Dictionary<string, BreedingDataFemale>>(
+                "content.json"
+            )!;
+
+            // Filter out breeding data with invalid females
+            FilterFemales(breedingDataDic, contentPack.Manifest.UniqueID);
+            LoadedFemaleBreedingData[contentPack.Manifest.UniqueID] = breedingDataDic;
+        }
+
+        private void FilterFemales(
+            Dictionary<string, BreedingDataFemale> femalesData,
+            string contentPackID
+        )
+        {
+            var femalesToRemove = new List<string>();
+
+            foreach (var femaleData in femalesData)
+            {
+                if (Game1.farmAnimalData.ContainsKey(femaleData.Key))
+                {
+                    FilterMales(femaleData.Value.Males, femaleData.Key, contentPackID);
+                    if (femaleData.Value.Males.Count < 0)
+                    {
+                        femalesToRemove.Add(femaleData.Key);
+                        Monitor.Log(
+                            $"Removing female '{femaleData.Key}' because it has no valid males.",
+                            LogLevel.Warn
+                        );
+                    }
+                }
+                else
+                {
+                    femalesToRemove.Add(femaleData.Key);
+                    Monitor.Log(
+                        $"Removing female '{femaleData.Key}' because it's not found in the game data.",
+                        LogLevel.Warn
+                    );
+                }
+            }
+            foreach (var key in femalesToRemove)
+            {
+                femalesData.Remove(key);
+            }
+        }
+
+        private void FilterMales(
+            Dictionary<string, BreedingDataMale> males,
+            string femaleKey,
+            string contentPackID = ""
+        )
+        {
+            var malesToRemove = new List<string>();
+            var malesToAdd = new List<KeyValuePair<string, BreedingDataMale>>();
+            foreach (var male in males)
+            {
+                // Monitor.Log($"Processing {male.Key}...");
+                if (Game1.farmAnimalData.ContainsKey(male.Key) || male.Key == femaleKey)
+                {
+                    UpdateMissingEggs(male, femaleKey);
+                    if (male.Key == femaleKey)
+                    {
+                        // Monitor.Log($"{male.Key}={femaleKey}");
+                        var oldData = male.Value;
+                        var newMaleKey = GetClonedAnimalID(contentPackID, femaleKey);
+                        var newMaleBreedingData = new BreedingDataMale()
+                        {
+                            AdjustableMaleChances = oldData.AdjustableMaleChances,
+                            BoostByMale = oldData.BoostByMale,
+                            MaleChance = oldData.MaleChance,
+                            EggsIDs = new(oldData.EggsIDs),
+                            Enabled = oldData.Enabled
+                        };
+                        newMaleBreedingData.SetEggIDs(oldData.GetEggIDs());
+                        var newMale = new KeyValuePair<string, BreedingDataMale>(
+                            newMaleKey,
+                            newMaleBreedingData
+                        );
+                        malesToAdd.Add(newMale);
+                        malesToRemove.Add(male.Key);
+                    }
+                }
+                else
+                {
+                    malesToRemove.Add(male.Key);
+                    Monitor.Log(
+                        $"Removing male '{male.Key}' from female '{femaleKey}' because it's not found in the game data.",
+                        LogLevel.Warn
+                    );
+                }
+            }
+            foreach (var key in malesToRemove)
+            {
+                //  Monitor.Log($"Removing {key}...");
+                males.Remove(key);
+            }
+            foreach (var (key, value) in malesToAdd)
+            {
+                // Monitor.Log($"Adding {key}...");
+                males.Add(key, value);
+            }
+        }
+
+        private void FilterOutDuplicateClones()
+        {
+            ClonedAnimalsInfoList = new();
+            var femaleBredingData = LoadedFemaleBreedingData.SelectMany(x => x.Value.Values);
+            var maleClones = LoadedFemaleBreedingData.SelectMany(kvp =>
+                kvp.Value.Select(innerKvp =>
+                    innerKvp
+                        .Value.Males.Where(m => m.Key.EndsWith("Male"))
+                        .Select(m => new
+                        {
+                            ContentPackID = kvp.Key,
+                            FemaleKey = innerKvp.Key,
+                            Male = m.Key
+                        })
+                )
+            );
+            var groupedMales = maleClones.SelectMany(x => x).GroupBy(x => x.FemaleKey);
+
+            foreach (var group in groupedMales)
+            {
+                var femaleKey = group.Key;
+                var chosenMale = group.FirstOrDefault(
+                    g => g.ContentPackID == "Vanilla",
+                    group.First()
+                );
+                var cloneInfo = LoadedFemaleBreedingData[chosenMale.ContentPackID][
+                    chosenMale.FemaleKey
+                ].CloneConfig;
+                cloneInfo.ContentPackID = chosenMale.ContentPackID;
+                cloneInfo.FemaleKey = chosenMale.FemaleKey;
+                cloneInfo.MaleKey = chosenMale.Male;
+                Monitor.Log(
+                    $"Found cloned male from {chosenMale.Male} from content pack {chosenMale.ContentPackID}"
+                );
+                if (!ClonedAnimalsInfoList.Contains(cloneInfo))
+                {
+                    ClonedAnimalsInfoList.Add(cloneInfo);
+                }
+
+                // Remove duplicates
+                foreach (var male in group)
+                {
+                    if (cloneInfo.MaleKey.Equals(male.Male))
+                    {
+                        continue;
+                    }
+                    // Remove the duplicate male from the data
+                    foreach (var fd in LoadedFemaleBreedingData.Values)
+                    {
+                        foreach (var bd in fd.Values.ToList())
+                        {
+                            if (bd.Males.ContainsKey(male.Male))
+                            {
+                                bd.Males.Remove(male.Male);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check if the female breeding data list is empty
+            LoadedFemaleBreedingData = LoadedFemaleBreedingData
+                .Where(x => x.Value.Any(y => y.Value.Males.Any()))
+                .ToDictionary(
+                    x => x.Key,
+                    x =>
+                        x.Value.Where(y => y.Value.Males.Any())
+                            .ToDictionary(y => y.Key, y => y.Value)
+                );
+        }
+
+        private void UpdateMissingEggs(
+            KeyValuePair<string, BreedingDataMale> male,
+            string femaleKey
+        )
+        {
+            var eggs = male.Value.EggsIDs;
+            var foundEggs = FindEgg(femaleKey, Game1.farmAnimalData[femaleKey]);
+            foreach (var eggType in eggs.Keys.Where(e => e != ItemOrEggType.Fertilized))
+            {
+                var foundEgg = eggs[eggType].IsEmptyOrWhitespace()
+                    ? foundEggs[eggType]
+                    : eggs[eggType];
+                male.Value.SetEggID(eggType, foundEgg);
+            }
+            var finalEggs = male.Value.GetEggIDs();
+            var originalEgg = finalEggs[ItemOrEggType.Large] ?? finalEggs[ItemOrEggType.Normal];
+            originalEgg ??= AnimalProducts.WhiteEgg;
+            bool isFertilizedEggEmpty = eggs[ItemOrEggType.Fertilized].IsEmptyOrWhitespace();
+            string? fertilizedEggID;
+
+            if (isFertilizedEggEmpty)
+            {
+                if (ShouldUseMearasFertilizedEggs(male.Key, femaleKey))
+                {
+                    fertilizedEggID = GetMearaFertilizedEggID(femaleKey, male.Key);
+                }
+                else
+                {
+                    Monitor.Log(
+                        $"Found Eggs for {femaleKey}:\nNormal: {finalEggs[ItemOrEggType.Normal]}\nLarge: {finalEggs[ItemOrEggType.Large]}"
+                    );
+                    fertilizedEggID = GetFertilizedClonedEggID(femaleKey, originalEgg);
+                }
+            }
+            else
+            {
+                fertilizedEggID = eggs[ItemOrEggType.Fertilized];
+            }
+            var fertilizedEgg = fertilizedEggID;
+            male.Value.SetEggID(ItemOrEggType.Fertilized, fertilizedEgg);
+        }
+
+        private bool ShouldUseMearasFertilizedEggs(string roosterKey, string femaleKey)
+        {
+            var hasMearaRoostersMod = ModIdEvaluator.Evaluate("Meara.Roosters");
+
+            var malesForMearaMod = new string[]
+            {
+                "cockwhite",
+                "cockbrown",
+                "cockblue",
+                "cockvoid",
+                "cockgold"
+            };
+
+            bool isMaleForMearaMod = malesForMearaMod.Contains(roosterKey);
+            bool result = hasMearaRoostersMod && isMaleForMearaMod;
+            return result;
+        }
+
+        private string GetMearaFertilizedEggID(string femaleKey, string maleKey)
+        {
+            var chickenTypes = new Dictionary<string, string>
+            {
+                { VanillaAnimals.WhiteChicken, CustomItems.FertilizedWhiteEgg },
+                { VanillaAnimals.BrownChicken, CustomItems.FertilizedBrownEgg },
+                { VanillaAnimals.BlueChicken, CustomItems.FertilizedBlueEgg },
+                { VanillaAnimals.VoidChicken, CustomItems.FertilizedVoidEgg },
+                { VanillaAnimals.GoldenChicken, CustomItems.FertilizedGoldEgg },
+            };
+
+            if (chickenTypes.TryGetValue(femaleKey, out var fertilizedEggId))
+            {
+                return fertilizedEggId;
+            }
+
+            var cockTypes = new Dictionary<string, string>
+            {
+                { "cockwhite", CustomItems.FertilizedWhiteEgg },
+                { "cockbrown", CustomItems.FertilizedBrownEgg },
+                { "cockblue", CustomItems.FertilizedBlueEgg },
+                { "cockgold", CustomItems.FertilizedVoidEgg },
+                { "cockvoid", CustomItems.FertilizedGoldEgg },
+            };
+
+            if (cockTypes.TryGetValue(maleKey, out fertilizedEggId))
+            {
+                return fertilizedEggId;
+            }
+
+            return "";
+        }
+
+        private Dictionary<ItemOrEggType, string?> FindEgg(
+            string femaleKey,
+            FarmAnimalData animalData
+        )
+        {
+            var foundEggs = GetVanillaEggsID(femaleKey);
+            if (foundEggs.Any(e => e.Value == null))
+            {
+                if (
+                    SavedItemsData.AnimalVanillaItemRelation.ContainsKey(femaleKey)
+                    && SavedItemsData.AnimalVanillaItemRelation[femaleKey][CloneItemType.Egg]
+                        != null
+                )
+                {
+                    ProcessModData(femaleKey, foundEggs);
+                }
+                else
+                {
+                    ProcessGameData(animalData, foundEggs);
+                }
+                if (
+                    string.IsNullOrEmpty(foundEggs[ItemOrEggType.Normal])
+                    && string.IsNullOrEmpty(foundEggs[ItemOrEggType.Large])
+                )
+                {
+                    foundEggs[ItemOrEggType.Normal] = AnimalProducts.WhiteEgg;
+                    SavedItemsData.AnimalVanillaItemRelation.TryAdd(femaleKey, new());
+                    SavedItemsData
+                        .AnimalVanillaItemRelation[femaleKey]
+                        .TryAdd(CloneItemType.Egg, new());
+                    SavedItemsData.AnimalVanillaItemRelation[femaleKey][CloneItemType.Egg] ??=
+                        new();
+                    SavedItemsData.AnimalVanillaItemRelation[femaleKey][CloneItemType.Egg]![
+                        ItemOrEggType.Normal
+                    ] = AnimalProducts.WhiteEgg;
+                    SavedItemsData.AnimalVanillaItemRelation[femaleKey][CloneItemType.Egg]![
+                        ItemOrEggType.Large
+                    ] = string.Empty;
+                }
+            }
+            return foundEggs;
+        }
+
+        private void ProcessModData(string femaleKey, Dictionary<ItemOrEggType, string?> foundEggs)
+        {
+            var animalEggRelation = SavedItemsData.AnimalVanillaItemRelation[femaleKey][
+                CloneItemType.Egg
+            ]!;
+            var normalEggId = animalEggRelation[ItemOrEggType.Normal];
+            var largeEggId = animalEggRelation[ItemOrEggType.Large];
+            foundEggs[ItemOrEggType.Normal] = !string.IsNullOrEmpty(normalEggId)
+                ? GetClonedItemID(femaleKey, normalEggId, CloneItemType.Egg, ItemOrEggType.Normal)
+                : null;
+            foundEggs[ItemOrEggType.Large] = !string.IsNullOrEmpty(largeEggId)
+                ? GetClonedItemID(femaleKey, largeEggId, CloneItemType.Egg, ItemOrEggType.Large)
+                : null;
+        }
+
+        private void ProcessGameData(
+            FarmAnimalData animalData,
+            Dictionary<ItemOrEggType, string?> foundEggs
+        )
+        {
+            var eggsList = animalData.EggItemIds;
+            var produceItemIds = animalData.ProduceItemIds.Union(animalData.DeluxeProduceItemIds);
+            var allEggIds = GetEggIdsFromGameData(eggsList, produceItemIds);
+            var largeEggs = allEggIds.Where(e => IsLargeEgg(e)).ToList();
+            var normalEggs = allEggIds.Except(largeEggs).ToList();
+            foundEggs[ItemOrEggType.Normal] ??= normalEggs.FirstOrDefault();
+            foundEggs[ItemOrEggType.Large] ??= largeEggs.FirstOrDefault();
+        }
+
+        private List<string> GetEggIdsFromGameData(
+            List<string> eggsList,
+            IEnumerable<FarmAnimalProduce> produceItemIds
+        )
+        {
+            var eggIds = new List<string>();
+            if (eggsList != null)
+            {
+                eggIds.AddRange(eggsList.Where(e => IsEgg(e)));
+            }
+            eggIds.AddRange(produceItemIds.Select(p => p.ItemId).Where(p => IsEgg(p)));
+            return eggIds.Distinct().ToList();
+        }
+
+        private bool IsEgg(string itemId)
+        {
+            return Game1.objectData[itemId].Category == Object.EggCategory
+                || Regex.IsMatch(itemId, @"\b(egg)\b", RegexOptions.IgnoreCase);
+        }
+
+        private bool IsLargeEgg(string eggId)
+        {
+            var VanillaLargeEggs = new string[]
+            {
+                AnimalProducts.LargeBrownEgg,
+                AnimalProducts.LargeWhiteEgg
+            };
+            return Regex.IsMatch(eggId, @"(large|giant|big)", RegexOptions.IgnoreCase)
+                || (
+                    IsClonedEgg(eggId)
+                    && VanillaLargeEggs.Contains(GetOriginalItemAndAnimalID(eggId).OriginalItemID)
+                );
+        }
+
+        private bool CheckIfIsAValidEgg(
+            string? itemID,
+            string pattern,
+            IDictionary<string, ObjectData> gameObjectData
+        )
+        {
+            if (itemID == null)
+            {
+                Monitor.Log("Item ID is null, not finding valid egg");
+                return false;
+            }
+            if (!gameObjectData.ContainsKey(itemID))
+            {
+                return IsClonedEgg(itemID);
+            }
+            return Regex.IsMatch(itemID, pattern, RegexOptions.IgnoreCase)
+                || (
+                    gameObjectData[itemID].Category == Object.EggCategory
+                    && Regex.IsMatch(
+                        int.TryParse(itemID, out _) ? gameObjectData[itemID].DisplayName : itemID,
+                        pattern,
+                        RegexOptions.IgnoreCase
+                    )
+                );
+        }
+
+        private Dictionary<ItemOrEggType, string?> GetVanillaEggsID(string animalKey)
+        {
+            (string? NormalEgg, string? NormalLargeEgg) eggs = (null, null);
+            if (VanillaAnimals.AnimalKeys.Contains(animalKey))
+            {
+                eggs = animalKey switch
+                {
+                    VanillaAnimals.WhiteChicken
+                        => (AnimalProducts.WhiteEgg, AnimalProducts.LargeWhiteEgg),
+                    VanillaAnimals.BrownChicken
+                        => (AnimalProducts.BrownEgg, AnimalProducts.LargeBrownEgg),
+                    VanillaAnimals.VoidChicken => (AnimalProducts.VoidEgg, null),
+                    VanillaAnimals.GoldenChicken => (AnimalProducts.GoldenEgg, null),
+                    VanillaAnimals.Duck => (AnimalProducts.DuckEgg, null),
+                    VanillaAnimals.Ostrich => (AnimalProducts.OstrichEgg, null),
+                    VanillaAnimals.Dinosaur => (AnimalProducts.DinoEgg, null),
+                    _ => eggs
+                };
+            }
+            return new()
+            {
+                [ItemOrEggType.Normal] = eggs.NormalEgg,
+                [ItemOrEggType.Large] = eggs.NormalLargeEgg,
+            };
+        }
+
+        #region Egg List Edits
+        public void EditEggListByName(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            e.Edit(
+                asset =>
+                {
+                    var data = asset.AsDictionary<string, FarmAnimalData>().Data;
+                    var exclusions = Config
+                        .EditedAnimals[EditType.EggList]
+                        .Where(a => !a.Value)
+                        .Select(a => a.Key)
+                        .ToList();
+
+                    SetUpEggList(data, exclusions);
+                },
+                priority
+            );
+        }
+
+        public void SetUpEggList(IDictionary<string, FarmAnimalData> data, List<string> exclusions)
+        {
+            Config.EditedAnimals[EditType.EggList] = new();
+            FullEditedEggList.Clear();
+            var EditedEggList = Config.EditedAnimals[EditType.EggList];
+            foreach (var (key, animal) in data)
+            {
+                var eggsItems = new List<string>();
+                //   Monitor.Log($"Searching produces of {key}");
+                eggsItems = SearchProduces(
+                    eggsItems,
+                    animal.ProduceItemIds.Concat(animal.DeluxeProduceItemIds).ToList()
+                );
+                if (animal.EggItemIds != null && eggsItems.Any())
+                {
+                    foreach (var egg in eggsItems)
+                    {
+                        if (IsClonedEgg(egg))
+                        {
+                            var originalEgg = GetOriginalItemAndAnimalID(egg).OriginalItemID;
+                            animal.EggItemIds.RemoveAll(e => e == originalEgg);
+                        }
+                    }
+                    var OldList = animal.EggItemIds;
+                    animal.EggItemIds.AddRange(eggsItems.Except(animal.EggItemIds));
+                    if (!OldList.OrderBy(x => x).SequenceEqual(animal.EggItemIds.OrderBy(x => x)))
+                    {
+                        if (!exclusions.Contains(key))
+                        {
+                            Config
+                                .EditedAnimals[EditType.EggList]
+                                .TryAdd(key, !exclusions.Contains(key));
+                        }
+                    }
+                }
+                else if (animal.EggItemIds == null && eggsItems.Any())
+                {
+                    if (!exclusions.Contains(key))
+                    {
+                        animal.EggItemIds = eggsItems;
+                        Config
+                            .EditedAnimals[EditType.EggList]
+                            .TryAdd(key, !exclusions.Contains(key));
+                    }
+                }
+            }
+        }
+
+        public List<string> SearchProduces(
+            List<string> eggsItems,
+            List<FarmAnimalProduce> animalProduces
+        )
+        {
+            if (animalProduces != null)
+            {
+                /*var produceEggName = animalProduces
+                            .Where(x =>
+                                x.ItemId.ToLower().Contains("egg")
+                                && !eggsItems.Contains(x.ItemId, StringComparer.OrdinalIgnoreCase)
+                            )
+                            .Select(x => x.ItemId);
+                        eggsItems.AddRange(produceEggName);*/
+                var pattern = @".*egg.*";
+                var produceItemIds = animalProduces.Select(p => p.ItemId);
+                // Monitor.Log($"Produces: [{string.Join(",", produceItemIds)}]", LogLevel.Warn);
+                var foundEggs = produceItemIds.Where(pid =>
+                    !string.IsNullOrEmpty(pid) && CheckIfIsAValidEgg(pid, pattern, Game1.objectData)
+                );
+                return foundEggs.ToList();
+            }
+            return eggsItems;
+        }
+        #endregion
+        #region Birth Texts Edits
+        private void EditBirthTexts(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            var birthTextExclusions = Config
+                .EditedAnimals[EditType.BirthText]
+                .Where(a => !a.Value)
+                .Select(a => a.Key)
+                .Union(VanillaAnimals.AnimalKeys)
+                .ToList();
+
+            e.Edit(
+                asset =>
+                {
+                    var data = asset.AsDictionary<string, FarmAnimalData>().Data;
+                    EditBirthText(data, birthTextExclusions);
+                },
+                priority
+            );
+        }
+
+        public void EditBirthText(IDictionary<string, FarmAnimalData> data, List<string> exclusions)
+        {
+            Config.EditedAnimals[EditType.BirthText] = new();
+            FullEditedBirthText.Clear();
+            EditBirthTextDefault(data, exclusions);
+            if (wildEggs != null)
+            {
+                if (wildEggs.BirthTextMode == "Mysterious")
+                {
+                    EditBirthTextMysterious(data, exclusions);
+                }
+                else
+                {
+                    EditBirthTextDefault(data, exclusions, true);
+                }
+            }
+        }
+
+        private void EditBirthTextDefault(
+            IDictionary<string, FarmAnimalData> data,
+            List<string> exclusions,
+            bool _wildEggs = false
+        )
+        {
+            foreach (var (key, animal) in data.Where(x => GetBirthTextCondition(x, _wildEggs)))
+            {
+                if (!exclusions.Contains(key))
+                {
+                    animal.BirthText = Config!.AlternateBirthText
+                        ? $"{Helper.Translation.Get("message.fullbirthtext")}: {animal.DisplayName}!"
+                        : $"{Helper.Translation.Get("message.new")} {animal.DisplayName} {Helper.Translation.Get("message.hatched")}!";
+                    Config.EditedAnimals[EditType.BirthText].TryAdd(key, !exclusions.Contains(key));
+                }
+            }
+        }
+
+        private void EditBirthTextMysterious(
+            IDictionary<string, FarmAnimalData> data,
+            List<string> exclusions
+        )
+        {
+            foreach (var (key, animal) in data.Where(x => GetBirthTextCondition(x, true)))
+            {
+                if (!exclusions.Contains(key))
+                {
+                    animal.BirthText = null;
+                    Config.EditedAnimals[EditType.BirthText].TryAdd(key, !exclusions.Contains(key));
+                }
+            }
+        }
+
+        private bool GetBirthTextCondition(
+            KeyValuePair<string, FarmAnimalData> animal,
+            bool _wildEggs = false
+        )
+        {
+            if (_wildEggs)
+            {
+                return wildEggs.ValidAnimals.Contains(animal.Key);
+            }
+            else
+            {
+                return animal.Value.BirthText == null
+                    && CheckIfProduceEgg(
+                        animal
+                            .Value.ProduceItemIds.Concat(animal.Value.DeluxeProduceItemIds)
+                            .ToList()
+                    );
+            }
+        }
+
+        public bool CheckIfProduceEgg(List<FarmAnimalProduce> animalProduces)
+        {
+            if (animalProduces != null)
+            {
+                if (
+                    animalProduces.Exists(x =>
+                        x.ItemId.ToLower().Contains("egg")
+                        || (
+                            Config!.CloneVanillaEggs
+                            && AnimalProducts.VanillaEggs.Contains(x.ItemId)
+                        )
+                    )
+                )
+                {
+                    return true;
+                }
+                else
+                {
+                    var produceEggCategory = animalProduces.Select(x => x.ItemId);
+                    //Helper.GameContent.InvalidateCache("Data/Objects");
+
+                    foreach ((var key, var objectID) in Game1.objectData)
+                    {
+                        if (
+                            objectID.Category == StardewValley.Object.EggCategory
+                            && produceEggCategory.Contains(key, StringComparer.OrdinalIgnoreCase)
+                        )
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        #endregion
+        #region Vanilla Egg Cloning
+        private void EditAssetWithFancyChickensEggs(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            e.Edit(
+                asset =>
+                {
+                    var data = asset.AsDictionary<string, FarmAnimalData>().Data;
+                    var FancyChickensKeys = new List<string>
+                    {
+                        "Cuckoo Bluebar",
+                        "Cream Legbar",
+                        "Lavender Americauna",
+                        "Dark Olive Egger",
+                        "Olive Egger",
+                        "Light Olive Egger",
+                        "Asil",
+                        "Buff Orpington",
+                        "Light Sussex",
+                        "Salmon Faverolle",
+                        "Light Easter Egger",
+                        "Dark Easter Egger",
+                        "Easter Egger"
+                    };
+                    data["Cuckoo Bluebar"].PurchasePrice = 2500;
+                    foreach (
+                        var (_, animalData) in data.Where(a => FancyChickensKeys.Contains(a.Key))
+                    )
+                    {
+                        animalData.EggItemIds ??= new();
+                        animalData.EggItemIds.Clear();
+                        animalData.ProduceItemIds.Clear();
+                        animalData.ProduceItemIds.Add(
+                            new FarmAnimalProduce() { Id = "176", ItemId = "176" }
+                        );
+                        animalData.DeluxeProduceItemIds.Clear();
+                        animalData.DeluxeProduceItemIds.Add(
+                            new FarmAnimalProduce() { Id = "174", ItemId = "174" }
+                        );
+                    }
+                },
+                priority
+            );
+        }
+
+        private void EditAssetRemoveFancyChickensEggs(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            e.Edit(
+                asset =>
+                {
+                    var data = asset.AsDictionary<string, ObjectData>().Data;
+                    var FancyChickensEggs = new List<string>
+                    {
+                        "cantabilechaos.BFAVChickens_LightBlueEgg",
+                        "cantabilechaos.BFAVChickens_LargeLightBlueEgg",
+                        "cantabilechaos.BFAVChickens_OliveEgg",
+                        "cantabilechaos.BFAVChickens_LargeOliveEgg",
+                        "cantabilechaos.BFAVChickens_PinkEgg",
+                        "cantabilechaos.BFAVChickens_LargePinkEgg"
+                    };
+                    foreach (var objectKey in data.Keys.Where(o => FancyChickensEggs.Contains(o)))
+                    {
+                        data.Remove(objectKey);
+                    }
+                },
+                priority
+            );
+        }
+
+        private void EditAssetWithNewClonedEggs(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            e.Edit(
+                asset =>
+                {
+                    var data = asset.AsDictionary<string, ObjectData>().Data;
+                    AddClonedItems(data);
+                    //  SyncEggColors(data);
+                    if (Config.OnlyFertilizedEggs)
+                    {
+                        if (FertilizedEggsToAdd.Count < 1)
+                        {
+                            AddFertilizedEggs(data);
+                        }
+                        SetFertilizedEggs(data);
+                    }
+                    CopyOriginalTexturesGray(data);
+                },
+                priority
+            );
+        }
+
+        private void SyncEggColors(IDictionary<string, ObjectData> objectData)
+        {
+            string pattern = @"^Mikew\.letmehatchthisegg\.smapi\.(.*)_(\d+)$";
+            string patternEgg = @"(^.*_)(\d+)$";
+            var normalEggs = new List<string> { AnimalProducts.WhiteEgg, AnimalProducts.BrownEgg };
+            foreach (
+                var normalEgg in objectData
+                    .Keys.Where(obj => Regex.Match(obj, pattern).Success)
+                    .Where(o => normalEggs.Contains(Regex.Replace(o, patternEgg, "$2")))
+            )
+            {
+                var largeEgg = Regex.Replace(normalEgg, patternEgg, "$2") switch
+                {
+                    AnimalProducts.WhiteEgg => AnimalProducts.LargeWhiteEgg,
+                    _ => AnimalProducts.LargeBrownEgg
+                };
+                var largeEggID = Regex.Replace(normalEgg, patternEgg, "$1") + largeEgg;
+                if (objectData.ContainsKey(largeEggID))
+                {
+                    objectData[largeEggID].CustomFields[
+                        "JollyLlama.PrismaticValleyFramework/Color"
+                    ] = objectData[normalEgg].CustomFields[
+                        "JollyLlama.PrismaticValleyFramework/Color"
+                    ];
+                    objectData[largeEggID].ContextTags = objectData[largeEggID]
+                        .ContextTags.Where(s => !s.StartsWith("color_"))
+                        .ToList();
+                    objectData[largeEggID]
+                        .ContextTags.AddRange(
+                            objectData[normalEgg].ContextTags.Where(s => s.StartsWith("color_"))
+                        );
+                }
+            }
+        }
+
+        private bool HasAddedClonedItems => Game1.objectData.Keys.Any(k => IsClonedItem(k));
+        private bool HasAddedFertilizedEggs =>
+            Game1.objectData.Keys.Any(k => IsClonedItem(k, CloneItemType.Egg, fertilized: true));
+
+        private void CloneItemsFromGame()
+        {
+            foreach (var cloneItemType in GetCloneItemTypes())
+            {
+                CloneEggsFromGame(cloneItemType);
+            }
+        }
+
+        public void CloneEggsFromGame(CloneItemType cloneItemType)
+        {
+            foreach (
+                var (animalKey, animalItems) in SavedItemsData
+                    .AnimalVanillaItemRelation.Where(a => a.Value[cloneItemType] != null)
+                    .Select(a => (a.Key, a.Value[cloneItemType]!))
+            )
+            {
+                var gameFarmAnimaldata = Game1.farmAnimalData;
+                if (
+                    animalItems[ItemOrEggType.Normal] == string.Empty
+                    && animalItems[ItemOrEggType.Large] == string.Empty
+                )
+                {
+                    Monitor.Log(
+                        $"Skipping {animalKey}'s {cloneItemType} cloning because of both items being empty!",
+                        LogLevel.Alert
+                    );
+                    continue;
+                }
+                var animal = gameFarmAnimaldata[animalKey];
+                animal.CustomFields ??= new();
+                animal.ProduceItemIds ??= new();
+                animal.DeluxeProduceItemIds ??= new();
+                animal.CustomFields[$"Cloned{cloneItemType}s"] = "";
+                ItemsToAdd.TryAdd(animalKey, new());
+
+                ItemsToAdd[animalKey][cloneItemType] = GetClonedItems(
+                    animalKey,
+                    animal,
+                    animalItems,
+                    gameFarmAnimaldata,
+                    cloneItemType
+                );
+            }
+        }
+
+        private void ReplaceOriginalItemForClone(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            e.Edit(
+                asset =>
+                {
+                    var data = asset.AsDictionary<string, FarmAnimalData>().Data;
+                    foreach (var cloneItemType in GetCloneItemTypes())
+                    {
+                        ReplaceOriginalItemForClone(data, cloneItemType);
+                    }
+
+                    //  SyncEggColors(data);
+                },
+                priority
+            );
+        }
+
+        public void ReplaceOriginalItemForClone(
+            IDictionary<string, FarmAnimalData> gameFarmAnimaldata,
+            CloneItemType cloneItemType
+        )
+        {
+            foreach (
+                var (animalKey, itemsToAdd) in ItemsToAdd
+                    .Where(i => i.Value.ContainsKey(cloneItemType))
+                    .Select(i => (i.Key, i.Value[cloneItemType]))
+            )
+            {
+                var animal = gameFarmAnimaldata[animalKey];
+                var animalProducts = SavedItemsData.FoundItems[cloneItemType];
+                foreach (var (itemID, _) in itemsToAdd)
+                {
+                    var originalKey = GetOriginalItemAndAnimalID(itemID).OriginalItemID;
+
+                    if (cloneItemType == CloneItemType.Egg && animal.EggItemIds != null)
+                    {
+                        animal.EggItemIds.RemoveAll(e =>
+                            e.ToLower() == originalKey.ToLower() || animalProducts.Contains(e)
+                        );
+                        animal.EggItemIds.Add(itemID);
+                    }
+                    foreach (
+                        var produceItemId in animal.ProduceItemIds.Where(p =>
+                            p.ItemId != null
+                            && (
+                                p.ItemId.ToLower() == originalKey.ToLower()
+                                || animalProducts.Contains(p.ItemId)
+                            )
+                        )
+                    )
+                    {
+                        produceItemId.ItemId = itemID;
+                    }
+                    foreach (
+                        var deluxeProduceItemId in animal.DeluxeProduceItemIds.Where(p =>
+                            p.ItemId != null
+                            && (
+                                p.ItemId.ToLower() == originalKey.ToLower()
+                                || animalProducts.Contains(p.ItemId)
+                            )
+                        )
+                    )
+                    {
+                        deluxeProduceItemId.ItemId = itemID;
+                    }
+                }
+            }
+        }
+
+        public bool CheckIfProduceVanillaItem(FarmAnimalData animalData, string[] animalProducts)
+        {
+            animalData.ProduceItemIds ??= new();
+            animalData.DeluxeProduceItemIds ??= new();
+            if (animalData.ProduceItemIds.Any() || animalData.DeluxeProduceItemIds.Any())
+            {
+                var bothProducesList = animalData
+                    .ProduceItemIds.Union(animalData.DeluxeProduceItemIds)
+                    .ToList();
+                return bothProducesList.Select(x => x.ItemId).Any(i => animalProducts.Contains(i));
+            }
+            else
+            {
+                Monitor.Log(
+                    $"{animalData.DisplayName} does  not produce any items.",
+                    LogLevel.Debug
+                );
+                return false;
+            }
+        }
+
+        public bool CheckIfProduceAnyItemOfThisType(
+            FarmAnimalData animalData,
+            string[] animalProducts,
+            int category
+        )
+        {
+            animalData.ProduceItemIds ??= new();
+            animalData.DeluxeProduceItemIds ??= new();
+            if (animalData.ProduceItemIds.Any() || animalData.DeluxeProduceItemIds.Any())
+            {
+                var bothProducesList = animalData
+                    .ProduceItemIds.Union(animalData.DeluxeProduceItemIds)
+                    .ToList();
+                return bothProducesList
+                    .Select(x => x.ItemId)
+                    .Any(i =>
+                        Game1.objectData.ContainsKey(i)
+                        && (animalProducts.Contains(i) || Game1.objectData[i].Category == category)
+                    );
+            }
+            else
+            {
+                Monitor.Log(
+                    $"{animalData.DisplayName} does  not produce any items.",
+                    LogLevel.Debug
+                );
+                return false;
+            }
+        }
+
+        Func<int, string[], FarmAnimalProduce, bool> GetVanillaItemFilterFunc()
+        {
+            return (category, animalProducts, produce) =>
+                Game1.objectData.TryGetValue(produce.ItemId, out var item)
+                && item.Category == category
+                && animalProducts.Contains(produce.ItemId)
+                && !produce.ItemId.StartsWith(
+                    ModManifest.UniqueID,
+                    StringComparison.OrdinalIgnoreCase
+                );
+        }
+
+        Func<int, string[], FarmAnimalProduce, bool> GetMiscItemFilterFunc()
+        {
+            return (_, _, produce) =>
+                Game1.objectData.TryGetValue(produce.ItemId, out var item)
+                && item.Category != Object.EggCategory
+                && item.Category != Object.MilkCategory
+                && (
+                    !VanillaObjectKeys.Contains(produce.ItemId)
+                    || produce.ItemId == AnimalProducts.Wool
+                    || produce.ItemId == AnimalProducts.DuckFeather
+                    || produce.ItemId == AnimalProducts.RabbitFoot
+                )
+                && !produce.ItemId.StartsWith(
+                    ModManifest.UniqueID,
+                    StringComparison.OrdinalIgnoreCase
+                );
+        }
+
+        private List<string> GetAnimalsWithRepeatingItems(
+            IDictionary<string, FarmAnimalData> animalDataDic,
+            int category,
+            string[] animalProducts,
+            CloneItemType cloneItemType
+        )
+        {
+            var filterFunc =
+                cloneItemType == CloneItemType.Misc
+                    ? GetMiscItemFilterFunc()
+                    : GetVanillaItemFilterFunc();
+            var itemIds = new Dictionary<string, List<string>>();
+
+            foreach (var animalDataKeyValuePair in animalDataDic)
+            {
+                var animalKey = animalDataKeyValuePair.Key;
+                var animalData = animalDataKeyValuePair.Value;
+
+                var allItemIds = animalData
+                    .ProduceItemIds.Concat(animalData.DeluxeProduceItemIds ?? new())
+                    .Where(p => filterFunc(category, animalProducts, p))
+                    .Select(p => p.ItemId)
+                    .ToList();
+
+                foreach (var itemId in allItemIds)
+                {
+                    if (!itemIds.ContainsKey(itemId))
+                    {
+                        itemIds.Add(itemId, new List<string>());
+                    }
+                    itemIds[itemId].Add(animalKey);
+                    SavedItemsData.FoundItems[cloneItemType].TryAdd(itemId);
+                }
+            }
+
+            // Filter out items that are not repeated
+            var repeatedItemIds = itemIds.Where(x => x.Value.Count > 1).Select(x => x.Key).ToList();
+
+            // Get the animal keys that correspond to the repeated item IDs, skipping the first one and excluding VanillaAnimals
+            var result = new List<string>();
+            foreach (var itemId in repeatedItemIds)
+            {
+                var animalKeys = itemIds[itemId]
+                    .Skip(1)
+                    .Where(key =>
+                        !VanillaAnimals.AnimalKeys.Contains(key) || key == VanillaAnimals.Rabbit
+                    )
+                    .ToList();
+                result.AddRange(animalKeys);
+            }
+
+            return result;
+        }
+
+        public Dictionary<string, ObjectData> GetClonedItems(
+            string animalKey,
+            FarmAnimalData animalData,
+            Dictionary<ItemOrEggType, string> animalItems,
+            IDictionary<string, FarmAnimalData> gameFarmAnimaldata,
+            CloneItemType cloneItemType
+        )
+        {
+            var clonedItems = new Dictionary<string, ObjectData>();
+            foreach (
+                var (itemType, itemId) in animalItems.Where(e => !string.IsNullOrEmpty(e.Value))
+            )
+            {
+                var itemData = CreateClonedItemData(
+                    animalKey,
+                    itemId,
+                    itemType,
+                    animalData,
+                    gameFarmAnimaldata,
+                    cloneItemType
+                );
+                clonedItems.Add(itemData.Key, itemData.Value);
+                if (itemId == AnimalProducts.Wool)
+                {
+                    var clothData = CreateClonedItemData(
+                        animalKey,
+                        ArtisanGoods.Cloth,
+                        itemType,
+                        animalData,
+                        gameFarmAnimaldata,
+                        cloneItemType
+                    );
+                    OutpuItemsToClone.Add((itemId, ArtisanGoods.Cloth, clothData.Key));
+                    clonedItems.Add(clothData.Key, clothData.Value);
+                }
+            }
+
+            return clonedItems;
+        }
+
+        private KeyValuePair<string, ObjectData> CreateClonedItemData(
+            string animalKey,
+            string originalItemID,
+            ItemOrEggType itemType,
+            FarmAnimalData animalData,
+            IDictionary<string, FarmAnimalData> gameFarmAnimaldata,
+            CloneItemType cloneItemType
+        )
+        {
+            var stringToExtractFrom =
+                $"{animalData.ShopDescription ?? string.Empty} {animalData.DisplayName} {animalKey}";
+            string? color = null;
+            if (cloneItemType != CloneItemType.Milk)
+            {
+                ColorTheItem(stringToExtractFrom, animalKey, originalItemID);
+                color = Saved_Colors.ItemColors[animalKey];
+            }
+            var originalItemData = Game1.objectData[originalItemID];
+            var clonedItemData = originalItemData.CloneOrDeepClone(true)!;
+            SetItemDataProperties(
+                clonedItemData,
+                originalItemData,
+                animalKey,
+                originalItemID,
+                itemType,
+                gameFarmAnimaldata,
+                cloneItemType
+            );
+            SetItemDataContextTags(clonedItemData, originalItemID, itemType, cloneItemType, color);
+            SetItemDataCustomFields(
+                clonedItemData,
+                animalKey,
+                originalItemID,
+                cloneItemType,
+                color
+            );
+
+            return new(
+                GetClonedItemID(animalKey, originalItemID, cloneItemType, itemType),
+                clonedItemData
+            );
+        }
+
+        private void SetItemDataProperties(
+            ObjectData clonedItemData,
+            ObjectData originalItemData,
+            string animalKey,
+            string originalItemID,
+            ItemOrEggType itemType,
+            IDictionary<string, FarmAnimalData> gameFarmAnimaldata,
+            CloneItemType cloneItemType
+        )
+        {
+            var clonedItemID = GetClonedItemID(animalKey, originalItemID, cloneItemType, itemType);
+            if (originalItemID == AnimalProducts.DinoEgg)
+            {
+                HandleDinosaurEgg(clonedItemData, originalItemData);
+            }
+            SetDescriptionAndDisplayName(clonedItemData, animalKey, itemType);
+            SetTextureAndSpriteIndex(
+                clonedItemData,
+                originalItemData,
+                animalKey,
+                originalItemID,
+                clonedItemID,
+                cloneItemType
+            );
+            SetPrice(
+                clonedItemData,
+                animalKey,
+                originalItemID,
+                cloneItemType,
+                itemType,
+                gameFarmAnimaldata
+            );
+        }
+
+        private void HandleDinosaurEgg(ObjectData clonedEggData, ObjectData originalEggData)
+        {
+            if (Config.DinoEggAsArtifact)
+            {
+                clonedEggData.Category = originalEggData.Category;
+                clonedEggData.Type = originalEggData.Type;
+                clonedEggData.ArtifactSpotChances = originalEggData.ArtifactSpotChances;
+            }
+            else
+            {
+                clonedEggData.Category = Object.EggCategory;
+                clonedEggData.ArtifactSpotChances = null;
+            }
+        }
+
+        private void SetDescriptionAndDisplayName(
+            ObjectData clonedEggData,
+            string animalKey,
+            ItemOrEggType eggType
+        )
+        {
+            clonedEggData.DisplayName =
+                $"{TranslationHelper.Get(eggType == ItemOrEggType.Large ? "object.LargeEgg.name" : "object.Egg.name")}: {animalKey}";
+
+            clonedEggData.Description =
+                eggType == ItemOrEggType.Large
+                    ? TranslationHelper.Get("object.LargeEgg.description")
+                    : TranslationHelper.Get("object.Egg.description");
+        }
+
+        private void SetPrice(
+            ObjectData eggData,
+            string animalKey,
+            string itemID,
+            CloneItemType cloneItemType,
+            ItemOrEggType itemType,
+            IDictionary<string, FarmAnimalData> gameFarmAnimaldata
+        )
+        {
+            var animalPrice = GetAnimalPrice(animalKey, gameFarmAnimaldata);
+            var animalProduceDays = Game1.farmAnimalData[animalKey].DaysToProduce;
+            var price = CalculateItemPrice(
+                itemID,
+                animalPrice,
+                animalProduceDays,
+                cloneItemType,
+                itemType
+            );
+            eggData.Price = price;
+        }
+
+        private int GetAnimalPrice(
+            string animalKey,
+            IDictionary<string, FarmAnimalData> gameFarmAnimaldata
+        )
+        {
+            var animalData = gameFarmAnimaldata[animalKey];
+            return animalData.PurchasePrice == -1
+                ? GetAlternatePurchasePrice(gameFarmAnimaldata, animalKey)
+                : animalData.PurchasePrice;
+        }
+
+        private int GetAlternatePurchasePrice(
+            IDictionary<string, FarmAnimalData> gameFarmAnimaldata,
+            string animalKey
+        )
+        {
+            return gameFarmAnimaldata
+                .Select(a => a.Value)
+                .Where(a =>
+                    a.AlternatePurchaseTypes != null
+                    && a.AlternatePurchaseTypes.SelectMany(ap => ap.AnimalIds).Contains(animalKey)
+                )
+                .Select(a => a.PurchasePrice)
+                .SingleOrDefault(0);
+        }
+
+        private int CalculateItemPrice(
+            string originalItemID,
+            int animalPrice,
+            int animalProduceDays,
+            CloneItemType cloneItemType,
+            ItemOrEggType itemType
+        )
+        {
+            var price = cloneItemType switch
+            {
+                CloneItemType.Egg
+                    => GetPrice_Egg(
+                        originalItemID,
+                        Game1.objectData,
+                        itemType,
+                        animalPrice,
+                        animalProduceDays
+                    ),
+                CloneItemType.Milk
+                    => GetPrice_Milk(
+                        originalItemID,
+                        Game1.objectData,
+                        itemType,
+                        animalPrice,
+                        animalProduceDays
+                    ),
+                CloneItemType.Misc
+                    => GetPrice_Misc(
+                        originalItemID,
+                        Game1.objectData,
+                        itemType,
+                        animalPrice,
+                        animalProduceDays
+                    ),
+                _
+                    => GetPrice_Egg(
+                        originalItemID,
+                        Game1.objectData,
+                        itemType,
+                        animalPrice,
+                        animalProduceDays
+                    ),
+            };
+            return 5 * (int)price / 5;
+        }
+
+        private void SetItemDataContextTags(
+            ObjectData clonedItemData,
+            string originalItemId,
+            ItemOrEggType itemType,
+            CloneItemType cloneItemType,
+            string? color
+        )
+        {
+            clonedItemData.ContextTags ??= new();
+            clonedItemData.ContextTags.Add("cloned_item");
+            clonedItemData.ContextTags.Add($"cloned_{cloneItemType.ToString().ToLower()}");
+            if (itemType == ItemOrEggType.Large)
+            {
+                clonedItemData.ContextTags.Add($"large_{cloneItemType.ToString().ToLower()}_item");
+            }
+            if (color != null)
+            {
+                bool containsColor = Saved_Colors
+                    ._colorDictionary.SelectMany(outerKvp => outerKvp.Value)
+                    .Select(innerKvp => innerKvp.Value)
+                    .Any(innermostKvp => innermostKvp == color);
+
+                if (containsColor)
+                {
+                    if (originalItemId == AnimalProducts.VoidEgg)
+                    {
+                        var colorName = GetKeyByValueGalaxy(color);
+                        var colorNameTag = $"color_{colorName.ToLowerInvariant()}";
+                        clonedItemData.ContextTags.Add(colorNameTag);
+                    }
+                    else
+                    {
+                        var (colorName, colorHue) = GetKeysByValue(color);
+                        var colorNameTag = $"color_{colorName.ToLowerInvariant()}";
+                        var colorHueTag = $"color_{colorHue.ToLowerInvariant()}";
+
+                        if (GameColorTags.Contains(colorHueTag))
+                        {
+                            clonedItemData.ContextTags.Add(colorHueTag);
+                        }
+                        else
+                        {
+                            clonedItemData.ContextTags.Add(colorNameTag);
+                        }
+                    }
+                }
+            }
+        }
+
+        public (string ColorName, string ColorHue) GetKeysByValue(string hexCode)
+        {
+            return Saved_Colors
+                ._colorDictionary.SelectMany(kvp =>
+                    kvp.Value.Where(innerValueKV => innerValueKV.Value == hexCode)
+                        .Select(innerValueKV => (ColorName: kvp.Key, ColorHue: innerValueKV.Key))
+                )
+                .FirstOrDefault();
+        }
+
+        public string GetKeyByValueGalaxy(string hexCode)
+        {
+            return Saved_Colors
+                .GalaxyColors.SelectMany(innerDict => innerDict.Value)
+                .Where(kv => kv.Value == hexCode)
+                .Select(kv => kv.Key.Split(' ')[0])
+                .Single();
+        }
+
+        private void SetItemDataCustomFields(
+            ObjectData itemData,
+            string animalKey,
+            string itemID,
+            CloneItemType cloneItemType,
+            string? color
+        )
+        {
+            itemData.CustomFields = new()
+            {
+                ["animal"] = animalKey,
+                [$"original{cloneItemType}"] = itemID,
+            };
+            if (color != null)
+            {
+                itemData.CustomFields["JollyLlama.PrismaticValleyFramework/Color"] = color;
+            }
+        }
+
+        private void ColorTheItem(string animalString, string animalKey, string originalEggID)
+        {
+            var colorControl = new Colors(Config!, Saved_Colors);
+            if (!Config.EggColors.ContainsKey(originalEggID))
+            {
+                Config.EggColors[originalEggID] = Saved_Colors._colorDictionary.ToDictionary(
+                    x => x.Key,
+                    x => true
+                );
+            }
+            var color = colorControl.GetColor(
+                originalEggID,
+                animalString,
+                Config!.LinkAnimalColorToEgg,
+                Config.EggColors[originalEggID]
+            ); /*
+			if(animalKey == "Olive Egger")
+			{
+				SavedColors.EggColors[animalKey] = colorControl.GetRandomHexCodeFromPalettes(Monitor,
+				new Dictionary<string, bool>{{"green", true}}, new Dictionary<string, bool>{{"dark", }})
+			}*/
+            if (Config!.ChangeEggColors)
+            {
+                Saved_Colors.ItemColors[animalKey] = color;
+            }
+            else
+            {
+                if (!Saved_Colors.ItemColors.TryGetValue(animalKey, out var existingColor))
+                {
+                    Saved_Colors.ItemColors[animalKey] = color;
+                }
+                /* if (Convert.ToBoolean(Config!.EggOptions[eggID][ColorOptions.ColorEdit]))
+                         {
+                             SavedColors.EggColors[animalKey] = Helpers.Colors.AdjustColor(
+                                 SavedColors.EggColors[animalKey],
+                                 float.Parse(Config!.EggOptions[eggID][ColorOptions.Luminance]),
+                                 float.Parse(Config!.EggOptions[eggID][ColorOptions.Saturation])
+                             );
+                         }*/
+            }
+
+            //SAVE
+        }
+
+        private void AddClonedItems(IDictionary<string, ObjectData> objectData)
+        {
+            foreach (var cloneItemType in GetCloneItemTypes())
+            {
+                foreach (
+                    var item in ItemsToAdd
+                        .Where(i => i.Value.ContainsKey(cloneItemType))
+                        .SelectMany(i => i.Value[cloneItemType])
+                )
+                {
+                    objectData[item.Key] = item.Value;
+                }
+            }
+        }
+
+        // Define constants for animal prices
+        private const int DefaultChickenPrice = 800;
+        private const int DefaultDuckPrice = 1200;
+        private const int DefaultCowPrice = 800;
+        private const int DefaultGoatPrice = 1200;
+        private const int DefaultSheepPrice = 800;
+
+        // Define regex patterns as constants
+        private const string EggPattern =
+            $@"({AnimalProducts.BrownEgg}|{AnimalProducts.WhiteEgg}|{AnimalProducts.LargeWhiteEgg}|{AnimalProducts.LargeBrownEgg})";
+        private const string DuckEggPattern = AnimalProducts.DuckEgg;
+        private const string VoidEggPattern = AnimalProducts.VoidEgg;
+        private const string GoldenEggPattern = AnimalProducts.GoldenEgg;
+        private const string OstrichEggPattern = AnimalProducts.OstrichEgg;
+        private const string DinoEggPattern = AnimalProducts.DinoEgg;
+        private const string SlimeEggPattern =
+            $@"({AnimalProducts.BlueSlimeEgg}|{AnimalProducts.RedSlimeEgg}|{AnimalProducts.PurpleSlimeEgg}|{AnimalProducts.GreenSlimeEgg}|{AnimalProducts.TigerSlimeEgg})";
+
+        private const string MilkPattern = $@"({AnimalProducts.Milk}|{AnimalProducts.LargeMilk})";
+        private const string GoatMilkPattern =
+            $@"({AnimalProducts.GoatMilk}|{AnimalProducts.LargeGoatMilk})";
+        private const string IridiumMilkPattern = $@"({AnimalProducts.IridiumMilk})";
+
+        private const string WoolPattern = $@"({AnimalProducts.Wool})";
+        private const string DuckFeatherPattern = $@"({AnimalProducts.DuckFeather})";
+
+        // Create a method to calculate the price of an animal product
+
+
+        // Create a method to calculate the price of eggs
+        private double GetPrice_Egg(
+            string id,
+            IDictionary<string, ObjectData> data,
+            ItemOrEggType itemType,
+            int animalPrice,
+            int animalProduceDays
+        )
+        {
+            var chickenPrice =
+                Game1.farmAnimalData[VanillaAnimals.WhiteChicken].PurchasePrice == -1
+                    ? DefaultChickenPrice
+                    : Game1.farmAnimalData[VanillaAnimals.WhiteChicken].PurchasePrice;
+            var chickenProduction = Game1.farmAnimalData[VanillaAnimals.WhiteChicken].DaysToProduce;
+            // Handle special cases for eggs
+            if (Regex.IsMatch(id, DuckEggPattern))
+            {
+                var duckPrice =
+                    Game1.farmAnimalData[VanillaAnimals.Duck].PurchasePrice == -1
+                        ? DefaultDuckPrice
+                        : Game1.farmAnimalData[VanillaAnimals.Duck].PurchasePrice;
+                var duckProduction = Game1.farmAnimalData[VanillaAnimals.Duck].DaysToProduce;
+                return GetPrice(
+                    animalPrice,
+                    animalProduceDays,
+                    data[id].Price,
+                    duckProduction,
+                    duckPrice,
+                    itemType
+                );
+            }
+
+            if (
+                Regex.IsMatch(id, VoidEggPattern)
+                || Regex.IsMatch(id, GoldenEggPattern)
+                || Regex.IsMatch(id, OstrichEggPattern)
+                || Regex.IsMatch(id, DinoEggPattern)
+            )
+            {
+                var priceDifferenceMultiplier =
+                    1
+                    + (GetLargeIncrementValue(data, itemType) - 1)
+                    + Math.Abs(
+                        data[AnimalProducts.VoidEgg].Price - data[AnimalProducts.WhiteEgg].Price
+                    ) / data[AnimalProducts.WhiteEgg].Price;
+                return priceDifferenceMultiplier
+                    * GetPrice(
+                        animalPrice,
+                        animalProduceDays,
+                        data[id].Price,
+                        chickenProduction,
+                        chickenPrice,
+                        itemType
+                    );
+            }
+
+            if (Regex.IsMatch(id, SlimeEggPattern))
+            {
+                string slimeEggId = Regex.Match(id, SlimeEggPattern).Value;
+                var slimePrice = CalculateTargetAnimalCost(
+                    data[AnimalProducts.WhiteEgg].Price,
+                    data[slimeEggId].Price,
+                    1 / 20
+                );
+                return GetPrice(
+                    animalPrice,
+                    animalProduceDays,
+                    data[slimeEggId].Price,
+                    1 / 20,
+                    slimePrice,
+                    itemType
+                );
+            }
+            // Get the base animal price and production days
+            var baseAnimal = GetBaseAnimal(id);
+
+            if (baseAnimal.Key != null && !Regex.IsMatch(id, EggPattern))
+            {
+                return GetPrice(
+                    animalPrice,
+                    animalProduceDays,
+                    data[id].Price,
+                    baseAnimal.Value.DaysToProduce,
+                    baseAnimal.Value.PurchasePrice,
+                    itemType
+                );
+            }
+            // Default to chicken egg price
+
+            return GetPrice(
+                animalPrice,
+                animalProduceDays,
+                data[id].Price,
+                chickenProduction,
+                chickenPrice,
+                itemType
+            );
+        }
+
+        // Create a method to calculate the price of milk
+        private double GetPrice_Milk(
+            string id,
+            IDictionary<string, ObjectData> data,
+            ItemOrEggType itemType,
+            int animalPrice,
+            int animalProduceDays
+        )
+        {
+            var cowPrice =
+                Game1.farmAnimalData[VanillaAnimals.WhiteCow].PurchasePrice == -1
+                    ? DefaultCowPrice
+                    : Game1.farmAnimalData[VanillaAnimals.WhiteCow].PurchasePrice;
+            var cowProduction = Game1.farmAnimalData[VanillaAnimals.WhiteCow].DaysToProduce;
+            // Get the base animal price and production days
+            var baseAnimal = GetBaseAnimal(id);
+            // Handle special cases for milk
+            if (Regex.IsMatch(id, GoatMilkPattern))
+            {
+                var goatPrice =
+                    Game1.farmAnimalData[VanillaAnimals.Goat].PurchasePrice == -1
+                        ? DefaultGoatPrice
+                        : Game1.farmAnimalData[VanillaAnimals.Goat].PurchasePrice;
+                var goatProduction = Game1.farmAnimalData[VanillaAnimals.Goat].DaysToProduce;
+                return GetPrice(
+                    animalPrice,
+                    animalProduceDays,
+                    data[id].Price,
+                    goatProduction,
+                    goatPrice,
+                    itemType
+                );
+            }
+
+            if (Regex.IsMatch(id, IridiumMilkPattern))
+            {
+                var priceDifferenceMultiplier =
+                    1
+                    + (GetLargeIncrementValue(data, itemType) - 1)
+                    + Math.Abs(
+                        data[AnimalProducts.VoidEgg].Price - data[AnimalProducts.WhiteEgg].Price
+                    ) / data[AnimalProducts.WhiteEgg].Price;
+                return priceDifferenceMultiplier
+                    * GetPrice(
+                        animalPrice,
+                        animalProduceDays,
+                        data[id].Price,
+                        cowProduction,
+                        cowPrice,
+                        itemType
+                    );
+            }
+            if (baseAnimal.Key != null && !Regex.IsMatch(id, MilkPattern))
+            {
+                return GetPrice(
+                    animalPrice,
+                    animalProduceDays,
+                    data[id].Price,
+                    baseAnimal.Value.DaysToProduce,
+                    baseAnimal.Value.PurchasePrice,
+                    itemType
+                );
+            }
+
+            // Default to cow milk price
+            return GetPrice(
+                animalPrice,
+                animalProduceDays,
+                data[id].Price,
+                cowProduction,
+                cowPrice,
+                itemType
+            );
+        }
+
+        // Create a method to calculate the price of wool and duck feathers
+        private double GetPrice_Misc(
+            string id,
+            IDictionary<string, ObjectData> data,
+            ItemOrEggType itemType,
+            int animalPrice,
+            int animalProduceDays
+        )
+        {
+            // Default to sheep wool price
+            // Handle special cases for wool and duck feathers
+            if (Regex.IsMatch(id, WoolPattern))
+            {
+                var sheepPrice =
+                    Game1.farmAnimalData[VanillaAnimals.Sheep].PurchasePrice == -1
+                        ? DefaultSheepPrice
+                        : Game1.farmAnimalData[VanillaAnimals.Sheep].PurchasePrice;
+                var sheepProduction = Game1.farmAnimalData[VanillaAnimals.Sheep].DaysToProduce;
+                return GetPrice(
+                    animalPrice,
+                    animalProduceDays,
+                    data[id].Price,
+                    sheepProduction,
+                    sheepPrice,
+                    itemType
+                );
+            }
+            // Get the base animal price and production days
+            var baseAnimal = GetBaseAnimal(id);
+
+            if (baseAnimal.Key != null && !Regex.IsMatch(id, DuckFeatherPattern))
+            {
+                return GetPrice(
+                    animalPrice,
+                    animalProduceDays,
+                    data[id].Price,
+                    baseAnimal.Value.DaysToProduce,
+                    baseAnimal.Value.PurchasePrice,
+                    itemType
+                );
+            }
+            var duckPrice =
+                Game1.farmAnimalData[VanillaAnimals.Duck].PurchasePrice == -1
+                    ? DefaultDuckPrice
+                    : Game1.farmAnimalData[VanillaAnimals.Duck].PurchasePrice;
+            var duckProduction = Game1.farmAnimalData[VanillaAnimals.Duck].DaysToProduce;
+            return GetPrice(
+                animalPrice,
+                animalProduceDays,
+                data[id].Price,
+                duckProduction,
+                duckPrice,
+                itemType
+            );
+        }
+
+        // Create a method to get the base animal price and production days
+        private KeyValuePair<string, FarmAnimalData> GetBaseAnimal(string id)
+        {
+            return Game1
+                .farmAnimalData.ToList()
+                .Find(x =>
+                    x.Value.PurchasePrice != -1
+                    && x.Value.ProduceItemIds != null
+                    && x.Value.ProduceItemIds.Concat(x.Value.DeluxeProduceItemIds ?? new())
+                        .Any(p => p.ItemId != null && p.ItemId == id)
+                );
+        }
+
+        // Create a method to get the large increment value
+        private double GetLargeIncrementValue(
+            IDictionary<string, ObjectData> data,
+            ItemOrEggType itemType
+        )
+        {
+            return itemType == ItemOrEggType.Large
+                ? (double)data[AnimalProducts.LargeMilk].Price / data[AnimalProducts.Milk].Price
+                : 0;
+        }
+
+        public double GetPrice(
+            double newAnimalCost,
+            double newDaysToProduce,
+            double eggValue,
+            double originaldaysToProduce,
+            double originalAnimalCost,
+            ItemOrEggType itemType
+        )
+        {
+            var largeIncrementValue =
+                itemType == ItemOrEggType.Large
+                    ? GetLargeIncrementValue(Game1.objectData, itemType)
+                    : 0;
+            // Calculate the price of the egg per day for the original animal
+            double eggPricePerDay = eggValue / originaldaysToProduce;
+
+            // Calculate the price of the egg for the new animal
+            double newEggPrice =
+                eggPricePerDay * newDaysToProduce * (newAnimalCost / originalAnimalCost);
+
+            return newEggPrice * largeIncrementValue;
+        }
+
+        public static double CalculateTargetAnimalCost(
+            double dailyEggValueFromBaseChicken,
+            double dailyEggValueFromTargetAnimal,
+            double targetEggProductionFrequency
+        )
+        {
+            const double baseChickenCost = 800.0;
+            return baseChickenCost
+                * dailyEggValueFromTargetAnimal
+                * targetEggProductionFrequency
+                / dailyEggValueFromBaseChicken;
+        }
+
+        #endregion
+        #region Fertilized Egg Cloning
+        private void AddFertilizedEggs(IDictionary<string, ObjectData> data)
+        {
+            foreach (var (eggID, eggData) in FertilizedEggsToAdd)
+            {
+                data[eggID] = eggData;
+            }
+        }
+
+        private void SetFertilizedEggs(IDictionary<string, ObjectData> objectData)
+        {
+            foreach (var breedingDataGroup in LoadedFemaleBreedingData.SelectMany(x => x.Value))
+            {
+                var femaleKey = breedingDataGroup.Key;
+                foreach (var male in breedingDataGroup.Value.Males)
+                {
+                    if (ShouldUseMearasFertilizedEggs(male.Key, femaleKey))
+                    {
+                        continue;
+                    }
+                    var eggs = male.Value.GetEggIDs();
+                    var originalEgg = eggs[ItemOrEggType.Large] ?? eggs[ItemOrEggType.Normal];
+                    if (originalEgg != null)
+                    {
+                        if (!objectData.ContainsKey(originalEgg))
+                        {
+                            Monitor.Log(
+                                $"Couldn't create fertilized egg for male {male.Key} with original egg {originalEgg}",
+                                LogLevel.Error
+                            );
+                            continue;
+                        }
+                        var (ClonedEggID, ClonedEggData) = GetFertilizedEgg(
+                            objectData[originalEgg],
+                            femaleKey,
+                            originalEgg
+                        );
+                        FertilizedEggsToAdd[ClonedEggID] = ClonedEggData;
+                    }
+                }
+            }
+        }
+
+        public (string ClonedEggID, ObjectData ClonedEggData) GetFertilizedEgg(
+            ObjectData originalEggData,
+            string animalKey,
+            string eggID
+        )
+        {
+            var clonedEggID = GetFertilizedClonedEggID(animalKey, eggID);
+            /*eggID = IsClonedEgg(eggID)
+                      ? GetOriginalEggAndAnimalID(eggID, false).OriginalEggID
+                      : eggID;*/
+            var clonedEggData = CreateEggData(originalEggData, animalKey, eggID);
+            HandleContextTags(clonedEggData, originalEggData, eggID);
+            if (IsClonedEgg(originalEggData))
+            {
+                SetCustomFields(
+                    clonedEggData,
+                    clonedEggData.CustomFields["animal"],
+                    eggID,
+                    clonedEggData.CustomFields["JollyLlama.PrismaticValleyFramework/Color"]
+                );
+            }
+            else
+            {
+                HandleNonClonedEgg(originalEggData, clonedEggData, animalKey, eggID);
+            }
+
+            return (clonedEggID, clonedEggData);
+        }
+
+        private ObjectData CreateEggData(ObjectData originalEggData, string animalKey, string eggID)
+        {
+            var clonedEggData = new ObjectData
+            {
+                Name = GetFertilizedClonedEggID(animalKey, eggID),
+                DisplayName = $"{TranslationHelper.Get("fertilizedEgg.name")}: {animalKey}",
+                Description = TranslationHelper.Get("fertilizedEgg.description"),
+                Type = "BasicType",
+                Category = StardewValley.Object.EggCategory,
+                Price = originalEggData.Price * FertilizedPriceMultiplier,
+                Edibility = originalEggData.Edibility + FertilizedEdibilityIncrement,
+                CanBeGivenAsGift = originalEggData.CanBeGivenAsGift,
+                CanBeTrashed = originalEggData.CanBeTrashed,
+                ExcludeFromShippingCollection = originalEggData.ExcludeFromShippingCollection,
+                ContextTags = new(),
+                CustomFields = new()
+            };
+
+            SetTextureAndSpriteIndexFertilized(clonedEggData, originalEggData, animalKey, eggID);
+
+            return clonedEggData;
+        }
+
+        private void SetTextureAndSpriteIndex(
+            ObjectData clonedItemData,
+            ObjectData originalItemData,
+            string animalKey,
+            string originalItemID,
+            string clonedItemID,
+            CloneItemType cloneItemType
+        )
+        {
+            if (ClonedItemsTextureInfo.TryGetValue(clonedItemID, out var textureInfo))
+            {
+                var textureInfoCloned = textureInfo[TextureInfoType.Cloned];
+                clonedItemData.Texture = textureInfoCloned.TextureName;
+                clonedItemData.SpriteIndex = textureInfoCloned.SpriteIndex;
+            }
+            else
+            {
+                //if (!ItemIndexMap.ContainsKey(originalItemID))
+                //{
+                //   ItemIndexMap[originalItemID] = clonedEggsSpriteIndex++;
+                // }
+                //var spriteIndex = ItemIndexMap[originalItemID];
+                int spriteIndex = 0;
+                string texture = string.Empty;
+                bool isColored = false;
+                if (
+                    cloneItemType != CloneItemType.Milk
+                    || (cloneItemType == CloneItemType.Milk && Config.ColorClonedMilk)
+                )
+                {
+                    spriteIndex = clonedEggsSpriteIndex++;
+                    texture = AssetHandler.GetAssetPath("clonedEggs", AssetPathType.GamePath);
+                    isColored = true;
+                }
+                else if (!Config.ColorClonedMilk)
+                {
+                    spriteIndex = originalItemData.SpriteIndex;
+                    texture = originalItemData.Texture;
+                    isColored = false;
+                }
+                ClonedItemsTextureInfo[clonedItemID] = new()
+                {
+                    {
+                        TextureInfoType.Original,
+                        new(
+                            originalItemID,
+                            originalItemData.SpriteIndex,
+                            cloneItemType,
+                            originalItemData.Texture,
+                            isColored
+                        )
+                    },
+                    {
+                        TextureInfoType.Cloned,
+                        new(clonedItemID, spriteIndex, cloneItemType, texture, isColored)
+                    },
+                };
+                SetTextureAndSpriteIndex(
+                    clonedItemData,
+                    originalItemData,
+                    animalKey,
+                    originalItemID,
+                    clonedItemID,
+                    cloneItemType
+                );
+            }
+
+            Helper.Data.WriteJsonFile("TextureInfonew.json", ClonedItemsTextureInfo);
+        }
+
+        private void SetTextureAndSpriteIndexFertilized(
+            ObjectData clonedEggData,
+            ObjectData originalEggData,
+            string animalKey,
+            string originalEggID
+        )
+        {
+            var clonedEggID = GetFertilizedClonedEggID(animalKey, originalEggID);
+            if (IsClonedEgg(originalEggID))
+            {
+                var textureInfoCloned = ClonedItemsTextureInfo[originalEggID][
+                    TextureInfoType.Cloned
+                ];
+                clonedEggData.Texture = textureInfoCloned.TextureName;
+                clonedEggData.SpriteIndex = textureInfoCloned.SpriteIndex;
+                ClonedItemsTextureInfo[clonedEggID] = new(ClonedItemsTextureInfo[originalEggID]);
+                ClonedItemsTextureInfo[clonedEggID][TextureInfoType.Original].ID = originalEggID;
+                ClonedItemsTextureInfo[clonedEggID][TextureInfoType.Cloned].ID = clonedEggID;
+            }
+            else
+            {
+                //if (!ItemIndexMap.ContainsKey(originalEggID))
+                //{
+                //    ItemIndexMap[originalEggID] = clonedEggsSpriteIndex++;
+                //}
+                //var spriteIndex = ItemIndexMap[originalEggID];
+                var spriteIndex = clonedEggsSpriteIndex++;
+                var texture = AssetHandler.GetAssetPath("clonedEggs", AssetPathType.GamePath);
+                ClonedItemsTextureInfo[clonedEggID] = new()
+                {
+                    {
+                        TextureInfoType.Original,
+                        new(
+                            originalEggID,
+                            originalEggData.SpriteIndex,
+                            CloneItemType.Egg,
+                            originalEggData.Texture,
+                            true
+                        )
+                    },
+                    {
+                        TextureInfoType.Cloned,
+                        new(clonedEggID, spriteIndex, CloneItemType.Egg, texture, true)
+                    },
+                };
+                clonedEggData.Texture = texture;
+                clonedEggData.SpriteIndex = spriteIndex;
+            }
+        }
+
+        private void WriteTextureInfoToFile()
+        {
+            Helper.Data.WriteJsonFile("TextureInfonew.json", ClonedItemsTextureInfo);
+        }
+
+        private void HandleContextTags(
+            ObjectData clonedEggData,
+            ObjectData originalEggData,
+            string originalEggID
+        )
+        {
+            clonedEggData.ContextTags =
+                originalEggData.ContextTags != null ? new(originalEggData.ContextTags) : new();
+            clonedEggData.ContextTags.Remove("cloned_egg");
+            clonedEggData.ContextTags.Add("fertilized_egg");
+            clonedEggData.CustomFields =
+                originalEggData.CustomFields != null ? new(originalEggData.CustomFields) : new();
+            clonedEggData.CustomFields["originalEgg"] = originalEggID;
+        }
+
+        private void HandleNonClonedEgg(
+            ObjectData originalEggData,
+            ObjectData clonedEggData,
+            string animalKey,
+            string originalEggID
+        )
+        {
+            clonedEggData.ContextTags ??= new();
+
+            var color = GetColorFromTags(originalEggData.ContextTags, originalEggID);
+            clonedEggData.ContextTags =
+                originalEggData.ContextTags == null
+                    ? new()
+                    : originalEggData.ContextTags.Where(s => !s.StartsWith("color_")).ToList();
+            clonedEggData.CustomFields = new()
+            {
+                ["animal"] = animalKey,
+                ["originalEgg"] = originalEggID
+            };
+            color ??= FindColor(clonedEggData, animalKey, originalEggID);
+
+            clonedEggData.CustomFields["JollyLlama.PrismaticValleyFramework/Color"] =
+                "Custom Palette";
+            clonedEggData.CustomFields["JollyLlama.PrismaticValleyFramework/Palette"] =
+                Colors.GenerateGlowingColorGradient(color, 3);
+        }
+
+        private string FindColor(ObjectData clonedEggData, string animalKey, string originalEggID)
+        {
+            var stringToExtractFrom =
+                $"{Game1.farmAnimalData[animalKey].ShopDescription ?? string.Empty} {Game1.farmAnimalData[animalKey].DisplayName} {animalKey}";
+            ColorTheItem(stringToExtractFrom, animalKey, originalEggID);
+            var color = Saved_Colors.ItemColors[animalKey];
+
+            var colorTag = GetColorTag(color);
+            if (colorTag != null)
+            {
+                clonedEggData.ContextTags.Add(colorTag);
+            }
+            return color;
+        }
+
+        private string? GetColorTag(string color)
+        {
+            bool containsColor = Saved_Colors
+                ._colorDictionary.SelectMany(kvp => kvp.Value)
+                .Any(innerKvp => innerKvp.Value == color);
+
+            if (containsColor)
+            {
+                var (colorName, colorHue) = GetKeysByValue(color);
+                var colorNameTag = $"color_{colorName.ToLowerInvariant()}";
+                var colorHueTag = $"color_{colorHue.ToLowerInvariant()}";
+                return GameColorTags.Contains(colorHueTag) ? colorHueTag : colorNameTag;
+            }
+            return null;
+        }
+
+        private void SetCustomFields(
+            ObjectData eggData,
+            string animalKey,
+            string eggID,
+            string color
+        )
+        {
+            eggData.CustomFields = new()
+            {
+                ["animal"] = animalKey,
+                ["originalEgg"] = eggID,
+                ["JollyLlama.PrismaticValleyFramework/Color"] = "Custom Palette",
+                ["JollyLlama.PrismaticValleyFramework/Palette"] =
+                    Colors.GenerateGlowingColorGradient(color, 3)
+            };
+        }
+
+        private string? GetColorFromTags(List<string> contextTags, string eggID)
+        {
+            if (contextTags == null)
+            {
+                return null;
+            }
+            var color = contextTags.Count <= 0 ? null : Colors.GetColorFromTags(contextTags);
+            if (color != null)
+            {
+                LoggerHelper.elper.TestLog("Found Color in context tags:  " + color, LogLevel.Info);
+            }
+            return color;
+        }
+        #endregion
+        #region Breeding System
+
+        private void RunBreedingSystem(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            e.Edit(
+                asset =>
+                {
+                    var data = asset.AsDictionary<string, FarmAnimalData>().Data;
+                    RunHatchingSystem(data);
+                },
+                priority
+            );
+        }
+
+        public static FarmAnimalProduce CreateFarmAnimalProduce(string? ItemID)
+        {
+            if (ItemID == null)
+            {
+                LoggerHelper.elper.TestLog("Null item id, setting it to default: 400", LogLevel.Warn);
+                return GetErrorProduce();
+            }
+            else
+            {
+                return new FarmAnimalProduce() { ItemId = ItemID, Id = ItemID };
+            }
+        }
+
+        public static FarmAnimalProduce GetErrorProduce()
+        {
+            return CreateFarmAnimalProduce("400");
+        }
+
+        private void RunHatchingSystem(IDictionary<string, FarmAnimalData> farmAnimalsData)
+        {
+            var validBreedingData = GetBreedingDataGroupedByFemale();
+            foreach (var (femaleKey, breedingDataList) in validBreedingData)
+            {
+                foreach (var male in breedingDataList.SelectMany(x => x.BreedingData.Males))
+                {
+                    male.Value.SetQuantity(male.Key);
+                }
+                var chosenFemaleData = breedingDataList
+                    .Where(x => x.BreedingData.Males.Any())
+                    .GetRandomItem(i => 1);
+                var chosenMaleData = chosenFemaleData
+                    .BreedingData.Males.Where(x => x.Value.GetQuantity() > 0)
+                    .GetRandomItem(m => m.Value.GetQuantity());
+                if (chosenFemaleData.BreedingData == null)
+                {
+                    Monitor.Log(
+                        $"Skipped female {femaleKey} because did not find a breeding data."
+                    );
+                    continue;
+                }
+                if (chosenMaleData.Key == null)
+                {
+                    Monitor.Log(
+                        $"Skipped female {femaleKey} because did not find a male breeding data."
+                    );
+                    continue;
+                }
+                var currentBreedingSystem = new BreedingSystem(
+                    Config.OnlyFertilizedEggs,
+                    femaleKey,
+                    chosenFemaleData,
+                    chosenMaleData,
+                    farmAnimalsData
+                );
+                currentBreedingSystem.Run();
+            }
+        }
+
+        public Dictionary<
+            string,
+            IEnumerable<(string ContentPackID, BreedingDataFemale BreedingData)>
+        > GetBreedingDataGroupedByFemale()
+        {
+            return LoadedFemaleBreedingData
+                .SelectMany(x => x.Value.Select(y => (x.Key, BreedingData: y)))
+                .GroupBy(x => x.BreedingData.Key)
+                .ToDictionary(x => x.Key, x => x.Select(y => (y.Key, y.BreedingData.Value)));
+        }
+        #endregion
+        #region General Methods
+        private void SaveModData()
+        {
+            SaveData(Saved_Colors);
+            SaveData(SavedItemsData);
+            SaveData(BreedingConfigsByPack);
+        }
+
+        private T LoadData<T>()
+            where T : class, new()
+        {
+            string path = $"data/{typeof(T).Name}.json";
+            string fullPath = $"{Helper.DirectoryPath}/{path}";
+            FileInfo dataFile = new FileInfo(fullPath);
+
+            if (!dataFile.Exists)
+            {
+                SaveData(new T());
+            }
+
+            return this.Helper.Data.ReadJsonFile<T>(path)!;
+        }
+
+        private void SaveData<T>(T data)
+            where T : class, new()
+        {
+            string path = $"data/{typeof(T).Name}.json";
+            this.Helper.Data.WriteJsonFile(path, data);
+        }
+
+        private void HandleAnimalEggRelations()
+        {
+            var animalDataDic = Game1.farmAnimalData;
+            Dictionary<CloneItemType, List<string>> animalsWithVanillaItems = new();
+            Dictionary<CloneItemType, List<string>> animalsWithoutVanillaItems = new();
+            Dictionary<CloneItemType, List<string>> animalsWithRepeatingVanillaItem = new();
+            foreach (var animalKey in SavedItemsData.AnimalVanillaItemRelation.Keys)
+            {
+                UpdateEggRelations(animalKey);
+            }
+
+            foreach (var cloneItemType in GetCloneItemTypes())
+            {
+                var animalProducts = GetAnimalProductsPerCloneItemTypes(cloneItemType);
+                var category = GetCategoryPerCloneItemTypes(cloneItemType);
+
+                animalsWithVanillaItems[cloneItemType] = animalDataDic
+                    .Where(a =>
+                        !VanillaAnimals.AnimalKeys.Contains(a.Key)
+                        && CheckIfProduceVanillaItem(a.Value, animalProducts)
+                    )
+                    .Select(x => x.Key)
+                    .ToList();
+
+                animalsWithoutVanillaItems[cloneItemType] =
+                    cloneItemType != CloneItemType.Egg
+                        ? new()
+                        : animalDataDic
+                            .Where(a =>
+                                !CheckIfProduceAnyItemOfThisType(a.Value, animalProducts, category)
+                            )
+                            .Select(x => x.Key)
+                            .ToList();
+                animalsWithRepeatingVanillaItem[cloneItemType] = GetAnimalsWithRepeatingItems(
+                    animalDataDic,
+                    category,
+                    animalProducts,
+                    cloneItemType
+                );
+
+                var finalList = animalsWithVanillaItems[cloneItemType]
+                    .Union(animalsWithRepeatingVanillaItem[cloneItemType])
+                    .Union(animalsWithoutVanillaItems[cloneItemType])
+                    .Distinct();
+                AnimalVanillaItemRelationOrder[cloneItemType] = finalList.ToList();
+
+                Helper.Data.WriteJsonFile(
+                    $"lists/animalsWith{cloneItemType}.json",
+                    animalsWithVanillaItems[cloneItemType]
+                );
+                Helper.Data.WriteJsonFile(
+                    $"lists/animalsWithout{cloneItemType}.json",
+                    animalsWithoutVanillaItems[cloneItemType]
+                );
+                Helper.Data.WriteJsonFile(
+                    $"lists/animalsWithRepeating{cloneItemType}.json",
+                    animalsWithRepeatingVanillaItem[cloneItemType]
+                );
+
+                Helper.Data.WriteJsonFile($"lists/final{cloneItemType}List.json", finalList);
+                var lists = new List<string>[]
+                {
+                    animalsWithVanillaItems[cloneItemType],
+                    animalsWithRepeatingVanillaItem[cloneItemType],
+                    animalsWithoutVanillaItems[cloneItemType]
+                };
+
+                var animalsWithoutEggRelations = animalDataDic.Keys.Where(k =>
+                    !SavedItemsData.AnimalVanillaItemRelation.ContainsKey(k)
+                    && finalList.Contains(k)
+                );
+                foreach (var animal in animalsWithoutEggRelations)
+                {
+                    SavedItemsData.AnimalVanillaItemRelation[animal] = new()
+                    {
+                        { CloneItemType.Egg, null },
+                        { CloneItemType.Milk, null },
+                        { CloneItemType.Misc, null }
+                    };
+                }
+
+                //foreach (var item in collection) { }
+                foreach (var animal in finalList)
+                {
+                    AddEggRelationsForAnimal(
+                        animal,
+                        animalDataDic,
+                        category,
+                        animalProducts,
+                        lists,
+                        cloneItemType
+                    );
+                }
+            }
+        }
+
+        private CloneItemType[] GetCloneItemTypes()
+        {
+            return new CloneItemType[]
+            {
+                CloneItemType.Egg,
+                CloneItemType.Milk,
+                CloneItemType.Misc
+            };
+        }
+
+        private int GetCategoryPerCloneItemTypes(CloneItemType cloneItemType)
+        {
+            return cloneItemType switch
+            {
+                CloneItemType.Egg => Object.EggCategory,
+                CloneItemType.Milk => Object.MilkCategory,
+                CloneItemType.Misc => 0,
+                _ => 0
+            };
+        }
+
+        private string[] GetAnimalProductsPerCloneItemTypes(CloneItemType cloneItemType)
+        {
+            return cloneItemType switch
+            {
+                CloneItemType.Egg => AnimalProducts.VanillaEggs,
+                CloneItemType.Milk => AnimalProducts.VanillaMilk,
+                CloneItemType.Misc
+                    => new string[] { AnimalProducts.DuckFeather, AnimalProducts.Wool },
+                _ => Array.Empty<string>()
+            };
+        }
+
+        private void UpdateEggRelations(string animalKey)
+        {
+            foreach (
+                var item in SavedItemsData
+                    .AnimalVanillaItemRelation[animalKey]
+                    .Where(x => x.Value != null)
+                    .Select(x => x.Value!)
+            )
+            {
+                var normalItem = item[ItemOrEggType.Normal];
+                var largeItem = item[ItemOrEggType.Large];
+                if (!Game1.objectData.ContainsKey(normalItem) && normalItem != string.Empty)
+                {
+                    item[ItemOrEggType.Normal] = string.Empty;
+                }
+                if (!Game1.objectData.ContainsKey(largeItem) && largeItem != string.Empty)
+                {
+                    item[ItemOrEggType.Large] = string.Empty;
+                }
+            }
+        }
+
+        private void AddEggRelationsForAnimal(
+            string animal,
+            IDictionary<string, FarmAnimalData> animalDataDic,
+            int category,
+            string[] animalProducts,
+            List<string>[] lists,
+            CloneItemType itemType
+        )
+        {
+            var animalsWithVanillaEggs = lists[0];
+            var animalsWithRepeatingEgg = lists[1];
+            var data = animalDataDic[animal];
+            SavedItemsData.AnimalVanillaItemRelation[animal][itemType] ??= new();
+            var itemsToClone = SavedItemsData.AnimalVanillaItemRelation[animal][itemType]!;
+            if (animalsWithVanillaEggs.Contains(animal))
+            {
+                var (normalEgg, largeEgg) = DetermineItemsToCloneFromProduce(
+                    data,
+                    animalProducts,
+                    itemType
+                );
+                itemsToClone[ItemOrEggType.Normal] = normalEgg;
+                itemsToClone[ItemOrEggType.Large] = largeEgg;
+            }
+            else if (animalsWithRepeatingEgg.Contains(animal))
+            {
+                var (normalEgg, largeEgg) = DetermineItemsToCloneFromRepeatingItem(
+                    data,
+                    category,
+                    animalProducts,
+                    itemType
+                );
+                itemsToClone[ItemOrEggType.Normal] = normalEgg;
+                itemsToClone[ItemOrEggType.Large] = largeEgg;
+            }
+            else
+            {
+                itemsToClone[ItemOrEggType.Normal] = string.Empty;
+                itemsToClone[ItemOrEggType.Large] = string.Empty;
+            }
+        }
+
+        private (string, string) DetermineItemsToCloneFromProduce(
+            FarmAnimalData data,
+            string[] animalProducts,
+            CloneItemType itemType
+        )
+        {
+            var produce = data.ProduceItemIds.Union(data.DeluxeProduceItemIds);
+            var itemsToClone = produce
+                .Where(p => animalProducts.Contains(p.ItemId))
+                .Select(p => p.ItemId)
+                .Distinct();
+
+            switch (itemType)
+            {
+                case CloneItemType.Egg:
+                    return HandleItemType(
+                        itemsToClone,
+                        AnimalProducts.LargeBrownEgg,
+                        AnimalProducts.LargeWhiteEgg
+                    );
+                case CloneItemType.Milk:
+                    return HandleItemType(
+                        itemsToClone,
+                        AnimalProducts.LargeGoatMilk,
+                        AnimalProducts.LargeMilk
+                    );
+                default:
+                    return HandleDefaultType(itemsToClone);
+            }
+        }
+
+        private (string, string) HandleItemType(
+            IEnumerable<string> itemsToClone,
+            string largeItem1,
+            string largeItem2
+        )
+        {
+            if (itemsToClone.Contains(largeItem1) || itemsToClone.Contains(largeItem2))
+            {
+                var largeItem = itemsToClone.Contains(largeItem1) ? largeItem1 : largeItem2;
+                var normalItem = itemsToClone.FirstOrDefault(e => e != largeItem, string.Empty);
+                return (normalItem, largeItem);
+            }
+            else
+            {
+                var normalItem = itemsToClone.First();
+                var largeItem =
+                    itemsToClone.Count() > 1 ? itemsToClone.Skip(1).First() : string.Empty;
+                return (normalItem, largeItem);
+            }
+        }
+
+        private (string, string) HandleDefaultType(IEnumerable<string> itemsToClone)
+        {
+            if (
+                itemsToClone.Contains(AnimalProducts.DuckFeather)
+                || itemsToClone.Contains(AnimalProducts.Wool)
+            )
+            {
+                var normalItem = itemsToClone.Contains(AnimalProducts.DuckFeather)
+                    ? AnimalProducts.DuckFeather
+                    : AnimalProducts.Wool;
+                return (normalItem, string.Empty);
+            }
+            else
+            {
+                var normalItem = itemsToClone.First();
+                var largeItem =
+                    itemsToClone.Count() > 1 ? itemsToClone.Skip(1).First() : string.Empty;
+                return (normalItem, largeItem);
+            }
+        }
+
+        private (string, string) DetermineItemsToCloneFromRepeatingItem(
+            FarmAnimalData data,
+            int category,
+            string[] animalProducts,
+            CloneItemType itemType
+        )
+        {
+            data.ProduceItemIds ??= new();
+            data.DeluxeProduceItemIds ??= new();
+            var filterFunc =
+                itemType == CloneItemType.Misc
+                    ? GetMiscItemFilterFunc()
+                    : GetVanillaItemFilterFunc();
+            var produceItems = data
+                .ProduceItemIds.Where(p => filterFunc(category, animalProducts, p))
+                .Select(p => p.ItemId)
+                .ToList();
+
+            var deluxeProduceItems = data
+                .DeluxeProduceItemIds.Where(p => filterFunc(category, animalProducts, p))
+                .Select(p => p.ItemId)
+                .ToList();
+
+            if (produceItems.Any() && deluxeProduceItems.Any())
+            {
+                return (produceItems[0], deluxeProduceItems[0]);
+            }
+            else if (produceItems.Any())
+            {
+                return (produceItems[0], string.Empty);
+            }
+            else if (deluxeProduceItems.Any())
+            {
+                return (deluxeProduceItems[0], string.Empty);
+            }
+            else
+            {
+                return (string.Empty, string.Empty);
+            }
+        }
+
+        private void LoadTextureFromContentPack(
+            string assetName,
+            AssetRequestedEventArgs e,
+            AssetLoadPriority priority
+        )
+        {
+            foreach (var info in ClonedAnimalsInfoList)
+            {
+                foreach (var (textureType, texture) in info.Textures)
+                {
+                    if (string.Equals(texture, assetName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var contentPack = LoadedContentPacks.Find(cp =>
+                            cp.Manifest.UniqueID == info.ContentPackID
+                        );
+
+                        if (contentPack != null)
+                        {
+                            string pattern = @"^Animals/MaleClones/([^/]+)/([^/]+)/([^/]+)$";
+                            Match match = Regex.Match(assetName, pattern, RegexOptions.IgnoreCase);
+                            if (match.Success)
+                            {
+                                string result =
+                                    $"textures/{info.FemaleKey}/{match.Groups[3].Value}.png";
+
+                                try
+                                {
+                                    var texturePath = contentPack.ModContent.Load<Texture2D>(
+                                        result
+                                    );
+                                    e.LoadFrom(() => texturePath, priority);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Monitor.Log($"Error loading texture: {ex.Message}");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void CreateClonePlaceholders(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            e.Edit(
+                asset =>
+                {
+                    var data = asset.AsDictionary<string, FarmAnimalData>().Data;
+                    foreach (var clonedAnimalInfo in ClonedAnimalsInfoList)
+                    {
+                        data[clonedAnimalInfo.MaleKey] = clonedAnimalInfo.AnimalData;
+                    }
+                },
+                priority
+            );
+        }
+
+        private void CreateAndAddAnimalClonesDebug(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            e.Edit(
+                asset =>
+                {
+                    var data = asset.AsDictionary<string, FarmAnimalData>().Data;
+
+                    foreach (var clonedAnimalInfo in ClonedAnimalsInfoList)
+                    {
+                        var femaleKey = clonedAnimalInfo.FemaleKey;
+                        var maleKey = clonedAnimalInfo.MaleKey;
+                        var contentPack = LoadedContentPacks.First(cp =>
+                            cp.Manifest.UniqueID == clonedAnimalInfo.ContentPackID
+                        );
+                        EditClonedAnimal(contentPack, maleKey, data[femaleKey], data[maleKey]);
+                        var clonedAnimalData = data[maleKey];
+                        data.Remove(maleKey);
+                        var dataAsList = data.ToList();
+                        var femaleKvp = dataAsList.Find(x => x.Key == femaleKey);
+                        // Find the index of the element after which you want to insert the new element
+                        int index = dataAsList.IndexOf(femaleKvp);
+                        // Insert the new element after "egg2"
+
+                        dataAsList.Insert(index + 1, new(maleKey, clonedAnimalData));
+                        asset
+                            .AsDictionary<string, FarmAnimalData>()
+                            .ReplaceWith(dataAsList.ToDictionary(x => x.Key, x => x.Value));
+                        data = asset.AsDictionary<string, FarmAnimalData>().Data;
+                        if (
+                            femaleKey == VanillaAnimals.VoidChicken
+                            && data[VanillaAnimals.VoidChicken].PurchasePrice == -1
+                        )
+                        {
+                            data[VanillaAnimals.WhiteChicken].AlternatePurchaseTypes ??= new();
+                            data[VanillaAnimals.WhiteChicken]
+                                .AlternatePurchaseTypes.Add(
+                                    new()
+                                    {
+                                        AnimalIds = new() { maleKey, femaleKey },
+                                        Id = maleKey
+                                    }
+                                );
+                        }
+                        else if (
+                            clonedAnimalInfo.AddAsAlternatePurchase
+                            || (
+                                !clonedAnimalInfo.AddAsAlternatePurchase
+                                && data[femaleKey].PurchasePrice == -1
+                            )
+                        )
+                        {
+                            data[maleKey].PurchasePrice = -1;
+                            var originalPurchaseAnimal = data.GetOriginalPurchaseAnimal(femaleKey);
+
+                            FarmAnimalData targetShopAnimalEntry;
+                            if (
+                                originalPurchaseAnimal != null
+                                && originalPurchaseAnimal.Value.Key != null
+                            )
+                            {
+                                targetShopAnimalEntry = originalPurchaseAnimal.Value.Value;
+                            }
+                            else
+                            {
+                                targetShopAnimalEntry = data[femaleKey];
+                            }
+                            targetShopAnimalEntry.AlternatePurchaseTypes ??= new();
+                            if (
+                                targetShopAnimalEntry.AlternatePurchaseTypes.Any(x =>
+                                    x.Condition == null
+                                )
+                            )
+                            {
+                                targetShopAnimalEntry
+                                    .AlternatePurchaseTypes.First(x => x.Condition == null)
+                                    .AnimalIds.Add(maleKey);
+                            }
+                            else
+                            {
+                                targetShopAnimalEntry.AlternatePurchaseTypes.Add(
+                                    new()
+                                    {
+                                        AnimalIds = new() { maleKey },
+                                        Id = maleKey
+                                    }
+                                );
+                            }
+                        }
+                    }
+                },
+                priority
+            );
+
+            Monitor.Log("CreateAndAddAnimalClones method finished.", LogLevel.Info);
+        }
+
+        private void OrderShopEntries(
+            AssetRequestedEventArgs e,
+            AssetEditPriority priority = AssetEditPriority.Late
+        )
+        {
+            e.Edit(
+                static asset =>
+                {
+                    var data = asset.AsDictionary<string, FarmAnimalData>().Data;
+
+                    var shopEntriesList = data.ToList();
+                    var firstPart = new List<KeyValuePair<string, FarmAnimalData>>();
+                    var secondPart = new List<KeyValuePair<string, FarmAnimalData>>();
+                    int index = shopEntriesList.FindIndex(kvp =>
+                        kvp.Key == "Vanilla_#Ostrich#_Male"
+                    );
+                    if (index == -1)
+                    {
+                        index = shopEntriesList.FindIndex(kvp => kvp.Key == "Ostrich");
+                    }
+                    if (index != -1)
+                    {
+                        firstPart = shopEntriesList.GetRange(0, index);
+                        secondPart = shopEntriesList
+                            .GetRange(index, shopEntriesList.Count - index)
+                            .OrderBy(x => x.Value.ShopDisplayName)
+                            .ToList();
+                    }
+                    shopEntriesList = firstPart.Concat(secondPart).ToList();
+                    var shopEntries = shopEntriesList.ToDictionary(x => x.Key, x => x.Value);
+                    asset.ReplaceWith(shopEntries);
+                },
+                priority
+            );
+
+            Monitor.Log("CreateAndAddAnimalClones method finished.", LogLevel.Info);
+        }
+
+        public void EditClonedAnimal(
+            IContentPack contentPack,
+            string maleKey,
+            FarmAnimalData originalAnimalData,
+            FarmAnimalData currentCloneData
+        )
+        {
+            var placeholderData = GetFarmAnimalDataPlaceholder();
+            currentCloneData.Gender = FarmAnimalGender.Male;
+            currentCloneData.HarvestType = FarmAnimalHarvestType.DropOvernight;
+
+            SetTextureIfNeeded(
+                contentPack,
+                currentCloneData,
+                originalAnimalData,
+                placeholderData,
+                maleKey
+            );
+            SetIfValueIsPlaceholder(
+                contentPack,
+                ref currentCloneData.DisplayName,
+                originalAnimalData.DisplayName,
+                placeholderData.DisplayName
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.House,
+                originalAnimalData.House,
+                placeholderData.House
+            );
+
+            SetIfValueIsPlaceholder(
+                contentPack,
+                ref currentCloneData.ShopDisplayName,
+                originalAnimalData.ShopDisplayName,
+                placeholderData.ShopDisplayName
+            );
+            SetIfValueIsPlaceholder(
+                contentPack,
+                ref currentCloneData.ShopDescription,
+                originalAnimalData.ShopDescription,
+                placeholderData.ShopDescription
+            );
+            SetIfValueIsPlaceholder(
+                contentPack,
+                ref currentCloneData.ShopMissingBuildingDescription,
+                originalAnimalData.ShopMissingBuildingDescription,
+                placeholderData.ShopMissingBuildingDescription
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.RequiredBuilding,
+                originalAnimalData.RequiredBuilding,
+                placeholderData.RequiredBuilding
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.UnlockCondition,
+                originalAnimalData.UnlockCondition,
+                placeholderData.UnlockCondition
+            );
+            SetIfValueIsPlaceholder(
+                contentPack,
+                ref currentCloneData.BirthText,
+                originalAnimalData.BirthText,
+                placeholderData.BirthText
+            );
+
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.HarvestTool,
+                originalAnimalData.HarvestTool,
+                placeholderData.HarvestTool
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.Sound,
+                originalAnimalData.Sound,
+                placeholderData.Sound
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.BabySound,
+                originalAnimalData.BabySound,
+                placeholderData.BabySound
+            );
+
+            currentCloneData.ShadowWhenBabySwims ??= originalAnimalData.ShadowWhenBabySwims;
+            currentCloneData.ShadowWhenBaby ??= originalAnimalData.ShadowWhenBaby;
+            currentCloneData.ShadowWhenAdultSwims ??= originalAnimalData.ShadowWhenAdultSwims;
+            currentCloneData.ShadowWhenAdult ??= originalAnimalData.ShadowWhenAdult;
+            currentCloneData.EggItemIds = null;
+
+            currentCloneData.Skins ??=
+                originalAnimalData.Skins != null ? new(originalAnimalData.Skins) : new();
+            currentCloneData.AlternatePurchaseTypes = null;
+            currentCloneData.StatToIncrementOnProduce ??=
+                originalAnimalData.StatToIncrementOnProduce != null
+                    ? new(originalAnimalData.StatToIncrementOnProduce)
+                    : new();
+
+            currentCloneData.CustomFields =
+                originalAnimalData.CustomFields != null
+                    ? new(originalAnimalData.CustomFields)
+                    : new();
+
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.PurchasePrice,
+                originalAnimalData.PurchasePrice,
+                placeholderData.PurchasePrice
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.SellPrice,
+                originalAnimalData.SellPrice,
+                placeholderData.SellPrice
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.IncubationTime,
+                originalAnimalData.IncubationTime,
+                placeholderData.IncubationTime
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.IncubatorParentSheetOffset,
+                originalAnimalData.IncubatorParentSheetOffset,
+                placeholderData.IncubatorParentSheetOffset
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.DaysToMature,
+                originalAnimalData.DaysToMature,
+                placeholderData.DaysToMature
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.DaysToProduce,
+                originalAnimalData.DaysToProduce,
+                placeholderData.DaysToProduce
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.FriendshipForFasterProduce,
+                originalAnimalData.FriendshipForFasterProduce,
+                placeholderData.FriendshipForFasterProduce
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.DeluxeProduceMinimumFriendship,
+                originalAnimalData.DeluxeProduceMinimumFriendship,
+                placeholderData.DeluxeProduceMinimumFriendship
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.DeluxeProduceCareDivisor,
+                originalAnimalData.DeluxeProduceCareDivisor,
+                placeholderData.DeluxeProduceCareDivisor
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.DeluxeProduceLuckMultiplier,
+                originalAnimalData.DeluxeProduceLuckMultiplier,
+                placeholderData.DeluxeProduceLuckMultiplier
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.ProfessionForHappinessBoost,
+                originalAnimalData.ProfessionForHappinessBoost,
+                placeholderData.ProfessionForHappinessBoost
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.ProfessionForQualityBoost,
+                originalAnimalData.ProfessionForQualityBoost,
+                placeholderData.ProfessionForQualityBoost
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.ProfessionForFasterProduce,
+                originalAnimalData.ProfessionForFasterProduce,
+                placeholderData.ProfessionForFasterProduce
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.SpriteWidth,
+                originalAnimalData.SpriteWidth,
+                placeholderData.SpriteWidth
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.SpriteHeight,
+                originalAnimalData.SpriteHeight,
+                placeholderData.SpriteHeight
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.SleepFrame,
+                originalAnimalData.SleepFrame,
+                placeholderData.SleepFrame
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.GrassEatAmount,
+                originalAnimalData.GrassEatAmount,
+                placeholderData.GrassEatAmount
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.HappinessDrain,
+                originalAnimalData.HappinessDrain,
+                placeholderData.HappinessDrain
+            );
+
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.ShopSourceRect,
+                originalAnimalData.ShopSourceRect,
+                placeholderData.ShopSourceRect
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.UpDownPetHitboxTileSize,
+                originalAnimalData.UpDownPetHitboxTileSize,
+                placeholderData.UpDownPetHitboxTileSize
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.LeftRightPetHitboxTileSize,
+                originalAnimalData.LeftRightPetHitboxTileSize,
+                placeholderData.LeftRightPetHitboxTileSize
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.BabyUpDownPetHitboxTileSize,
+                originalAnimalData.BabyUpDownPetHitboxTileSize,
+                placeholderData.BabyUpDownPetHitboxTileSize
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.BabyLeftRightPetHitboxTileSize,
+                originalAnimalData.BabyLeftRightPetHitboxTileSize,
+                placeholderData.BabyLeftRightPetHitboxTileSize
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.EmoteOffset,
+                originalAnimalData.EmoteOffset,
+                placeholderData.EmoteOffset
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.SwimOffset,
+                originalAnimalData.SwimOffset,
+                placeholderData.SwimOffset
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.ProduceOnMature,
+                originalAnimalData.ProduceOnMature,
+                placeholderData.ProduceOnMature
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.CanEatGoldenCrackers,
+                originalAnimalData.CanEatGoldenCrackers,
+                placeholderData.CanEatGoldenCrackers
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.UseFlippedRightForLeft,
+                originalAnimalData.UseFlippedRightForLeft,
+                placeholderData.UseFlippedRightForLeft
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.UseDoubleUniqueAnimationFrames,
+                originalAnimalData.UseDoubleUniqueAnimationFrames,
+                placeholderData.UseDoubleUniqueAnimationFrames
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.CanSwim,
+                originalAnimalData.CanSwim,
+                placeholderData.CanSwim
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.BabiesFollowAdults,
+                originalAnimalData.BabiesFollowAdults,
+                placeholderData.BabiesFollowAdults
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.ShowInSummitCredits,
+                originalAnimalData.ShowInSummitCredits,
+                placeholderData.ShowInSummitCredits
+            );
+            SetIfValueIsPlaceholder(
+                ref currentCloneData.CanGetPregnant,
+                originalAnimalData.CanGetPregnant,
+                placeholderData.CanGetPregnant
+            );
+            currentCloneData.EggItemIds ??= new();
+
+            var pattern = @".*egg.*";
+
+            if (currentCloneData.ProduceItemIds.Count == 0)
+            {
+                currentCloneData.ProduceItemIds =
+                    originalAnimalData.ProduceItemIds != null
+                        ? new List<FarmAnimalProduce>(originalAnimalData.ProduceItemIds)
+                        : new();
+
+                currentCloneData.ProduceItemIds.RemoveAll(e =>
+                    AnimalProducts.VanillaEggs.Contains(e.ItemId)
+                    || Regex.IsMatch(e.ItemId, pattern)
+                    || (
+                        Game1.objectData.ContainsKey(e.ItemId)
+                        && Game1.objectData[e.ItemId].Category == Object.EggCategory
+                    )
+                );
+            }
+            if (currentCloneData.DeluxeProduceItemIds.Count == 0)
+            {
+                currentCloneData.DeluxeProduceItemIds =
+                    originalAnimalData.DeluxeProduceItemIds != null
+                        ? new List<FarmAnimalProduce>(originalAnimalData.DeluxeProduceItemIds)
+                        : new();
+
+                currentCloneData.DeluxeProduceItemIds.RemoveAll(e =>
+                    AnimalProducts.VanillaEggs.Contains(e.ItemId)
+                    || Regex.IsMatch(e.ItemId, pattern)
+                    || (
+                        Game1.objectData.ContainsKey(e.ItemId)
+                        && Game1.objectData[e.ItemId].Category == Object.EggCategory
+                    )
+                );
+            }
+        }
+
+        private void SetIfValueIsPlaceholder<T>(
+            ref T currentValue,
+            T originalValue,
+            T predeterminedValue
+        )
+        {
+            if (EqualityComparer<T>.Default.Equals(currentValue, predeterminedValue))
+            {
+                currentValue = originalValue;
+            }
+        }
+
+        private void SetIfValueIsPlaceholder(
+            ref string currentValue,
+            string originalValue,
+            string predeterminedValue
+        )
+        {
+            var tokenString = ContentPatcherAPI.ParseTokenString(
+                manifest: this.ModManifest,
+                rawValue: currentValue,
+                formatVersion: new SemanticVersion("2.3.0")
+            );
+            tokenString.UpdateContext();
+            var currentValueTokenString = tokenString.Value ?? currentValue;
+            if (currentValue == predeterminedValue)
+            {
+                currentValue = originalValue;
+            }
+            else
+            {
+                currentValue = currentValueTokenString;
+            }
+        }
+
+        private void SetIfValueIsPlaceholder(
+            IContentPack contentPack,
+            ref string currentValue,
+            string originalValue,
+            string predeterminedValue
+        )
+        {
+            string pattern = @"{{i18n:(.*?)}}";
+            if (currentValue == predeterminedValue)
+            {
+                Monitor.Log($"Setting {currentValue} to  {originalValue}");
+                currentValue = originalValue;
+            }
+            else if (Regex.Match(currentValue, pattern).Success)
+            {
+                Match match = Regex.Match(currentValue, pattern);
+                string key = match.Groups[1].Value.Replace(" ", "");
+                currentValue = contentPack.Translation.Get(key);
+            }
+        }
+
+        private void SetTextureIfNeeded(
+            IContentPack contentPack,
+            FarmAnimalData currentData,
+            FarmAnimalData originalData,
+            FarmAnimalData placeholderData,
+            string animalKey
+        )
+        {
+            var contentPackID = contentPack.Manifest.UniqueID;
+            var cloneInfo = ClonedAnimalsInfoList.Find(a => a.MaleKey == animalKey);
+            if (cloneInfo == null)
+            {
+                return;
+            }
+            currentData.BabyTexture = GetTextureString(
+                currentData.BabyTexture,
+                originalData.BabyTexture,
+                placeholderData.BabyTexture,
+                contentPackID,
+                animalKey,
+                TextureType.Baby
+            );
+            currentData.Texture = GetTextureString(
+                currentData.Texture,
+                originalData.Texture,
+                placeholderData.Texture,
+                contentPackID,
+                animalKey,
+                TextureType.Adult
+            );
+            currentData.HarvestedTexture = GetTextureString(
+                currentData.HarvestedTexture,
+                originalData.HarvestedTexture,
+                placeholderData.HarvestedTexture,
+                contentPackID,
+                animalKey,
+                TextureType.Harvested
+            );
+            currentData.ShopTexture = GetTextureString(
+                currentData.ShopTexture,
+                originalData.ShopTexture,
+                placeholderData.ShopTexture,
+                contentPackID,
+                animalKey,
+                TextureType.Shop
+            );
+        }
+
+        private string GetTextureString(
+            string? currentValue,
+            string originalValue,
+            string? placeholderValue,
+            string contentPackID,
+            string animalKey,
+            TextureType textureName
+        )
+        {
+            var clonedInfo = ClonedAnimalsInfoList.Find(x => x.MaleKey == animalKey);
+            string texture;
+            if (currentValue == null)
+            {
+                texture = originalValue;
+            }
+            else if (currentValue.Equals("cp", StringComparison.OrdinalIgnoreCase))
+            {
+                texture =
+                    $"Animals/MaleClones/{contentPackID}/{clonedInfo?.FemaleKey}/{textureName}";
+                clonedInfo!.Textures[textureName] = texture;
+            }
+            else
+            {
+                texture = (string)currentValue.Clone();
+            }
+            return texture;
+        }
+
+        internal static FarmAnimalData GetFarmAnimalDataPlaceholder()
+        {
+            return new FarmAnimalData
+            {
+                AlternatePurchaseTypes = null,
+                EggItemIds = null,
+                ProduceItemIds = new(),
+                DeluxeProduceItemIds = new(),
+                Skins = null,
+                StatToIncrementOnProduce = null,
+                CustomFields = null
+            };
+        }
+
+        private bool IsClonedEgg(string clonedEggID)
+        {
+            string pattern = @"^.*#(.*)#(\d*)_Cloned.*Egg$";
+            Match match = Regex.Match(clonedEggID, pattern);
+            return match.Success;
+        }
+
+        private bool IsClonedItem(
+            string clonedItemID,
+            CloneItemType? cloneItemType = null,
+            bool fertilized = false
+        )
+        {
+            string pattern =
+                cloneItemType == null
+                    ? @"^[^#]+#(.*)#(.*)_Cloned(.*)$"
+                    : cloneItemType switch
+                    {
+                        CloneItemType.Egg
+                            => fertilized
+                                ? @"^[^#]+#(.*)#(.*)_ClonedFertilizedEgg$"
+                                : @"^[^#]+#(.*)#(.*)_Cloned.*Egg$",
+                        CloneItemType.Milk => @"^[^#]+#(.*)#(.*)_Cloned.*Milk$",
+                        CloneItemType.Misc => @"^[^#]+#(.*)#(.*)_Cloned.*Misc$",
+                        _ => string.Empty
+                    };
+            return Regex.IsMatch(clonedItemID, pattern);
+        }
+
+        private bool IsClonedEgg(ObjectData originalEggData)
+        {
+            return originalEggData.ContextTags != null
+                && originalEggData.ContextTags.Contains("cloned_egg");
+        }
+
+        private string GetClonedItemID(
+            string animalKey,
+            string originalItemID,
+            CloneItemType cloneItemType,
+            ItemOrEggType itemType = ItemOrEggType.Normal,
+            bool isFertilized = false
+        )
+        {
+            var suffix = cloneItemType switch
+            {
+                CloneItemType.Egg => isFertilized ? "ClonedFertilizedEgg" : $"Cloned{itemType}Egg",
+                CloneItemType.Milk => $"Cloned{itemType}Milk",
+                CloneItemType.Misc => $"Cloned{itemType}Misc",
+                _ => string.Empty
+            };
+            ;
+            var animalIdex = GetAnimalKeyIndex(animalKey);
+            return $"{ModManifest.UniqueID}_#{animalIdex}#{originalItemID}_{suffix}";
+        }
+
+        private int GetAnimalKeyIndex(string animalKey)
+        {
+            if (!SavedItemsData.AnimalKeys.Contains(animalKey))
+            {
+                SavedItemsData.AnimalKeys.Add(animalKey);
+            }
+            return SavedItemsData.AnimalKeys.IndexOf(animalKey);
+        }
+
+        private string GetFertilizedClonedEggID(string animalKey, string originalEggID)
+        {
+            if (IsClonedEgg(originalEggID))
+            {
+                return Regex.Replace(originalEggID, @"_Cloned.*Egg$", "_ClonedFertilizedEgg");
+            }
+            else
+            {
+                return GetClonedItemID(
+                    animalKey,
+                    originalEggID,
+                    CloneItemType.Egg,
+                    isFertilized: true
+                );
+            }
+        }
+
+        public string GetOriginalItemID(string input)
+        {
+            var textureInfo = ClonedItemsTextureInfo.Values.FirstOrDefault(t =>
+                t[TextureInfoType.Cloned].ID == input
+            );
+            if (textureInfo == null)
+            {
+                return string.Empty;
+            }
+            return textureInfo[TextureInfoType.Original].ID;
+        }
+
+        public (string AnimalKey, string OriginalItemID) GetOriginalItemAndAnimalID(string input)
+        {
+            var patterns = new[]
+            {
+                new { Pattern = @"^[^#]+#(.*)#(.*)_ClonedFertilizedEgg$" },
+                new { Pattern = @"^[^#]+#(.*)#(.*)_Cloned.*Egg$" },
+                new { Pattern = @"^[^#]+#(.*)#(.*)_Cloned.*Milk$" },
+                new { Pattern = @"^[^#]+#(.*)#(.*)_Cloned.*Misc$" },
+            };
+
+            foreach (var pattern in patterns)
+            {
+                if (Regex.IsMatch(input, pattern.Pattern))
+                {
+                    var regexPattern = new Regex(pattern.Pattern);
+                    var match = regexPattern.Match(input);
+
+                    if (match.Success)
+                    {
+                        try
+                        {
+                            int animalKeyIndex = int.Parse(match.Groups[1].Value);
+                            string itemID = match.Groups[2].Value;
+                            return (SavedItemsData.AnimalKeys[animalKeyIndex], itemID);
+                        }
+                        catch (Exception ex)
+                        {
+                            Monitor.Log(
+                                $"Failed to decompress egg ID:\nMessage: {ex.Message}\nStackTrace: {ex.StackTrace}",
+                                LogLevel.Error
+                            );
+                        }
+                    }
+                }
+            }
+            Monitor.Log($"Failed to get original IDs for input: {input}", LogLevel.Error);
+            return (string.Empty, string.Empty);
+        }
+
+        internal static string GetClonedAnimalID(string contentPackID, string originalAnimalKey)
+        {
+            return $"{contentPackID}_#{originalAnimalKey}#_Male";
+        }
+
+        private bool IsAClonedAnimal(string animalKey)
+        {
+            var clonedInfo = ClonedAnimalsInfoList.FirstOrDefault(x => x.MaleKey == animalKey);
+            return clonedInfo != null;
+        }
+
+        private EditExclusion GetExclusions()
+        {
+            List<string> BuildExclusionList(List<string> exclusions)
+            {
+                var AnimalExclusions = new List<string>();
+                foreach (var animal in exclusions)
+                {
+                    if (animal.Contains(','))
+                    {
+                        AnimalExclusions.AddRange(
+                            animal.Split(",", StringSplitOptions.TrimEntries)
+                        );
+                    }
+                    else
+                    {
+                        AnimalExclusions.Add(animal);
+                    }
+                }
+                return AnimalExclusions;
+            }
+            var exclusions = this.Helper.Data.ReadJsonFile<EditExclusion>("data/exclusions.json");
+            if (exclusions == null)
+            {
+                this.Helper.Data.WriteJsonFile("data/exclusions.json", new EditExclusion());
+                exclusions = this.Helper.Data.ReadJsonFile<EditExclusion>("data/exclusions.json");
+            }
+            var Exclusions = exclusions;
+            var finalExclusions = new EditExclusion();
+            finalExclusions.EditExclusions[EditType.BirthText] = BuildExclusionList(
+                Exclusions!
+                    .EditExclusions[EditType.BirthText]
+                    .Concat(VanillaAnimals.AnimalKeys)
+                    .ToList()
+            );
+            finalExclusions.EditExclusions[EditType.EggList] = BuildExclusionList(
+                Exclusions!
+                    .EditExclusions[EditType.EggList]
+                    .Concat(VanillaAnimals.AnimalKeys)
+                    .ToList()
+            );
+            finalExclusions.EditExclusions[EditType.CloneEggs] = BuildExclusionList(
+                Exclusions!
+                    .EditExclusions[EditType.CloneEggs]
+                    .Concat(VanillaAnimals.AnimalKeys)
+                    .ToList()
+            );
+            finalExclusions.ClonedEggsExclusionListEggs = BuildExclusionList(
+                Exclusions!.ClonedEggsExclusionListEggs
+            );
+            return finalExclusions;
+        }
+
+        public void CloneMachineData(Dictionary<string, MachineData> data)
+        {
+            if (ItemsToAdd.Count < 1)
+            {
+                return;
+            }
+            if (MachineRules.Count > 0)
+            {
+                SetUpMachineRules(data);
+            }
+            var modifiedMachines = new Dictionary<string, MachineData>();
+            foreach (
+                var (
+                    MachineKey,
+                    OutputRuleId,
+                    Triggers,
+                    OutputItemRuleID,
+                    OutputItemId
+                ) in MachineRules
+            )
+            {
+                var outputRule = data[MachineKey].OutputRules.Find(or => or.Id == OutputRuleId);
+                outputRule?.Triggers.AddRange(Triggers);
+                Monitor.Log(
+                    $"OutputItemRuleID null or empty: {!string.IsNullOrEmpty(OutputItemRuleID)}. OutpuItemsToClone contains {OutputItemId}: {OutpuItemsToClone.Select(x => x.OutputItemOriginalID).Contains(OutputItemId)}",
+                    LogLevel.Warn
+                );
+                if (
+                    !string.IsNullOrEmpty(OutputItemRuleID)
+                    && OutpuItemsToClone.Select(x => x.OutputItemOriginalID).Contains(OutputItemId)
+                )
+                {
+                    var clonedRule = outputRule?.CloneOrDeepClone(true);
+                    var (InputItem, OutputItemOriginalID, OutputItemClonedID) =
+                        OutpuItemsToClone.Find(i => i.OutputItemOriginalID == OutputItemId);
+                    var inputItem = InputItem;
+                    var outputItem = OutputItemOriginalID;
+                    clonedRule?.Triggers.RemoveAll(t =>
+                        t.RequiredItemId == null
+                        || GetUnqualifiedItemID(t.RequiredItemId) != inputItem
+                    );
+                    var outputItemRule = clonedRule.OutputItem.Find(i => i.Id == OutputItemRuleID);
+                    if (outputItemRule == null)
+                    {
+                        continue;
+                    }
+                    outputItemRule.ItemId = $"(O){OutputItemClonedID}";
+                    data[MachineKey].OutputRules.Add(clonedRule);
+                    modifiedMachines.Add(MachineKey, data[MachineKey]);
+                }
+            }
+            Helper.Data.WriteJsonFile("data/modifiedMachines.json", modifiedMachines);
+            Helper.Data.WriteJsonFile("data/machineRules.json", MachineRules);
+        }
+
+        private void SetUpMachineRules(Dictionary<string, MachineData> data)
+        {
+            var originalItems = ClonedItemsTextureInfo
+                .SelectMany(t =>
+                    t.Value.Where(x => x.Key == TextureInfoType.Original).Select(x => x.Value)
+                )
+                .Select(y => y.ID);
+            foreach (var (machineKey, machineData) in data.Where(x => x.Value.OutputRules != null))
+            {
+                foreach (
+                    var rule in machineData.OutputRules.Where(r =>
+                        r.Triggers != null && r.OutputItem != null
+                    )
+                )
+                {
+                    List<MachineOutputTriggerRule> triggers = rule
+                        .Triggers.Where(t =>
+                            t.RequiredItemId != null
+                            && originalItems.Contains(GetUnqualifiedItemID(t.RequiredItemId))
+                        )
+                        .Select(t => t.CloneOrDeepClone(true))
+                        .Where(t => t != null)
+                        .ToList()!;
+                    if (triggers.Count < 1)
+                    {
+                        continue;
+                    }
+                    foreach (var trigger in triggers)
+                    {
+                        var unqualifiedReqItemId = GetUnqualifiedItemID(trigger.RequiredItemId!);
+                        var clonedID = ClonedItemsTextureInfo
+                            .Values.First(x =>
+                                x[TextureInfoType.Original].ID == unqualifiedReqItemId
+                            )[TextureInfoType.Cloned]
+                            .ID;
+                        trigger.RequiredItemId = $"(O){clonedID}";
+                        trigger.Id = $"{clonedID}";
+                    }
+                    var outputItemRule = rule.OutputItem.FirstOrDefault(i => i.ItemId != null);
+                    var outputItemRuleID = outputItemRule != null ? outputItemRule.Id : "";
+                    var outputItemID =
+                        outputItemRule != null ? GetUnqualifiedItemID(outputItemRule.ItemId) : "";
+                    MachineRules.Add(
+                        (machineKey, rule.Id, triggers, outputItemRuleID, outputItemID)
+                    );
+                }
+            }
+        }
+
+        private string GetUnqualifiedItemID(string qualifiedItemID) =>
+            qualifiedItemID.Replace("(O)", "");
+    }
+        #endregion
+}
