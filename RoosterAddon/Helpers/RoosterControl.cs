@@ -36,28 +36,22 @@ namespace RoosterAddon.Helpers
 
         public static bool UpdatePercentage(int chance)
         {
-            return RollChancePercent(chance);
+            if (chance <= 0)
+                return false;
+            if (chance >= 100)
+                return true;
+
+            return rnd.Next(100) < chance;
         }
 
         public static bool UpdatePercentage(float chance)
         {
-            return RollChancePercent(chance);
-        }
-
-        public static bool UpdatePercentage(double chance)
-        {
-            return RollChancePercent(chance);
-        }
-
-        private static bool RollChancePercent(double chancePercent)
-        {
-            if (double.IsNaN(chancePercent) || chancePercent <= 0)
+            if (chance <= 0)
                 return false;
-
-            if (chancePercent >= 100)
+            if (chance >= 100)
                 return true;
 
-            return rnd.NextDouble() < (chancePercent / 100.0);
+            return rnd.NextDouble() * 100.0 < chance;
         }
 
         private Dictionary<

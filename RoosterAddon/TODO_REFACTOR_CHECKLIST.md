@@ -1,46 +1,23 @@
-# RoosterAddon Refactor Checklist
+# RoosterAddon Refactor Checklist (Phase 0+)
 
-This tracks the WildEggsHatching-style refactor plan and the shipped stabilization fixes.
+This file is a living checklist to keep refactors honest.
 
-## Phase 0 — Baseline + guardrails
-- [x] Add `roosteraddon_dump_state` console command.
+## Phase 0: Baseline & guardrails
+- [ ] Capture a "known good" save for manual parity checks.
+- [x] Add `roosteraddon_dump_state` console command (JSON snapshot).
 - [x] Add parity checklist doc.
-- [ ] Capture a “before” dump and commit it as a baseline reference.
-- [ ] Capture an “after each phase” dump and compare.
+- [ ] Record baseline state dump files (before/after each phase).
 
-## Phase 1 — Stop-the-bleeding fixes
-- [x] GMCM registers once (no `UpdateTicked` setup loop).
-- [x] Fix probability math (`0%` truly means `0%`).
-- [x] Remove file I/O from asset edits (`Data/FarmAnimals` / `Data/Objects` edit path).
-- [x] Remove `InvalidateCache("Data/Objects")` from inside asset edits.
-- [x] Optimize BetterTruffles tagging (no nested full scan).
+## Phase 1: Stop-the-bleeding fixes
+- [x] GMCM registers once on `GameLaunched` (no per-tick registration).
+- [x] No file IO inside `AssetRequested` edits.
+- [x] No cache invalidation inside asset edits (`InvalidateCache` deferred).
+- [x] Fix percentage roll math (0% = never, 100% = always).
+- [x] Remove unintended `female.Length` chance factor.
+- [x] Optimize BetterTruffles tagging (HashSet + single pass).
 
-## Phase 2 — Thin ModEntry
-- [ ] Event router + coordinator.
-- [ ] External mod adapters.
-
-## Phase 3 — Typed config + migration
-- [ ] `ModConfigV2` with validation + migration from legacy.
-
-## Phase 4 — Content pipeline editors
-- [ ] `SmapiContentCoordinator`
-- [ ] `FarmAnimalsEditor`
-- [ ] `ObjectsEditor`
-- [ ] `TexturesEditor`
-
-## Phase 5 — Core services + strategies
-- [ ] Strategy-based hatching service.
-- [ ] Luck adjustment service.
-
-## Phase 6 — Deterministic daily plan + save data
-- [ ] Daily plan computed once/day, persisted.
-
-## Phase 7 — Data-driven catalogs
-- [ ] Move rooster defs + produce groups + egg rules to JSON.
-
-## Phase 8 — GMCM descriptor UI
-- [ ] Descriptor-driven pages/sections.
-
-## Phase 9 — Tests + cleanup
-- [ ] Unit tests for core logic.
-- [ ] Remove legacy paths.
+## Next phases (planned)
+- [ ] Phase 2: Thin `ModEntry` + coordinator/router.
+- [ ] Phase 3: Typed config + migration.
+- [ ] Phase 4: Content pipeline editors (FarmAnimals/Objects/Textures).
+- [ ] Phase 5+: Daily plan + data catalogs + tests.

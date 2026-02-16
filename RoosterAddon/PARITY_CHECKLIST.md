@@ -1,32 +1,40 @@
-# RoosterAddon Parity Checklist
+# RoosterAddon Parity Checklist (manual)
 
-Use this checklist to verify refactors didn’t break behavior.
+Use this after each phase to confirm behavior hasn't drifted unexpectedly.
 
-## GMCM
-- [ ] GMCM page opens from title + in-game without errors.
-- [ ] Reset restores defaults.
-- [ ] Save applies changes and persists `roosterFemales.json`.
+## Setup
+- Load the same test save.
+- Run `roosteraddon_dump_state` and keep the JSON output.
+- Toggle debug option if you rely on debug logs.
 
-## Farm animals patching
-- [ ] Roosters appear with correct:
-  - required building
-  - purchase/sell prices
-  - maturation + production days
-  - harvest type
-- [ ] Rooster reload does not spam errors.
+## GMCM (Generic Mod Config Menu)
+- Open GMCM page.
+- Change a few options, save, reload menu:
+  - Values persist.
+  - No lag spikes when opening GMCM.
+- Change **Female assignments**, save:
+  - Reload game content (e.g. warp / sleep) and confirm changes apply.
+
+## Farm animals patch
+- Day start:
+  - Rooster types exist in `Data/FarmAnimals`.
+  - Shop icons/textures still load.
+- Warp between locations:
+  - If UpdateRate is OnLocationChange, confirm FarmAnimals edits re-apply.
 
 ## Hatching behavior
-- [ ] Original mode: normal/large eggs show up as expected.
-- [ ] Fertilized-only mode: fertilized eggs replace produce for mapped females.
-- [ ] Rooster-to-chicken ratio option affects egg sharing as expected.
+- HatchOnlyByFertilized = ON:
+  - Females produce fertilized eggs as expected.
+  - Roosters hatch from fertilized eggs as expected.
+- HatchOnlyByFertilized = OFF:
+  - Normal/Large eggs logic still works.
+- If LetMeHatch integration is installed:
+  - Cloned eggs detected and supported females appear.
 
-## Data/Objects patching
-- [ ] Fertilized egg objects exist (cloned/created as expected).
-- [ ] BetterTruffles context tag applied only to intended objects.
-
-## Interop
-- [ ] LetMeHatch integration works when installed.
-- [ ] No hard dependency when not installed.
+## Objects patch
+- Fertilized egg objects exist where expected.
+- BetterTruffles tag applied to default rooster produces.
 
 ## Diagnostics
-- [ ] `roosteraddon_dump_state` creates a JSON file under `data/state-dumps/`.
+- `roosteraddon_dump_state farmanimals` works (includes farm animals key list).
+- No errors/spam in SMAPI console during asset loads.
