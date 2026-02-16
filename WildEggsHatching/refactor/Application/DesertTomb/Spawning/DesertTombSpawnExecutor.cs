@@ -18,6 +18,14 @@ namespace WildEggsHatching.Application.DesertTomb.Spawning;
 /// </summary>
 public sealed class DesertTombSpawnExecutor
 {
+    private const string MonsterTypeKey = Constants.ModId + "/deserttomb/type";
+    private const string SpawnAreaIdKey = Constants.ModId + "/deserttomb/areaId";
+    private const string RoleKey = Constants.ModId + "/deserttomb/role";
+    private const string HomeTileKey = Constants.ModId + "/deserttomb/homeTile";
+    private const string LeashRadiusKey = Constants.ModId + "/deserttomb/leashRadius";
+    private const string LeashRectKey = Constants.ModId + "/deserttomb/leashRect";
+    private const string PatrolPointsKey = Constants.ModId + "/deserttomb/patrolPoints";
+    private const string PatrolIndexKey = Constants.ModId + "/deserttomb/patrolIndex";
 
     private readonly IDesertTombMonsterFactory _factory;
     private readonly ILog _log;
@@ -125,22 +133,17 @@ public sealed class DesertTombSpawnExecutor
                     customDropData: null
                 );
 
-                monster.modData[TombMonsterBehaviorModData.MonsterTypeKey] = spec.Type.ToString();
-                monster.modData[TombMonsterBehaviorModData.SpawnAreaIdKey] = areaState.AreaId.ToString();
-                if (spec.Type != TombMonsterType.TheTombPharaoh)
+                monster.modData[MonsterTypeKey] = spec.Type.ToString();
+                monster.modData[SpawnAreaIdKey] = areaState.AreaId.ToString();
+                monster.modData[RoleKey] = spec.Role.ToString();
+                monster.modData[HomeTileKey] = $"{tile.X},{tile.Y}";
+                monster.modData[LeashRectKey] = $"{areaState.Rect.X},{areaState.Rect.Y},{areaState.Rect.Width},{areaState.Rect.Height}";
+                monster.modData[LeashRadiusKey] = ComputeLeashRadiusTiles(areaState.Rect).ToString();
+
+                if (spec.Role == TombMonsterRole.Patrol)
                 {
-                    var role = spec.Role;
-                    monster.modData[TombMonsterBehaviorModData.RoleKey] = role.ToString();
-
-                    monster.modData[TombMonsterBehaviorModData.HomeTileKey] = TombMonsterBehaviorModData.FormatPoint(tile);
-
-                    var leashRadius = ComputeLeashRadius(areaState.Rect, role);
-                    monster.modData[TombMonsterBehaviorModData.LeashRadiusKey] = leashRadius.ToString();
-
-                    if (role == MonsterSpawnRole.Guard || role == MonsterSpawnRole.Patrol)
-                        monster.modData[TombMonsterBehaviorModData.LeashRectKey] = TombMonsterBehaviorModData.FormatRect(areaState.Rect);
-
-                    monster.modData.Remove(TombMonsterBehaviorModData.LeashTicksKey);
+                    monster.modData[PatrolPointsKey] = BuildPatrolPoints(mineShaft, areaState, tile);
+                    monster.modData[PatrolIndexKey] = "0";
                 }
 
                 mineShaft.characters.Add(monster);
@@ -154,6 +157,42 @@ public sealed class DesertTombSpawnExecutor
         }
 
         return spawned;
+    }
+
+
+    private static int ComputeLeashRadiusTiles(Rectangle rect)
+    {
+        // Keep it simple: bigger areas leash wider. Clamp to a sane range.
+        var r = Math.Max(rect.Width, rect.Height);
+        return Math.Clamp(r, 6, 20);
+    }
+
+    private static string BuildPatrolPoints(MineShaft mineShaft, TombAreaState areaState, Point homeTile)
+    {
+        // home + 1–3 additional points, spaced out a bit.
+        var desired = mineShaft.mineRandom.Next(2, 5);
+        var points = new List<Point>(capacity: desired) { homeTile };
+
+        // Sample from valid tiles without consuming the area spawn cache.
+        var candidates = areaState.ValidSpawnTiles;
+        if (candidates.Count == 0)
+            return $"{homeTile.X},{homeTile.Y}";
+
+        var attempts = Math.Min(200, candidates.Count * 2);
+        for (int i = 0; i < attempts && points.Count < desired; i++)
+        {
+            var candidate = candidates[mineShaft.mineRandom.Next(candidates.Count)];
+            if (candidate == homeTile)
+                continue;
+
+            if (!TombSpawnTileCache.IsFarEnough(candidate, points, minSpacingTiles: 2))
+                continue;
+
+            points.Add(candidate);
+        }
+
+        // Serialize as "x,y;x,y;..."
+        return string.Join(";", points.ConvertAll(p => $"{p.X},{p.Y}"));
     }
 
     private static bool IsFarFromPlayer(Point tile, int minDistanceTiles)

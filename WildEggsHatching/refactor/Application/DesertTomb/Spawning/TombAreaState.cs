@@ -30,9 +30,9 @@ public sealed class TombAreaState
     public IReadOnlyDictionary<TombMonsterType, MonsterSpawnStats> StatsByType { get; }
 
     /// <summary>
-    /// Planned role per monster type (from the pure plan).
+    /// Planned roles per monster type (from the pure plan).
     /// </summary>
-    public IReadOnlyDictionary<TombMonsterType, MonsterSpawnRole> RoleByType { get; }
+    public IReadOnlyDictionary<TombMonsterType, TombMonsterRole> RolesByType { get; }
 
     public IReadOnlyList<Point> ValidSpawnTiles { get; }
 
@@ -51,7 +51,7 @@ public sealed class TombAreaState
         int capacityChosen,
         IReadOnlyDictionary<TombMonsterType, int> desiredCountByType,
         IReadOnlyDictionary<TombMonsterType, MonsterSpawnStats> statsByType,
-        IReadOnlyDictionary<TombMonsterType, MonsterSpawnRole> roleByType,
+        IReadOnlyDictionary<TombMonsterType, TombMonsterRole> rolesByType,
         IReadOnlyList<Point> validSpawnTiles,
         int minSpacingTiles
     )
@@ -64,7 +64,7 @@ public sealed class TombAreaState
 
         DesiredCountByType = desiredCountByType ?? throw new ArgumentNullException(nameof(desiredCountByType));
         StatsByType = statsByType ?? throw new ArgumentNullException(nameof(statsByType));
-        RoleByType = roleByType ?? throw new ArgumentNullException(nameof(roleByType));
+        RolesByType = rolesByType ?? throw new ArgumentNullException(nameof(rolesByType));
 
         ValidSpawnTiles = validSpawnTiles ?? throw new ArgumentNullException(nameof(validSpawnTiles));
         SpawnTiles = new TombSpawnTileCache(candidates: new List<Point>(ValidSpawnTiles), minSpacingTiles: minSpacingTiles);

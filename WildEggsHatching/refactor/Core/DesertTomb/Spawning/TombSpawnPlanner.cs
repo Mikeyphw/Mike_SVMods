@@ -100,8 +100,7 @@ public sealed class TombSpawnPlanner
                 globalMaxByType: globalMaxByType,
                 type: guardType,
                 desiredCount: guardCount,
-                stats: statsByType[guardType],
-                role: MonsterSpawnRole.Guard
+                stats: statsByType[guardType]
             );
 
             if (remaining > 0)
@@ -109,7 +108,7 @@ public sealed class TombSpawnPlanner
                 var wanderPool = candidates.Where(t => t != guardType).ToList();
                 if (wanderPool.Count == 0)
                 {
-                    AddWithCaps(specs, globalCounts, globalMaxByType, guardType, remaining, statsByType[guardType], MonsterSpawnRole.Guard);
+                    AddWithCaps(specs, globalCounts, globalMaxByType, guardType, remaining, statsByType[guardType], TombMonsterRole.Guard);
                 }
                 else
                 {
@@ -124,14 +123,14 @@ public sealed class TombSpawnPlanner
 
                     if (wanderTypes.Count == 1)
                     {
-                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[0], remaining, statsByType[wanderTypes[0]], MonsterSpawnRole.Wander);
+                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[0], remaining, statsByType[wanderTypes[0]]);
                     }
                     else
                     {
                         var first = NextInclusive(1, remaining - 1);
                         var second = remaining - first;
-                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[0], first, statsByType[wanderTypes[0]], MonsterSpawnRole.Wander);
-                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[1], second, statsByType[wanderTypes[1]], MonsterSpawnRole.Wander);
+                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[0], first, statsByType[wanderTypes[0]]);
+                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[1], second, statsByType[wanderTypes[1]]);
                     }
                 }
             }
@@ -170,6 +169,23 @@ public sealed class TombSpawnPlanner
         return candidates[^1];
     }
 
+
+    private static TombMonsterRole PreferRole(TombMonsterRole existing, TombMonsterRole incoming)
+    {
+        if (existing == incoming)
+            return existing;
+
+        // Guard > Patrol > Wander
+        static int Rank(TombMonsterRole r) => r switch
+        {
+            TombMonsterRole.Guard => 3,
+            TombMonsterRole.Patrol => 2,
+            _ => 1,
+        };
+
+        return Rank(existing) >= Rank(incoming) ? existing : incoming;
+    }
+
     private static void AddWithCaps(
         List<MonsterSpawnSpec> specs,
         Dictionary<TombMonsterType, int> globalCounts,
@@ -177,7 +193,7 @@ public sealed class TombSpawnPlanner
         TombMonsterType type,
         int desiredCount,
         MonsterSpawnStats stats,
-        MonsterSpawnRole role
+        TombMonsterRole role
     )
     {
         if (desiredCount <= 0)
@@ -207,10 +223,10 @@ public sealed class TombSpawnPlanner
 
         globalCounts[type] = currentGlobal + count;
 
-        // Merge if spec already exists for this type+role.
+        // Merge if spec already exists for this type.
         for (int i = 0; i < specs.Count; i++)
         {
-            if (specs[i].Type != type || specs[i].Role != role)
+            if (specs[i].Type != type)
                 continue;
 
             var merged = specs[i] with { Count = specs[i].Count + count };

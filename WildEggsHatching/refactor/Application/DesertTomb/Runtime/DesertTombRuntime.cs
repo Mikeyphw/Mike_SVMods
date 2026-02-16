@@ -101,7 +101,6 @@ public sealed class DesertTombRuntime
 
             _activeFloor.Population.UpdateTicked();
             _roleEnforcer.UpdateTicked(_activeFloor.MineShaft);
-
         }
     }
 

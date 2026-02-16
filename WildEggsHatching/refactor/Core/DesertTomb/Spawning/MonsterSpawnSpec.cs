@@ -10,5 +10,5 @@ public sealed record MonsterSpawnSpec(
     TombMonsterType Type,
     int Count,
     MonsterSpawnStats Stats,
-    MonsterSpawnRole Role
+    TombMonsterRole Role
 );
