@@ -1,8 +1,9 @@
+using System;
+
 namespace RoosterAddon.Framework
 {
-    public interface ILetMeHatchApi
+    [Obsolete("Use Mikew.BirdsOfAFeather.Framework.ILetMeHatchApi instead.")]
+    public interface ILetMeHatchApi : Mikew.BirdsOfAFeather.Framework.ILetMeHatchApi
     {
-        List<string> AnimalsWithClonedEggs { get; }
-        bool CloneEggs {get;}
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using RoosterAddon.Enums;
+using LuckyTypes = Mikew.BirdsOfAFeather.EnumsAndStrings.Enums.LuckyTypes;
 using RoosterAddon.Framework;
 using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;

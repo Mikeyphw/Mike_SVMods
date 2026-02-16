@@ -1,6 +1,7 @@
 using System.Reflection;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
+using LuckyTypes = Mikew.BirdsOfAFeather.EnumsAndStrings.Enums.LuckyTypes;
 using RoosterAddon.Framework;
 using Mikew.BirdsOfAFeather.Framework.Random;
 using StardewModdingAPI;

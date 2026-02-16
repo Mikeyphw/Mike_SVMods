@@ -1,4 +1,4 @@
-using RoosterAddon.Enums;
+using LuckyTypes = Mikew.BirdsOfAFeather.EnumsAndStrings.Enums.LuckyTypes;
 
 namespace RoosterAddon.Application.State;
 

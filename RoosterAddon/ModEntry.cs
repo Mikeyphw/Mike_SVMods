@@ -4,6 +4,8 @@ using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework;
 using RoosterAddon.Helpers;
+using Mikew.BirdsOfAFeather.Framework;
+using ILetMeHatchApi = Mikew.BirdsOfAFeather.Framework.ILetMeHatchApi;
 using RoosterAddon.Application;
 using RoosterAddon.Infrastructure.Smapi;
 using RoosterAddon.Infrastructure.SaveData;
@@ -66,7 +68,7 @@ internal sealed partial class ModEntry : Mod
         return _coordinator;
     }
 
-    private bool GetHatchApiCloneEggsOption() => hatchApi is not null && hatchApi.CloneEggs;
+    private bool GetHatchApiCloneEggsOption() => hatchApi is not null && hatchApi.GetClonedAnimalsInfo().Count > 0;
 
     private bool GetHatchOnlyByFertilizedOption() =>
         ModCfg.Options[OptionEntries.HatchingMode][OptionDetails.Value] != OptionValues.Original;

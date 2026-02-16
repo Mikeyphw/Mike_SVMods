@@ -1,3 +1,5 @@
+using System;
+
 namespace RoosterAddon.Enums
 {
     public enum RoosterItemDataEntries
@@ -123,6 +125,7 @@ namespace RoosterAddon.Enums
         MoldFolderPath
     }
 
+    [Obsolete("Use Mikew.BirdsOfAFeather.EnumsAndStrings.Enums.LuckyTypes instead.")]
     public enum LuckyTypes
     {
         SuperUnlucky,
