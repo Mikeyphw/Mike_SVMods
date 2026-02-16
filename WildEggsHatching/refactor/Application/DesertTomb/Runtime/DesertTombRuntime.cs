@@ -34,6 +34,7 @@ public sealed class DesertTombRuntime
     private readonly Func<bool> _isMainPlayer;
     private readonly DesertTombLevelGenerator _generator;
     private readonly DesertTombSpawnExecutor _spawnExecutor;
+    private readonly TombRoleEnforcer _roleEnforcer;
 
     private readonly DesertTombDiagnostics? _diagnostics;
     private ActiveTombFloorState? _activeFloor;
@@ -56,6 +57,7 @@ public sealed class DesertTombRuntime
         _isMainPlayer = isMainPlayer ?? throw new ArgumentNullException(nameof(isMainPlayer));
         _generator = generator ?? throw new ArgumentNullException(nameof(generator));
         _spawnExecutor = spawnExecutor ?? throw new ArgumentNullException(nameof(spawnExecutor));
+        _roleEnforcer = new TombRoleEnforcer(_log);
         _diagnostics = diagnostics;
     }
 
@@ -98,6 +100,8 @@ public sealed class DesertTombRuntime
             }
 
             _activeFloor.Population.UpdateTicked();
+            _roleEnforcer.UpdateTicked(_activeFloor.MineShaft);
+
         }
     }
 

@@ -18,8 +18,6 @@ namespace WildEggsHatching.Application.DesertTomb.Spawning;
 /// </summary>
 public sealed class DesertTombSpawnExecutor
 {
-    private const string MonsterTypeKey = Constants.ModId + "/deserttomb/type";
-    private const string SpawnAreaIdKey = Constants.ModId + "/deserttomb/areaId";
 
     private readonly IDesertTombMonsterFactory _factory;
     private readonly ILog _log;
@@ -127,8 +125,23 @@ public sealed class DesertTombSpawnExecutor
                     customDropData: null
                 );
 
-                monster.modData[MonsterTypeKey] = spec.Type.ToString();
-                monster.modData[SpawnAreaIdKey] = areaState.AreaId.ToString();
+                monster.modData[TombMonsterBehaviorModData.MonsterTypeKey] = spec.Type.ToString();
+                monster.modData[TombMonsterBehaviorModData.SpawnAreaIdKey] = areaState.AreaId.ToString();
+                if (spec.Type != TombMonsterType.TheTombPharaoh)
+                {
+                    var role = spec.Role;
+                    monster.modData[TombMonsterBehaviorModData.RoleKey] = role.ToString();
+
+                    monster.modData[TombMonsterBehaviorModData.HomeTileKey] = TombMonsterBehaviorModData.FormatPoint(tile);
+
+                    var leashRadius = ComputeLeashRadius(areaState.Rect, role);
+                    monster.modData[TombMonsterBehaviorModData.LeashRadiusKey] = leashRadius.ToString();
+
+                    if (role == MonsterSpawnRole.Guard || role == MonsterSpawnRole.Patrol)
+                        monster.modData[TombMonsterBehaviorModData.LeashRectKey] = TombMonsterBehaviorModData.FormatRect(areaState.Rect);
+
+                    monster.modData.Remove(TombMonsterBehaviorModData.LeashTicksKey);
+                }
 
                 mineShaft.characters.Add(monster);
                 areaState.IncrementSpawned(spec.Type);

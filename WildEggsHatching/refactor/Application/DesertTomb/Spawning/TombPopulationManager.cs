@@ -293,7 +293,8 @@ public sealed class TombPopulationManager
             if (!area.StatsByType.TryGetValue(type, out var stats))
                 continue;
 
-            list.Add(new MonsterSpawnSpec(type, spawnCount, stats.Clone()));
+            var role = area.RoleByType.TryGetValue(type, out var r) ? r : MonsterSpawnRole.Wander;
+            list.Add(new MonsterSpawnSpec(type, spawnCount, stats.Clone(), role));
             budget -= spawnCount;
         }
 
@@ -315,7 +316,7 @@ public sealed class TombPopulationManager
             if (count <= 0)
                 continue;
 
-            list.Add(new MonsterSpawnSpec(s.Type, count, s.Stats.Clone()));
+            list.Add(new MonsterSpawnSpec(s.Type, count, s.Stats.Clone(), s.Role));
         }
 
         return list;

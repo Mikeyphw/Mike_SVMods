@@ -30,13 +30,17 @@ public static class TombAreaStateBuilder
 
             var desired = new Dictionary<TombMonsterType, int>();
             var stats = new Dictionary<TombMonsterType, MonsterSpawnStats>();
+            var roles = new Dictionary<TombMonsterType, MonsterSpawnRole>();
             var allowed = new HashSet<TombMonsterType>();
 
             foreach (var s in areaPlan.Spawns)
             {
                 allowed.Add(s.Type);
-                desired[s.Type] = s.Count;
+                desired[s.Type] = (desired.TryGetValue(s.Type, out var current) ? current : 0) + s.Count;
                 stats[s.Type] = s.Stats.Clone();
+
+                if (!roles.TryGetValue(s.Type, out var existing) || PreferRole(s.Role, existing))
+                    roles[s.Type] = s.Role;
             }
 
             var capacity = desired.Values.Sum();
@@ -49,6 +53,7 @@ public static class TombAreaStateBuilder
                     capacityChosen: capacity,
                     desiredCountByType: desired,
                     statsByType: stats,
+                    roleByType: roles,
                     validSpawnTiles: validTiles,
                     minSpacingTiles: minSpacingTiles
                 )
@@ -57,4 +62,20 @@ public static class TombAreaStateBuilder
 
         return states;
     }
+
+
+    private static bool PreferRole(MonsterSpawnRole candidate, MonsterSpawnRole existing)
+    {
+        // Guard beats Patrol beats Wander.
+        return RolePriority(candidate) > RolePriority(existing);
+    }
+
+    private static int RolePriority(MonsterSpawnRole role)
+        => role switch
+        {
+            MonsterSpawnRole.Guard => 3,
+            MonsterSpawnRole.Patrol => 2,
+            _ => 1,
+        };
+
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using WildEggsHatching.DesertTomb.Core.Model;
+using WildEggsHatching.DesertTomb.Core.Spawning;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace WildEggsHatching.Application.DesertTomb.Spawning;
@@ -28,6 +29,11 @@ public sealed class TombAreaState
     /// </summary>
     public IReadOnlyDictionary<TombMonsterType, MonsterSpawnStats> StatsByType { get; }
 
+    /// <summary>
+    /// Planned role per monster type (from the pure plan).
+    /// </summary>
+    public IReadOnlyDictionary<TombMonsterType, MonsterSpawnRole> RoleByType { get; }
+
     public IReadOnlyList<Point> ValidSpawnTiles { get; }
 
     /// <summary>
@@ -45,6 +51,7 @@ public sealed class TombAreaState
         int capacityChosen,
         IReadOnlyDictionary<TombMonsterType, int> desiredCountByType,
         IReadOnlyDictionary<TombMonsterType, MonsterSpawnStats> statsByType,
+        IReadOnlyDictionary<TombMonsterType, MonsterSpawnRole> roleByType,
         IReadOnlyList<Point> validSpawnTiles,
         int minSpacingTiles
     )
@@ -57,6 +64,7 @@ public sealed class TombAreaState
 
         DesiredCountByType = desiredCountByType ?? throw new ArgumentNullException(nameof(desiredCountByType));
         StatsByType = statsByType ?? throw new ArgumentNullException(nameof(statsByType));
+        RoleByType = roleByType ?? throw new ArgumentNullException(nameof(roleByType));
 
         ValidSpawnTiles = validSpawnTiles ?? throw new ArgumentNullException(nameof(validSpawnTiles));
         SpawnTiles = new TombSpawnTileCache(candidates: new List<Point>(ValidSpawnTiles), minSpacingTiles: minSpacingTiles);
