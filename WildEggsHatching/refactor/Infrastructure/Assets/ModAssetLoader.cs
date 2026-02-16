@@ -36,6 +36,8 @@ public sealed class ModAssetLoader : IDisposable
             ["Characters/Monsters/SandyDuggy"] = "assets/Mines/SandyDuggy.png",
             ["Characters/Monsters/BruteMummy"] = "assets/Mines/BruteMummy.png",
             ["Characters/Monsters/SkeletonMummy"] = "assets/Mines/SkeletonMummy.png",
+            ["Characters/Monsters/ThePharaoh"] = "assets/Mines/ThePharaoh.png",
+            ["Characters/Monsters/ThePharaoh_CombatMode"] = "assets/Mines/ThePharaoh_CombatMode.png",
         };
 
         _maps = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)

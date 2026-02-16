@@ -9,6 +9,17 @@ public sealed class ModConfig
     /// </summary>
     public bool DesertTombModuleEnabled { get; set; } = true;
 
+    /// <summary>
+    /// Render a HUD arrow pointing towards The Pharaoh when off-screen (debug/optional).
+    /// </summary>
+    public bool DesertTombPharaohTrackerEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Enable extra DesertTomb trace logging (debug/optional).
+    /// </summary>
+    public bool DesertTombDebugLogging { get; set; } = false;
+
+
     public TombChance TombChance { get; set; } = TombChance.Medium;
 
     public bool AlternatePotionSprite { get; set; } = false;

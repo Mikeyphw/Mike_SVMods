@@ -42,6 +42,7 @@ internal static class TombMonsterUtilities
             { TombMonsterType.Ghost, "768 .95 768 .1 156 .08 338 .08 97 .005 99 .001 749 .99" },
             { TombMonsterType.Mummy, "768 .99 428 .2 428 .05 768 .15 243 .04 99 .001 74 .001" },
             { TombMonsterType.RoyalSerpent, "769 .99 769 .15 287 .15 226 .06 446 .008 74 .001" },
+            { TombMonsterType.TheTombPharaoh, $"261 .01 124 0.008 125 0.008 275 0.006 791 0.005 166 0.004 (H)MummyMask 0.002 {ModItemIds.OsirisScroll} 0.01" },
             { TombMonsterType.Spider, "769 .75 769 .1 337 .002 336 .01 335 .02 334 .04 203 .04 108 .003 98 .005 99 .001 74 .0005" },
             { TombMonsterType.Skeleton, "769 .99 881 .5 881 .4 881 .2 579 .005" },
         };
@@ -62,6 +63,10 @@ internal static class TombMonsterUtilities
             TombSkeletonMage => TombMonsterType.SkeletonMage,
             TombSpider => TombMonsterType.Spider,
             ThePharaoh => TombMonsterType.TheTombPharaoh,
+            Crawler => TombMonsterType.Crawler,
+            Matango => TombMonsterType.Matango,
+            Hurricane => TombMonsterType.Hurricane,
+            Sandi => TombMonsterType.Sandi,
             _ => TombMonsterType.Mummy,
         };
 }

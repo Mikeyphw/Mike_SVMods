@@ -1,23 +1,24 @@
 namespace WildEggsHatching.DesertTomb.Core.Model;
 
 /// <summary>
-/// Spawn-tuning statistics for a monster type within a tomb area.
+/// Spawn tuning for a monster type within a tomb area.
 /// </summary>
-public sealed class MonsterSpawnStats
+/// <param name="Weight">How likely this type is chosen by the planner.</param>
+/// <param name="MinPerArea">Minimum count for this type when selected (reserved for later).</param>
+/// <param name="MaxPerArea">Maximum count for this type within a single area.</param>
+/// <param name="PackMin">Minimum pack size when spawned as a pack (reserved for later).</param>
+/// <param name="PackMax">Maximum pack size when spawned as a pack (reserved for later).</param>
+/// <param name="DifficultyAdd">Additive difficulty modifier applied at monster creation time.</param>
+/// <param name="SpeedAdd">Additive speed modifier applied at monster creation time.</param>
+public sealed record MonsterSpawnStats(
+    int Weight,
+    int MinPerArea,
+    int MaxPerArea,
+    int PackMin,
+    int PackMax,
+    int DifficultyAdd,
+    int SpeedAdd
+)
 {
-    public int Max { get; init; }
-    public int Difficulty { get; init; }
-    public int Speed { get; init; }
-
-    public MonsterSpawnStats(int max, int difficulty, int speed)
-    {
-        Max = max;
-        Difficulty = difficulty;
-        Speed = speed;
-    }
-
-    /// <summary>
-    /// Create a deep clone of this instance.
-    /// </summary>
-    public MonsterSpawnStats Clone() => new(Max, Difficulty, Speed);
+    public MonsterSpawnStats Clone() => this with { };
 }

@@ -35,6 +35,11 @@ public static class DesertTombEnums
         HauntedSkull,
         RoyalSerpent,
         TheTombPharaoh,
+    
+        Crawler,
+        Matango,
+        Hurricane,
+        Sandi,
     }
 
     /// <summary>

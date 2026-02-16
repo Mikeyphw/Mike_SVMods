@@ -1,4 +1,10 @@
 using System;
+using WildEggsHatching.Application.DesertTomb.Generation;
+using WildEggsHatching.Application.DesertTomb.Runtime;
+using WildEggsHatching.Application.DesertTomb.Spawning;
+using WildEggsHatching.DesertTomb.Core.Configuration;
+using WildEggsHatching.Infrastructure.DesertTomb.Monsters;
+using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using WildEggsHatching.Application.Facade;
@@ -39,6 +45,10 @@ public sealed class ModEntry : Mod
 
     private ProgressionService? _progression;
     private int _tickCounter;
+
+    private DesertTombRuntime? _desertTomb;
+
+    private DesertTombDiagnostics? _desertTombDiagnostics;
 
     public override void Entry(IModHelper helper)
     {
@@ -110,6 +120,23 @@ public sealed class ModEntry : Mod
 
         var items = new GameItemRegistry();
 
+        // DesertTomb runtime (Phase 0): activate tomb floors and spawn tomb monsters.
+        var tombConfig = SpawnConfiguration.Default;
+        var tombGenerator = new DesertTombLevelGenerator(tombConfig);
+        var tombFactory = new DesertTombMonsterFactory();
+        var tombSpawnExecutor = new DesertTombSpawnExecutor(tombFactory, log);
+        _desertTombDiagnostics = new DesertTombDiagnostics(helper, configProvider, log);
+        _desertTomb = new DesertTombRuntime(
+            config: configProvider,
+            getStep: () => _progression?.GetCurrentStep() ?? ProgressionStep.PartI,
+            log: log,
+            isMainPlayer: () => Context.IsMainPlayer,
+            generator: tombGenerator,
+            spawnExecutor: tombSpawnExecutor,
+            diagnostics: _desertTombDiagnostics
+        );
+
+
         _facade = new ModFacade(
             config: configProvider,
             log: log,
@@ -135,6 +162,8 @@ public sealed class ModEntry : Mod
         helper.Events.GameLoop.DayStarted += OnDayStarted;
         helper.Events.GameLoop.DayEnding += OnDayEnding;
         helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+        helper.Events.Player.Warped += OnWarped;
+        helper.Events.Display.RenderingHud += OnRenderingHud;
         configProvider.ConfigChanged += OnConfigChanged;
 
         helper.ConsoleCommands.Add(
@@ -153,18 +182,28 @@ public sealed class ModEntry : Mod
 
         _tickCounter++;
         _progression?.OnUpdateTicked(isMultipleOf60Ticks: _tickCounter % 60 == 0);
+        _desertTomb?.OnUpdateTicked();
     }
 
     private void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
         _progression?.OnDayStarted();
         _spawner?.OnDayStarted();
+        _desertTomb?.OnDayStarted();
     }
 
     private void OnDayEnding(object? sender, DayEndingEventArgs e)
     {
         _spawner?.OnDayEnding();
         _progression?.OnDayEnding();
+    }
+
+    private void OnWarped(object? sender, WarpedEventArgs e)
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        _desertTomb?.OnWarped(e.NewLocation);
     }
 
     private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Config.ConfigChangedEventArgs e)

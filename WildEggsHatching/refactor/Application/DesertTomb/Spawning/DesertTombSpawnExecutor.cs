@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using StardewValley;
 using StardewValley.Locations;
 using WildEggsHatching.DesertTomb.Core.Configuration;
 using WildEggsHatching.DesertTomb.Core.Spawning;
 using WildEggsHatching.Infrastructure.DesertTomb.Monsters;
 using WildEggsHatching.Infrastructure.Logging;
+using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace WildEggsHatching.Application.DesertTomb.Spawning;
 
@@ -25,7 +26,12 @@ public sealed class DesertTombSpawnExecutor
         _log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
-    public int Execute(MineShaft mineShaft, TombSpawnPlan plan, SpawnConfiguration config)
+    public int Execute(
+        MineShaft mineShaft,
+        TombSpawnPlan plan,
+        SpawnConfiguration config,
+        IReadOnlyList<TombAreaState> areaStates
+    )
     {
         if (mineShaft is null)
             throw new ArgumentNullException(nameof(mineShaft));
@@ -33,67 +39,71 @@ public sealed class DesertTombSpawnExecutor
             throw new ArgumentNullException(nameof(plan));
         if (config is null)
             throw new ArgumentNullException(nameof(config));
+        if (areaStates is null)
+            throw new ArgumentNullException(nameof(areaStates));
 
         int spawned = 0;
+
+        var statesById = new Dictionary<int, TombAreaState>(capacity: areaStates.Count);
+        foreach (var s in areaStates)
+            statesById[s.AreaId] = s;
 
         foreach (var areaPlan in plan.Areas)
         {
             var rect = areaPlan.Area.Area;
+            var areaId = TombAreaState.ComputeAreaId(rect, areaPlan.AreaType);
+
+            if (!statesById.TryGetValue(areaId, out var areaState))
+            {
+                // Defensive fallback; should not happen when built via TombAreaStateBuilder.
+                areaState = new TombAreaState(
+                    areaType: areaPlan.AreaType,
+                    rect: rect,
+                    allowedTypesResolved: TombAreaState.TypesFromPlan(Array.Empty<TombMonsterType>()),
+                    capacityChosen: 0,
+                    validSpawnTiles: TombSpawnTileCache.ComputeValidSpawnTiles(mineShaft, rect)
+                );
+                statesById[areaId] = areaState;
+            }
+
+            // Phase 2: compute valid tiles once per area and consume them while spawning.
+            var cache = new TombSpawnTileCache(
+                candidates: new List<Point>(areaState.ValidSpawnTiles),
+                minSpacingTiles: 0
+            );
+
             foreach (var spec in areaPlan.Spawns)
             {
                 for (int i = 0; i < spec.Count; i++)
                 {
-                    var tile = TryFindSpawnTile(mineShaft, rect, maxAttempts: config.Global.MonsterSpawnAttemptsPerMonster);
-                    if (tile is null)
+                    if (!cache.TryTakeTile(mineShaft, out var tile))
                     {
-                        _log.Trace(
+                        _log.Log(
                             $"[DesertTomb] No valid spawn tile for {spec.Type} in area {rect}. " +
-                            $"SpawnCount={spec.Count}, MineLevel={mineShaft.mineLevel}"
+                            $"SpawnCount={spec.Count}, MineLevel={mineShaft.mineLevel}",
+                            LogLevel.Trace
                         );
-                        continue;
+                        break;
                     }
 
-                    var pixelPos = tile.Value * 64f;
+                    var pixelPos = new Vector2(tile.X, tile.Y) * 64f;
+
                     var monster = _factory.Create(
                         monsterType: spec.Type,
                         position: pixelPos,
-                        difficulty: spec.Stats.Difficulty,
-                        speedToAdd: spec.Stats.Speed,
+                        difficulty: spec.Stats.DifficultyAdd,
+                        speedToAdd: spec.Stats.SpeedAdd,
                         multipliers: config.Multipliers,
                         customDropData: null
                     );
 
                     mineShaft.characters.Add(monster);
+                    areaState.IncrementSpawned(spec.Type);
                     spawned++;
                 }
             }
         }
 
         return spawned;
-    }
-
-    private static Vector2? TryFindSpawnTile(MineShaft mineShaft, Rectangle area, int maxAttempts)
-    {
-        maxAttempts = Math.Max(1, maxAttempts);
-
-        for (int i = 0; i < maxAttempts; i++)
-        {
-            int x = mineShaft.mineRandom.Next(area.X, area.Right);
-            int y = mineShaft.mineRandom.Next(area.Y, area.Bottom);
-
-            if (!mineShaft.isTileOnMap(x, y))
-                continue;
-
-            if (!mineShaft.isTileClearForMineObjects(x, y))
-                continue;
-
-            var tile = new Vector2(x, y);
-            if (mineShaft.isTileOccupied(tile))
-                continue;
-
-            return tile;
-        }
-
-        return null;
     }
 }

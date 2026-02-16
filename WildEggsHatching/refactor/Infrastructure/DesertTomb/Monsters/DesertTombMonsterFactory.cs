@@ -26,7 +26,11 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
         { TombMonsterType.Skeleton, "Skeleton" },
         { TombMonsterType.SkeletonMage, "Skeleton Mage" },
         { TombMonsterType.Spider, "Spider" },
-        { TombMonsterType.TheTombPharaoh, "Mummy_dangerous" },
+        { TombMonsterType.TheTombPharaoh, "ThePharaoh" },
+        { TombMonsterType.Crawler, "Crawler" },
+        { TombMonsterType.Matango, "Matango" },
+        { TombMonsterType.Hurricane, "Hurricane" },
+        { TombMonsterType.Sandi, "Sandi" },
     };
 
     public Monster Create(
@@ -57,6 +61,11 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
             TombMonsterType.SkeletonMage => new TombSkeletonMage(multipliers, position, difficulty, texture, speedToAdd, customDropData),
             TombMonsterType.Spider => new TombSpider(multipliers, position, difficulty, texture, speedToAdd, customDropData),
             TombMonsterType.TheTombPharaoh => new ThePharaoh(multipliers, position, difficulty, texture, speedToAdd, customDropData),
+
+            TombMonsterType.Crawler => new Crawler(multipliers, position, difficulty, texture, speedToAdd, customDropData),
+            TombMonsterType.Matango => new Matango(multipliers, position, difficulty, texture, speedToAdd, customDropData),
+            TombMonsterType.Hurricane => new Hurricane(multipliers, position, difficulty, texture, speedToAdd, customDropData),
+            TombMonsterType.Sandi => new Sandi(multipliers, position, difficulty, texture, speedToAdd, customDropData),
             _ => new TombMummy(multipliers, position, difficulty, "Mummy", speedToAdd, customDropData),
         };
     }

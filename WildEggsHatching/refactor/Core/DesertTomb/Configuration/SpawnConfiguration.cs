@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using WildEggsHatching.Core.Enums;
 using WildEggsHatching.DesertTomb.Core.Model;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
@@ -23,9 +24,15 @@ namespace WildEggsHatching.DesertTomb.Core.Configuration;
         > AllowedMonstersByDifficulty { get; set; } = new();
 
         /// <summary>
+        /// Optional minimum progression step required for a monster to be allowed when progression mode is enabled.
+        /// </summary>
+        public Dictionary<TombMonsterType, ProgressionStep> MinimumProgressionByMonster { get; set; } = new();
+
+
+        /// <summary>
         /// Configuration for monster spawn rates by area type and difficulty
         /// </summary>
-        internal Dictionary<
+        public Dictionary<
             TombAreaType,
             Dictionary<TombMonsterType, MonsterSpawnStats>
         > MonsterSpawnRatesByArea { get; set; } = new();
@@ -106,42 +113,42 @@ namespace WildEggsHatching.DesertTomb.Core.Configuration;
                 {
                     [TombAreaType.MummyArea] = new Dictionary<TombMonsterType, MonsterSpawnStats>
                     {
-                        [TombMonsterType.TheTombPharaoh] = new(1, 2, 0),
+                        [TombMonsterType.TheTombPharaoh] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 2, speedAdd: 0),
                     },
                     [TombAreaType.MummyDefendArea] = new Dictionary<
                         TombMonsterType,
                         MonsterSpawnStats
                     >
                     {
-                        [TombMonsterType.Mummy] = new(3, 1, 0),
-                        [TombMonsterType.HauntedSkull] = new(1, 1, 0),
-                        [TombMonsterType.Ghost] = new(1, 0, 0),
-                        [TombMonsterType.RoyalSerpent] = new(1, 0, 0),
-                        [TombMonsterType.BruteMummy] = new(2, 1, 0),
-                        [TombMonsterType.Skeleton] = new(1, 1, 0),
-                        [TombMonsterType.SkeletonMage] = new(2, 1, 0),
+                        [TombMonsterType.Mummy] = new MonsterSpawnStats(weight: 3, minPerArea: 0, maxPerArea: 3, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.HauntedSkull] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.Ghost] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
+                        [TombMonsterType.RoyalSerpent] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
+                        [TombMonsterType.BruteMummy] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.Skeleton] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.SkeletonMage] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
                     },
                     [TombAreaType.NormalArea] = new Dictionary<TombMonsterType, MonsterSpawnStats>
                     {
-                        [TombMonsterType.Mummy] = new(99, 1, 0),
-                        [TombMonsterType.HauntedSkull] = new(1, 1, 0),
-                        [TombMonsterType.Ghost] = new(1, 0, 0),
-                        [TombMonsterType.AssassinBug] = new(1, 0, 0),
-                        [TombMonsterType.Bat] = new(1, 0, 0),
-                        [TombMonsterType.RoyalSerpent] = new(2, 0, 0),
-                        [TombMonsterType.BruteMummy] = new(99, 1, 0),
-                        [TombMonsterType.Skeleton] = new(99, 1, 0),
-                        [TombMonsterType.SkeletonMage] = new(1, 1, 0),
-                        [TombMonsterType.Spider] = new(2, 0, 0),
+                        [TombMonsterType.Mummy] = new MonsterSpawnStats(weight: 99, minPerArea: 0, maxPerArea: 99, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.HauntedSkull] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.Ghost] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
+                        [TombMonsterType.AssassinBug] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
+                        [TombMonsterType.Bat] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
+                        [TombMonsterType.RoyalSerpent] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
+                        [TombMonsterType.BruteMummy] = new MonsterSpawnStats(weight: 99, minPerArea: 0, maxPerArea: 99, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.Skeleton] = new MonsterSpawnStats(weight: 99, minPerArea: 0, maxPerArea: 99, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.SkeletonMage] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.Spider] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
                     },
                     [TombAreaType.SmallArea] = new Dictionary<TombMonsterType, MonsterSpawnStats>
                     {
-                        [TombMonsterType.Mummy] = new(2, 1, 0),
-                        [TombMonsterType.AssassinBug] = new(1, 0, 0),
+                        [TombMonsterType.Mummy] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.AssassinBug] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
                     },
                     [TombAreaType.DuggyArea] = new Dictionary<TombMonsterType, MonsterSpawnStats>
                     {
-                        [TombMonsterType.Duggy] = new(4, 0, 0),
+                        [TombMonsterType.Duggy] = new MonsterSpawnStats(weight: 4, minPerArea: 0, maxPerArea: 4, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
                     },
                 },
             };
@@ -285,6 +292,7 @@ namespace WildEggsHatching.DesertTomb.Core.Configuration;
     {
         public int MaxMonstersPerArea { get; set; } = 50;
         public Dictionary<TombMonsterType, int> MaxMonsterInTomb { get; }
+        public HashSet<TombMonsterType> BannedMonsters { get; set; } = new();
         public int MinMonstersPerArea { get; set; } = 1;
 
         /// <summary>
@@ -347,6 +355,8 @@ namespace WildEggsHatching.DesertTomb.Core.Configuration;
             {
                 clone.MaxMonsterInTomb.Add(kvp.Key, kvp.Value);
             }
+
+            clone.BannedMonsters = new HashSet<TombMonsterType>(this.BannedMonsters);
 
             return clone;
         }
