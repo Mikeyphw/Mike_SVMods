@@ -14,7 +14,7 @@ namespace RoosterAddon
     ///
     internal sealed partial class ModEntry : Mod
     {
-        private void GMCMSetup(ref IGenericModConfigMenuAPI configMenu)
+        internal void GMCMSetup(ref IGenericModConfigMenuAPI configMenu)
         {
             var OptionsOrder = new List<OptionEntries>
             {

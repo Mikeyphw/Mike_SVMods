@@ -17,7 +17,7 @@ This file is a living checklist to keep refactors honest.
 - [x] Optimize BetterTruffles tagging (HashSet + single pass).
 
 ## Next phases (planned)
-- [ ] Phase 2: Thin `ModEntry` + coordinator/router.
+- [x] Phase 2: Thin `ModEntry` + coordinator/router (event bodies in coordinator, SaveData store scaffold).
 - [ ] Phase 3: Typed config + migration.
 - [ ] Phase 4: Content pipeline editors (FarmAnimals/Objects/Textures).
 - [ ] Phase 5+: Daily plan + data catalogs + tests.
