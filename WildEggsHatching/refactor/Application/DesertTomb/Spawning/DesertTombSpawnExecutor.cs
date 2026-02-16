@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using StardewValley;
 using StardewValley.Locations;
 using WildEggsHatching.DesertTomb.Core.Configuration;
 using WildEggsHatching.DesertTomb.Core.Spawning;
@@ -17,6 +18,9 @@ namespace WildEggsHatching.Application.DesertTomb.Spawning;
 /// </summary>
 public sealed class DesertTombSpawnExecutor
 {
+    private const string MonsterTypeKey = Constants.ModId + "/deserttomb/type";
+    private const string SpawnAreaIdKey = Constants.ModId + "/deserttomb/areaId";
+
     private readonly IDesertTombMonsterFactory _factory;
     private readonly ILog _log;
 
@@ -54,56 +58,104 @@ public sealed class DesertTombSpawnExecutor
             var areaId = TombAreaState.ComputeAreaId(rect, areaPlan.AreaType);
 
             if (!statesById.TryGetValue(areaId, out var areaState))
-            {
-                // Defensive fallback; should not happen when built via TombAreaStateBuilder.
-                areaState = new TombAreaState(
-                    areaType: areaPlan.AreaType,
-                    rect: rect,
-                    allowedTypesResolved: TombAreaState.TypesFromPlan(Array.Empty<TombMonsterType>()),
-                    capacityChosen: 0,
-                    validSpawnTiles: TombSpawnTileCache.ComputeValidSpawnTiles(mineShaft, rect)
-                );
-                statesById[areaId] = areaState;
-            }
+                continue;
 
-            // Phase 2: compute valid tiles once per area and consume them while spawning.
-            var cache = new TombSpawnTileCache(
-                candidates: new List<Point>(areaState.ValidSpawnTiles),
-                minSpacingTiles: 0
+            spawned += SpawnIntoArea(
+                mineShaft: mineShaft,
+                areaState: areaState,
+                specs: areaPlan.Spawns,
+                config: config,
+                minDistanceToPlayerTiles: 0,
+                maxSpawnCount: int.MaxValue
             );
+        }
 
-            foreach (var spec in areaPlan.Spawns)
+        return spawned;
+    }
+
+    public int SpawnIntoArea(
+        MineShaft mineShaft,
+        TombAreaState areaState,
+        IReadOnlyList<MonsterSpawnSpec> specs,
+        SpawnConfiguration config,
+        int minDistanceToPlayerTiles,
+        int maxSpawnCount,
+        Dictionary<TombMonsterType, int>? spawnedByType = null
+    )
+    {
+        if (mineShaft is null)
+            throw new ArgumentNullException(nameof(mineShaft));
+        if (areaState is null)
+            throw new ArgumentNullException(nameof(areaState));
+        if (specs is null)
+            throw new ArgumentNullException(nameof(specs));
+        if (config is null)
+            throw new ArgumentNullException(nameof(config));
+
+        var spawned = 0;
+        var max = Math.Max(0, maxSpawnCount);
+
+        foreach (var spec in specs)
+        {
+            if (spawned >= max)
+                break;
+
+            for (int i = 0; i < spec.Count && spawned < max; i++)
             {
-                for (int i = 0; i < spec.Count; i++)
+                if (!areaState.SpawnTiles.TryTakeTile(
+                        mineShaft,
+                        accept: t => IsFarFromPlayer(t, minDistanceToPlayerTiles),
+                        out var tile
+                    ))
                 {
-                    if (!cache.TryTakeTile(mineShaft, out var tile))
-                    {
-                        _log.Log(
-                            $"[DesertTomb] No valid spawn tile for {spec.Type} in area {rect}. " +
-                            $"SpawnCount={spec.Count}, MineLevel={mineShaft.mineLevel}",
-                            LogLevel.Trace
-                        );
-                        break;
-                    }
-
-                    var pixelPos = new Vector2(tile.X, tile.Y) * 64f;
-
-                    var monster = _factory.Create(
-                        monsterType: spec.Type,
-                        position: pixelPos,
-                        difficulty: spec.Stats.DifficultyAdd,
-                        speedToAdd: spec.Stats.SpeedAdd,
-                        multipliers: config.Multipliers,
-                        customDropData: null
+                    _log.Log(
+                        $"[DesertTomb] No valid spawn tile for {spec.Type} in area {areaState.Rect}. " +
+                        $"Requested={spec.Count}, RemainingTiles={areaState.SpawnTiles.Remaining}, MineLevel={mineShaft.mineLevel}",
+                        LogLevel.Trace
                     );
-
-                    mineShaft.characters.Add(monster);
-                    areaState.IncrementSpawned(spec.Type);
-                    spawned++;
+                    break;
                 }
+
+                var pixelPos = new Vector2(tile.X, tile.Y) * 64f;
+
+                var monster = _factory.Create(
+                    monsterType: spec.Type,
+                    position: pixelPos,
+                    difficulty: spec.Stats.DifficultyAdd,
+                    speedToAdd: spec.Stats.SpeedAdd,
+                    multipliers: config.Multipliers,
+                    customDropData: null
+                );
+
+                monster.modData[MonsterTypeKey] = spec.Type.ToString();
+                monster.modData[SpawnAreaIdKey] = areaState.AreaId.ToString();
+
+                mineShaft.characters.Add(monster);
+                areaState.IncrementSpawned(spec.Type);
+
+                if (spawnedByType is not null)
+                    spawnedByType[spec.Type] = (spawnedByType.TryGetValue(spec.Type, out var c) ? c : 0) + 1;
+
+                spawned++;
             }
         }
 
         return spawned;
+    }
+
+    private static bool IsFarFromPlayer(Point tile, int minDistanceTiles)
+    {
+        if (minDistanceTiles <= 0)
+            return true;
+
+        // Main player is authoritative for spawns in our runtime.
+        var player = Game1.player;
+        if (player is null)
+            return true;
+
+        var playerTile = player.getTileLocationPoint();
+        var dx = tile.X - playerTile.X;
+        var dy = tile.Y - playerTile.Y;
+        return (dx * dx + dy * dy) >= (minDistanceTiles * minDistanceTiles);
     }
 }

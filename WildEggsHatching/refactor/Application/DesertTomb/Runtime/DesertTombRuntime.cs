@@ -13,16 +13,16 @@ using WildEggsHatching.DesertTomb.Core.Runtime;
 using WildEggsHatching.DesertTomb.Core.Spawning;
 using WildEggsHatching.Infrastructure.Config;
 using WildEggsHatching.Infrastructure.Logging;
-using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
+using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace WildEggsHatching.Application.DesertTomb.Runtime;
 
 /// <summary>
-/// Minimal runtime integration for DesertTomb (Phase 0):
+/// Runtime integration for DesertTomb:
 /// - Detect tomb floors (via AdditionalMineMaps or direct tomb map paths),
 /// - Apply level visuals/containers,
-/// - Plan and spawn tomb monsters once per floor instance.
+/// - Plan and spawn tomb monsters with paced waves (Phase 3).
 /// </summary>
 public sealed class DesertTombRuntime
 {
@@ -37,7 +37,6 @@ public sealed class DesertTombRuntime
 
     private readonly DesertTombDiagnostics? _diagnostics;
     private ActiveTombFloorState? _activeFloor;
-
 
     private MineShaft? _pending;
 
@@ -57,9 +56,8 @@ public sealed class DesertTombRuntime
         _isMainPlayer = isMainPlayer ?? throw new ArgumentNullException(nameof(isMainPlayer));
         _generator = generator ?? throw new ArgumentNullException(nameof(generator));
         _spawnExecutor = spawnExecutor ?? throw new ArgumentNullException(nameof(spawnExecutor));
-    
         _diagnostics = diagnostics;
-}
+    }
 
     /// <summary>
     /// Schedule tomb activation for the next tick (avoids running during the warp transition).
@@ -82,13 +80,25 @@ public sealed class DesertTombRuntime
 
     public void OnUpdateTicked()
     {
-        if (_pending is null)
-            return;
+        // Activation takes priority on the tick after a warp.
+        if (_pending is not null)
+        {
+            var mineShaft = _pending;
+            _pending = null;
+            TryActivate(mineShaft);
+        }
 
-        var mineShaft = _pending;
-        _pending = null;
+        // Runtime population pacing (Phase 3).
+        if (_activeFloor is not null)
+        {
+            if (!ReferenceEquals(Game1.currentLocation, _activeFloor.MineShaft))
+            {
+                _activeFloor = null;
+                return;
+            }
 
-        TryActivate(mineShaft);
+            _activeFloor.Population.UpdateTicked();
+        }
     }
 
     private void TryActivate(MineShaft mineShaft)
@@ -121,7 +131,7 @@ public sealed class DesertTombRuntime
             return;
         }
 
-        // Remove any vanilla monsters already spawned for this floor.
+        // Remove any vanilla mons.
         RemoveExistingMonsters(mineShaft);
 
         var config = SpawnConfiguration.Default;
@@ -134,17 +144,34 @@ public sealed class DesertTombRuntime
 
         var areaStates = TombAreaStateBuilder.Build(mineShaft, plan);
 
-        var spawned = _spawnExecutor.Execute(mineShaft, plan, config, areaStates);
+        var population = new TombPopulationManager(
+            mineShaft: mineShaft,
+            plan: plan,
+            config: config,
+            areas: areaStates,
+            executor: _spawnExecutor,
+            log: _log
+        );
 
-        _activeFloor = new ActiveTombFloorState(mineShaft, layoutLevel, mapPath, areaStates, plan, config);
+        var spawnedInitial = population.SpawnInitialWave();
+
+        _activeFloor = new ActiveTombFloorState(
+            mineShaft: mineShaft,
+            layoutLevel: layoutLevel,
+            mapPath: mapPath,
+            areas: areaStates,
+            plan: plan,
+            config: config,
+            population: population
+        );
 
         MarkProcessedToday(mineShaft);
 
-        _diagnostics?.OnActivated(layoutLevel, mapPath, mineShaft, plan, spawned);
+        _diagnostics?.OnActivated(layoutLevel, mapPath, mineShaft, plan, spawnedInitial);
 
         _log.Log(
             $"[DesertTomb] Activated on MineLevel={mineShaft.mineLevel} MapPath='{mapPath}'. " +
-            $"Layout={layoutLevel} Spawned={spawned} (Planned={plan.TotalPlanned}).",
+            $"Layout={layoutLevel} SpawnedInitial={spawnedInitial} (Planned={plan.TotalPlanned}).",
             LogLevel.Info
         );
     }
@@ -180,6 +207,7 @@ public sealed class DesertTombRuntime
         public IReadOnlyList<TombAreaState> Areas { get; }
         public TombSpawnPlan Plan { get; }
         public SpawnConfiguration Config { get; }
+        public TombPopulationManager Population { get; }
 
         public ActiveTombFloorState(
             MineShaft mineShaft,
@@ -187,7 +215,8 @@ public sealed class DesertTombRuntime
             string mapPath,
             IReadOnlyList<TombAreaState> areas,
             TombSpawnPlan plan,
-            SpawnConfiguration config
+            SpawnConfiguration config,
+            TombPopulationManager population
         )
         {
             MineShaft = mineShaft ?? throw new ArgumentNullException(nameof(mineShaft));
@@ -196,7 +225,7 @@ public sealed class DesertTombRuntime
             Areas = areas ?? throw new ArgumentNullException(nameof(areas));
             Plan = plan ?? throw new ArgumentNullException(nameof(plan));
             Config = config ?? throw new ArgumentNullException(nameof(config));
+            Population = population ?? throw new ArgumentNullException(nameof(population));
         }
     }
-
 }

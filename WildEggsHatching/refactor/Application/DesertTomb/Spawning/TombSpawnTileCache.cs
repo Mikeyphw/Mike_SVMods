@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using StardewValley;
 using StardewValley.Locations;
 
 namespace WildEggsHatching.Application.DesertTomb.Spawning;
@@ -24,16 +23,31 @@ public sealed class TombSpawnTileCache
     public int Remaining => _candidates.Count;
 
     public bool TryTakeTile(MineShaft mineShaft, out Point tile)
+        => TryTakeTile(mineShaft, accept: static _ => true, out tile);
+
+    public bool TryTakeTile(MineShaft mineShaft, Func<Point, bool> accept, out Point tile)
     {
         if (mineShaft is null)
             throw new ArgumentNullException(nameof(mineShaft));
+        if (accept is null)
+            throw new ArgumentNullException(nameof(accept));
 
-        while (_candidates.Count > 0)
+        // Attempt at most once per candidate to avoid infinite loops on strict accept predicates.
+        var deferred = new List<Point>();
+        var attempts = _candidates.Count;
+
+        for (int attempt = 0; attempt < attempts && _candidates.Count > 0; attempt++)
         {
             var idx = mineShaft.mineRandom.Next(_candidates.Count);
             var candidate = SwapRemoveAt(_candidates, idx);
 
-            if (mineShaft.isTileOccupied(new Vector2(candidate.X, candidate.Y)))
+            if (!accept(candidate))
+            {
+                deferred.Add(candidate);
+                continue;
+            }
+
+            if (mineShaft.isTileOccupied(new Microsoft.Xna.Framework.Vector2(candidate.X, candidate.Y)))
                 continue;
 
             if (_minSpacingTiles > 0 && !IsFarEnough(candidate, _used, _minSpacingTiles))
@@ -41,8 +55,13 @@ public sealed class TombSpawnTileCache
 
             _used.Add(candidate);
             tile = candidate;
+            if (deferred.Count > 0)
+                _candidates.AddRange(deferred);
             return true;
         }
+
+        if (deferred.Count > 0)
+            _candidates.AddRange(deferred);
 
         tile = default;
         return false;

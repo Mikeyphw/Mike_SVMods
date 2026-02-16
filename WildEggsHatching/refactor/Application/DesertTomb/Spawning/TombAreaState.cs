@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
+using WildEggsHatching.DesertTomb.Core.Model;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace WildEggsHatching.Application.DesertTomb.Spawning;
@@ -18,7 +18,22 @@ public sealed class TombAreaState
     public IReadOnlySet<TombMonsterType> AllowedTypesResolved { get; }
     public int CapacityChosen { get; }
 
+    /// <summary>
+    /// Planned desired counts per monster type (from the pure plan).
+    /// </summary>
+    public IReadOnlyDictionary<TombMonsterType, int> DesiredCountByType { get; }
+
+    /// <summary>
+    /// Planned stats per monster type (from the pure plan).
+    /// </summary>
+    public IReadOnlyDictionary<TombMonsterType, MonsterSpawnStats> StatsByType { get; }
+
     public IReadOnlyList<Point> ValidSpawnTiles { get; }
+
+    /// <summary>
+    /// Consumable cache of spawn tiles for this area (persists across paced waves).
+    /// </summary>
+    public TombSpawnTileCache SpawnTiles { get; }
 
     public Dictionary<TombMonsterType, int> AliveCountByType { get; } = new();
     public Dictionary<TombMonsterType, int> SpawnedThisInstance { get; } = new();
@@ -28,7 +43,10 @@ public sealed class TombAreaState
         Rectangle rect,
         IReadOnlySet<TombMonsterType> allowedTypesResolved,
         int capacityChosen,
-        IReadOnlyList<Point> validSpawnTiles
+        IReadOnlyDictionary<TombMonsterType, int> desiredCountByType,
+        IReadOnlyDictionary<TombMonsterType, MonsterSpawnStats> statsByType,
+        IReadOnlyList<Point> validSpawnTiles,
+        int minSpacingTiles
     )
     {
         AreaType = areaType;
@@ -37,7 +55,11 @@ public sealed class TombAreaState
         AllowedTypesResolved = allowedTypesResolved ?? throw new ArgumentNullException(nameof(allowedTypesResolved));
         CapacityChosen = capacityChosen;
 
+        DesiredCountByType = desiredCountByType ?? throw new ArgumentNullException(nameof(desiredCountByType));
+        StatsByType = statsByType ?? throw new ArgumentNullException(nameof(statsByType));
+
         ValidSpawnTiles = validSpawnTiles ?? throw new ArgumentNullException(nameof(validSpawnTiles));
+        SpawnTiles = new TombSpawnTileCache(candidates: new List<Point>(ValidSpawnTiles), minSpacingTiles: minSpacingTiles);
 
         AreaId = ComputeAreaId(rect, areaType);
     }
@@ -70,7 +92,4 @@ public sealed class TombAreaState
             return hash;
         }
     }
-
-    public static IReadOnlySet<TombMonsterType> TypesFromPlan(IEnumerable<TombMonsterType> types)
-        => new HashSet<TombMonsterType>(types ?? Enumerable.Empty<TombMonsterType>());
 }
