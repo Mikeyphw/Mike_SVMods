@@ -9,6 +9,8 @@ public sealed class ModConfig
     /// </summary>
     public bool DesertTombModuleEnabled { get; set; } = true;
 
+    public TombChance TombChance { get; set; } = TombChance.Medium;
+
     public bool AlternatePotionSprite { get; set; } = false;
     public bool NeedsFern { get; set; } = true;
     public bool HatchDinoEggs { get; set; } = true;

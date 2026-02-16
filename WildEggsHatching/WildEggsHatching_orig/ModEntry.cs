@@ -10,8 +10,10 @@ using StardewValley.Locations;
 using StardewValley.Monsters;
 using WildEggsHatching.Commands;
 using WildEggsHatching.DesertTomb;
-using WildEggsHatching.DesertTomb.Core;
-using WildEggsHatching.DesertTomb.TombMonsters.Creatures;
+using WildEggsHatching.DesertTomb.Integration;
+using WildEggsHatching.DesertTomb.Model;
+using WildEggsHatching.DesertTomb.Assets;
+using WildEggsHatching.DesertTomb.Monsters.Creatures;
 using WildEggsHatching.Framework;
 using WildEggsHatching.Management;
 using WildEggsHatching.Managers;
@@ -42,7 +44,7 @@ namespace WildEggsHatching
         public bool PharaohChanging { get; private set; } = false;
 
         internal ILetMeHatchApi? LetMeHatchApi = null;
-        private DesertTombWrapper DesertTomb = null!;
+        private DesertTombOrchestrator DesertTomb = null!;
         private WildListManager WildListManager = null!;
         private GMCMenu GMCMenu = null!;
         private ProgressionManager ProgressionManager = null!;
@@ -384,35 +386,8 @@ namespace WildEggsHatching
         // }
         private void LoadMineLevelAsset(AssetRequestedEventArgs e, string assetName)
         {
-            var quantity = ModEntry.Config.TombChance switch
-            {
-                TombChance.Low => 5,
-                TombChance.Medium => 10,
-                TombChance.High => 15,
-                TombChance.Always => 39,
-                _ => 1,
-            };
-
-            var levels = GetRandomizedLevels();
-            e.Edit(
-                asset =>
-                {
-                    var data = asset.AsDictionary<string, AdditionalMineMaps.MapData>().Data;
-
-                    for (int i = 0; i < quantity; i++)
-                    {
-                        data[$"DesertTomb_{i}"] = new AdditionalMineMaps.MapData()
-                        {
-                            forceLevel = -1,
-                            mapPath = AssetHandler.GetAssetPath(
-                                MineLevel.Level77377,
-                                AssetPathType.GamePath
-                            ),
-                            mapType = "M",
-                            maxLevel = -1,
-                            minLevel = 121,
-                        };
-                    }
+            DesertTombMineMapRegistry.EditAdditionalMineMaps(e, ModEntry.Config.TombChance, AssetHandler);
+        }
                 },
                 AssetEditPriority.Default
             );
@@ -487,17 +462,7 @@ namespace WildEggsHatching
             // LoggerHelper.TestingLog("Asset loading initiated.");
         }
 
-        private List<Assets.MineLevel> GetRandomizedLevels()
-        {
-            var excludedLevels = new Assets.MineLevel[] { };
-
-            return EnumExtensions
-                .GetValues<Assets.MineLevel>()
-                .Where(x => !excludedLevels.Contains(x))
-                .OrderBy(x => Game1.random.Next())
-                .ToList();
-        }
-
+        
         public void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
         {
             LetMeHatchApi = Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.lmh");

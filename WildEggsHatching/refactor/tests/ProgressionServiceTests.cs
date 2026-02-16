@@ -9,22 +9,41 @@ namespace WildEggsHatching.Refactor.Tests;
 public sealed class ProgressionServiceTests
 {
     [Fact]
-    public void ProgressionModeDisabled_ForcesMaxStep()
+    public void ProgressionModeDisabled_OnSaveLoaded_AutoLearnsRecipes_And_DoesNotMutateStep()
     {
         var store = new InMemorySaveDataStore();
+        store.WriteEnvelope(
+            SaveKeys.Progression,
+            new SaveDataEnvelope<ProgressionSaveData>(version: 1, new ProgressionSaveData { Step = ProgressionStep.PartII })
+        );
+
         var config = new FakeConfigProvider(new ModConfig { ProgressionMode = false });
         var facts = new FakeUnlockFactsProvider { DayNumber = 5, IsMainPlayer = true };
         var quests = new FakeQuestService();
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var stepChangedCount = 0;
+
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
+        svc.StepChanged += _ => stepChangedCount++;
 
         svc.OnSaveLoaded();
 
         Assert.Equal(ProgressionStep.PartVI, svc.GetCurrentStep());
+        Assert.Contains("Elixir Of Revitalized Essence", recipes.Learned);
+        Assert.Contains("Wild Egg Incubator", recipes.Learned);
         Assert.Empty(mail.Tomorrow);
         Assert.Empty(mail.Received);
+        Assert.Equal(0, stepChangedCount);
+
+        svc.SaveNow();
+
+        var envelope = store.ReadEnvelope<ProgressionSaveData>(SaveKeys.Progression);
+        Assert.NotNull(envelope);
+        Assert.NotNull(envelope!.Data);
+        Assert.Equal(ProgressionStep.PartII, envelope.Data!.Step);
     }
 
     [Fact]
@@ -35,9 +54,10 @@ public sealed class ProgressionServiceTests
         var facts = new FakeUnlockFactsProvider { DayNumber = 5, IsMainPlayer = true };
         var quests = new FakeQuestService();
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
 
         svc.OnSaveLoaded();
         svc.OnDayStarted();
@@ -56,9 +76,10 @@ public sealed class ProgressionServiceTests
 
         var quests = new FakeQuestService();
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
 
         svc.OnSaveLoaded();
         svc.OnDayStarted();
@@ -87,9 +108,10 @@ public sealed class ProgressionServiceTests
         var facts = new FakeUnlockFactsProvider { DayNumber = 20, IsMainPlayer = true };
         var quests = new FakeQuestService();
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
 
         svc.OnSaveLoaded();
         svc.OnDayStarted();
@@ -109,9 +131,10 @@ public sealed class ProgressionServiceTests
 
         var quests = new FakeQuestService();
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
 
         svc.OnSaveLoaded();
         svc.OnDayStarted();
@@ -149,15 +172,18 @@ public sealed class ProgressionServiceTests
         quests.SetCompletedQuest(ProgressionIds.Quests.WizardStudy, true);
 
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
 
         svc.OnSaveLoaded();
         svc.OnDayStarted();
 
         Assert.Equal(ProgressionStep.PartIII, svc.GetCurrentStep());
         Assert.Contains(mail.Received, x => x.Id == ProgressionIds.Mail.WizardDone && x.NoLetter);
+    }
+
     
 
     [Fact]
@@ -168,9 +194,10 @@ public sealed class ProgressionServiceTests
         var facts = new FakeUnlockFactsProvider { DayNumber = 10, IsMainPlayer = true };
         var quests = new FakeQuestService();
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
 
         svc.OnSaveLoaded();
 
@@ -191,9 +218,10 @@ public sealed class ProgressionServiceTests
         var facts = new FakeUnlockFactsProvider { DayNumber = 10, IsMainPlayer = true };
         var quests = new FakeQuestService();
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
 
         svc.OnSaveLoaded();
 
@@ -205,5 +233,4 @@ public sealed class ProgressionServiceTests
 
         Assert.Equal(1, mail.Received.FindAll(x => x.Id == ProgressionIds.Mail.WizardDone).Count);
     }
-}
 }

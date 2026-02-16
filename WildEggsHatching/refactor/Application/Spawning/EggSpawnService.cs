@@ -72,7 +72,7 @@ public sealed class EggSpawnService
                     var top = _histogram.FormatTopRejections(job.MapName, job.EggItemId, topN: 3);
                     _log.Log(
                         $"No valid tile (job={job.EggItemId} map={job.MapName}) " +
-                        $"attempts={stats.Attempts} excluded={stats.RejectedExcludedRect} terrain={stats.RejectedTerrain} water={stats.RejectedWater} " +
+                        $"attempts={stats.Attempts} outOfBounds={stats.RejectedOutOfBounds} excluded={stats.RejectedExcludedRect} terrain={stats.RejectedTerrain} water={stats.RejectedWater} " +
                         $"occupied={stats.RejectedOccupied} impassable={stats.RejectedImpassable} top=[{top}]",
                         LogLevel.Trace);
                     break;

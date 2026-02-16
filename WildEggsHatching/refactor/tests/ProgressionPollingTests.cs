@@ -17,9 +17,10 @@ public sealed class ProgressionPollingTests
         var facts = new FakeUnlockFactsProvider { DayNumber = 10, IsMainPlayer = true };
         var quests = new FakeQuestService();
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
 
         svc.OnSaveLoaded();
 
@@ -58,9 +59,10 @@ public sealed class ProgressionPollingTests
         var facts = new FakeUnlockFactsProvider { DayNumber = 10, IsMainPlayer = true };
         var quests = new FakeQuestService();
         var mail = new FakeMailService();
+        var recipes = new FakeRecipeService();
         var log = new FakeLog();
 
-        var svc = new ProgressionService(store, config, facts, quests, mail, log, invalidateAssets: () => { });
+        var svc = new ProgressionService(store, config, facts, quests, mail, recipes, log, invalidateAssets: () => { });
 
         svc.OnSaveLoaded();
 

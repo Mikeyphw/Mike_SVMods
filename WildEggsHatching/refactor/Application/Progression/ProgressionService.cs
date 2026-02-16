@@ -18,6 +18,7 @@ public sealed class ProgressionService
     private readonly IUnlockFactsProvider _facts;
     private readonly IGameQuestService _quests;
     private readonly IGameMailService _mail;
+    private readonly IGameRecipeService _recipes;
     private readonly ILog _log;
     private readonly Action _invalidateAssets;
 
@@ -32,6 +33,7 @@ public sealed class ProgressionService
         IUnlockFactsProvider facts,
         IGameQuestService quests,
         IGameMailService mail,
+        IGameRecipeService recipes,
         ILog log,
         Action invalidateAssets
     )
@@ -41,14 +43,20 @@ public sealed class ProgressionService
         _facts = facts;
         _quests = quests;
         _mail = mail;
+        _recipes = recipes;
         _log = log;
         _invalidateAssets = invalidateAssets;
     }
 
     public ProgressionStep GetCurrentStep()
     {
+        var config = _config.Config;
+
         if (!_initialized)
-            return _config.Config.ProgressionMode ? ProgressionStep.PartI : ProgressionRules.MaxStep;
+            return config.ProgressionMode ? ProgressionStep.PartI : ProgressionRules.MaxStep;
+
+        if (!config.ProgressionMode)
+            return ProgressionRules.MaxStep;
 
         Evaluate(ProgressionTrigger.OnDemand);
         return _data.Step;
@@ -130,12 +138,24 @@ public sealed class ProgressionService
 public void OnSaveLoaded()
     {
         EnsureInitialized();
+
+        if (!_config.Config.ProgressionMode)
+        {
+            _recipes.EnsureCraftingRecipeLearned("Elixir Of Revitalized Essence");
+            _recipes.EnsureCraftingRecipeLearned("Wild Egg Incubator");
+            return;
+        }
+
         Evaluate(ProgressionTrigger.SaveLoaded);
     }
 
     public void OnDayStarted()
     {
         EnsureInitialized();
+
+        if (!_config.Config.ProgressionMode)
+            return;
+
         SyncQuestCompletionDays();
         Evaluate(ProgressionTrigger.DayStarted);
     }
@@ -146,6 +166,9 @@ public void OnSaveLoaded()
             return;
 
         EnsureInitialized();
+
+        if (!_config.Config.ProgressionMode)
+            return;
 
         // "QuestCompleted" trigger via polling, since SMAPI doesn't expose a quest-completion event.
         if (SyncQuestCompletionDays())
@@ -254,13 +277,8 @@ public void OnSaveLoaded()
 
         if (!facts.IsMainPlayer)
             return;
-
-        // If progression gating is disabled, expose everything via a single max-step.
         if (!config.ProgressionMode)
-        {
-            SetStep(ProgressionRules.MaxStep, trigger, "ProgressionMode disabled");
             return;
-        }
 
         NormalizeStateForConfig(config);
 
@@ -312,10 +330,7 @@ public void OnSaveLoaded()
     private void NormalizeStateForConfig(ModConfig config)
     {
         if (!config.ProgressionMode)
-        {
-            _data.Step = ProgressionRules.MaxStep;
             return;
-        }
 
         if (!config.DesertTombModuleEnabled && _data.Step == ProgressionStep.PartV)
             _data.Step = ProgressionStep.PartVI;

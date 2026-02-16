@@ -1,5 +1,9 @@
+using System;
+using System.Collections.Generic;
 using StardewModdingAPI.Events;
 using StardewValley.GameData.BigCraftables;
+using WildEggsHatching.Core.Enums;
+using WildEggsHatching.Core.Ids;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
@@ -9,7 +13,35 @@ public sealed class BigCraftablesEditor : AssetEditorBase
 
     public override void Edit(IAssetData asset, ContentContext context)
     {
-        _ = asset.AsDictionary<string, BigCraftableData>().Data;
-        context.Log("BigCraftablesEditor applied (Phase 0 wiring).");
+        if (context.Step < ProgressionStep.PartVI)
+            return;
+
+        var data = asset.AsDictionary<string, BigCraftableData>().Data;
+        data[ModItemIds.WildEggIncubator] = CreateWildEggIncubator(context);
+    }
+
+    private static BigCraftableData CreateWildEggIncubator(ContentContext context)
+        => new()
+        {
+            Name = ModItemIds.WildEggIncubator,
+            DisplayName = TranslateOrFallback(context, "object.WildEggIncubator.name", "Wild Egg Incubator"),
+            Description = TranslateOrFallback(
+                context,
+                "object.WildEggIncubator.description",
+                "A sturdy incubator designed to hatch wild eggs."
+            ),
+            Texture = $"Mods/{Constants.ModId}/wildeggincubator",
+            SpriteIndex = 0,
+            CanBePlacedIndoors = true,
+            CanBePlacedOutdoors = false,
+            Fragility = 0,
+            Price = 0,
+            ContextTags = new List<string> { "wildegg_machine" },
+        };
+
+    private static string TranslateOrFallback(ContentContext context, string key, string fallback)
+    {
+        var translated = context.I18n.Get(key).ToString();
+        return string.Equals(translated, key, StringComparison.OrdinalIgnoreCase) ? fallback : translated;
     }
 }

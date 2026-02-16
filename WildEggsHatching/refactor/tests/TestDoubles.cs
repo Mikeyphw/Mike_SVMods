@@ -138,6 +138,20 @@ internal sealed class FakeMailService : IGameMailService
     }
 }
 
+
+internal sealed class FakeRecipeService : IGameRecipeService
+{
+    public readonly List<string> Learned = new();
+
+    public bool EnsureCraftingRecipeLearned(string recipeName)
+    {
+        if (!Learned.Contains(recipeName))
+            Learned.Add(recipeName);
+
+        return true;
+    }
+}
+
 internal sealed class FakeQuestService : IGameQuestService
 {
     private readonly HashSet<string> _quests = new(StringComparer.Ordinal);

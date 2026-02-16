@@ -10,6 +10,7 @@ using WildEggsHatching.Infrastructure.Content;
 using WildEggsHatching.Infrastructure.Content.Editors;
 using WildEggsHatching.Infrastructure.Api;
 using WildEggsHatching.Infrastructure.Assets;
+using WildEggsHatching.Infrastructure.DesertTomb.Assets;
 using WildEggsHatching.Infrastructure.Commands;
 using WildEggsHatching.Infrastructure.Game;
 using WildEggsHatching.Infrastructure.Logging;
@@ -61,6 +62,7 @@ public sealed class ModEntry : Mod
 
         var mail = new GameMailService();
         var quests = new GameQuestService();
+        var recipes = new GameRecipeService();
         var facts = new GameUnlockFactsProvider(_game, mail, quests);
         _progression = new ProgressionService(
             store: _saveData,
@@ -68,6 +70,7 @@ public sealed class ModEntry : Mod
             facts: facts,
             quests: quests,
             mail: mail,
+            recipes: recipes,
             log: log,
             invalidateAssets: () => _content?.InvalidateAll()
         );
@@ -85,6 +88,7 @@ public sealed class ModEntry : Mod
                 new SmapiContentCoordinator.Registration(new BigCraftablesEditor(), ProgressionStep.PartV),
                 new SmapiContentCoordinator.Registration(new CraftingRecipesEditor(), ProgressionStep.PartV),
                 new SmapiContentCoordinator.Registration(new MachinesEditor(), ProgressionStep.PartV),
+                new SmapiContentCoordinator.Registration(new DesertTombAdditionalMineMapsEditor(), ProgressionStep.PartI),
             }
         );
 

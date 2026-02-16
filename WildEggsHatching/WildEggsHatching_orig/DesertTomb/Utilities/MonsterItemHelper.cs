@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using StardewValley;
 using StardewValley.Monsters;
-using WildEggsHatching.DesertTomb.TombMonsters.Base;
+using WildEggsHatching.DesertTomb.Monsters.Base;
 using static WildEggsHatching.EnumsAndStrings.Enums;
 
 namespace WildEggsHatching.DesertTomb.Utilities
