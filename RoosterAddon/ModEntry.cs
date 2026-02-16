@@ -63,6 +63,13 @@ namespace RoosterAddon
         private Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures = new(); // Keys represent texture types, values contain texture details and strings
         private RoosterFemales _roosterFemales = new();
 
+        private AnimalExclusion _animalExclusions = new();
+        private bool _roosterFemalesDirty;
+        private bool _roosterFemalesSaveScheduled;
+        private bool _objectsCacheInvalidationScheduled;
+        private readonly Queue<Action> _nextTickActions = new();
+        private bool _isNextTickHandlerSubscribed;
+
         /**********
         ** Public methods
         *********/
@@ -114,12 +121,22 @@ namespace RoosterAddon
             // Read the mod's configuration from the file
             ModCfg = this.Helper.ReadConfig<ModConfig>();
 
+            EnsureExclusionsLoaded();
+            EnsureRoosterFemalesLoaded();
+
             // Subscribe to game events
             helper.Events.GameLoop.GameLaunched += OnGameLaunched; // Called when the game is launched
-            this.Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked; // Called every game tick
-            this.Helper.Events.GameLoop.DayStarted += OnDayStart; // Called when a new day starts
+            // UpdateTicked is subscribed only for one-shot scheduled actions (see ScheduleNextTick)
+this.Helper.Events.GameLoop.DayStarted += OnDayStart; // Called when a new day starts
             helper.Events.Player.Warped += OnWarped; // Called when the player warps to a new location
             this.Helper.Events.Content.AssetRequested += OnAssetRequested; // Called when an asset is requested
+            helper.Events.GameLoop.Saving += OnSaving; // Flush pending writes
+            helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle; // Flush pending writes
+            helper.ConsoleCommands.Add(
+                name: "roosteraddon_dump_state",
+                documentation: "Write a JSON snapshot of RoosterAddon state to the mod data folder.",
+                callback: DumpStateCommand
+            );
 
             // List of textures to be loaded
             var TexturesList = new List<Textures>
@@ -380,6 +397,8 @@ namespace RoosterAddon
                     {
                         RunHatchingSystem(rooster, data);
                     }
+                    RequestObjectsCacheInvalidation();
+
                 },
                 AssetEditPriority.Late + 12500
             );
@@ -512,36 +531,33 @@ namespace RoosterAddon
                     // Get the object data from the asset
                     var dataObject = asset.AsDictionary<string, ObjectData>().Data;
 
-                    // Loop through each rooster type and its produces
-                    foreach (
-                        var roosterType in RoosterHelper.Roosters.Select(data =>
-                            data.Value.AllProduces
-                        )
-                    )
-                    {
-                        // Get the default produce and deluxe default produce for the rooster type
-                        var defaultProduce = roosterType[ProduceTypeEntries.Produce][
-                            ProduceEntries.First
-                        ][RoosterItemDataEntries.Name];
-                        var deluxeDefaultProduce = roosterType[ProduceTypeEntries.Deluxe][
-                            ProduceEntries.First
-                        ][RoosterItemDataEntries.Name];
+                    // BetterTruffles tagging (single pass)
+                    var betterTrufflesIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                        // Loop through each game object in the data object
-                        foreach (var gameObject in dataObject)
-                        {
-                            // Check if the game object key matches the default produce or deluxe default produce
-                            if (
-                                gameObject.Key == defaultProduce
-                                || gameObject.Key == deluxeDefaultProduce
-                            )
-                            {
-                                // Ensure the ContextTags is not null and add "temisthem_bettertruffles" to it
-                                gameObject.Value.ContextTags ??= new();
-                                gameObject.Value.ContextTags.Add("temisthem_bettertruffles");
-                            }
-                        }
+                    foreach (var rooster in RoosterHelper.Roosters.Values)
+                    {
+                        var defaultProduce = rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.First]
+                            .GetValueOrDefault(RoosterItemDataEntries.Name, "");
+                        var deluxeDefaultProduce = rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.First]
+                            .GetValueOrDefault(RoosterItemDataEntries.Name, "");
+
+                        if (!string.IsNullOrWhiteSpace(defaultProduce))
+                            betterTrufflesIds.Add(defaultProduce);
+
+                        if (!string.IsNullOrWhiteSpace(deluxeDefaultProduce))
+                            betterTrufflesIds.Add(deluxeDefaultProduce);
                     }
+
+                    foreach (var objectId in betterTrufflesIds)
+                    {
+                        if (!dataObject.TryGetValue(objectId, out var obj))
+                            continue;
+
+                        obj.ContextTags ??= new();
+                        if (!obj.ContextTags.Contains("temisthem_bettertruffles"))
+                            obj.ContextTags.Add("temisthem_bettertruffles");
+                    }
+
                 },
                 AssetEditPriority.Late + 10000
             );
@@ -693,7 +709,6 @@ namespace RoosterAddon
                 (Dictionary<string, FarmAnimalData>)data,
                 rooster
             );
-            Helper.GameContent.InvalidateCache("Data/Objects");
             foreach (
                 var female in rooster.Females.Where(f =>
                     _roosterFemales.Females[f].ToLower() == rooster.FarmAnimalName.ToLower()
@@ -748,8 +763,8 @@ namespace RoosterAddon
                     Int32.Parse(
                         ModCfg.Options[OptionEntries.RoosterToChickenRatio][OptionDetails.Value]
                     )
-                ) && RoosterControl.UpdatePercentage(female.Length)
-            )
+                )
+                )
             {
                 // Set the fertilized egg item id for the rooster
                 data[rooster.FarmAnimalName].EggItemIds ??= new();
@@ -788,8 +803,7 @@ namespace RoosterAddon
                         rooster.Eggs[EggTypeEntries.Normal][RoosterItemDataEntries.Probability]
                     )
                 )
-                && RoosterControl.UpdatePercentage(female.Length)
-            )
+                )
             {
                 // Add the normal egg item id to the rooster's egg item ids
                 data[rooster.FarmAnimalName]
@@ -809,8 +823,7 @@ namespace RoosterAddon
                         rooster.Eggs[EggTypeEntries.Large][RoosterItemDataEntries.Probability]
                     )
                 )
-                && RoosterControl.UpdatePercentage(female.Length)
-            )
+                )
             {
                 // Add the large egg item id to the rooster's egg item ids
                 data[rooster.FarmAnimalName]
@@ -1069,6 +1082,8 @@ namespace RoosterAddon
                 "Pathoschild.ContentPatcher"
             )!;
             hatchApi = Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.letmehatchthisegg.smapi")!;
+
+            TryRegisterGmcm();
         }
 
         /// <summary>
@@ -1078,107 +1093,349 @@ namespace RoosterAddon
         /// <param name="e">The event arguments.</param>
         private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
-            // Unsubscribe from the UpdateTicked event to prevent multiple registrations
-            // Get the Generic Mod Config Menu API (if it's installed)
+            if (_nextTickActions.Count == 0)
+            {
+                Helper.Events.GameLoop.UpdateTicked -= OnUpdateTicked;
+                _isNextTickHandlerSubscribed = false;
+                return;
+            }
+
+            while (_nextTickActions.Count > 0)
+            {
+                var action = _nextTickActions.Dequeue();
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    Monitor.Log($"Scheduled action failed: {ex}", LogLevel.Warn);
+                }
+            }
+
+            Helper.Events.GameLoop.UpdateTicked -= OnUpdateTicked;
+            _isNextTickHandlerSubscribed = false;
+        }
+
+        
+        private void ScheduleNextTick(Action action)
+        {
+            _nextTickActions.Enqueue(action);
+
+            if (_isNextTickHandlerSubscribed)
+                return;
+
+            _isNextTickHandlerSubscribed = true;
+            Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+        }
+
+        private void EnsureExclusionsLoaded()
+        {
+            var exclusions = Helper.Data.ReadJsonFile<AnimalExclusion>("exclusions.json");
+            if (exclusions is null)
+            {
+                exclusions = new AnimalExclusion();
+                Helper.Data.WriteJsonFile("exclusions.json", exclusions);
+            }
+
+            _animalExclusions = exclusions;
+        }
+
+        private void EnsureRoosterFemalesLoaded()
+        {
+            var females = Helper.Data.ReadJsonFile<RoosterFemales>("roosterFemales.json");
+            if (females is null)
+            {
+                females = new RoosterFemales();
+                Helper.Data.WriteJsonFile("roosterFemales.json", females);
+            }
+
+            _roosterFemales = females;
+            ModCfg.FemalesOptions = _roosterFemales.Females;
+        }
+
+        private void TryRegisterGmcm()
+        {
             configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>(
                 "spacechase0.GenericModConfigMenu"
             )!;
 
-            // If the API is not available, exit the method
             if (configMenu is null)
                 return;
 
-            // Unregister the mod from the config menu
             configMenu.Unregister(ModManifest);
 
-            // Register the mod with the config menu
             configMenu.Register(
                 mod: ModManifest,
                 reset: () =>
                 {
                     ModCfg = new ModConfig();
-                    Helper.WriteConfig<ModConfig>(ModCfg);
+                    Helper.WriteConfig(ModCfg);
                     ModCfg.FemalesOptions = _roosterFemales.Females;
                 },
                 save: () =>
                 {
                     Helper.WriteConfig(ModCfg);
+
                     _roosterFemales.Females = ModCfg.FemalesOptions;
                     Helper.Data.WriteJsonFile("roosterFemales.json", _roosterFemales);
-                    if (RoosterHelper.Roosters != null)
+
+                    if (Context.IsWorldReady && RoosterHelper.Roosters != null)
                     {
                         foreach (var rooster in RoosterHelper.Roosters.Values)
                         {
-                            rooster.Females = _roosterFemales!
+                            rooster.Females = _roosterFemales
                                 .Females.Where(f =>
-                                    f.Value.ToLower() == rooster.FarmAnimalName.ToLower()
+                                    f.Value.Equals(rooster.FarmAnimalName, StringComparison.OrdinalIgnoreCase)
                                 )
                                 .Select(f => f.Key)
                                 .ToList();
                         }
+
                         var model = new RoosterDataExport(RoosterHelper.Roosters);
-                        // Save the rooster data to a JSON file
-                        this.Helper.Data.WriteJsonFile(
+                        Helper.Data.WriteJsonFile(
                             $"data/{StardewModdingAPI.Constants.SaveFolderName}.json",
                             model
                         );
                     }
                 }
             );
+
             ModCfg.FemalesOptions = _roosterFemales.Females;
-            // Set up the GMCM (Generic Mod Config Menu) for this mod
             GMCMSetup(ref configMenu);
         }
 
-        internal void GetRoostersFemales(
+        private void MarkRoosterFemalesDirty()
+        {
+            _roosterFemalesDirty = true;
+
+            if (_roosterFemalesSaveScheduled)
+                return;
+
+            _roosterFemalesSaveScheduled = true;
+            ScheduleNextTick(() =>
+            {
+                _roosterFemalesSaveScheduled = false;
+                PersistRoosterFemalesIfDirty();
+            });
+        }
+
+        private void PersistRoosterFemalesIfDirty()
+        {
+            if (!_roosterFemalesDirty)
+                return;
+
+            Helper.Data.WriteJsonFile("roosterFemales.json", _roosterFemales);
+            _roosterFemalesDirty = false;
+        }
+
+        private void RequestObjectsCacheInvalidation()
+        {
+            if (_objectsCacheInvalidationScheduled)
+                return;
+
+            _objectsCacheInvalidationScheduled = true;
+            ScheduleNextTick(() =>
+            {
+                _objectsCacheInvalidationScheduled = false;
+            });
+        }
+
+        private void OnSaving(object? sender, SavingEventArgs e)
+        {
+            PersistRoosterFemalesIfDirty();
+        }
+
+        private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+        {
+            PersistRoosterFemalesIfDirty();
+        }
+
+        private void DumpStateCommand(string command, string[] args)
+        {
+            var stamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+            var path = $"state-dumps/roosteraddon_state_{stamp}.json";
+
+            var dump = new RoosterAddonStateDump
+            {
+                GeneratedAtUtc = DateTime.UtcNow,
+                ModVersion = ModManifest.Version.ToString(),
+                WorldReady = Context.IsWorldReady,
+                SaveFolderName = StardewModdingAPI.Constants.SaveFolderName,
+                DailyLuck = Context.IsWorldReady ? Game1.player?.DailyLuck : null,
+                Config = ModCfg,
+                RoosterFemales = _roosterFemales,
+                Exclusions = _animalExclusions,
+                Roosters = RoosterHelper?.Roosters?.Values.Select(r => new RoosterAddonRoosterDump
+                {
+                    Type = r.Type.ToString(),
+                    FarmAnimalName = r.FarmAnimalName,
+                    Female = r.Female,
+                    Females = r.Females?.ToList() ?? new List<string>(),
+                    Eggs = r.Eggs?.ToDictionary(
+                        kvp => kvp.Key.ToString(),
+                        kvp => kvp.Value.ToDictionary(x => x.Key, x => x.Value)
+                    ) ?? new Dictionary<string, Dictionary<string, string>>(),
+                    ProducesSummary = r.AllProduces?.ToDictionary(
+                        kvp => kvp.Key.ToString(),
+                        kvp => kvp.Value.ToDictionary(
+                            pe => pe.Key.ToString(),
+                            pe => pe.Value.ContainsKey(RoosterItemDataEntries.Name)
+                                ? pe.Value[RoosterItemDataEntries.Name]
+                                : ""
+                        )
+                    ) ?? new Dictionary<string, Dictionary<string, string>>()
+                }).ToList() ?? new List<RoosterAddonRoosterDump>(),
+                ObjectsPatchSummary = BuildObjectsPatchSummary()
+            };
+
+            Helper.Data.WriteJsonFile(path, dump);
+            Monitor.Log($"Wrote state dump: {path}", LogLevel.Info);
+        }
+
+        private RoosterAddonObjectsPatchSummary BuildObjectsPatchSummary()
+        {
+            var betterTrufflesIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (RoosterHelper?.Roosters != null)
+            {
+                foreach (var rooster in RoosterHelper.Roosters.Values)
+                {
+                    var defaultProduce = rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.First]
+                        .GetValueOrDefault(RoosterItemDataEntries.Name, "");
+                    var deluxeDefaultProduce = rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.First]
+                        .GetValueOrDefault(RoosterItemDataEntries.Name, "");
+
+                    if (!string.IsNullOrWhiteSpace(defaultProduce))
+                        betterTrufflesIds.Add(defaultProduce);
+
+                    if (!string.IsNullOrWhiteSpace(deluxeDefaultProduce))
+                        betterTrufflesIds.Add(deluxeDefaultProduce);
+                }
+            }
+
+            return new RoosterAddonObjectsPatchSummary
+            {
+                BetterTrufflesTaggedObjectIds = betterTrufflesIds.OrderBy(x => x).ToList(),
+                FemaleEggs = RoosterHelper?.FemaleEggs?.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.ToDictionary(x => x.Key, x => x.Value)
+                ) ?? new Dictionary<string, Dictionary<string, string>>()
+            };
+        }
+
+        
+        private sealed class KeyValuePairIgnoreCaseComparer : IEqualityComparer<KeyValuePair<string, string>>
+        {
+            public bool Equals(KeyValuePair<string, string> x, KeyValuePair<string, string> y)
+            {
+                return string.Equals(x.Key, y.Key, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(x.Value, y.Value, StringComparison.OrdinalIgnoreCase);
+            }
+
+            public int GetHashCode(KeyValuePair<string, string> obj)
+            {
+                return HashCode.Combine(
+                    obj.Key?.ToLowerInvariant(),
+                    obj.Value?.ToLowerInvariant()
+                );
+            }
+        }
+
+private sealed class RoosterAddonStateDump
+        {
+            public DateTime GeneratedAtUtc { get; set; }
+            public string ModVersion { get; set; } = "";
+            public bool WorldReady { get; set; }
+            public string? SaveFolderName { get; set; }
+            public double? DailyLuck { get; set; }
+            public ModConfig Config { get; set; } = new();
+            public RoosterFemales RoosterFemales { get; set; } = new();
+            public AnimalExclusion Exclusions { get; set; } = new();
+            public List<RoosterAddonRoosterDump> Roosters { get; set; } = new();
+            public RoosterAddonObjectsPatchSummary ObjectsPatchSummary { get; set; } = new();
+        }
+
+        private sealed class RoosterAddonRoosterDump
+        {
+            public string Type { get; set; } = "";
+            public string FarmAnimalName { get; set; } = "";
+            public string Female { get; set; } = "";
+            public List<string> Females { get; set; } = new();
+            public Dictionary<string, Dictionary<string, string>> Eggs { get; set; } = new();
+            public Dictionary<string, Dictionary<string, string>> ProducesSummary { get; set; } = new();
+        }
+
+        private sealed class RoosterAddonObjectsPatchSummary
+        {
+            public List<string> BetterTrufflesTaggedObjectIds { get; set; } = new();
+            public Dictionary<string, Dictionary<string, string>> FemaleEggs { get; set; } = new();
+        }
+
+internal void GetRoostersFemales(
             IDictionary<string, FarmAnimalData> animalData,
             Dictionary<RoosterType, RoosterData> Roosters
         )
         {
-            var animalExclusions = GetExclusions();
-            _roosterFemales = Helper.Data.ReadJsonFile<RoosterFemales>("roosterFemales.json");
-            if (_roosterFemales == null)
-            {
-                Helper.Data.WriteJsonFile("roosterFemales.json", new RoosterFemales());
-                _roosterFemales = Helper.Data.ReadJsonFile<RoosterFemales>("roosterFemales.json");
-            }
+            var animalExclusions = _animalExclusions;
+            _roosterFemales ??= new RoosterFemales();
+
+            var beforeNormalized = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in _roosterFemales.Females)
+                beforeNormalized[kvp.Key] = kvp.Value;
+
             var eggTypes = Roosters
                 .Values.SelectMany(rd => rd.Eggs.Values)
                 .Where(ed => ed.ContainsKey(RoosterItemDataEntries.Name))
                 .Select(ed => ed[RoosterItemDataEntries.Name])
                 .ToList();
+
             var defaultFemales = Roosters.Values.ToDictionary(x => x.Female, x => x.FarmAnimalName);
             var foundFemales = defaultFemales.Keys.ToList();
+
             if (GetHatchApiCloneEggsOption())
             {
                 foundFemales.AddRange(
                     GetFemales(animalData, eggTypes, animalExclusions).OrderBy(f => f)
                 );
             }
-            foreach (
-                var female in _roosterFemales!.Females.Keys.Where(f => !foundFemales.Contains(f))
-            )
+
+            foreach (var female in _roosterFemales.Females.Keys.Where(f => !foundFemales.Contains(f)).ToList())
             {
                 _roosterFemales.Females.Remove(female);
             }
+
             foreach (var female in foundFemales)
             {
-                if (!_roosterFemales!.Females.ContainsKey(female))
+                if (!_roosterFemales.Females.ContainsKey(female))
                 {
-                    _roosterFemales!.Females[female] = defaultFemales.ContainsKey(female)
+                    _roosterFemales.Females[female] = defaultFemales.ContainsKey(female)
                         ? defaultFemales[female]
                         : OptionValues.Off;
                 }
             }
-            Helper.Data.WriteJsonFile("roosterFemales.json", _roosterFemales);
+
+            var afterNormalized = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in _roosterFemales.Females)
+                afterNormalized[kvp.Key] = kvp.Value;
+
+            if (!beforeNormalized.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase)
+                .SequenceEqual(afterNormalized.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase),
+                    new KeyValuePairIgnoreCaseComparer()))
+            {
+                MarkRoosterFemalesDirty();
+            }
+
+            ModCfg.FemalesOptions = _roosterFemales.Females;
+
             foreach (var roosterType in Roosters.Keys)
             {
-                RoosterHelper.Roosters[roosterType].Females = _roosterFemales!
+                RoosterHelper.Roosters[roosterType].Females = _roosterFemales
                     .Females.Where(f =>
-                        f.Value.ToLower() == Roosters[roosterType].FarmAnimalName.ToLower()
+                        f.Value.Equals(Roosters[roosterType].FarmAnimalName, StringComparison.OrdinalIgnoreCase)
                     )
                     .Select(f => f.Key)
                     .ToList();
+
                 RoosterHelper.UpdateFemaleEggs(RoosterHelper.Roosters[roosterType], animalData);
             }
         }
@@ -1217,26 +1474,7 @@ namespace RoosterAddon
 
         private AnimalExclusion GetExclusions()
         {
-            var exclusions = Helper.Data.ReadJsonFile<AnimalExclusion>("exclusions.json");
-            if (exclusions == null)
-            {
-                Helper.Data.WriteJsonFile("exclusions.json", new AnimalExclusion());
-                exclusions = Helper.Data.ReadJsonFile<AnimalExclusion>("exclusions.json");
-            }
-
-            var eggListExclusionsModID = exclusions!.AnimalExclusionsModID;
-
-            var animalExclusions = new List<string>();
-            foreach (var animal in exclusions.AnimalExclusions)
-            {
-                animalExclusions.AddRange(GetExclusions(animal));
-            }
-            animalExclusions = animalExclusions.Distinct().ToList(); // Remove duplicates
-            return new AnimalExclusion
-            {
-                AnimalExclusions = animalExclusions,
-                AnimalExclusionsModID = eggListExclusionsModID
-            };
+            return _animalExclusions;
         }
 
         private static List<string> GetExclusions(string exclusionString)
