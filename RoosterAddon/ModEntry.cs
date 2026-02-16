@@ -12,6 +12,8 @@ using RoosterAddon.Framework;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
 using RoosterAddon.Helpers;
+using RoosterAddon.Application;
+using RoosterAddon.Infrastructure.Smapi;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -39,6 +41,9 @@ namespace RoosterAddon
         internal IGenericModConfigMenuAPI? configMenu; // Reference to the mod's configuration menu API, initialized to null
         internal ILetMeHatchApi? hatchApi;
 
+
+        private SmapiEventRouter? _eventRouter;
+        private Application.IRoosterCoordinator? _coordinator;
         // Content Patcher API
         internal static IContentPatcherAPI? ContentPatcher; // Static reference to the Content Patcher API, which allows modifying game content
 
@@ -133,15 +138,9 @@ namespace RoosterAddon
                 "Write a JSON snapshot of RoosterAddon state to data/state-dumps.",
                 DumpStateCommand
             );
-
-            helper.Events.GameLoop.GameLaunched += OnGameLaunched;
-            helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
-            helper.Events.GameLoop.Saving += OnSaving;
-            helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
-            helper.Events.GameLoop.DayStarted += OnDayStart;
-            helper.Events.GameLoop.LocaleChanged += OnLocaleChanged;
-            helper.Events.Player.Warped += OnWarped;
-            helper.Events.Content.AssetRequested += OnAssetRequested;
+            _coordinator = new RoosterCoordinator(this);
+            _eventRouter = new SmapiEventRouter(helper, _coordinator);
+            _eventRouter.Hook();
 
             var TexturesList = new List<Textures>
             {
@@ -181,7 +180,7 @@ namespace RoosterAddon
         }
 
         // Event handler for when the player warps to a new location
-        private void OnWarped(object? sender, WarpedEventArgs e)
+        internal void OnWarped(object? sender, WarpedEventArgs e)
         {
             // Check if the update rate option is set to update on location change
             if (
@@ -194,7 +193,7 @@ namespace RoosterAddon
             }
         }
 
-        private void OnLocaleChanged(object? sender, LocaleChangedEventArgs e)
+        internal void OnLocaleChanged(object? sender, LocaleChangedEventArgs e)
         {
             TryRegisterGmcm(force: true);
             RequestInvalidate(FarmAnimalsAssetName);
@@ -205,7 +204,7 @@ namespace RoosterAddon
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
         // Event handler for when a new day starts
-        private void OnDayStart(object? sender, DayStartedEventArgs e)
+        internal void OnDayStart(object? sender, DayStartedEventArgs e)
         {
             // Set flag to indicate that the day has started
             HasDayStarted = true;
@@ -333,7 +332,7 @@ namespace RoosterAddon
         private const string FarmAnimalsAssetName = "Data/FarmAnimals";
         private const string ObjectsAssetName = "Data/Objects";
 
-        private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+        internal void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
         {
             if (!HasDayStarted)
                 return;
@@ -1083,7 +1082,7 @@ namespace RoosterAddon
             return newEgg;
         }
 
-        private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+        internal void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
         {
             ContentPatcher = this.Helper.ModRegistry.GetApi<IContentPatcherAPI>(
                 "Pathoschild.ContentPatcher"
@@ -1144,19 +1143,19 @@ namespace RoosterAddon
             _gmcmRegistered = true;
         }
 
-        private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
+        internal void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
             _needsRoosterSetup = true;
             _lastRoosterSetupDay = -1;
             _lastDebugDumpDay = -1;
         }
 
-        private void OnSaving(object? sender, SavingEventArgs e)
+        internal void OnSaving(object? sender, SavingEventArgs e)
         {
             SaveRoosterFemalesIfDirty();
         }
 
-        private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+        internal void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
         {
             SaveRoosterFemalesIfDirty();
             _gmcmRegistered = false;
