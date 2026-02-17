@@ -13,10 +13,9 @@
   <ItemGroup>
     <ProjectReference Include="..\BirdsOfAFeather\BirdsOfAFeather.csproj" />
   </ItemGroup>
+  
+
   <ItemGroup>
-    <Compile Remove="GMCMenu.cs" />
-    <Compile Remove="Framework/ModConfig.cs" />
-    <Compile Remove="Framework/Config/LegacyConfigAdapter.cs" />
-      <Compile Remove="Application/RoosterCoordinator.FertilizedEggs.cs" />
+    <Compile Remove="Legacy/**" />
   </ItemGroup>
 </Project>

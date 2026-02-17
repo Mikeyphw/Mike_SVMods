@@ -100,6 +100,12 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
             DumpStateCommand
         );
 
+        Helper.ConsoleCommands.Add(
+            "ra_farmanimals",
+            "FarmAnimals pipeline diagnostics. Usage: ra_farmanimals help",
+            FarmAnimalsCommand
+        );
+
                 AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
         AssetHandler.AddAssets(
             new List<AssetData>

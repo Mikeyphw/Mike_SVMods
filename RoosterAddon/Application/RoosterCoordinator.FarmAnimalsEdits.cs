@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Helpers;
+using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
 
 namespace RoosterAddon.Application;
@@ -122,48 +123,42 @@ private void ProduceRandomizationSystem(
             IDictionary<string, FarmAnimalData> data
         )
         {
-            // Handle the logic for rooster produce options
             if (rooster.ProduceOption != ProduceMode.KeepOriginalProduce)
             {
-                // Create a new farm animal produce item
-                FarmAnimalProduce farmAnimalProduce =
-                    new()
-                    {
-                        ItemId = rooster.AllProduces[ProduceTypeEntries.Produce][
-                            ProduceEntries.Chosen
-                        ][RoosterItemDataEntries.Name],
-                        Id = rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen][
-                            RoosterItemDataEntries.Name
-                        ]
-                    };
-
-                // Set the produce item ids for the rooster
-                data[rooster.FarmAnimalName].ProduceItemIds = new List<FarmAnimalProduce>
+                var chosenProduce = rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen];
+                if (chosenProduce.TryGetValue(RoosterItemDataEntries.Name, out var chosenName) && !string.IsNullOrWhiteSpace(chosenName))
                 {
-                    farmAnimalProduce
-                };
+                    data[rooster.FarmAnimalName].ProduceItemIds = new List<FarmAnimalProduce>
+                    {
+                        new() { ItemId = chosenName, Id = chosenName }
+                    };
+                }
+                else
+                {
+                    Monitor.Log(
+                        $"Produce config produced an empty chosen produce for '{rooster.FarmAnimalName}'. Skipping produce edit.",
+                        LogLevel.Warn
+                    );
+                }
             }
 
-            // Handle the logic for deluxe rooster produce options
             if (rooster.DeluxeProduceOption == DeluxeProduceMode.CustomizeBelow)
             {
-                // Create a new farm animal produce item
-                FarmAnimalProduce deluxeFarmAnimalProduce =
-                    new()
-                    {
-                        ItemId = rooster.AllProduces[ProduceTypeEntries.Deluxe][
-                            ProduceEntries.Chosen
-                        ][RoosterItemDataEntries.Name],
-                        Id = rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen][
-                            RoosterItemDataEntries.Name
-                        ]
-                    };
-
-                // Set the deluxe produce item ids for the rooster
-                data[rooster.FarmAnimalName].DeluxeProduceItemIds = new List<FarmAnimalProduce>
+                var chosenDeluxe = rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen];
+                if (chosenDeluxe.TryGetValue(RoosterItemDataEntries.Name, out var chosenDeluxeName) && !string.IsNullOrWhiteSpace(chosenDeluxeName))
                 {
-                    deluxeFarmAnimalProduce
-                };
+                    data[rooster.FarmAnimalName].DeluxeProduceItemIds = new List<FarmAnimalProduce>
+                    {
+                        new() { ItemId = chosenDeluxeName, Id = chosenDeluxeName }
+                    };
+                }
+                else
+                {
+                    Monitor.Log(
+                        $"Deluxe produce config produced an empty chosen deluxe produce for '{rooster.FarmAnimalName}'. Skipping deluxe produce edit.",
+                        LogLevel.Warn
+                    );
+                }
             }
             else if (rooster.DeluxeProduceOption == DeluxeProduceMode.Off)
             {
@@ -171,7 +166,7 @@ private void ProduceRandomizationSystem(
             }
         }
 
-private bool GetEnableStuckInsideOption()
+        private bool GetEnableStuckInsideOption()
         {
             return Config.General.EnableStuckInside;
         }
