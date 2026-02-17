@@ -22,6 +22,7 @@ using LuckyTypes = Mikew.BirdsOfAFeather.EnumsAndStrings.Enums.LuckyTypes;
 using Mikew.BirdsOfAFeather.Helpers;
 using Mikew.BirdsOfAFeather.Models;
 using RoosterAddon.Infrastructure.Assets;
+using RoosterAddon.Application.FarmAnimals;
 
 namespace RoosterAddon.Application;
 
@@ -64,8 +65,11 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     
 
+    
+    private readonly FarmAnimalExclusionsService _farmAnimalExclusionsService = new();
+    private readonly FarmAnimalProduceRulesService _produceRulesService = new();
     private readonly FarmAnimalHatchingService _farmAnimalHatching = new();
-private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
     private readonly Queue<Action> _nextTickActions = new();
     private bool _nextTickHooked;
     private bool _gmcmRegistered;
@@ -98,12 +102,6 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
             "roosteraddon_dump_state",
             "Write a JSON snapshot of RoosterAddon state to data/state-dumps. Add 'farmanimals' to include farm animal keys.",
             DumpStateCommand
-        );
-
-        Helper.ConsoleCommands.Add(
-            "ra_farmanimals",
-            "FarmAnimals pipeline diagnostics. Usage: ra_farmanimals help",
-            FarmAnimalsCommand
         );
 
                 AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
@@ -263,22 +261,9 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
     }
 
 
-
     private void LoadExclusionsData()
     {
-        var exclusions = Helper.Data.ReadJsonFile<AnimalExclusion>("exclusions.json") ?? new AnimalExclusion();
-        Helper.Data.WriteJsonFile("exclusions.json", exclusions);
-
-        var eggListExclusionsModID = exclusions.AnimalExclusionsModID ?? new();
-        var animalExclusions = new List<string>();
-        foreach (var animal in exclusions.AnimalExclusions ?? new())
-            animalExclusions.AddRange(GetExclusions(animal));
-
-        _animalExclusions = new AnimalExclusion
-        {
-            AnimalExclusions = animalExclusions.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
-            AnimalExclusionsModID = eggListExclusionsModID
-        };
+        _animalExclusions = _farmAnimalExclusionsService.LoadOrCreate(Helper);
     }
 
     private void DumpStateCommand(string command, string[] args)

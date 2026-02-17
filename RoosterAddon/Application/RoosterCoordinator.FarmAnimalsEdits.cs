@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Helpers;
-using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
 
 namespace RoosterAddon.Application;
@@ -30,23 +29,14 @@ private void SetRoosterData(RoosterData rooster, IDictionary<string, FarmAnimalD
             data[rooster.FarmAnimalName].DaysToMature = rooster.MatureDays;
             data[rooster.FarmAnimalName].DaysToProduce = rooster.ProduceDays;
 
-            // Handle the blue egg logic if the mod "6480.blueegg" is present and the rooster is blue
-            if (HasMod("6480.blueegg", Helper) && rooster.FarmAnimalName == RoosterKeys.Blue)
-            {
-                // Get the new blue egg translation
-                var newBlueEgg = RoosterControl.ProduceTranslation(Config.Roosters[RoosterType.Blue].BlueEggChoice);
-
-                // Set the blue egg produce item id
-                RoosterHelper.Roosters[RoosterType.Blue].Eggs[EggTypeEntries.Normal][
-                    RoosterItemDataEntries.Name
-                ] = newBlueEgg;
-
-                // Set the produce item id for the female rooster
-                data[rooster.Female].ProduceItemIds = new List<FarmAnimalProduce>
-                {
-                    new() { ItemId = newBlueEgg, Id = newBlueEgg }
-                };
-            }
+            // Produce rules (including BlueEgg override) are handled by a service.
+            _produceRulesService.ApplyProduceEdits(
+                rooster,
+                data,
+                Config,
+                RoosterHelper,
+                blueEggModInstalled: HasMod("6480.blueegg", Helper)
+            );
 
             // Set the purchase and sell price for buyable roosters
             if (rooster.Buyable)
@@ -100,8 +90,6 @@ private void SetRoosterData(RoosterData rooster, IDictionary<string, FarmAnimalD
             {
                 data[rooster.FarmAnimalName].PurchasePrice = -1;
             }
-
-            ProduceRandomizationSystem(rooster, data);
             // Handle the logic for the stuck inside option
             if (GetEnableStuckInsideOption())
             {
@@ -118,55 +106,7 @@ private void SetRoosterData(RoosterData rooster, IDictionary<string, FarmAnimalD
             }
         }
 
-private void ProduceRandomizationSystem(
-            RoosterData rooster,
-            IDictionary<string, FarmAnimalData> data
-        )
-        {
-            if (rooster.ProduceOption != ProduceMode.KeepOriginalProduce)
-            {
-                var chosenProduce = rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen];
-                if (chosenProduce.TryGetValue(RoosterItemDataEntries.Name, out var chosenName) && !string.IsNullOrWhiteSpace(chosenName))
-                {
-                    data[rooster.FarmAnimalName].ProduceItemIds = new List<FarmAnimalProduce>
-                    {
-                        new() { ItemId = chosenName, Id = chosenName }
-                    };
-                }
-                else
-                {
-                    Monitor.Log(
-                        $"Produce config produced an empty chosen produce for '{rooster.FarmAnimalName}'. Skipping produce edit.",
-                        LogLevel.Warn
-                    );
-                }
-            }
-
-            if (rooster.DeluxeProduceOption == DeluxeProduceMode.CustomizeBelow)
-            {
-                var chosenDeluxe = rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen];
-                if (chosenDeluxe.TryGetValue(RoosterItemDataEntries.Name, out var chosenDeluxeName) && !string.IsNullOrWhiteSpace(chosenDeluxeName))
-                {
-                    data[rooster.FarmAnimalName].DeluxeProduceItemIds = new List<FarmAnimalProduce>
-                    {
-                        new() { ItemId = chosenDeluxeName, Id = chosenDeluxeName }
-                    };
-                }
-                else
-                {
-                    Monitor.Log(
-                        $"Deluxe produce config produced an empty chosen deluxe produce for '{rooster.FarmAnimalName}'. Skipping deluxe produce edit.",
-                        LogLevel.Warn
-                    );
-                }
-            }
-            else if (rooster.DeluxeProduceOption == DeluxeProduceMode.Off)
-            {
-                data[rooster.FarmAnimalName].DeluxeProduceItemIds = null;
-            }
-        }
-
-        private bool GetEnableStuckInsideOption()
+private bool GetEnableStuckInsideOption()
         {
             return Config.General.EnableStuckInside;
         }

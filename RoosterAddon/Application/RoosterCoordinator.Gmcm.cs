@@ -21,9 +21,6 @@ internal sealed partial class RoosterCoordinator
 
         ConfigMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
 
-
-        LogFarmAnimalsStartupValidationSummary();
-
         TryRegisterGmcm(force: true);
     }
 

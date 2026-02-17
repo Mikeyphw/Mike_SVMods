@@ -9,6 +9,7 @@ using RoosterAddon.Infrastructure.SaveData;
 using StardewValley.GameData.FarmAnimals;
 
 using ILetMeHatchApi = Mikew.BirdsOfAFeather.Framework.ILetMeHatchApi;
+using RoosterAddon.Application.FarmAnimals;
 
 namespace RoosterAddon.Application.Hatching;
 
@@ -96,6 +97,8 @@ internal static class FemaleAssignmentService
         ILetMeHatchApi hatchApi
     )
     {
+        var matcher = FarmAnimalExclusionMatcher.From(animalExclusions);
+
         var clonedFemales = new HashSet<string>(
             hatchApi.GetClonedAnimalsInfo().Select(t => t.FemaleKey),
             StringComparer.OrdinalIgnoreCase
@@ -107,7 +110,7 @@ internal static class FemaleAssignmentService
                 && a.Value.CustomFields != null
                 && a.Value.CustomFields.TryGetValue("ClonedEggs", out var clonedEggsRaw)
                 && GetClonedEggsList(clonedEggsRaw).Any(egg => eggTypes.Contains(egg, StringComparer.OrdinalIgnoreCase))
-                && !animalExclusions.AnimalExclusions.Contains(a.Key, StringComparer.OrdinalIgnoreCase)
+                && !matcher.IsExcluded(a.Key, a.Value)
             )
             .Select(a => a.Key)
             .ToList();
