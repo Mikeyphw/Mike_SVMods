@@ -64,7 +64,6 @@
   "config.Number.roosterToChickenRatio.name": "Chance de Galo",
   "config.Number.roosterToChickenRatio.description": "A chance de um galo chocar de um ovo fertilizado. É ou galo ou galinha. Então, se você definir como 40, a chance de galinha será 60(100-40). Só válido se 'Tipo de Chocagem' estiver definido como 'Apenas Ovos Fertilizados'.",
 
-  //Galos
 
   "config.Text.BlueEggChoice.name": "Ovo Azul",
   "config.Text.BlueEggChoice.description": "Escolha seu ovo azul.",

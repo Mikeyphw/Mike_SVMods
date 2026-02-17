@@ -1,38 +1,5 @@
 namespace RoosterAddon.Constants;
 
-internal static class GMCMTypes
-{
-    public const string Bool = "Bool";
-    public const string Text = "Text";
-    public const string Number = "Number";
-    public const string General = "General";
-}
-
-internal static class OptionValues
-{
-    public const string True = "true";
-    public const string False = "false";
-    public const string Off = "Off";
-    public const string WhiteRooster = "cockwhite";
-    public const string BrownRooster = "cockbrown";
-    public const string BlueRooster = "cockblue";
-    public const string VoidRooster = "cockvoid";
-    public const string GoldRooster = "cockgold";
-    public const string KeepOriginalProduce = "Keep Original Produce";
-    public const string CustomizeBelow = "Customize Below";
-    public const string Coop = "Coop";
-    public const string BigCoop = "Big Coop";
-    public const string DeluxeCoop = "Deluxe Coop";
-    public const string OnDayStart = "On Day Start";
-    public const string OnLocationChange = "On Location Change";
-    public const string Original = "Original";
-    public const string OnlyFertilizedEggs = "Only Fertilized Eggs";
-    public const string DigUp = "Dig Up";
-    public const string DropOvernight = "Drop Overnight";
-    public const string Meara = "Meara's";
-    public const string Six480 = "6480's";
-}
-
 public static class ItemIds
 {
     public static class CustomItems

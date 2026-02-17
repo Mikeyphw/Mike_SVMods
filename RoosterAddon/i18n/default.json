@@ -66,7 +66,6 @@
   "config.Number.boostbyrooster.description": "The boost by rooster applied to the probability of a fertilized egg being laid.",
   "config.Number.roosterToChickenRatio.name": "Rooster Chance",
   "config.Number.roosterToChickenRatio.description": "The chance of roosters hatching from the fertilized egg. It's either rooster or chicken. So if you set it to 40, the chicken chance will be 60(100-40). Only Valid if Hatching Type is 'Only Fertilized Eggs'.",
-  //Roosters
 
   "config.Text.BlueEggChoice.name": "Blue Egg",
   "config.Text.BlueEggChoice.description": "Pick your blue egg.",

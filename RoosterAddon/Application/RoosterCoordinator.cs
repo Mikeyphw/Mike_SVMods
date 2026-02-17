@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using RoosterAddon.Application.Hatching;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework;
@@ -61,7 +62,10 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     private AnimalExclusion _animalExclusions = new();
 
-    private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
+    
+
+    private readonly FarmAnimalHatchingService _farmAnimalHatching = new();
+private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
     private readonly Queue<Action> _nextTickActions = new();
     private bool _nextTickHooked;
     private bool _gmcmRegistered;
