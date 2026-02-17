@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BirdsOfAFeather\BirdsOfAFeather.csproj" />
+    <ProjectReference Include="..\..\BirdsOfAFeather\BirdsOfAFeather.csproj" Private="false" />
   </ItemGroup>
 
 </Project>

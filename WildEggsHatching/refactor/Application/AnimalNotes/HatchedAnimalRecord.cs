@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace WildEggsHatching.Application.AnimalNotes;
 
 public sealed class HatchedAnimalRecord
@@ -17,6 +19,9 @@ public sealed class HatchedAnimalRecord
     public string QuestId { get; set; } = string.Empty;
     public string MailId { get; set; } = string.Empty;
 
+    /// <summary>Per-farmer quest/mail progress. Key is Farmer.UniqueMultiplayerID.</summary>
+    public Dictionary<long, AnimalNotesFarmerState> FarmerStates { get; set; } = new();
+
     public string LastPlacementFailureReason { get; set; } = string.Empty;
     public int ConsecutivePlacementFailureDays { get; set; }
     public int? LastPlacementAttemptDay { get; set; }
@@ -25,9 +30,5 @@ public sealed class HatchedAnimalRecord
     /// <summary>True once the note object has been placed into the home location.</summary>
     public bool NotePlaced { get; set; }
 
-    /// <summary>True once the player has been notified and the delivery quest has been added.</summary>
-    public bool QuestGiven { get; set; }
-
     public int? DayNotePlaced { get; set; }
-    public int? DayQuestGiven { get; set; }
 }

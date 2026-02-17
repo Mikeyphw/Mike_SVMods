@@ -33,30 +33,27 @@ public sealed class AnimalNotesStartupValidator
             return;
 
         var snapshot = _dataLoader.Load();
-        var expectedTokens = snapshot.WildAnimals.Keys
-            .Where(k => Game1.farmAnimalData.ContainsKey(k))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        var expectedNoteIds = expectedTokens.Select(AnimalNoteIds.NoteItemId).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var expectedQuestIds = expectedTokens.Select(AnimalNoteIds.NoteQuestId).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var expectedMailIds = expectedTokens.Select(AnimalNoteIds.NoteMailId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var expectedTokens = AnimalNotesValidationRules.GetExpectedAnimalTokens(
+            wildAnimalKeys: snapshot.WildAnimals.Keys,
+            farmAnimalKeys: Game1.farmAnimalData.Keys);
 
         var objects = SafeLoad<Dictionary<string, ObjectData>>(GameAssets.Objects) ?? new Dictionary<string, ObjectData>();
         var quests = SafeLoad<Dictionary<string, string>>(GameAssets.Quests) ?? new Dictionary<string, string>();
         var mail = SafeLoad<Dictionary<string, string>>(GameAssets.Mail) ?? new Dictionary<string, string>();
 
-        var presentNoteIds = objects.Keys.Where(IsJunimoNoteId).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var presentQuestIds = quests.Keys.Where(IsNoteQuestId).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var presentMailIds = mail.Keys.Where(IsNoteMailId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var result = AnimalNotesValidationRules.Analyze(
+            expectedTokens: expectedTokens,
+            presentNoteIds: objects.Keys,
+            presentQuestIds: quests.Keys,
+            presentMailIds: mail.Keys);
 
-        var missingNotes = expectedNoteIds.Except(presentNoteIds).ToList();
-        var missingQuests = expectedQuestIds.Except(presentQuestIds).ToList();
-        var missingMail = expectedMailIds.Except(presentMailIds).ToList();
+        var missingNotes = result.MissingNotes;
+        var missingQuests = result.MissingQuests;
+        var missingMail = result.MissingMail;
 
-        var extraNotes = presentNoteIds.Except(expectedNoteIds).ToList();
-        var extraQuests = presentQuestIds.Except(expectedQuestIds).ToList();
-        var extraMail = presentMailIds.Except(expectedMailIds).ToList();
+        var extraNotes = result.ExtraNotes;
+        var extraQuests = result.ExtraQuests;
+        var extraMail = result.ExtraMail;
 
         if (missingNotes.Count == 0 && missingQuests.Count == 0 && missingMail.Count == 0 && extraNotes.Count == 0 && extraQuests.Count == 0 && extraMail.Count == 0)
         {
@@ -89,13 +86,4 @@ public sealed class AnimalNotesStartupValidator
         try { return Game1.content.Load<T>(assetName); }
         catch { return null; }
     }
-
-    private static bool IsJunimoNoteId(string key)
-        => key.StartsWith($"{Constants.ModId}_junimoNote_", StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsNoteQuestId(string key)
-        => key.StartsWith("wildEggs_", StringComparison.OrdinalIgnoreCase) && key.EndsWith("Note", StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsNoteMailId(string key)
-        => key.StartsWith("wildEggs_NoteMail_", StringComparison.OrdinalIgnoreCase);
 }

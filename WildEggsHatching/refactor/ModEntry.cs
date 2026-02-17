@@ -64,6 +64,12 @@ public sealed class ModEntry : Mod
 
     public override void Entry(IModHelper helper)
     {
+        if (!helper.ModRegistry.IsLoaded("Mikew.birdsofafeather"))
+        {
+            Monitor.Log("Missing required dependency: BirdsOfAFeather (UniqueID: Mikew.birdsofafeather). Install it and try again.", LogLevel.Error);
+            throw new InvalidOperationException("BirdsOfAFeather (Mikew.birdsofafeather) is required.");
+        }
+
         var configProvider = new SmapiConfigProvider(helper);
 
         _ctx = new ModContext(helper, Monitor, ModManifest, helper.Translation, configProvider);
@@ -150,7 +156,22 @@ public sealed class ModEntry : Mod
                 progression: _progression,
                 log: log,
                 getStep: () => _progression?.GetCurrentStep() ?? ProgressionStep.PartI,
-                isMainPlayer: () => Context.IsMainPlayer
+                isMainPlayer: () => Context.IsMainPlayer,
+                sendQueueMailMessage: (playerId, msg) =>
+                {
+                    try
+                    {
+                        Helper.Multiplayer.SendMessage(
+                            message: msg,
+                            messageType: "WeggAnimalNoteQueueMail",
+                            modIDs: new[] { ModManifest.UniqueID },
+                            playerIDs: new[] { playerId });
+                    }
+                    catch
+                    {
+                        // best-effort
+                    }
+                }
             );
 
         _animalNotesClient = _dataLoader is null
@@ -158,6 +179,7 @@ public sealed class ModEntry : Mod
             : new AnimalNotesClientObserver(
                 helper: helper,
                 log: log,
+                dataLoader: _dataLoader,
                 modUniqueId: ModManifest.UniqueID,
                 getStep: () => _progression?.GetCurrentStep() ?? ProgressionStep.PartI,
                 allowClientDiscoveries: () => configProvider.Config.AnimalNotesAllowClientDiscoveries
@@ -284,19 +306,68 @@ public sealed class ModEntry : Mod
     }
     private void OnModMessageReceived(object? sender, ModMessageReceivedEventArgs e)
     {
-        if (!Context.IsMainPlayer)
+        if (!Context.IsWorldReady)
             return;
 
-
-        if (_ctx?.ConfigProvider.Config.AnimalNotesAllowClientDiscoveries != true)
-            return;
         if (!string.Equals(e.FromModID, ModManifest.UniqueID, StringComparison.OrdinalIgnoreCase))
             return;
 
+        // Client: accept host-granted quests.
+        if (!Context.IsMainPlayer && string.Equals(e.Type, "WeggAnimalNoteGrantQuest", StringComparison.OrdinalIgnoreCase))
+        {
+            var msg = e.ReadAs<AnimalNoteGrantQuestMessage>();
+            _animalNotesClient?.OnHostGrantQuest(msg);
+            return;
+        }
+
+        // Client: accept host-queued mail.
+        if (!Context.IsMainPlayer && string.Equals(e.Type, "WeggAnimalNoteQueueMail", StringComparison.OrdinalIgnoreCase))
+        {
+            var msg = e.ReadAs<AnimalNoteQueueMailMessage>();
+            _animalNotesClient?.OnHostQueueMail(msg);
+            return;
+        }
+
+        // Host only beyond this point.
+        if (!Context.IsMainPlayer || _animalNotes is null)
+            return;
+
+        if (_ctx?.ConfigProvider.Config.AnimalNotesAllowClientDiscoveries != true)
+            return;
+
+        // Host: accept client discoveries.
         if (string.Equals(e.Type, "WeggAnimalNoteFound", StringComparison.OrdinalIgnoreCase))
         {
-            var msg = e.ReadAs<AnimalNoteFoundMessage>();
-            _animalNotes?.OnClientNoteFound(msg);
+            var found = e.ReadAs<AnimalNoteFoundMessage>();
+
+            if (!_animalNotes.TryHandleClientNoteFound(found, e.FromPlayerID, out var questId))
+                return;
+
+            if (string.IsNullOrWhiteSpace(questId))
+                return;
+
+            try
+            {
+                // Tell the discovering client to add the quest locally (quests are per-farmer in MP).
+                Helper.Multiplayer.SendMessage(
+                    message: new AnimalNoteGrantQuestMessage { QuestId = questId, NoteItemId = found.NoteItemId },
+                    messageType: "WeggAnimalNoteGrantQuest",
+                    modIDs: new[] { ModManifest.UniqueID },
+                    playerIDs: new[] { e.FromPlayerID });
+            }
+            catch
+            {
+                // best-effort
+            }
+
+            return;
+        }
+
+        // Host: accept client quest completion reports.
+        if (string.Equals(e.Type, "WeggAnimalNoteQuestCompleted", StringComparison.OrdinalIgnoreCase))
+        {
+            var completed = e.ReadAs<AnimalNoteQuestCompletedMessage>();
+            _animalNotes.TryHandleClientQuestCompleted(completed, e.FromPlayerID);
         }
     }
 

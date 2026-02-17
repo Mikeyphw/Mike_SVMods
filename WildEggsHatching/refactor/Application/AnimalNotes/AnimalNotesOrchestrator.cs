@@ -19,7 +19,7 @@ namespace WildEggsHatching.Application.AnimalNotes;
 
 public sealed class AnimalNotesOrchestrator
 {
-    private const int SaveDataVersion = 1;
+    private const int SaveDataVersion = 2;
 
     private readonly ISaveDataStore _store;
     private readonly IModDataLoader _dataLoader;
@@ -35,6 +35,7 @@ public sealed class AnimalNotesOrchestrator
     private readonly ILog _log;
     private readonly Func<ProgressionStep> _getStep;
     private readonly Func<bool> _isMainPlayer;
+    private readonly Action<long, AnimalNoteQueueMailMessage>? _sendQueueMailMessage;
 
     private AnimalNotesSaveData _data = new();
     private bool _initialized;
@@ -53,7 +54,8 @@ public sealed class AnimalNotesOrchestrator
         ProgressionService progression,
         ILog log,
         Func<ProgressionStep> getStep,
-        Func<bool> isMainPlayer)
+        Func<bool> isMainPlayer,
+        Action<long, AnimalNoteQueueMailMessage>? sendQueueMailMessage)
     {
         _store = store;
         _dataLoader = dataLoader;
@@ -69,6 +71,7 @@ public sealed class AnimalNotesOrchestrator
         _log = log;
         _getStep = getStep;
         _isMainPlayer = isMainPlayer;
+        _sendQueueMailMessage = sendQueueMailMessage;
     }
     public string DumpState()
     {
@@ -78,54 +81,83 @@ public sealed class AnimalNotesOrchestrator
         try { EnsureInitialized(); }
         catch (Exception ex) { return $"AnimalNotes init failed: {ex.Message}"; }
 
+        var day = _game.GetDayNumber();
+        var farmers = SafeGetAllFarmers();
+
         var lines = new List<string>
         {
-            $"AnimalNotes: step={_getStep()} pending={_data.Pending.Count} registeredTypes={_data.RegisteredAnimalTypes.Count}",
+            $"AnimalNotes: step={_getStep()} day={day} pending={_data.Pending.Count} registeredTypes={_data.RegisteredAnimalTypes.Count}",
+            $"Config: debug={_debugMode} warnAfterDays={_warnAfterDays} placementRadius={_placementRadius}",
+            $"Farmers: {string.Join(", ", farmers.Select(f => $"{f.Name}({f.UniqueMultiplayerID})"))}"
         };
 
         foreach (var p in _data.Pending.OrderBy(x => x.FarmAnimalName).ThenBy(x => x.AnimalId))
         {
             var noteExists = Utility.doesItemExistAnywhere(p.NoteItemId);
-            var questActive = Game1.player?.questLog?.Any(q => string.Equals(q.id.Value, p.QuestId, StringComparison.OrdinalIgnoreCase)) ?? false;
-            var questCompleted = _quests.HasCompletedQuest(p.QuestId);
-
-            var mailReceived = _mail.HasReceivedMail(p.MailId);
-            var mailTomorrow = Game1.player?.mailForTomorrow?.Contains(p.MailId) ?? false;
+            var noteBlock = GetNoteBlockedReason(p, noteExists);
 
             lines.Add(
-                $" - {p.FarmAnimalName} id={p.AnimalId} home='{p.HomeNameOrUniqueName}' " +
-                $"note='{p.NoteItemId}' notePlaced={p.NotePlaced} noteExistsNow={noteExists} " +
-                $"quest='{p.QuestId}' questGiven={p.QuestGiven} questActive={questActive} questCompleted={questCompleted} " +
-                $"mail='{p.MailId}' mailTomorrow={mailTomorrow} mailReceived={mailReceived} " +
-                $"failDays={p.ConsecutivePlacementFailureDays} lastFail='{p.LastPlacementFailureReason}'");
+                $" - {p.FarmAnimalName} id={p.AnimalId} home='{p.HomeNameOrUniqueName}' token='{p.UniqueToken}' " +
+                $"note='{p.NoteItemId}' notePlaced={p.NotePlaced} noteExistsNow={noteExists} quest='{p.QuestId}' mail='{p.MailId}'");
+
+            if (!string.IsNullOrWhiteSpace(noteBlock))
+                lines.Add($"    noteBlocked: {noteBlock}");
+
+            foreach (var farmer in farmers)
+            {
+                var state = GetOrCreateFarmerState(p, farmer.UniqueMultiplayerID);
+                var questActive = farmer.questLog.Any(q => string.Equals(q.id.Value, p.QuestId, StringComparison.OrdinalIgnoreCase));
+                var questCompleted = HasCompletedQuest(farmer, p.QuestId);
+
+                var mailReceived = HasReceivedMail(farmer, p.MailId);
+                var mailTomorrow = HasMailForTomorrow(farmer, p.MailId);
+
+                var questBlock = GetQuestBlockedReason(p, farmer, noteExists, questActive, questCompleted, state);
+                var mailBlock = GetMailBlockedReason(p, day, farmer, mailTomorrow, mailReceived, state);
+
+                lines.Add(
+                    $"    farmer={farmer.Name}({farmer.UniqueMultiplayerID}) questGiven={state.QuestGiven} questActive={questActive} questCompleted={questCompleted} questDay={state.DayQuestCompleted?.ToString() ?? "-"} " +
+                    $"mailQueued={state.MailQueued} mailTomorrow={mailTomorrow} mailReceived={mailReceived}");
+
+                if (!string.IsNullOrWhiteSpace(questBlock))
+                    lines.Add($"      questBlocked: {questBlock}");
+
+                if (!string.IsNullOrWhiteSpace(mailBlock))
+                    lines.Add($"      mailBlocked: {mailBlock}");
+            }
+
+            if (p.ConsecutivePlacementFailureDays > 0 || !string.IsNullOrWhiteSpace(p.LastPlacementFailureReason))
+                lines.Add($"    placement: failDays={p.ConsecutivePlacementFailureDays} lastFail='{p.LastPlacementFailureReason}'");
         }
 
         return string.Join(Environment.NewLine, lines);
     }
 
-    public void OnClientNoteFound(AnimalNoteFoundMessage message)
+    public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmerId, out string questId)
     {
+        questId = string.Empty;
+
         if (!Context.IsWorldReady)
-            return;
+            return false;
 
         if (message is null)
-            return;
+            return false;
 
         EnsureInitialized();
         ReconcileState();
 
         if (!IsJunimoNoteId(message.NoteItemId))
-            return;
+            return false;
 
         if (!Utility.doesItemExistAnywhere(message.NoteItemId))
         {
             _log.Log($"AnimalNotes: client '{message.FoundByFarmerName}' reported note '{message.NoteItemId}', but it no longer exists.", StardewModdingAPI.LogLevel.Trace);
-            return;
+            return false;
         }
 
         var token = ExtractAnimalTokenFromNoteId(message.NoteItemId);
         if (string.IsNullOrWhiteSpace(token))
-            return;
+            return false;
 
         var rec = _data.Pending.FirstOrDefault(p => string.Equals(p.NoteItemId, message.NoteItemId, StringComparison.OrdinalIgnoreCase));
         if (rec is null)
@@ -141,29 +173,57 @@ public sealed class AnimalNotesOrchestrator
                 QuestId = AnimalNoteIds.NoteQuestId(token),
                 MailId = AnimalNoteIds.NoteMailId(token),
                 NotePlaced = true,
-                QuestGiven = false,
             };
 
             _data.Pending.Add(rec);
         }
 
-        if (rec.QuestGiven)
-            return;
+        questId = rec.QuestId;
 
-        try
-        {
-            _quests.AddQuest(rec.QuestId);
-            rec.QuestGiven = true;
-            rec.DayQuestGiven ??= _game.GetDayNumber();
-            _log.Log($"AnimalNotes: host issued quest '{rec.QuestId}' from client discovery (player='{message.FoundByFarmerName}').", StardewModdingAPI.LogLevel.Info);
-        }
-        catch (Exception ex)
-        {
-            _log.Log($"AnimalNotes: failed to issue quest '{rec.QuestId}' from client discovery: {ex}", StardewModdingAPI.LogLevel.Warn);
-        }
+        var state = GetOrCreateFarmerState(rec, farmerId);
+        if (state.QuestGiven)
+            return true;
+
+        state.QuestGiven = true;
+        state.DayQuestGiven ??= _game.GetDayNumber();
 
         Save();
+        return true;
     }
+
+    public bool TryHandleClientQuestCompleted(AnimalNoteQuestCompletedMessage message, long farmerId)
+    {
+        if (!Context.IsWorldReady)
+            return false;
+
+        if (message is null || string.IsNullOrWhiteSpace(message.QuestId))
+            return false;
+
+        EnsureInitialized();
+        ReconcileState();
+
+        var rec = _data.Pending.FirstOrDefault(p => string.Equals(p.QuestId, message.QuestId, StringComparison.OrdinalIgnoreCase));
+        if (rec is null)
+            return false;
+
+        var state = GetOrCreateFarmerState(rec, farmerId);
+        if (state.DayQuestCompleted is not null)
+            return true;
+
+        state.DayQuestCompleted = _game.GetDayNumber();
+        Save();
+        return true;
+    }
+
+    // Back-compat wrapper.
+    public void OnClientNoteFound(AnimalNoteFoundMessage message)
+        => TryHandleClientNoteFound(message, Game1.player?.UniqueMultiplayerID ?? 0, out _);
+
+
+    // Back-compat wrapper.
+    public void OnClientNoteFound(AnimalNoteFoundMessage message)
+        => TryHandleClientNoteFound(message, out _);
+
 
 
 
@@ -584,11 +644,9 @@ private void ProcessPending()
 
         var day = _game.GetDayNumber();
 
-        foreach (var p in _data.Pending)
-            _progression.RecordQuestCompletionDayIfCompleted(p.QuestId);
-
+        TrackQuestCompletionsForAllFarmers(day);
         TrySpawnNotes(day);
-        TryIssueUnlockMail(day);
+        TryIssueUnlockMailForAllFarmers(day);
         CleanupCompleted();
     }
 
@@ -654,13 +712,23 @@ private void ProcessPending()
         if (_data.Pending.Count == 0)
             return;
 
+        var farmer = Game1.player;
+        if (farmer is null)
+            return;
+
+        var farmerId = farmer.UniqueMultiplayerID;
+        var day = _game.GetDayNumber();
         var locName = location.NameOrUniqueName;
 
         foreach (var p in _data.Pending
-                     .Where(x => !x.QuestGiven && string.Equals(x.HomeNameOrUniqueName, locName, StringComparison.OrdinalIgnoreCase))
+                     .Where(x => string.Equals(x.HomeNameOrUniqueName, locName, StringComparison.OrdinalIgnoreCase))
                      .ToList())
         {
             if (!Utility.doesItemExistAnywhere(p.NoteItemId))
+                continue;
+
+            var state = GetOrCreateFarmerState(p, farmerId);
+            if (state.QuestGiven)
                 continue;
 
             try
@@ -677,42 +745,150 @@ private void ProcessPending()
                 // HUD is best-effort.
             }
 
-            try { _quests.AddQuest(p.QuestId); }
-            catch { /* ignored */ }
+            TryAddQuestToFarmer(farmer, p.QuestId);
 
-            p.QuestGiven = true;
-            p.DayQuestGiven ??= _game.GetDayNumber();
-            _log.Log($"AnimalNotes: quest '{p.QuestId}' issued for '{p.FarmAnimalName}'.", StardewModdingAPI.LogLevel.Trace);
+            state.QuestGiven = true;
+            state.DayQuestGiven ??= day;
+            _log.Log($"AnimalNotes: quest '{p.QuestId}' issued for '{p.FarmAnimalName}' (farmer={farmerId}).", StardewModdingAPI.LogLevel.Trace);
         }
 
         Save();
     }
 
-    private void TryIssueUnlockMail(int dayNumber)
+    private void TryIssueUnlockMailForAllFarmers(int dayNumber)
     {
+        var farmers = SafeGetAllFarmers();
+        if (farmers.Count == 0)
+            return;
+
+        var online = new HashSet<long>(Game1.getOnlineFarmers().Select(f => f.UniqueMultiplayerID));
+
         foreach (var p in _data.Pending)
         {
-            if (_mail.HasReceivedMail(p.MailId) || _mail.HasMailForTomorrow(p.MailId))
-                continue;
-
-            if (!_mail.HasReceivedMail(ProgressionIds.Mail.SpecialOrderDoneII))
-                continue;
-
-            if (!_quests.HasCompletedQuest(p.QuestId))
-                continue;
-
             if (!TryGetDaysToMature(p.FarmAnimalName, out var daysToMature))
                 continue;
 
-            if (!_progression.TryGetQuestCompletionDay(p.QuestId, out var questDay))
-                continue;
+            foreach (var farmer in farmers)
+            {
+                var farmerId = farmer.UniqueMultiplayerID;
+                var state = GetOrCreateFarmerState(p, farmerId);
 
-            if (dayNumber - questDay < daysToMature + 2)
-                continue;
+                if (HasReceivedMail(farmer, p.MailId) || HasMailForTomorrow(farmer, p.MailId))
+                {
+                    state.MailQueued = true;
+                    continue;
+                }
 
-            _mail.AddMailForTomorrow(p.MailId, noLetter: false);
-            _log.Log($"AnimalNotes: queued unlock mail '{p.MailId}' for '{p.FarmAnimalName}'.", StardewModdingAPI.LogLevel.Trace);
+                if (!HasReceivedMail(farmer, ProgressionIds.Mail.SpecialOrderDoneII))
+                    continue;
+
+                if (state.DayQuestCompleted is null)
+                    continue;
+
+                if (dayNumber - state.DayQuestCompleted.Value < daysToMature + 2)
+                    continue;
+
+                AddMailForTomorrow(farmer, p.MailId, noLetter: false);
+                state.MailQueued = true;
+                state.DayMailQueued ??= dayNumber;
+
+                // For online farmhands, also send a message so they queue it locally immediately.
+                if (!_isMainPlayer() || farmerId == Game1.player.UniqueMultiplayerID)
+                    continue;
+
+                if (online.Contains(farmerId))
+                {
+                    try { _sendQueueMailMessage?.Invoke(farmerId, new AnimalNoteQueueMailMessage { MailId = p.MailId, NoLetter = false }); }
+                    catch { /* best-effort */ }
+                }
+
+                _log.Log($"AnimalNotes: queued unlock mail '{p.MailId}' for '{p.FarmAnimalName}' (farmer={farmerId}).", StardewModdingAPI.LogLevel.Trace);
+            }
         }
+
+        Save();
+    }
+
+    private void TrackQuestCompletionsForAllFarmers(int dayNumber)
+    {
+        var farmers = SafeGetAllFarmers();
+        if (farmers.Count == 0)
+            return;
+
+        foreach (var p in _data.Pending)
+        {
+            foreach (var farmer in farmers)
+            {
+                var state = GetOrCreateFarmerState(p, farmer.UniqueMultiplayerID);
+                if (state.DayQuestCompleted is not null)
+                    continue;
+
+                if (HasCompletedQuest(farmer, p.QuestId))
+                    state.DayQuestCompleted = dayNumber;
+            }
+        }
+
+        Save();
+    }
+
+    private static List<Farmer> SafeGetAllFarmers()
+    {
+        try { return Game1.getAllFarmers().ToList(); }
+        catch { return new List<Farmer>(); }
+    }
+
+    private static AnimalNotesFarmerState GetOrCreateFarmerState(HatchedAnimalRecord record, long farmerId)
+    {
+        if (!record.FarmerStates.TryGetValue(farmerId, out var state) || state is null)
+        {
+            state = new AnimalNotesFarmerState();
+            record.FarmerStates[farmerId] = state;
+        }
+
+        return state;
+    }
+
+    private static void TryAddQuestToFarmer(Farmer farmer, string questId)
+    {
+        if (string.IsNullOrWhiteSpace(questId))
+            return;
+
+        try
+        {
+            if (farmer.questLog.Any(q => string.Equals(q.id.Value, questId, StringComparison.OrdinalIgnoreCase)))
+                return;
+        }
+        catch
+        {
+            // ignored
+        }
+
+        try { farmer.addQuest(questId); }
+        catch { /* ignored */ }
+    }
+
+    private static bool HasCompletedQuest(Farmer farmer, string questId)
+    {
+        var method = farmer.GetType().GetMethod("hasCompletedQuest", new[] { typeof(string) });
+        if (method is null)
+            return false;
+
+        try { return (bool)(method.Invoke(farmer, new object[] { questId }) ?? false); }
+        catch { return false; }
+    }
+
+    private static bool HasReceivedMail(Farmer farmer, string mailId)
+        => farmer.mailReceived.Contains(mailId);
+
+    private static bool HasMailForTomorrow(Farmer farmer, string mailId)
+        => farmer.mailForTomorrow.Any(entry => string.Equals(entry, mailId, StringComparison.Ordinal) || entry.StartsWith(mailId + "%&", StringComparison.Ordinal));
+
+    private static void AddMailForTomorrow(Farmer farmer, string mailId, bool noLetter)
+    {
+        if (HasReceivedMail(farmer, mailId) || HasMailForTomorrow(farmer, mailId))
+            return;
+
+        farmer.mailForTomorrow.Add(noLetter ? mailId + "%&NL&%" : mailId);
     }
 
     private static bool TryGetDaysToMature(string farmAnimalName, out int daysToMature)
@@ -735,12 +911,16 @@ private void ProcessPending()
 
     private void CleanupCompleted()
     {
+        var farmers = SafeGetAllFarmers();
+        if (farmers.Count == 0)
+            return;
+
         var removedAny = false;
 
         for (var i = _data.Pending.Count - 1; i >= 0; i--)
         {
             var p = _data.Pending[i];
-            if (!_mail.HasReceivedMail(p.MailId))
+            if (!farmers.All(f => HasReceivedMail(f, p.MailId)))
                 continue;
 
             _data.Pending.RemoveAt(i);
