@@ -69,6 +69,10 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
     
     private readonly FarmAnimalExclusionsService _farmAnimalExclusionsService = new();
 private readonly FarmAnimalHatchingService _farmAnimalHatching = new();
+
+    private readonly CatalogManager _catalogManager = new();
+    private CatalogBundle _catalogs = new();
+
 private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
     private readonly Queue<Action> _nextTickActions = new();
     private bool _nextTickHooked;
@@ -110,6 +114,12 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
             "roosteraddon_dump_state",
             "Write a JSON snapshot of RoosterAddon state to data/state-dumps. Add 'farmanimals' to include farm animal keys.",
             DumpStateCommand
+        );
+
+        Helper.ConsoleCommands.Add(
+            "ra_catalog",
+            "Catalog commands. Use: ra_catalog help",
+            CatalogCommand
         );
 
                 Helper.ConsoleCommands.Add(

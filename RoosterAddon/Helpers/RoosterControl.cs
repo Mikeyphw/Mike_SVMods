@@ -27,6 +27,8 @@ public sealed class RoosterControl
     private readonly IModHelper _helper;
     private readonly IMonitor _monitor;
 
+    private RoosterCatalog? _roosterCatalog;
+
     public RoosterAddonConfig Config { get; private set; }
     public LuckyTypes DailyLuck { private get; set; } = LuckyTypes.SuperUnlucky;
 
@@ -44,6 +46,9 @@ public sealed class RoosterControl
 
     public void UpdateConfig(RoosterAddonConfig config)
         => Config = config ?? throw new ArgumentNullException(nameof(config));
+
+    public void UpdateRoosterCatalog(RoosterCatalog? roosterCatalog)
+        => _roosterCatalog = roosterCatalog;
 
     public static bool UpdatePercentage(int chance)
     {

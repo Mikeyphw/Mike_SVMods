@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using RoosterAddon.Framework.Config;
+using RoosterAddon.Enums;
 using StardewModdingAPI;
 
 namespace RoosterAddon.Application.Catalogs;
@@ -31,36 +32,269 @@ internal sealed class CatalogManager
     }
 
     public bool ApplyToConfig(
-        RoosterAddonConfig config,
-        CatalogBundle catalogs,
-        bool isNewConfig,
-        IMonitor monitor
-    )
+    RoosterAddonConfig config,
+    CatalogBundle catalogs,
+    bool isNewConfig,
+    IMonitor monitor
+)
+{
+    if (config is null) throw new ArgumentNullException(nameof(config));
+    if (catalogs is null) throw new ArgumentNullException(nameof(catalogs));
+    if (monitor is null) throw new ArgumentNullException(nameof(monitor));
+
+    var changed = false;
+
+    // New config: seed config from catalogs so validation passes and GMCM has something sane.
+    if (isNewConfig)
     {
-        if (config is null) throw new ArgumentNullException(nameof(config));
-        if (catalogs is null) throw new ArgumentNullException(nameof(catalogs));
-        if (monitor is null) throw new ArgumentNullException(nameof(monitor));
-
-        var changed = false;
-
-        // New config: seed config from catalogs so validation passes and GMCM has something sane.
-        if (isNewConfig)
-        {
-            changed |= ApplyProduceDefaults(config, catalogs.Produce);
-            changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
-            if (changed)
-                monitor.Log("Catalogs applied to newly created config.", LogLevel.Info);
-
-            return changed;
-        }
-
-        // Existing config: only fix clearly-invalid produce tables (avoid clobbering user edits).
-        changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
+        changed |= ApplyProduceDefaults(config, catalogs.Produce);
+        changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
+        if (changed)
+            monitor.Log("Catalogs applied to newly created config.", LogLevel.Info);
 
         return changed;
     }
 
-    private static bool ApplyProduceDefaults(RoosterAddonConfig config, ProduceCatalog produce)
+    switch (config.General.CatalogApplyMode)
+    {
+        case CatalogApplyMode.SeedOnly:
+            return false;
+
+        case CatalogApplyMode.Authoritative:
+            changed |= ApplyProduceDefaults(config, catalogs.Produce);
+            changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
+            if (changed)
+                monitor.Log("Catalogs applied authoritatively to config.", LogLevel.Info);
+            return changed;
+
+        case CatalogApplyMode.MergeMissing:
+            changed |= MergeMissingFromCatalogs(config, catalogs, monitor);
+            return changed;
+
+        case CatalogApplyMode.RepairInvalid:
+        default:
+            // Existing config: only fix clearly-invalid produce tables (avoid clobbering user edits).
+            changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
+            return changed;
+    }
+}
+
+public void ExportEffective(IModHelper helper, IMonitor monitor, RoosterAddonConfig config, CatalogBundle currentCatalogs)
+{
+    if (helper is null) throw new ArgumentNullException(nameof(helper));
+    if (monitor is null) throw new ArgumentNullException(nameof(monitor));
+    if (config is null) throw new ArgumentNullException(nameof(config));
+    if (currentCatalogs is null) throw new ArgumentNullException(nameof(currentCatalogs));
+
+    // Preserve the rooster catalog (it is mostly structural keys).
+    helper.Data.WriteJsonFile(RoostersFile, currentCatalogs.Roosters);
+
+    var produce = BuildProduceFromConfig(config, currentCatalogs.Produce.SchemaVersion);
+    helper.Data.WriteJsonFile(ProduceFile, produce);
+
+    var hatching = BuildHatchingFromConfig(config, currentCatalogs.Hatching.SchemaVersion);
+    helper.Data.WriteJsonFile(HatchingFile, hatching);
+
+    monitor.Log("Catalogs exported to data/catalogs/*.json.", LogLevel.Info);
+}
+
+private static bool MergeMissingFromCatalogs(RoosterAddonConfig config, CatalogBundle catalogs, IMonitor monitor)
+{
+    var changed = false;
+
+    var defaultGeneral = new GeneralSettings();
+    if (config.General.HarvestType == defaultGeneral.HarvestType)
+    {
+        if (Enum.TryParse<HarvestType>(catalogs.Hatching.General.HarvestType ?? string.Empty, ignoreCase: true, out var harvest))
+        {
+            config.General.HarvestType = harvest;
+            changed = true;
+        }
+    }
+
+    if (config.General.HatchingMode == defaultGeneral.HatchingMode)
+    {
+        if (Enum.TryParse<HatchingMode>(catalogs.Hatching.General.HatchingMode ?? string.Empty, ignoreCase: true, out var mode))
+        {
+            config.General.HatchingMode = mode;
+            changed = true;
+        }
+    }
+
+    foreach (var (rt, settings) in config.Roosters)
+    {
+        var defaults = new RoosterSettings();
+
+        if (catalogs.Hatching.Roosters.TryGetValue(rt.ToString(), out var h))
+        {
+            if (settings.BuildingRequired == defaults.BuildingRequired
+                && Enum.TryParse<RequiredBuilding>(h.BuildingRequired ?? string.Empty, ignoreCase: true, out var b))
+            {
+                settings.BuildingRequired = b;
+                changed = true;
+            }
+
+            if (settings.Buyable == defaults.Buyable && h.Buyable.HasValue) { settings.Buyable = h.Buyable.Value; changed = true; }
+            if (settings.Price == defaults.Price && h.Price.HasValue) { settings.Price = h.Price.Value; changed = true; }
+            if (settings.EnableRoosterHatching == defaults.EnableRoosterHatching && h.EnableRoosterHatching.HasValue)
+            {
+                settings.EnableRoosterHatching = h.EnableRoosterHatching.Value;
+                changed = true;
+            }
+
+            if (settings.MatureDays == defaults.MatureDays && h.MatureDays.HasValue) { settings.MatureDays = h.MatureDays.Value; changed = true; }
+            if (settings.ProduceDays == defaults.ProduceDays && h.ProduceDays.HasValue) { settings.ProduceDays = h.ProduceDays.Value; changed = true; }
+
+            if (settings.BypassBlueConditions == defaults.BypassBlueConditions && h.BypassBlueConditions.HasValue)
+            {
+                settings.BypassBlueConditions = h.BypassBlueConditions.Value;
+                changed = true;
+            }
+
+            if (settings.ProduceOption == defaults.ProduceOption
+                && Enum.TryParse<ProduceMode>(h.ProduceOption ?? string.Empty, ignoreCase: true, out var p))
+            {
+                settings.ProduceOption = p;
+                changed = true;
+            }
+
+            if (settings.DeluxeProduceOption == defaults.DeluxeProduceOption
+                && Enum.TryParse<DeluxeProduceMode>(h.DeluxeProduceOption ?? string.Empty, ignoreCase: true, out var d))
+            {
+                settings.DeluxeProduceOption = d;
+                changed = true;
+            }
+        }
+
+        if (catalogs.Produce.Roosters.TryGetValue(rt.ToString(), out var entry))
+        {
+            if (rt.ToString().Equals("Blue", StringComparison.OrdinalIgnoreCase)
+                && (string.IsNullOrWhiteSpace(settings.BlueEggChoice) || settings.BlueEggChoice == defaults.BlueEggChoice)
+                && !string.IsNullOrWhiteSpace(entry.BlueEggChoice))
+            {
+                settings.BlueEggChoice = entry.BlueEggChoice.Trim();
+                changed = true;
+            }
+
+            if (settings.ProduceOption == ProduceMode.CustomizeBelow)
+            {
+                var shouldReplace = !HasAnyUsable(settings.ProduceEntries) || AreProduceListsEquivalent(settings.ProduceEntries, defaults.ProduceEntries);
+                if (shouldReplace && entry.Produce.Count > 0)
+                {
+                    settings.ProduceEntries = entry.Produce.Select(ToConfigEntry).ToList();
+                    changed = true;
+                    monitor.Log($"Catalogs: merged ProduceEntries for {rt}.", LogLevel.Info);
+                }
+            }
+
+            if (settings.DeluxeProduceOption == DeluxeProduceMode.CustomizeBelow)
+            {
+                var shouldReplace = !HasAnyUsable(settings.DeluxeProduceEntries) || AreProduceListsEquivalent(settings.DeluxeProduceEntries, defaults.DeluxeProduceEntries);
+                if (shouldReplace && entry.Deluxe.Count > 0)
+                {
+                    settings.DeluxeProduceEntries = entry.Deluxe.Select(ToConfigEntry).ToList();
+                    changed = true;
+                    monitor.Log($"Catalogs: merged DeluxeProduceEntries for {rt}.", LogLevel.Info);
+                }
+            }
+        }
+    }
+
+    // Always repair invalid tables (safe) even in merge mode.
+    changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
+
+    if (changed)
+        monitor.Log("Catalogs: merge-missing applied to config.", LogLevel.Info);
+
+    return changed;
+}
+
+private static bool AreProduceListsEquivalent(IReadOnlyList<ProduceEntry> a, IReadOnlyList<ProduceEntry> b)
+{
+    if (a is null || b is null) return false;
+    if (a.Count != b.Count) return false;
+
+    for (var i = 0; i < a.Count; i++)
+    {
+        var ea = a[i];
+        var eb = b[i];
+
+        if (ea is null || eb is null) return false;
+
+        if (!string.Equals((ea.Choice ?? string.Empty).Trim(), (eb.Choice ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (!string.Equals((ea.CustomItemName ?? string.Empty).Trim(), (eb.CustomItemName ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (ea.Probability != eb.Probability)
+            return false;
+    }
+
+    return true;
+}
+
+private static ProduceCatalog BuildProduceFromConfig(RoosterAddonConfig config, int schemaVersion)
+{
+    var cat = new ProduceCatalog { SchemaVersion = schemaVersion };
+
+    foreach (var (rt, settings) in config.Roosters)
+    {
+        var entry = new ProduceCatalogEntry
+        {
+            BlueEggChoice = rt.ToString().Equals("Blue", StringComparison.OrdinalIgnoreCase)
+                ? (string.IsNullOrWhiteSpace(settings.BlueEggChoice) ? null : settings.BlueEggChoice)
+                : null,
+            Produce = (settings.ProduceEntries ?? new List<ProduceEntry>()).Select(ToDto).ToList(),
+            Deluxe = (settings.DeluxeProduceEntries ?? new List<ProduceEntry>()).Select(ToDto).ToList(),
+        };
+
+        cat.Roosters[rt.ToString()] = entry;
+    }
+
+    return cat;
+}
+
+private static HatchingCatalog BuildHatchingFromConfig(RoosterAddonConfig config, int schemaVersion)
+{
+    var cat = new HatchingCatalog
+    {
+        SchemaVersion = schemaVersion,
+        General = new HatchingGeneralCatalog
+        {
+            HarvestType = config.General.HarvestType.ToString(),
+            HatchingMode = config.General.HatchingMode.ToString()
+        }
+    };
+
+    foreach (var (rt, settings) in config.Roosters)
+    {
+        cat.Roosters[rt.ToString()] = new HatchingRoosterCatalog
+        {
+            BuildingRequired = settings.BuildingRequired.ToString(),
+            Buyable = settings.Buyable,
+            Price = settings.Price,
+            EnableRoosterHatching = settings.EnableRoosterHatching,
+            MatureDays = settings.MatureDays,
+            ProduceDays = settings.ProduceDays,
+            ProduceOption = settings.ProduceOption.ToString(),
+            DeluxeProduceOption = settings.DeluxeProduceOption.ToString(),
+            BypassBlueConditions = settings.BypassBlueConditions
+        };
+    }
+
+    return cat;
+}
+
+private static ProduceEntryDto ToDto(ProduceEntry entry)
+    => new()
+    {
+        Choice = entry?.Choice ?? string.Empty,
+        CustomItemName = entry?.CustomItemName ?? string.Empty,
+        Probability = Math.Clamp(entry?.Probability ?? 0, 0, 100)
+    };
+
+private static bool ApplyProduceDefaults(RoosterAddonConfig config, ProduceCatalog produce)
     {
         var changed = false;
 

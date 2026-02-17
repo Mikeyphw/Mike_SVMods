@@ -50,7 +50,9 @@ internal sealed partial class RoosterCoordinator
 
         if (farmAnimals is not null)
         {
-            var requiredRoosterTypes = new[] { RoosterType.White, RoosterType.Brown, RoosterType.Blue, RoosterType.Void, RoosterType.Gold };
+            
+var requiredRoosterTypes = new[] { RoosterType.White, RoosterType.Brown, RoosterType.Blue, RoosterType.Void, RoosterType.Gold };
+
 foreach (var rt in requiredRoosterTypes)
 {
     var key =
@@ -71,13 +73,8 @@ foreach (var rt in requiredRoosterTypes)
     if (!farmAnimals.ContainsKey(key))
         errors.Add($"Missing required FarmAnimals key: '{key}'.");
 }
-)
-            {
-                if (!farmAnimals.ContainsKey(key))
-                    errors.Add($"Missing required FarmAnimals key: '{key}'.");
-            }
 
-            foreach (var (femaleKey, assignment) in Config.FemalesOptions)
+foreach (var (femaleKey, assignment) in Config.FemalesOptions)
             {
                 if (assignment == FemaleRoosterAssignment.Off)
                     continue;

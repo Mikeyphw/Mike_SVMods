@@ -37,6 +37,11 @@ public sealed class GeneralSettings
 {
     public UpdateRateMode UpdateRate { get; set; } = UpdateRateMode.OnDayStart;
 
+    /// <summary>
+    /// How JSON catalogs are applied to an existing config on startup/reload.
+    /// </summary>
+    public CatalogApplyMode CatalogApplyMode { get; set; } = CatalogApplyMode.RepairInvalid;
+
     /// <summary>Percent (0-100).</summary>
     public int ChosenPercentageDailyLuckBonus { get; set; } = 10;
 
@@ -123,6 +128,21 @@ public enum UpdateRateMode
 {
     OnDayStart,
     OnLocationChange
+}
+
+public enum CatalogApplyMode
+{
+    /// <summary>Apply catalogs only when a new config is created.</summary>
+    SeedOnly,
+
+    /// <summary>Repair clearly-invalid produce tables in an existing config (default).</summary>
+    RepairInvalid,
+
+    /// <summary>Fill only values that still match factory defaults (and repair invalid tables).</summary>
+    MergeMissing,
+
+    /// <summary>Catalogs overwrite config values on every startup/reload.</summary>
+    Authoritative
 }
 
 public enum HatchingMode
