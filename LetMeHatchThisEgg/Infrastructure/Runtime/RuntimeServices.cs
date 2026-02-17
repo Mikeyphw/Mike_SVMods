@@ -1,6 +1,4 @@
-using ContentPatcher;
 using LetMeHatchThisEgg.Core.Abstractions;
-using LetMeHatchThisEgg.Framework;
 using StardewModdingAPI;
 
 namespace LetMeHatchThisEgg.Infrastructure.Runtime;
@@ -34,19 +32,4 @@ internal sealed class SmapiAssetRegistry : IAssetRegistry
 
     public string GetModAssetPath(string relativePath)
         => helper.ModContent.GetInternalAssetName(relativePath).Name;
-}
-
-/// <summary>Static integration service wrapper.</summary>
-internal sealed class StaticIntegrationService : IIntegrationService
-{
-    public IContentPatcherAPI? ContentPatcher { get; }
-    public IWildEggsApi? WildEggs { get; }
-    public IRoosterHatchingAPI? RoostersAddon { get; }
-
-    public StaticIntegrationService(LmheIntegrations integrations)
-    {
-        ContentPatcher = integrations.ContentPatcher;
-        WildEggs = integrations.WildEggs;
-        RoostersAddon = integrations.RoostersAddon;
-    }
 }

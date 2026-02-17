@@ -1,17 +1,16 @@
-using ContentPatcher;
-using LetMeHatchThisEgg.Framework;
+using LetMeHatchThisEgg.Core.Abstractions.Integrations;
 
 namespace LetMeHatchThisEgg.Core.Abstractions;
 
-/// <summary>Provides access to optional integrations (Content Patcher, WildEggs, RoostersAddon).</summary>
+/// <summary>Provides access to optional integrations (Content Patcher, WildEggs, RoostersAddon) via adapters.</summary>
 public interface IIntegrationService
 {
-    /// <summary>Content Patcher API if available; otherwise <see langword="null"/>.</summary>
-    IContentPatcherAPI? ContentPatcher { get; }
+    /// <summary>Content Patcher integration adapter (may be unavailable).</summary>
+    IContentPatcherIntegration ContentPatcher { get; }
 
-    /// <summary>WildEggsHatching API if available; otherwise <see langword="null"/>.</summary>
-    IWildEggsApi? WildEggs { get; }
+    /// <summary>WildEggsHatching integration adapter (may be unavailable).</summary>
+    IWildEggsIntegration WildEggs { get; }
 
-    /// <summary>Rooster Control Addon API if available; otherwise <see langword="null"/>.</summary>
-    IRoosterHatchingAPI? RoostersAddon { get; }
+    /// <summary>Roosters Addon integration adapter (may be unavailable).</summary>
+    IRoostersAddonIntegration RoostersAddon { get; }
 }

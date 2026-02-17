@@ -1,7 +1,6 @@
-using ContentPatcher;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Core.Abstractions;
-using LetMeHatchThisEgg.Framework;
+using LetMeHatchThisEgg.Infrastructure.Integrations;
 using LetMeHatchThisEgg.Infrastructure.Logging;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
@@ -9,14 +8,10 @@ using StardewModdingAPI;
 
 namespace LetMeHatchThisEgg.Infrastructure.Runtime;
 
-/// <summary>
-/// Manual DI composition root for LMH.
-/// </summary>
+/// <summary>Manual DI composition root for LMH.</summary>
 public static class LmheCompositionRoot
 {
-    /// <summary>
-    /// Builds the LMH runtime bundle (context + base services).
-    /// </summary>
+    /// <summary>Builds the LMH runtime bundle (context + base services).</summary>
     public static LmheRuntime Create(IModHelper helper, IMonitor monitor, IManifest manifest)
     {
         if (helper is null)
@@ -35,17 +30,17 @@ public static class LmheCompositionRoot
         var lmhLogger = new LmheLogger(boafLogger, manifest.Name);
         var assets = new ModAssetHandler(manifest.UniqueID, monitor);
 
+        IConfigProvider<ModConfig> configProvider = new StaticConfigProvider<ModConfig>(config);
+        IAssetRegistry assetRegistry = new SmapiAssetRegistry(manifest.UniqueID, helper);
+        IIntegrationService integrationService = new SmapiIntegrationService(helper.ModRegistry);
+
         var integrations = new LmheIntegrations(
-            helper.ModRegistry.GetApi<IContentPatcherAPI>("Pathoschild.ContentPatcher"),
-            helper.ModRegistry.GetApi<IWildEggsApi>("Mikew.wildeggshatching"),
-            helper.ModRegistry.GetApi<IRoosterHatchingAPI>("Mikew.roostersaddon.smapi")
+            integrationService.ContentPatcher.Api,
+            integrationService.WildEggs.Api,
+            integrationService.RoostersAddon.Api
         );
 
         var context = new LmheContext(core, config, lmhLogger, assets, integrations);
-
-        IConfigProvider<ModConfig> configProvider = new StaticConfigProvider<ModConfig>(config);
-        IAssetRegistry assetRegistry = new SmapiAssetRegistry(manifest.UniqueID, helper);
-        IIntegrationService integrationService = new StaticIntegrationService(integrations);
 
         return new LmheRuntime(context, configProvider, lmhLogger, assetRegistry, integrationService);
     }
