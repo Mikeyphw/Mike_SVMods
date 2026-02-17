@@ -108,8 +108,8 @@ public sealed class ObjectsEditor : AssetEditorBase
         => new()
         {
             Name = noteId,
-            DisplayName = $"Junimo Note: {animalKey}",
-            Description = "A small note left behind by the Junimos. It seems important.",
+            DisplayName = $"{TranslateOrFallback(context, "object.JunimoNote.name", "Leafwhisper Note")}: {animalKey}",
+            Description = TranslateOrFallback(context, "object.JunimoNote.description", "A worn parchment, penned by the Junimos."),,
             Type = "Basic",
             Category = 0,
             Price = 0,
@@ -213,6 +213,13 @@ private static ObjectData CreateElixir(ContentContext context)
             _animalKeys = keys;
             return _animalKeys;
         }
+    }
+
+
+    private static string TranslateOrFallback(ContentContext context, string key, string fallback)
+    {
+        var translated = context.I18n.Get(key).ToString();
+        return string.Equals(translated, key, StringComparison.OrdinalIgnoreCase) ? fallback : translated;
     }
 
 static IReadOnlyList<string> GetEggItemIds(ContentContext context)

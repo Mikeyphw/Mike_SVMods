@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using StardewModdingAPI.Events;
+using StardewValley;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 
@@ -65,17 +66,24 @@ public sealed class QuestEditor : AssetEditorBase
                 var questId = $"wildEggs_{token}Note";
                 var noteId = $"{WildEggsHatching.Constants.ModId}_junimoNote_{token}";
 
+                var baseTitle = TranslateOrFallback(context, "quest.NoteDelivery.title", "Note Delivery");
+                var baseDetails = TranslateOrFallback(context, "quest.NoteDelivery.questDetails", "Deliver the note to Marnie.");
+                var baseHint = TranslateOrFallback(context, "quest.NoteDelivery.hint", "Deliver the note.");
+
+                var reactionKey = $"quest.NoteDelivery.reactionText{StardewValley.Game1.random.Next(4)}";
+                var reaction = TranslateOrFallback(context, reactionKey, "Thanks for bringing this to me.");
+
                 quests[questId] = CreateQuestString(
                     type: "ItemDelivery",
-                    title: $"Junimo Note: {animalKey}",
-                    details: $"Deliver the note about {animalKey} to Marnie.",
-                    hint: $"A Junimo left a note about {animalKey}.",
+                    title: $"{baseTitle}: {animalKey}",
+                    details: $"{baseDetails}: {animalKey}.",
+                    hint: $"{baseHint}: {animalKey}.",
                     solution: $"Marnie {noteId}",
                     gold: 0,
                     cancellable: false,
-                    reaction: "Thanks for bringing this to me. I'll take it from here."
+                    reaction: reaction
                 );
-            }
+}
         }
 
         return quests;

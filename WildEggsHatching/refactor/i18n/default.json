@@ -1,4 +1,20 @@
 {
   "mod.name": "Wild Eggs Hatching (Refactor)",
-  "mod.description": "Phase 0 refactor build: clean architecture & tests first."
+  "mod.description": "Phase 0 refactor build: clean architecture & tests first.",
+  "hudmessage": "The Incubator just produced a Junimo Note! Wonder what Marnie would think about it…",
+  "object.JunimoNote.name": "Leafwhisper Note",
+  "object.JunimoNote.description": "A worn parchment, penned by the Junimos. This guide offers comprehension of a valley creature. Handle it gently; the Junimos' wisdom is delicate as dew on a sun-kissed leaf.",
+  "quest.NoteDelivery.title": "Note Delivery",
+  "quest.NoteDelivery.questDetails": "Marnie has asked for the Leafwhisper Note",
+  "quest.NoteDelivery.hint": "Deliver to Marnie the Note",
+  "quest.NoteDelivery.reactionText0": "Oh, how wonderful! This note is just what I needed.$h#$b#I can't wait to find this egg and welcome a new friend to my farm. Thank you so much for your help!$h#$b#",
+  "quest.NoteDelivery.reactionText1": "What delightful news! This information will be so helpful.$h#$b#I'm excited to go find this egg and expand my farm. Thanks a bunch for thinking of me!$h#$b#",
+  "quest.NoteDelivery.reactionText2": "Fantastic! This note is perfect. I'll head out to find this egg right away.$h#$b#It's always a joy to add a new member to my farm. I really appreciate your assistance!$h#$b#",
+  "quest.NoteDelivery.reactionText3": "Oh, that's marvelous! This note will guide me to the egg, and I can't wait to see what hatches.$h#$b#Thank you for being so thoughtful and helping me grow my farm!$h#$b#",
+  "quest.NoteDelivery.reactionText_AnimalInfo": "It says this about this animal: ",
+  "mail.animalAvaliable.newAnimal": "**New Animal Avaliable:",
+  "mail.animalAvaliable0": "Dear @,^^Thanks a bunch for the note! The tips about the animal were really useful.^The animals are thriving and have settled in nicely. I've been able to reproduce them, and they're now available in my shop.^If you ever need anything or have more notes, just give me a shout.^^Best, Marnie",
+  "mail.animalAvaliable1": "Hi @,^^Just wanted to say thanks for the great note! The information was spot on.^The animals are doing great and have adapted perfectly. I've even managed to reproduce them, and they're now up for sale in my shop.^If you have any more notes or need anything, feel free to reach out.^Cheers!^- Marnie^^^",
+  "mail.animalAvaliable2": "Hey @,^^Thanks for the note! The information about the animal was super helpful.^I'm excited to tell you that the animals have settled in really well. I was able to reproduce them, and now they're available in my shop for everyone.^If you ever discover new animals or need anything, please let me know.^^Thanks again!^- Marnie^^^",
+  "mail.animalAvaliable3": "Dear @,^^Thanks for bringing me that note!"
 }

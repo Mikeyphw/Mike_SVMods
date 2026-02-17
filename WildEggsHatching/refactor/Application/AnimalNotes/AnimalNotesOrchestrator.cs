@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Extensions;
@@ -22,6 +23,7 @@ public sealed class AnimalNotesOrchestrator
     private readonly ISaveDataStore _store;
     private readonly IModDataLoader _dataLoader;
     private readonly IGameStateReader _game;
+    private readonly ITranslationHelper _i18n;
     private readonly IGameMailService _mail;
     private readonly IGameQuestService _quests;
     private readonly IGameObjectPlacer _placer;
@@ -37,6 +39,7 @@ public sealed class AnimalNotesOrchestrator
         ISaveDataStore store,
         IModDataLoader dataLoader,
         IGameStateReader game,
+        ITranslationHelper i18n,
         IGameMailService mail,
         IGameQuestService quests,
         IGameObjectPlacer placer,
@@ -48,6 +51,7 @@ public sealed class AnimalNotesOrchestrator
         _store = store;
         _dataLoader = dataLoader;
         _game = game;
+        _i18n = i18n;
         _mail = mail;
         _quests = quests;
         _placer = placer;
@@ -361,7 +365,7 @@ public sealed class AnimalNotesOrchestrator
 
             try
             {
-                var hud = new HUDMessage("You found a mysterious note!")
+                var hud = new HUDMessage(_i18n.Get("hudmessage").ToString())
                 {
                     timeLeft = 5000,
                     messageSubject = ItemRegistry.Create(p.NoteItemId),
@@ -406,7 +410,7 @@ public sealed class AnimalNotesOrchestrator
             if (dayNumber - questDay < daysToMature + 2)
                 continue;
 
-            _mail.AddMailForTomorrow(p.MailId, noLetter: true);
+            _mail.AddMailForTomorrow(p.MailId, noLetter: false);
             _log.Log($"AnimalNotes: queued unlock mail '{p.MailId}' for '{p.FarmAnimalName}'.", StardewModdingAPI.LogLevel.Trace);
         }
     }

@@ -134,6 +134,7 @@ public sealed class ModEntry : Mod
                 store: _saveData,
                 dataLoader: _dataLoader,
                 game: _game,
+                i18n: Helper.Translation,
                 mail: mail,
                 quests: quests,
                 placer: placer,
@@ -228,7 +229,6 @@ public sealed class ModEntry : Mod
     {
         _spawner?.OnDayEnding();
         _progression?.OnDayEnding();
-        _animalNotes?.OnSaving();
         _animalNotes?.OnDayEnding();
     }
 
@@ -291,8 +291,8 @@ public sealed class ModEntry : Mod
 
     private void OnSaving(object? sender, SavingEventArgs e)
     {
-        _progression?.OnDayEnding();
         _animalNotes?.OnSaving();
+        _progression?.OnDayEnding();
     }
 
 

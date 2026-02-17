@@ -1,12 +1,19 @@
 using System.Collections.Generic;
+using System;
+using System.IO;
+using System.Text.Json;
 using StardewModdingAPI.Events;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
+using WildEggsHatching.Application.AnimalNotes;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 public sealed class MailEditor : AssetEditorBase
 {
+    private static readonly object LockObj = new();
+    private static IReadOnlyList<string>? _animalKeys;
+
     public override string AssetName => GameAssets.Mail;
 
     public override void Edit(IAssetData asset, ContentContext context)
@@ -61,7 +68,58 @@ public sealed class MailEditor : AssetEditorBase
             );
         }
 
+        if (context.Step >= ProgressionStep.PartVI)
+        {
+            foreach (var animalKey in GetAnimalKeys(context))
+            {
+                var mailId = AnimalNoteIds.NoteMailId(animalKey);
+                mail[mailId] = CreateNoteMail(context, animalKey);
+            }
+        }
+
         return mail;
+    }
+
+    private static string CreateNoteMail(ContentContext context, string animalKey)
+    {
+        // Use a stable variant so mail content is deterministic across loads.
+        var body = TranslateOrFallback(context, "mail.animalAvaliable0",
+            "Dear @,^^Thanks for the note! The animals are doing great and are now available in my shop.");
+
+        var banner = TranslateOrFallback(context, "mail.animalAvaliable.newAnimal", "**New Animal Avaliable:");
+        var displayName = $"{animalKey}";
+
+        return $"{body} {banner} {displayName}**[#]{displayName} Avaliable";
+    }
+
+    private static IReadOnlyList<string> GetAnimalKeys(ContentContext context)
+    {
+        if (_animalKeys is not null)
+            return _animalKeys;
+
+        lock (LockObj)
+        {
+            if (_animalKeys is not null)
+                return _animalKeys;
+
+            var path = Path.Combine(context.Helper.DirectoryPath, "ModData", "WildAnimalsList.json");
+            if (!File.Exists(path))
+            {
+                context.Log($"MailEditor: WildAnimalsList.json not found at '{path}'.", StardewModdingAPI.LogLevel.Warn);
+                _animalKeys = Array.Empty<string>();
+                return _animalKeys;
+            }
+
+            using var stream = File.OpenRead(path);
+            using var doc = JsonDocument.Parse(stream);
+
+            var keys = new List<string>();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+                keys.Add(prop.Name);
+
+            _animalKeys = keys;
+            return _animalKeys;
+        }
     }
 
     private static string CreateMailWithItem(
