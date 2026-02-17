@@ -111,10 +111,50 @@ public sealed class WeggCommandDispatcher
         var sub = args[1].ToLowerInvariant();
         return sub switch
         {
-            "dump" => ToCommandResult(_facade.DumpAnimalNotes()),
+            "dump" => HandleNotesDump(args),
             "validate" => ToCommandResult(_facade.ValidateAnimalNotes()),
+            "repair" => HandleNotesRepair(args),
             _ => new CommandResult(false, $"Unknown notes subcommand '{args[1]}'.\n\n{HelpText()}"),
         };
+    }
+
+    private CommandResult HandleNotesDump(string[] args)
+    {
+        var asJson = Array.Exists(args, x => string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase));
+
+        long? farmerId = null;
+        var farmerIdx = Array.FindIndex(args, x => string.Equals(x, "--farmer", StringComparison.OrdinalIgnoreCase));
+        if (farmerIdx >= 0)
+        {
+            if (farmerIdx + 1 >= args.Length || !long.TryParse(args[farmerIdx + 1], out var parsed))
+                return new CommandResult(false, "Usage: wegg notes dump [--json] [--farmer <id>] [--animal <token>]");
+
+            farmerId = parsed;
+        }
+
+        string? token = null;
+        var tokenIdx = Array.FindIndex(args, x => string.Equals(x, "--animal", StringComparison.OrdinalIgnoreCase));
+        if (tokenIdx >= 0)
+        {
+            if (tokenIdx + 1 >= args.Length)
+                return new CommandResult(false, "Usage: wegg notes dump [--json] [--farmer <id>] [--animal <token>]");
+
+            token = args[tokenIdx + 1];
+        }
+
+        return ToCommandResult(_facade.DumpAnimalNotes(new WildEggsHatching.Application.AnimalNotes.AnimalNotesDumpOptions(
+            AsJson: asJson,
+            FarmerId: farmerId,
+            AnimalToken: token
+        )));
+    }
+
+    private CommandResult HandleNotesRepair(string[] args)
+    {
+        var requeueMail = !Array.Exists(args, x => string.Equals(x, "--no-mail", StringComparison.OrdinalIgnoreCase));
+        var reconcile = !Array.Exists(args, x => string.Equals(x, "--no-reconcile", StringComparison.OrdinalIgnoreCase));
+
+        return ToCommandResult(_facade.RepairAnimalNotes(requeueMail, reconcile));
     }
 
     private static bool IsHelp(string arg)
@@ -134,10 +174,12 @@ public sealed class WeggCommandDispatcher
             "  wegg progression eval",
             "  wegg spawn now",
             "  wegg spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]",
-            "  wegg notes dump",
+            "  wegg notes dump [--json] [--farmer <id>] [--animal <token>]",
             "  wegg notes validate",
-            "  wegg_notes dump",
+            "  wegg notes repair [--no-mail] [--no-reconcile]",
+            "  wegg_notes dump [--json] [--farmer <id>] [--animal <token>]",
             "  wegg_notes validate",
+            "  wegg_notes repair [--no-mail] [--no-reconcile]",
             "",
             "Notes:",
             "  - Host-only mutations; clients will be rejected.",

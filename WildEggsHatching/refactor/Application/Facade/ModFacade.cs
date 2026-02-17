@@ -205,6 +205,9 @@ public sealed class ModFacade : IModFacade
         {
             ProgressionMode = c.ProgressionMode,
             DesertTombModuleEnabled = c.DesertTombModuleEnabled,
+            DesertTombPharaohTrackerEnabled = c.DesertTombPharaohTrackerEnabled,
+            DesertTombDebugLogging = c.DesertTombDebugLogging,
+            TombChance = c.TombChance,
             AlternatePotionSprite = c.AlternatePotionSprite,
             NeedsFern = c.NeedsFern,
             HatchDinoEggs = c.HatchDinoEggs,
@@ -212,6 +215,11 @@ public sealed class ModFacade : IModFacade
             DinoPrice = c.DinoPrice,
             VoidChickenPrice = c.VoidChickenPrice,
             OstrichPrice = c.OstrichPrice,
+            AnimalNotesDebugMode = c.AnimalNotesDebugMode,
+            AnimalNotesWarnAfterDays = c.AnimalNotesWarnAfterDays,
+            AnimalNotesPlacementRadius = c.AnimalNotesPlacementRadius,
+            AnimalNotesQuestMailHostOnly = c.AnimalNotesQuestMailHostOnly,
+            AnimalNotesAllowClientDiscoveries = c.AnimalNotesAllowClientDiscoveries,
         };
 
     public FacadeResult DumpAnimalNotes()
@@ -228,7 +236,35 @@ public sealed class ModFacade : IModFacade
         return new FacadeResult(true, _animalNotes.DumpState());
     }
 
-    public FacadeResult ValidateAnimalNotes()
+        public FacadeResult DumpAnimalNotes(AnimalNotesDumpOptions options)
+    {
+        if (_animalNotes is null)
+            return new FacadeResult(false, "AnimalNotes service unavailable.");
+
+        if (!_isWorldReady())
+            return new FacadeResult(false, "World not ready.");
+
+        if (!_isMainPlayer())
+            return new FacadeResult(false, "Host-only.");
+
+        return new FacadeResult(true, _animalNotes.DumpState(options));
+    }
+
+    public FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true)
+    {
+        if (_animalNotes is null)
+            return new FacadeResult(false, "AnimalNotes service unavailable.");
+
+        if (!_isWorldReady())
+            return new FacadeResult(false, "World not ready.");
+
+        if (!_isMainPlayer())
+            return new FacadeResult(false, "Host-only.");
+
+        return new FacadeResult(true, _animalNotes.Repair(requeueMail, reconcileNotes));
+    }
+
+public FacadeResult ValidateAnimalNotes()
     {
         if (_animalNotesValidator is null)
             return new FacadeResult(false, "AnimalNotes validator unavailable.");

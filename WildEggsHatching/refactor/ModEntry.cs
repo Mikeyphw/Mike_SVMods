@@ -247,6 +247,7 @@ public sealed class ModEntry : Mod
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         helper.Events.GameLoop.Saving += OnSaving;
         helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
+        helper.Events.Multiplayer.PeerConnected += OnPeerConnected;
         helper.Events.GameLoop.DayStarted += OnDayStarted;
         helper.Events.GameLoop.DayEnding += OnDayEnding;
         helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
@@ -373,7 +374,47 @@ public sealed class ModEntry : Mod
 
 
 
-    private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Config.ConfigChangedEventArgs e)
+    
+    private void OnPeerConnected(object? sender, PeerConnectedEventArgs e)
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        if (!Context.IsMainPlayer || _animalNotes is null)
+            return;
+
+        if (_ctx?.ConfigProvider.Config.AnimalNotesAllowClientDiscoveries != true)
+            return;
+
+        try
+        {
+            var (quests, mail) = _animalNotes.GetPeerSyncPayload(e.Peer.PlayerID);
+
+            foreach (var q in quests)
+            {
+                Helper.Multiplayer.SendMessage(
+                    message: new AnimalNoteGrantQuestMessage { QuestId = q },
+                    messageType: "WeggAnimalNoteGrantQuest",
+                    modIDs: new[] { ModManifest.UniqueID },
+                    playerIDs: new[] { e.Peer.PlayerID });
+            }
+
+            foreach (var m in mail)
+            {
+                Helper.Multiplayer.SendMessage(
+                    message: new AnimalNoteQueueMailMessage { MailId = m, NoLetter = false },
+                    messageType: "WeggAnimalNoteQueueMail",
+                    modIDs: new[] { ModManifest.UniqueID },
+                    playerIDs: new[] { e.Peer.PlayerID });
+            }
+        }
+        catch
+        {
+            // best-effort
+        }
+    }
+
+private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Config.ConfigChangedEventArgs e)
     {
         _ctx?.Log($"Config changed ({e.Reason}). Invalidating assets.", LogLevel.Info);
         _content?.InvalidateAll();

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Config;
 
@@ -24,6 +25,10 @@ public interface IModFacade
     FacadeResult TryRunSpawnPlanNow();
 
     FacadeResult DumpAnimalNotes();
+
+    FacadeResult DumpAnimalNotes(AnimalNotesDumpOptions options);
+
+    FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true);
 
     FacadeResult ValidateAnimalNotes();
 }
