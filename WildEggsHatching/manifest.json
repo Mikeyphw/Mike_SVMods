@@ -1,0 +1,16 @@
+{
+  "Name": "Wild Eggs Hatching",
+  "Author": "Mikew",
+  "Version": "0.0.0-phase8",
+  "Description": "Phase 8: BOAF dedupe + asset handler + hard cutover.",
+  "UniqueID": "Mikew.wildeggshatching",
+  "EntryDll": "WildEggsHatching.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [],
+  "Dependencies": [
+    {
+      "UniqueID": "Mikew.birdsofafeather",
+      "IsRequired": true
+    }
+  ]
+}
