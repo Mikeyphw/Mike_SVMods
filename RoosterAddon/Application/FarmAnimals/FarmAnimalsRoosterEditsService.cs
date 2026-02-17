@@ -58,22 +58,22 @@ internal sealed class FarmAnimalsRoosterEditsService
         if (rooster.Buyable)
         {
             entry.PurchasePrice =
-                rooster.FarmAnimalName == RoosterKeys.White
+                rooster.RoosterType == RoosterType.White
                     ? -1
                     : (int)Math.Round(rooster.Price / 2 / 5.0) * 5;
 
             entry.SellPrice = (int)Math.Round(rooster.Price / 2 / 5.0) * 5;
 
-            if (rooster.FarmAnimalName == RoosterKeys.Blue && config.Roosters[RoosterType.Blue].BypassBlueConditions)
+            if (rooster.RoosterType == RoosterType.Blue && config.Roosters[RoosterType.Blue].BypassBlueConditions)
                 entry.UnlockCondition = null;
 
-            if (rooster.FarmAnimalName == RoosterKeys.Void)
+            if (rooster.RoosterType == RoosterType.Void)
             {
                 entry.ShopDisplayName = i18n.Get("shop.void.displayname");
                 entry.ShopDescription = i18n.Get("shop.void.description");
                 entry.ShopTexture = textures[Textures.VoidShopIcon][TextureDetails.GamePath];
             }
-            else if (rooster.FarmAnimalName == RoosterKeys.Gold)
+            else if (rooster.RoosterType == RoosterType.Gold)
             {
                 entry.ShopDisplayName = i18n.Get("shop.gold.displayname");
                 entry.ShopDescription = i18n.Get("shop.gold.description");

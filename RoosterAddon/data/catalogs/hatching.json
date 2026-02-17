@@ -1,0 +1,64 @@
+{
+  "SchemaVersion": 1,
+  "General": {
+    "HarvestType": "DigUp",
+    "HatchingMode": "Original"
+  },
+  "Roosters": {
+    "White": {
+      "BuildingRequired": "BigCoop",
+      "Buyable": true,
+      "Price": 2400,
+      "EnableRoosterHatching": true,
+      "MatureDays": 4,
+      "ProduceDays": 1,
+      "ProduceOption": "CustomizeBelow",
+      "DeluxeProduceOption": "CustomizeBelow",
+      "BypassBlueConditions": false
+    },
+    "Brown": {
+      "BuildingRequired": "BigCoop",
+      "Buyable": true,
+      "Price": 2400,
+      "EnableRoosterHatching": true,
+      "MatureDays": 4,
+      "ProduceDays": 1,
+      "ProduceOption": "CustomizeBelow",
+      "DeluxeProduceOption": "CustomizeBelow",
+      "BypassBlueConditions": false
+    },
+    "Blue": {
+      "BuildingRequired": "BigCoop",
+      "Buyable": true,
+      "Price": 2400,
+      "EnableRoosterHatching": true,
+      "MatureDays": 4,
+      "ProduceDays": 1,
+      "ProduceOption": "CustomizeBelow",
+      "DeluxeProduceOption": "CustomizeBelow",
+      "BypassBlueConditions": false
+    },
+    "Void": {
+      "BuildingRequired": "BigCoop",
+      "Buyable": true,
+      "Price": 2400,
+      "EnableRoosterHatching": true,
+      "MatureDays": 4,
+      "ProduceDays": 1,
+      "ProduceOption": "CustomizeBelow",
+      "DeluxeProduceOption": "CustomizeBelow",
+      "BypassBlueConditions": false
+    },
+    "Gold": {
+      "BuildingRequired": "BigCoop",
+      "Buyable": true,
+      "Price": 2400,
+      "EnableRoosterHatching": true,
+      "MatureDays": 4,
+      "ProduceDays": 1,
+      "ProduceOption": "CustomizeBelow",
+      "DeluxeProduceOption": "CustomizeBelow",
+      "BypassBlueConditions": false
+    }
+  }
+}

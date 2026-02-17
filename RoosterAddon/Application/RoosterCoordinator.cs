@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using RoosterAddon.Application.Hatching;
+using RoosterAddon.Application.Catalogs;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework;
@@ -95,7 +96,15 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
     {
         LoadExclusionsData();
 
+        var configPath = Path.Combine(Helper.DirectoryPath, "config.json");
+        var isNewConfig = !File.Exists(configPath);
+
         Config = ConfigManager.LoadOrCreate(Helper, Monitor);
+
+        _catalogs = _catalogManager.LoadOrCreateAll(Helper, Monitor);
+        var catalogsChangedConfig = _catalogManager.ApplyToConfig(Config, _catalogs, isNewConfig, Monitor);
+        if (catalogsChangedConfig)
+            Helper.WriteConfig(Config);
 
         Helper.ConsoleCommands.Add(
             "roosteraddon_dump_state",
@@ -144,7 +153,7 @@ AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
             };
         }
 
-        RoosterHelper = new RoosterControl(Config, Helper, Monitor);
+        RoosterHelper = new RoosterControl(Config, Helper, Monitor, _catalogs.Roosters);
     }
 
     public bool HasModCheck(string modID) => Helper.ModRegistry.IsLoaded(modID);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RoosterAddon.Constants;
 using RoosterAddon.Framework.Config;
+using RoosterAddon.Enums;
 using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
 
@@ -49,7 +50,28 @@ internal sealed partial class RoosterCoordinator
 
         if (farmAnimals is not null)
         {
-            foreach (var key in new[] { RoosterKeys.White, RoosterKeys.Brown, RoosterKeys.Blue, RoosterKeys.Void, RoosterKeys.Gold })
+            var requiredRoosterTypes = new[] { RoosterType.White, RoosterType.Brown, RoosterType.Blue, RoosterType.Void, RoosterType.Gold };
+foreach (var rt in requiredRoosterTypes)
+{
+    var key =
+        _catalogs?.Roosters?.Roosters is not null
+        && _catalogs.Roosters.Roosters.TryGetValue(rt.ToString(), out var entry)
+        && !string.IsNullOrWhiteSpace(entry.FarmAnimalKey)
+            ? entry.FarmAnimalKey.Trim()
+            : rt switch
+            {
+                RoosterType.White => RoosterKeys.White,
+                RoosterType.Brown => RoosterKeys.Brown,
+                RoosterType.Blue => RoosterKeys.Blue,
+                RoosterType.Void => RoosterKeys.Void,
+                RoosterType.Gold => RoosterKeys.Gold,
+                _ => RoosterKeys.White
+            };
+
+    if (!farmAnimals.ContainsKey(key))
+        errors.Add($"Missing required FarmAnimals key: '{key}'.");
+}
+)
             {
                 if (!farmAnimals.ContainsKey(key))
                     errors.Add($"Missing required FarmAnimals key: '{key}'.");

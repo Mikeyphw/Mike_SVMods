@@ -1,0 +1,90 @@
+{
+  "SchemaVersion": 1,
+  "Roosters": {
+    "White": {
+      "BlueEggChoice": null,
+      "Produce": [
+        {
+          "Choice": "White Egg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ],
+      "Deluxe": [
+        {
+          "Choice": "Large White Egg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ]
+    },
+    "Brown": {
+      "BlueEggChoice": null,
+      "Produce": [
+        {
+          "Choice": "Brown Egg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ],
+      "Deluxe": [
+        {
+          "Choice": "Large Brown Egg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ]
+    },
+    "Blue": {
+      "BlueEggChoice": "MearaBlueEgg",
+      "Produce": [
+        {
+          "Choice": "MearaBlueEgg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ],
+      "Deluxe": [
+        {
+          "Choice": "MearaLargeBlueEgg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ]
+    },
+    "Void": {
+      "BlueEggChoice": null,
+      "Produce": [
+        {
+          "Choice": "Void Egg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ],
+      "Deluxe": [
+        {
+          "Choice": "MearaLargeVoidEgg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ]
+    },
+    "Gold": {
+      "BlueEggChoice": null,
+      "Produce": [
+        {
+          "Choice": "Golden Egg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ],
+      "Deluxe": [
+        {
+          "Choice": "MearaLargeGoldEgg",
+          "CustomItemName": "Custom",
+          "Probability": 100
+        }
+      ]
+    }
+  }
+}

@@ -41,7 +41,7 @@ internal sealed class FarmAnimalProduceRulesService
         if (!blueEggModInstalled)
             return;
 
-        if (!string.Equals(rooster.FarmAnimalName, RoosterKeys.Blue, StringComparison.OrdinalIgnoreCase))
+        if (rooster.RoosterType != RoosterType.Blue)
             return;
 
         var newBlueEgg = RoosterControl.ProduceTranslation(config.Roosters[RoosterType.Blue].BlueEggChoice);

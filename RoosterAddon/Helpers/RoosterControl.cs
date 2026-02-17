@@ -7,6 +7,7 @@ using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
 using RoosterAddon.Application.FarmAnimals;
+using RoosterAddon.Application.Catalogs;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
@@ -33,11 +34,12 @@ public sealed class RoosterControl
     public Dictionary<string, Dictionary<EggTypeEntries, string>> FemaleEggs { get; } =
         new(StringComparer.OrdinalIgnoreCase);
 
-    public RoosterControl(RoosterAddonConfig config, IModHelper helper, IMonitor monitor)
+    public RoosterControl(RoosterAddonConfig config, IModHelper helper, IMonitor monitor, RoosterCatalog? roosterCatalog = null)
     {
         Config = config ?? throw new ArgumentNullException(nameof(config));
         _helper = helper ?? throw new ArgumentNullException(nameof(helper));
         _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
+        _roosterCatalog = roosterCatalog;
     }
 
     public void UpdateConfig(RoosterAddonConfig config)
@@ -99,7 +101,7 @@ public sealed class RoosterControl
                 Eggs = eggsByType[roosterType],
                 AllProduces = BuildProduces(settings),
                 Quantity = UpdateRoosterQuantity(farmAnimalName),
-                Females = new List<string>(),
+                Females = GetAdditionalFemaleKeys(roosterType),
             };
 
             RollChosenProduces(rooster);
@@ -130,37 +132,59 @@ public sealed class RoosterControl
         {
             [RoosterType.White] = new[]
             {
-                ItemIds.VariableValues[ItemIds.AnimalProducts.WhiteEgg],
-                ItemIds.VariableValues[ItemIds.AnimalProducts.LargeWhiteEgg],
-                ItemIds.VariableValues[ItemIds.CustomItems.FertilizedWhiteEgg],
+                ItemIds.AnimalProducts.WhiteEgg,
+                ItemIds.AnimalProducts.LargeWhiteEgg,
+                ItemIds.CustomItems.FertilizedWhiteEgg,
             },
             [RoosterType.Brown] = new[]
             {
-                ItemIds.VariableValues[ItemIds.AnimalProducts.BrownEgg],
-                ItemIds.VariableValues[ItemIds.AnimalProducts.LargeBrownEgg],
-                ItemIds.VariableValues[ItemIds.CustomItems.FertilizedBrownEgg],
+                ItemIds.AnimalProducts.BrownEgg,
+                ItemIds.AnimalProducts.LargeBrownEgg,
+                ItemIds.CustomItems.FertilizedBrownEgg,
             },
             [RoosterType.Blue] = new[]
             {
-                ItemIds.VariableValues[ItemIds.CustomItems.MearaBlueEgg],
-                ItemIds.VariableValues[ItemIds.CustomItems.MearaLargeBlueEgg],
-                ItemIds.VariableValues[ItemIds.CustomItems.FertilizedBlueEgg],
+                ItemIds.CustomItems.MearaBlueEgg,
+                ItemIds.CustomItems.MearaLargeBlueEgg,
+                ItemIds.CustomItems.FertilizedBlueEgg,
             },
             [RoosterType.Void] = new[]
             {
-                ItemIds.VariableValues[ItemIds.AnimalProducts.VoidEgg],
-                ItemIds.VariableValues[ItemIds.CustomItems.MearaLargeVoidEgg],
-                ItemIds.VariableValues[ItemIds.CustomItems.FertilizedVoidEgg],
+                ItemIds.AnimalProducts.VoidEgg,
+                ItemIds.CustomItems.MearaLargeVoidEgg,
+                ItemIds.CustomItems.FertilizedVoidEgg,
             },
             [RoosterType.Gold] = new[]
             {
-                ItemIds.VariableValues[ItemIds.AnimalProducts.GoldenEgg],
-                ItemIds.VariableValues[ItemIds.CustomItems.MearaLargeGoldEgg],
-                ItemIds.VariableValues[ItemIds.CustomItems.FertilizedGoldEgg],
+                ItemIds.AnimalProducts.GoldenEgg,
+                ItemIds.CustomItems.MearaLargeGoldEgg,
+                ItemIds.CustomItems.FertilizedGoldEgg,
             },
         };
+if (_roosterCatalog?.Roosters is not null)
+{
+    foreach (var (key, entry) in _roosterCatalog.Roosters)
+    {
+        if (!Enum.TryParse<RoosterType>(key, ignoreCase: true, out var rt))
+            continue;
 
-        var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>>();
+        if (entry?.Eggs is null)
+            continue;
+
+        var normal = string.IsNullOrWhiteSpace(entry.Eggs.Normal) ? null : entry.Eggs.Normal.Trim();
+        var large = string.IsNullOrWhiteSpace(entry.Eggs.Large) ? null : entry.Eggs.Large.Trim();
+        var fert = string.IsNullOrWhiteSpace(entry.Eggs.Fertilized) ? null : entry.Eggs.Fertilized.Trim();
+
+        if (normal is not null && large is not null && fert is not null)
+            eggIds[rt] = new[] { normal, large, fert };
+    }
+}
+
+
+        static string TranslateEggId(string eggKey)
+    => ItemIds.VariableValues.TryGetValue(eggKey, out var translated) ? translated : eggKey;
+
+var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>>();
         foreach (var roosterType in eggIds.Keys)
         {
             var settings = Config.Roosters[roosterType];
@@ -571,8 +595,16 @@ public sealed class RoosterControl
         };
     }
 
-    private static string GetFarmAnimalKey(RoosterType roosterType)
-        => roosterType switch
+        private string GetFarmAnimalKey(RoosterType roosterType)
+    {
+        if (_roosterCatalog?.Roosters is not null
+            && _roosterCatalog.Roosters.TryGetValue(roosterType.ToString(), out var entry)
+            && !string.IsNullOrWhiteSpace(entry.FarmAnimalKey))
+        {
+            return entry.FarmAnimalKey.Trim();
+        }
+
+        return roosterType switch
         {
             RoosterType.White => RoosterKeys.White,
             RoosterType.Brown => RoosterKeys.Brown,
@@ -581,9 +613,18 @@ public sealed class RoosterControl
             RoosterType.Gold => RoosterKeys.Gold,
             _ => RoosterKeys.White,
         };
+    }
 
-    private static string GetDefaultFemaleKey(RoosterType roosterType)
-        => roosterType switch
+    private string GetDefaultFemaleKey(RoosterType roosterType)
+    {
+        if (_roosterCatalog?.Roosters is not null
+            && _roosterCatalog.Roosters.TryGetValue(roosterType.ToString(), out var entry)
+            && !string.IsNullOrWhiteSpace(entry.DefaultFemaleKey))
+        {
+            return entry.DefaultFemaleKey.Trim();
+        }
+
+        return roosterType switch
         {
             RoosterType.White => "White Chicken",
             RoosterType.Brown => "Brown Chicken",
@@ -592,4 +633,22 @@ public sealed class RoosterControl
             RoosterType.Gold => "Golden Chicken",
             _ => "White Chicken",
         };
+    }
+
+    private List<string> GetAdditionalFemaleKeys(RoosterType roosterType)
+    {
+        if (_roosterCatalog?.Roosters is not null
+            && _roosterCatalog.Roosters.TryGetValue(roosterType.ToString(), out var entry)
+            && entry.AdditionalFemaleKeys is not null)
+        {
+            return entry.AdditionalFemaleKeys
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        return new List<string>();
+    }
 }
+
