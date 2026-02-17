@@ -9,6 +9,7 @@ using WildEggsHatching.Application.Spawning;
 using WildEggsHatching.Application.Spawning.Diagnostics;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Config;
+using WildEggsHatching.Infrastructure.Diagnostics;
 using WildEggsHatching.Infrastructure.Game;
 using WildEggsHatching.Infrastructure.Logging;
 using WildEggsHatching.Infrastructure.ModData;
@@ -26,6 +27,8 @@ public sealed class ModFacade : IModFacade
     private readonly Func<bool> _isMainPlayer;
 
     private readonly SmapiReloadAll _reloadAll;
+
+    private readonly WeggVerifier _verifier;
 
     private readonly ProgressionService? _progression;
     private readonly WildEggSpawnOrchestrator? _spawner;
@@ -55,7 +58,8 @@ public sealed class ModFacade : IModFacade
         IGameStateReader game,
         ITileFinder tileFinder,
         IGameObjectPlacer placer,
-        ITileSearchHistogram? histogram = null)
+        ITileSearchHistogram? histogram = null,
+        WeggVerifier? verifier = null)
     {
         _store = store;
         _config = config;
@@ -63,6 +67,8 @@ public sealed class ModFacade : IModFacade
         _isWorldReady = isWorldReady;
         _isMainPlayer = isMainPlayer;
         _reloadAll = reloadAll;
+
+        _verifier = verifier ?? throw new ArgumentNullException(nameof(verifier));
 
         _progression = progression;
         _spawner = spawner;
@@ -283,6 +289,27 @@ public FacadeResult ValidateAnimalNotes()
         return new FacadeResult(true, "AnimalNotes validation complete (see log).");
     }
 
+
+
+
+public FacadeResult Verify(string[] args)
+{
+    var asJson = Array.Exists(args, x => string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase));
+    var full = Array.Exists(args, x => string.Equals(x, "--full", StringComparison.OrdinalIgnoreCase));
+
+    if (full && !_isMainPlayer())
+        return new FacadeResult(false, "Verify --full is host-only.");
+
+    var report = _verifier.Run(new WeggVerifyOptions(
+        AsJson: asJson,
+        Full: full,
+        IsWorldReady: _isWorldReady(),
+        IsMainPlayer: _isMainPlayer(),
+        ProgressionStep: _progression?.GetCurrentStep() ?? ProgressionStep.PartI
+    ));
+
+    return new FacadeResult(report.Success, report.Rendered);
+}
 
     public FacadeResult WipeSchemaData(bool confirmed)
     {

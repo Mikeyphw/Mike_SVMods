@@ -249,6 +249,8 @@ public sealed class ModEntry : Mod
 
 
 
+        var verifier = new WeggVerifier(helper, _saveData!, configProvider, _dataLoader!, log);
+
         _facade = new ModFacade(
             store: _saveData!,
             config: configProvider,
@@ -265,7 +267,8 @@ public sealed class ModEntry : Mod
             game: _game,
             tileFinder: tileFinder,
             placer: placer,
-            histogram: histogram
+            histogram: histogram,
+            verifier: verifier
         );
 
         _weggCommands = new WeggConsoleCommands(Monitor, new WeggCommandDispatcher(_facade));
