@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Helpers;
+using RoosterAddon.Framework;
+using RoosterAddon.Framework.Config;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
@@ -70,24 +72,21 @@ internal sealed partial class RoosterCoordinator
                     || Game1.isSnowing;
             }
 
-            if (ModCfg.Options[OptionEntries.UpdateRate][OptionDetails.Value] == OptionValues.OnDayStart)
+            if (Config.General.UpdateRate == UpdateRateMode.OnDayStart)
                 _ = Helper.GameContent.InvalidateCache(FarmAnimalsAssetName);
         }
 
 
         private void UpdateRoosterHatchingApi()
         {
-            foreach (var rooster in RoosterHelper.Roosters.Select(r => r.Value))
-            {
-                // Ensure the female option exists for each female
-                RoosterHatchingApi.Instance.UpdateChosenFemales(
-                    _roosterFemales
-                        .Females.Where(f => f.Value != OptionValues.Off)
-                        .Select(f => f.Key)
-                        .ToList()
-                );
-            }
+            RoosterHatchingApi.Instance.UpdateChosenFemales(
+                Config.FemalesOptions
+                    .Where(kvp => kvp.Value != FemaleRoosterAssignment.Off)
+                    .Select(kvp => kvp.Key)
+                    .ToList()
+            );
         }
+
 
         /// <summary>
         /// Handles the AssetRequested event for objects.
@@ -96,8 +95,7 @@ internal sealed partial class RoosterCoordinator
 
         private bool GetHatchOnlyByFertilizedOption()
         {
-            return ModCfg.Options[OptionEntries.HatchingMode][OptionDetails.Value]
-                != OptionValues.Original;
+            return Config.General.HatchingMode == HatchingMode.OnlyFertilizedEggs;
         }
 
 
@@ -110,9 +108,9 @@ internal sealed partial class RoosterCoordinator
         private void SetRoosterData(RoosterData rooster, IDictionary<string, FarmAnimalData> data)
         {
             // Set the required building, harvest type, days to mature, and days to produce
-            data[rooster.FarmAnimalName].RequiredBuilding = rooster.BuildingRequired;
+            data[rooster.FarmAnimalName].RequiredBuilding = ToGameBuildingKey(rooster.BuildingRequired);
             data[rooster.FarmAnimalName].HarvestType =
-                rooster.HarvestType == OptionValues.DigUp
+                rooster.HarvestType == HarvestType.DigUp
                     ? FarmAnimalHarvestType.DigUp
                     : FarmAnimalHarvestType.DropOvernight;
             data[rooster.FarmAnimalName].DaysToMature = rooster.MatureDays;
@@ -122,11 +120,7 @@ internal sealed partial class RoosterCoordinator
             if (HasMod("6480.blueegg", Helper) && rooster.FarmAnimalName == RoosterKeys.Blue)
             {
                 // Get the new blue egg translation
-                var newBlueEgg = RoosterControl.ProduceTranslation(
-                    ModCfg.RoosterOptions[RoosterType.Blue][OptionEntries.BlueEggChoice][
-                        OptionDetails.Value
-                    ]
-                );
+                var newBlueEgg = RoosterControl.ProduceTranslation(Config.Roosters[RoosterType.Blue].BlueEggChoice);
 
                 // Set the blue egg produce item id
                 RoosterHelper.Roosters[RoosterType.Blue].Eggs[EggTypeEntries.Normal][
@@ -156,11 +150,7 @@ internal sealed partial class RoosterCoordinator
                 // Handle the unlock condition for the blue rooster
                 if (
                     rooster.FarmAnimalName == RoosterKeys.Blue
-                    && Convert.ToBoolean(
-                        ModCfg.RoosterOptions[RoosterType.Blue][OptionEntries.BypassBlueConditions][
-                            OptionDetails.Value
-                        ]
-                    )
+                    && Config.Roosters[RoosterType.Blue].BypassBlueConditions
                 )
                 {
                     data[rooster.FarmAnimalName].UnlockCondition = null;
@@ -203,7 +193,7 @@ internal sealed partial class RoosterCoordinator
             {
                 // Get the chosen harvest type
                 var chosenHarvestType =
-                    rooster.HarvestType == OptionValues.DigUp
+                    rooster.HarvestType == HarvestType.DigUp
                         ? FarmAnimalHarvestType.DigUp
                         : FarmAnimalHarvestType.DropOvernight;
 
@@ -220,27 +210,20 @@ internal sealed partial class RoosterCoordinator
             IDictionary<string, FarmAnimalData> data
         )
         {
-            var AnimalsThatShareEggs = AnimalsThatProduceRoosterEgg(
+            var animalsThatShareEggs = AnimalsThatProduceRoosterEgg(
                 (Dictionary<string, FarmAnimalData>)data,
                 rooster
             );
-            foreach (
-                var female in rooster.Females.Where(f =>
-                    _roosterFemales.Females[f].ToLower() == rooster.FarmAnimalName.ToLower()
-                )
-            )
+
+            foreach (var female in rooster.Females)
             {
-                // Handle the logic for hatching roosters only by fertilized eggs
                 if (GetHatchOnlyByFertilizedOption())
-                {
-                    FertilizedHatchingSystem(female, rooster, data, AnimalsThatShareEggs);
-                }
+                    FertilizedHatchingSystem(female, rooster, data, animalsThatShareEggs);
                 else
-                {
-                    NormalHatchingSystem(female, rooster, data, AnimalsThatShareEggs);
-                }
+                    NormalHatchingSystem(female, rooster, data, animalsThatShareEggs);
             }
         }
+
 
 
         private void FertilizedHatchingSystem(
@@ -276,9 +259,7 @@ internal sealed partial class RoosterCoordinator
 
             if (
                 RoosterControl.UpdatePercentage(
-                    Int32.Parse(
-                        ModCfg.Options[OptionEntries.RoosterToChickenRatio][OptionDetails.Value]
-                    )
+                    Config.General.RoosterToChickenRatio
                 )
             )
             {
@@ -382,7 +363,7 @@ internal sealed partial class RoosterCoordinator
         )
         {
             // Handle the logic for rooster produce options
-            if (rooster.ProduceOption != OptionValues.KeepOriginalProduce)
+            if (rooster.ProduceOption != ProduceMode.KeepOriginalProduce)
             {
                 // Create a new farm animal produce item
                 FarmAnimalProduce farmAnimalProduce =
@@ -404,10 +385,7 @@ internal sealed partial class RoosterCoordinator
             }
 
             // Handle the logic for deluxe rooster produce options
-            if (
-                rooster.DeluxeProduceOption != OptionValues.Off
-                && rooster.DeluxeProduceOption != OptionValues.KeepOriginalProduce
-            )
+            if (rooster.DeluxeProduceOption == DeluxeProduceMode.CustomizeBelow)
             {
                 // Create a new farm animal produce item
                 FarmAnimalProduce deluxeFarmAnimalProduce =
@@ -427,7 +405,7 @@ internal sealed partial class RoosterCoordinator
                     deluxeFarmAnimalProduce
                 };
             }
-            else if (rooster.DeluxeProduceOption == OptionValues.Off)
+            else if (rooster.DeluxeProduceOption == DeluxeProduceMode.Off)
             {
                 data[rooster.FarmAnimalName].DeluxeProduceItemIds = null;
             }
@@ -436,25 +414,19 @@ internal sealed partial class RoosterCoordinator
 
         private bool GetEnableEggProbabilityOption()
         {
-            return Convert.ToBoolean(
-                ModCfg.Options[OptionEntries.EnableEggProbability][OptionDetails.Value]
-            );
+            return Config.General.EnableEggProbability;
         }
 
 
         private bool GetEnableLargeEggProbabilityOption()
         {
-            return Convert.ToBoolean(
-                ModCfg.Options[OptionEntries.EnableLargeEggProbability][OptionDetails.Value]
-            );
+            return Config.General.EnableLargeEggProbability;
         }
 
 
         private bool GetEnableStuckInsideOption()
         {
-            return Convert.ToBoolean(
-                ModCfg.Options[OptionEntries.EnableStuckInside][OptionDetails.Value]
-            );
+            return Config.General.EnableStuckInside;
         }
 
 
@@ -583,16 +555,19 @@ internal sealed partial class RoosterCoordinator
 
         internal void GetRoostersFemales(
             IDictionary<string, FarmAnimalData> animalData,
-            Dictionary<RoosterType, RoosterData> Roosters
+            Dictionary<RoosterType, RoosterData> roosters
         )
         {
-            var eggTypes = Roosters
+            var eggTypes = roosters
                 .Values.SelectMany(rd => rd.Eggs.Values)
                 .Where(ed => ed.ContainsKey(RoosterItemDataEntries.Name))
                 .Select(ed => ed[RoosterItemDataEntries.Name])
                 .ToList();
 
-            var defaultFemales = Roosters.Values.ToDictionary(x => x.Female, x => x.FarmAnimalName);
+            var defaultFemales = roosters.Values.ToDictionary(
+                x => x.Female,
+                x => ToFemaleAssignment(x.RoosterType)
+            );
             var foundFemales = defaultFemales.Keys.ToList();
 
             if (GetHatchApiCloneEggsOption() && HatchApi is not null)
@@ -602,48 +577,76 @@ internal sealed partial class RoosterCoordinator
                 );
             }
 
+            Config.FemalesOptions ??= new Dictionary<string, FemaleRoosterAssignment>();
+
             var changed = false;
 
-            foreach (var female in _roosterFemales.Females.Keys.ToList())
+            foreach (var female in Config.FemalesOptions.Keys.ToList())
             {
                 if (!foundFemales.Contains(female))
                 {
-                    _roosterFemales.Females.Remove(female);
+                    Config.FemalesOptions.Remove(female);
                     changed = true;
                 }
             }
 
             foreach (var female in foundFemales)
             {
-                if (!_roosterFemales.Females.ContainsKey(female))
+                if (!Config.FemalesOptions.ContainsKey(female))
                 {
-                    _roosterFemales.Females[female] = defaultFemales.TryGetValue(female, out var def)
+                    Config.FemalesOptions[female] = defaultFemales.TryGetValue(female, out var def)
                         ? def
-                        : OptionValues.Off;
+                        : FemaleRoosterAssignment.Off;
                     changed = true;
                 }
             }
 
             if (changed)
-            {
-                _roosterFemalesDirty = true;
-                ModCfg.FemalesOptions = new Dictionary<string, string>(_roosterFemales.Females);
-            }
+                _femaleAssignmentsDirty = true;
 
-            foreach (var roosterType in Roosters.Keys)
+            foreach (var roosterType in roosters.Keys)
             {
-                var roosterData = Roosters[roosterType];
-                RoosterHelper.Roosters[roosterType].Females = _roosterFemales
-                    .Females.Where(f =>
-                        f.Value.Equals(roosterData.FarmAnimalName, StringComparison.OrdinalIgnoreCase)
-                    )
-                    .Select(f => f.Key)
+                RoosterHelper.Roosters[roosterType].Females = Config.FemalesOptions
+                    .Where(kvp => AssignmentMatchesRooster(kvp.Value, roosterType))
+                    .Select(kvp => kvp.Key)
                     .ToList();
 
                 RoosterHelper.UpdateFemaleEggs(RoosterHelper.Roosters[roosterType], animalData);
             }
         }
 
+
+
+        private static string ToGameBuildingKey(RequiredBuilding building)
+            => building switch
+            {
+                RequiredBuilding.Coop => "Coop",
+                RequiredBuilding.BigCoop => "Big Coop",
+                RequiredBuilding.DeluxeCoop => "Deluxe Coop",
+                _ => "Big Coop"
+            };
+
+        private static FemaleRoosterAssignment ToFemaleAssignment(RoosterType roosterType)
+            => roosterType switch
+            {
+                RoosterType.White => FemaleRoosterAssignment.White,
+                RoosterType.Brown => FemaleRoosterAssignment.Brown,
+                RoosterType.Blue => FemaleRoosterAssignment.Blue,
+                RoosterType.Void => FemaleRoosterAssignment.Void,
+                RoosterType.Gold => FemaleRoosterAssignment.Gold,
+                _ => FemaleRoosterAssignment.Off
+            };
+
+        private static bool AssignmentMatchesRooster(FemaleRoosterAssignment assignment, RoosterType roosterType)
+            => assignment switch
+            {
+                FemaleRoosterAssignment.White => roosterType == RoosterType.White,
+                FemaleRoosterAssignment.Brown => roosterType == RoosterType.Brown,
+                FemaleRoosterAssignment.Blue => roosterType == RoosterType.Blue,
+                FemaleRoosterAssignment.Void => roosterType == RoosterType.Void,
+                FemaleRoosterAssignment.Gold => roosterType == RoosterType.Gold,
+                _ => false
+            };
 
         private List<string> GetFemales(
             IDictionary<string, FarmAnimalData> animalData,
@@ -717,6 +720,4 @@ internal sealed partial class RoosterCoordinator
 
             return exclusionList;
         }
-    }
-}
 }

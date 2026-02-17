@@ -1,15 +1,10 @@
 using System;
-using System.Collections.Generic;
-using RoosterAddon.Constants;
-using RoosterAddon.Enums;
+using RoosterAddon.Application;
 using RoosterAddon.Framework;
 using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
-using Mikew.BirdsOfAFeather.Framework;
-using ILetMeHatchApi = Mikew.BirdsOfAFeather.Framework.ILetMeHatchApi;
-using RoosterAddon.Application;
-using RoosterAddon.Infrastructure.Smapi;
 using RoosterAddon.Infrastructure.SaveData;
+using RoosterAddon.Infrastructure.Smapi;
 using StardewModdingAPI;
 
 namespace RoosterAddon;
@@ -23,39 +18,15 @@ internal sealed partial class ModEntry : Mod
     /// <summary>Content Patcher API (set at game launch).</summary>
     internal static IContentPatcherAPI? ContentPatcher;
 
-    /// <summary>Exposes coordinator-owned config for legacy partials.</summary>
-    internal ModConfig ModCfg
-    {
-        get => EnsureCoordinator().ModCfg;
-        set => EnsureCoordinator().ModCfg = value;
-    }
-
-    /// <summary>Typed config (Phase 3).</summary>
+    /// <summary>Typed persisted config (Phase 3+).</summary>
     internal RoosterAddonConfig Config
     {
         get => EnsureCoordinator().Config;
         set => EnsureCoordinator().Config = value;
     }
 
-    /// <summary>Exposes coordinator-owned rooster helper for legacy partials.</summary>
+    /// <summary>Coordinator-owned runtime helper (legacy services still depend on it).</summary>
     internal RoosterControl RoosterHelper => EnsureCoordinator().RoosterHelper;
-
-    /// <summary>Exposes coordinator-owned texture map for legacy partials.</summary>
-    internal Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures => EnsureCoordinator().ModTextures;
-
-    /// <summary>GMCM API (set at game launch).</summary>
-    internal IGenericModConfigMenuAPI? configMenu
-    {
-        get => EnsureCoordinator().ConfigMenu;
-        set => EnsureCoordinator().ConfigMenu = value;
-    }
-
-    /// <summary>LetMeHatch API (set at game launch).</summary>
-    internal ILetMeHatchApi? hatchApi
-    {
-        get => EnsureCoordinator().HatchApi;
-        set => EnsureCoordinator().HatchApi = value;
-    }
 
     public override object GetApi() => RoosterHatchingApi.Instance;
 
@@ -70,43 +41,32 @@ internal sealed partial class ModEntry : Mod
     }
 
     private RoosterCoordinator EnsureCoordinator()
+        => _coordinator ?? throw new InvalidOperationException("Coordinator not initialized yet.");
+
+    public bool HasModCheck(string modId) => Helper.ModRegistry.IsLoaded(modId);
+
+    public static bool HasMod(string modId, IModHelper helper)
     {
-        if (_coordinator is null)
-            throw new InvalidOperationException("Coordinator not initialized yet.");
-        return _coordinator;
-    }
-
-    private bool GetHatchApiCloneEggsOption() => hatchApi is not null && hatchApi.GetClonedAnimalsInfo().Count > 0;
-
-    private bool GetHatchOnlyByFertilizedOption() =>
-        ModCfg.Options[OptionEntries.HatchingMode][OptionDetails.Value] != OptionValues.Original;
-
-    public bool HasModCheck(string modID) => Helper.ModRegistry.IsLoaded(modID);
-
-    public static bool HasMod(string modID, IModHelper helper)
-    {
-        if (modID.Contains("&&", StringComparison.Ordinal))
+        if (modId.Contains("&&", StringComparison.Ordinal))
         {
-            string[] mods = modID.Split("&&", StringSplitOptions.TrimEntries);
-            foreach (var mod in mods)
+            foreach (var part in modId.Split("&&", StringSplitOptions.TrimEntries))
             {
-                if (!helper.ModRegistry.IsLoaded(mod))
+                if (!helper.ModRegistry.IsLoaded(part))
                     return false;
             }
             return true;
         }
 
-        if (modID.Contains("||", StringComparison.Ordinal))
+        if (modId.Contains("||", StringComparison.Ordinal))
         {
-            string[] mods = modID.Split("||", StringSplitOptions.TrimEntries);
-            foreach (var mod in mods)
+            foreach (var part in modId.Split("||", StringSplitOptions.TrimEntries))
             {
-                if (helper.ModRegistry.IsLoaded(mod))
+                if (helper.ModRegistry.IsLoaded(part))
                     return true;
             }
             return false;
         }
 
-        return helper.ModRegistry.IsLoaded(modID);
+        return helper.ModRegistry.IsLoaded(modId);
     }
 }

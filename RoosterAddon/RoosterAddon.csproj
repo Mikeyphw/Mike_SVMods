@@ -13,4 +13,9 @@
   <ItemGroup>
     <ProjectReference Include="..\BirdsOfAFeather\BirdsOfAFeather.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="GMCMenu.cs" />
+    <Compile Remove="Framework/ModConfig.cs" />
+    <Compile Remove="Framework/Config/LegacyConfigAdapter.cs" />
+  </ItemGroup>
 </Project>

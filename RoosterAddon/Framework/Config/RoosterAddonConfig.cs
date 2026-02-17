@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using RoosterAddon.Enums;
 using RoosterAddon.Constants;
-using RoosterAddon.Framework;
+using RoosterAddon.Enums;
 
 namespace RoosterAddon.Framework.Config;
 
 /// <summary>
-/// The persisted configuration schema for RoosterAddon (Phase 3).
+/// The persisted configuration schema for RoosterAddon.
 /// </summary>
 public sealed class RoosterAddonConfig : Mikew.BirdsOfAFeather.Framework.CoreModConfig
 {
@@ -16,14 +14,13 @@ public sealed class RoosterAddonConfig : Mikew.BirdsOfAFeather.Framework.CoreMod
 
     public GeneralSettings General { get; set; } = new();
 
-    /// <summary>Per-rooster settings. Only the base rooster types are used by the mod today.</summary>
+    /// <summary>Per-rooster settings. Only base rooster types are used by the mod today.</summary>
     public Dictionary<RoosterType, RoosterSettings> Roosters { get; set; } = CreateDefaultRoosters();
 
-    /// <summary>Female -> rooster type mapping for LMH clone-egg mode.</summary>
-    public Dictionary<string, string> FemalesOptions { get; set; } = new();
+    /// <summary>Female animal key -> assigned rooster type (or <see cref="FemaleRoosterAssignment.Off"/>).</summary>
+    public Dictionary<string, FemaleRoosterAssignment> FemalesOptions { get; set; } = new();
 
-    public static RoosterAddonConfig CreateDefault()
-        => LegacyConfigAdapter.FromLegacy(new ModConfig());
+    public static RoosterAddonConfig CreateDefault() => new();
 
     internal static Dictionary<RoosterType, RoosterSettings> CreateDefaultRoosters()
         => new()
@@ -107,7 +104,7 @@ public sealed class ProduceEntry
     /// <summary>
     /// Free text used when <see cref="Choice"/> is "Custom".
     /// </summary>
-    public string CustomItemName { get; set; } = "Custom";
+    public string CustomItemName { get; set; } = ItemIds.CustomItems.Custom;
 
     /// <summary>Percent (0-100).</summary>
     public int Probability { get; set; }
@@ -160,104 +157,12 @@ public enum DeluxeProduceMode
     CustomizeBelow
 }
 
-/// <summary>String conversion helpers to preserve legacy config value text.</summary>
-public static class ConfigStringConversions
+public enum FemaleRoosterAssignment
 {
-    public static string ToLegacyString(UpdateRateMode mode)
-        => mode switch
-        {
-            UpdateRateMode.OnDayStart => OptionValues.OnDayStart,
-            UpdateRateMode.OnLocationChange => OptionValues.OnLocationChange,
-            _ => OptionValues.OnDayStart
-        };
-
-    public static UpdateRateMode ParseUpdateRate(string value)
-        => value switch
-        {
-            OptionValues.OnLocationChange => UpdateRateMode.OnLocationChange,
-            _ => UpdateRateMode.OnDayStart
-        };
-
-    public static string ToLegacyString(HatchingMode mode)
-        => mode switch
-        {
-            HatchingMode.OnlyFertilizedEggs => OptionValues.OnlyFertilizedEggs,
-            _ => OptionValues.Original
-        };
-
-    public static HatchingMode ParseHatchingMode(string value)
-        => value switch
-        {
-            OptionValues.OnlyFertilizedEggs => HatchingMode.OnlyFertilizedEggs,
-            _ => HatchingMode.Original
-        };
-
-    public static string ToLegacyString(HarvestType type)
-        => type switch
-        {
-            HarvestType.DropOvernight => OptionValues.DropOvernight,
-            _ => OptionValues.DigUp
-        };
-
-    public static HarvestType ParseHarvestType(string value)
-        => value switch
-        {
-            OptionValues.DropOvernight => HarvestType.DropOvernight,
-            _ => HarvestType.DigUp
-        };
-
-    public static string ToLegacyString(RequiredBuilding building)
-        => building switch
-        {
-            RequiredBuilding.Coop => OptionValues.Coop,
-            RequiredBuilding.DeluxeCoop => OptionValues.DeluxeCoop,
-            _ => OptionValues.BigCoop
-        };
-
-    public static RequiredBuilding ParseRequiredBuilding(string value)
-        => value switch
-        {
-            OptionValues.Coop => RequiredBuilding.Coop,
-            OptionValues.DeluxeCoop => RequiredBuilding.DeluxeCoop,
-            _ => RequiredBuilding.BigCoop
-        };
-
-    public static string ToLegacyString(ProduceMode mode)
-        => mode switch
-        {
-            ProduceMode.KeepOriginalProduce => OptionValues.KeepOriginalProduce,
-            _ => OptionValues.CustomizeBelow
-        };
-
-    public static ProduceMode ParseProduceMode(string value)
-        => value switch
-        {
-            OptionValues.KeepOriginalProduce => ProduceMode.KeepOriginalProduce,
-            _ => ProduceMode.CustomizeBelow
-        };
-
-    public static string ToLegacyString(DeluxeProduceMode mode)
-        => mode switch
-        {
-            DeluxeProduceMode.Off => OptionValues.Off,
-            DeluxeProduceMode.KeepOriginalProduce => OptionValues.KeepOriginalProduce,
-            _ => OptionValues.CustomizeBelow
-        };
-
-    public static DeluxeProduceMode ParseDeluxeProduceMode(string value)
-        => value switch
-        {
-            OptionValues.Off => DeluxeProduceMode.Off,
-            OptionValues.KeepOriginalProduce => DeluxeProduceMode.KeepOriginalProduce,
-            _ => DeluxeProduceMode.CustomizeBelow
-        };
-
-    public static float ParseFloat(string value, float fallback)
-        => float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) ? f : fallback;
-
-    public static int ParseInt(string value, int fallback)
-        => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i) ? i : fallback;
-
-    public static bool ParseBool(string value, bool fallback)
-        => bool.TryParse(value, out var b) ? b : fallback;
+    Off,
+    White,
+    Brown,
+    Blue,
+    Void,
+    Gold
 }

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using RoosterAddon.Enums;
 using LuckyTypes = Mikew.BirdsOfAFeather.EnumsAndStrings.Enums.LuckyTypes;
-using RoosterAddon.Framework;
 using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
 
@@ -18,7 +17,7 @@ namespace RoosterAddon.Helpers
             LogLevel logLevel = LogLevel.Trace
         )
         {
-            monitor.Log($"Daily Luck is {ModConfig.GetEnumName(luckyType)}", logLevel);
+            monitor.Log($"Daily Luck is {luckyType}", logLevel);
         }
 
         public static void LogRoosterData(
@@ -38,7 +37,7 @@ namespace RoosterAddon.Helpers
             };
             foreach (var rooster in roosterData)
             {
-                RoosterStrings[rooster.Key].Add($"\"{ModConfig.GetEnumName(rooster.Key)}\":{{");
+                RoosterStrings[rooster.Key].Add($"\"{rooster.Key}\":{{");
                 RoosterStrings[rooster.Key]
                     .Add(
                         $"\"ProduceOption\": \"{rooster.Value.ProduceOption}\", \"DeluxeProduceOption\": \"{rooster.Value.DeluxeProduceOption}\","
@@ -47,14 +46,14 @@ namespace RoosterAddon.Helpers
 
                 foreach (var produce in rooster.Value.AllProduces)
                 {
-                    RoosterStrings[rooster.Key].Add($"\"{ModConfig.GetEnumName(produce.Key)}\":{{");
+                    RoosterStrings[rooster.Key].Add($"\"{produce.Key}\":{{");
                     foreach (var entry in produce.Value)
                     {
-                        RoosterStrings[rooster.Key].Add($"\"{ModConfig.GetEnumName(entry.Key)}\":{{");
+                        RoosterStrings[rooster.Key].Add($"\"{entry.Key}\":{{");
                         foreach (var item in entry.Value)
                         {
                             RoosterStrings[rooster.Key]
-                                .Add($"\"{ModConfig.GetEnumName(item.Key)}\": \"{item.Value}\",");
+                                .Add($"\"{item.Key}\": \"{item.Value}\",");
                         }
                         RoosterStrings[rooster.Key].Add("},");
                     }
@@ -67,11 +66,11 @@ namespace RoosterAddon.Helpers
                 RoosterStrings[rooster.Key].Add("\"Eggs\":{");
                 foreach (var egg in rooster.Value.Eggs)
                 {
-                    RoosterStrings[rooster.Key].Add($"\"{ModConfig.GetEnumName(egg.Key)}\":{{");
+                    RoosterStrings[rooster.Key].Add($"\"{egg.Key}\":{{");
                     foreach (var entry in egg.Value)
                     {
                         RoosterStrings[rooster.Key]
-                            .Add($"\"{ModConfig.GetEnumName(entry.Key)}\": \"{entry.Value}\",");
+                            .Add($"\"{entry.Key}\": \"{entry.Value}\",");
                     }
                     RoosterStrings[rooster.Key].Add("},");
                 }

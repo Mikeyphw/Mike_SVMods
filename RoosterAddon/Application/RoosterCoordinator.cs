@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using RoosterAddon.Constants;
+using RoosterAddon.Enums;
 using RoosterAddon.Framework;
 using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
@@ -17,6 +18,9 @@ using StardewValley.GameData.FarmAnimals;
 
 using ILetMeHatchApi = Mikew.BirdsOfAFeather.Framework.ILetMeHatchApi;
 using LuckyTypes = Mikew.BirdsOfAFeather.EnumsAndStrings.Enums.LuckyTypes;
+using Mikew.BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Models;
+using RoosterAddon.Infrastructure.Assets;
 
 namespace RoosterAddon.Application;
 
@@ -34,24 +38,34 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     private string SaveStateKey => $"{ModManifest.UniqueID}/save-state";
 
-    internal RoosterAddonConfig Config = null!;
-    internal ModConfig ModCfg = null!;
+    private RoosterAddonConfig? _config;
+
+    internal RoosterAddonConfig Config
+    {
+        get => _config ?? throw new InvalidOperationException("Config not initialized yet.");
+        set
+        {
+            _config = value ?? throw new ArgumentNullException(nameof(value));
+            RoosterHelper?.UpdateConfig(_config);
+        }
+    }
     internal RoosterControl RoosterHelper = null!;
     internal Mikew.BirdsOfAFeather.Framework.IGenericModConfigMenuAPI? ConfigMenu;
     internal ILetMeHatchApi? HatchApi;
 
     internal Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures = new();
 
+    internal ModAssetHandler AssetHandler = null!;
+
     private State.RoosterAddonSaveState _saveState = new();
 
-    private RoosterFemales _roosterFemales = new();
     private AnimalExclusion _animalExclusions = new();
 
     private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
     private readonly Queue<Action> _nextTickActions = new();
     private bool _nextTickHooked;
     private bool _gmcmRegistered;
-    private bool _roosterFemalesDirty;
+    private bool _femaleAssignmentsDirty;
     private bool _needsRoosterSetup = true;
     private int _lastRoosterSetupDay = -1;
     private int _lastDebugDumpDay = -1;
@@ -72,19 +86,29 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     internal void Initialize()
     {
-        LoadRoosterFemales();
         LoadExclusionsData();
 
-        Config = ConfigManager.LoadOrMigrate(Helper, Monitor);
-        Config.FemalesOptions = new Dictionary<string, string>(_roosterFemales.Females);
-
-        ModCfg = LegacyConfigAdapter.ToLegacy(Config);
+        Config = ConfigManager.LoadOrCreate(Helper, Monitor);
 
         Helper.ConsoleCommands.Add(
             "roosteraddon_dump_state",
             "Write a JSON snapshot of RoosterAddon state to data/state-dumps. Add 'farmanimals' to include farm animal keys.",
             DumpStateCommand
         );
+
+                AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
+        AssetHandler.AddAssets(
+            new List<AssetData>
+            {
+                new(
+                    enumAssetType: typeof(Textures),
+                    enumAssetFolder: RoosterAddonAssetFolder.Textures,
+                    fileExt: ModAssetHandler.FileExtension.Png,
+                    gamePath: $"Mods/{ModManifest.UniqueID}"
+                )
+            }
+        );
+        AssetHandler.SetUpAssets();
 
         var texturesList = new List<Textures>
         {
@@ -102,11 +126,12 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
         {
             ModTextures[item] = new Dictionary<TextureDetails, string>
             {
-                { TextureDetails.MoldFolderPath, "assets/" + ModConfig.GetEnumName(item).ToLowerInvariant() + ".png" }
+                { TextureDetails.GamePath, AssetHandler.GetAssetPath(item, ModAssetHandler.AssetPathType.GamePath) },
+                { TextureDetails.MoldFolderPath, AssetHandler.GetAssetPath(item, ModAssetHandler.AssetPathType.ModFolderPath) }
             };
         }
 
-        RoosterHelper = new RoosterControl(ref ModCfg, Helper, Monitor);
+        RoosterHelper = new RoosterControl(Config, Helper, Monitor);
     }
 
     public bool HasModCheck(string modID) => Helper.ModRegistry.IsLoaded(modID);
@@ -140,7 +165,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     public void OnWarped(object? sender, WarpedEventArgs e)
     {
-        if (ModCfg.Options[OptionEntries.UpdateRate][OptionDetails.Value] == OptionValues.OnLocationChange)
+        if (Config.General.UpdateRate == UpdateRateMode.OnLocationChange)
             _ = Helper.GameContent.InvalidateCache(FarmAnimalsAssetName);
     }
 
@@ -154,7 +179,12 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     public void OnSaving(object? sender, SavingEventArgs e)
     {
-        SaveRoosterFemalesIfDirty();
+        if (_femaleAssignmentsDirty)
+        {
+            ConfigManager.Save(Helper, Config);
+            _femaleAssignmentsDirty = false;
+        }
+
 
         _saveState.LastRoosterSetupDay = _lastRoosterSetupDay;
         _saveState.LastDebugDumpDay = _lastDebugDumpDay;
@@ -165,7 +195,6 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     public void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
-        SaveRoosterFemalesIfDirty();
         _gmcmRegistered = false;
         _pendingInvalidations.Clear();
         _nextTickActions.Clear();
@@ -223,28 +252,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
         _nextTickHooked = false;
     }
 
-    private void LoadRoosterFemales()
-    {
-        _roosterFemales = Helper.Data.ReadJsonFile<RoosterFemales>("roosterFemales.json") ?? new RoosterFemales();
-        _roosterFemales.Females ??= new Dictionary<string, string>();
-        Helper.Data.WriteJsonFile("roosterFemales.json", _roosterFemales);
-    }
 
-    private void SaveRoosterFemalesIfDirty()
-    {
-        if (!_roosterFemalesDirty)
-            return;
-
-        try
-        {
-            Helper.Data.WriteJsonFile("roosterFemales.json", _roosterFemales);
-            _roosterFemalesDirty = false;
-        }
-        catch (Exception ex)
-        {
-            Monitor.Log($"Failed to save roosterFemales.json: {ex}", LogLevel.Error);
-        }
-    }
 
     private void LoadExclusionsData()
     {
@@ -292,7 +300,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
             Females = r.Females?.ToList() ?? new List<string>(),
             Eggs = r.Eggs,
             ProduceOption = r.ProduceOption,
-            ChosenProduce = r.ChosenProduce,
+            ChosenProduce = r.AllProduces.TryGetValue(ProduceTypeEntries.Produce, out var produce) && produce.TryGetValue(ProduceEntries.Chosen, out var chosen) ? chosen : null,
         }).ToList() ?? new();
 
         object? farmAnimals = null;
@@ -316,9 +324,9 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
             Save = StardewModdingAPI.Constants.SaveFolderName,
             Day = new { today, Game1.Date.Season, Game1.Date.DayOfMonth, Game1.Date.Year },
             Luck = DailyLuck,
-            Config = ModCfg,
+            Config = Config,
             SaveState = _saveState,
-            RoosterFemales = _roosterFemales.Females,
+            FemaleAssignments = Config.FemalesOptions,
             Exclusions = _animalExclusions.AnimalExclusions,
             Roosters = roosters,
             FarmAnimals = farmAnimals
