@@ -25,8 +25,12 @@ internal interface IRoosterAssetEdits
 
     IModHelper Helper { get; }
     IMonitor Monitor { get; }
-    IManifest ModManifest { get; }    RoosterAddonConfig Config { get; }
+    IManifest ModManifest { get; }
+
+    RoosterAddonConfig Config { get; }
     RoosterControl RoosterHelper { get; }
+
+    bool CloneEggsEnabled { get; }
 
     void EnsureRoostersSetup();
 
@@ -34,8 +38,6 @@ internal interface IRoosterAssetEdits
     void RunHatchingSystem(RoosterData rooster, IDictionary<string, FarmAnimalData> data);
     void GetRoostersFemales(IDictionary<string, FarmAnimalData> animalData, Dictionary<RoosterType, RoosterData> roosters);
     void UpdateRoosterHatchingApi();
-
-    void GetAndSetFertilizedEggs(Dictionary<string, ObjectData> data, Dictionary<string, ObjectData> originalEggs, bool mearasegg = false);
 
     void RequestInvalidate(string assetName);
     void QueueNextTickAction(Action action);

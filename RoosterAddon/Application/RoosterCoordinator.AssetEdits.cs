@@ -32,6 +32,8 @@ internal sealed partial class RoosterCoordinator : IRoosterAssetEdits
     RoosterAddonConfig IRoosterAssetEdits.Config => Config;
     RoosterControl IRoosterAssetEdits.RoosterHelper => RoosterHelper;
 
+    bool IRoosterAssetEdits.CloneEggsEnabled => HatchApi is not null && HatchApi.GetClonedAnimalsInfo().Count > 0;
+
     void IRoosterAssetEdits.EnsureRoostersSetup() => EnsureRoostersSetup();
 
     void IRoosterAssetEdits.SetRoosterData(RoosterData rooster, IDictionary<string, FarmAnimalData> data) =>
@@ -46,12 +48,6 @@ internal sealed partial class RoosterCoordinator : IRoosterAssetEdits
     ) => GetRoostersFemales(animalData, roosters);
 
     void IRoosterAssetEdits.UpdateRoosterHatchingApi() => UpdateRoosterHatchingApi();
-
-    void IRoosterAssetEdits.GetAndSetFertilizedEggs(
-        Dictionary<string, ObjectData> data,
-        Dictionary<string, ObjectData> originalEggs,
-        bool mearasegg
-    ) => GetAndSetFertilizedEggs(data, originalEggs, mearasegg);
 
     void IRoosterAssetEdits.RequestInvalidate(string assetName) => RequestInvalidate(assetName);
 

@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using RoosterAddon.Application.Hatching.Decisions;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using StardewValley.GameData.FarmAnimals;
@@ -56,35 +56,49 @@ internal sealed class NormalHatchingStrategy : IHatchingStrategy
         if (!enabled)
             return;
 
-        if (!rooster.Eggs.TryGetValue(eggType, out var egg) || !egg.TryGetValue(RoosterItemDataEntries.Probability, out var rawChance))
+        if (!rooster.Eggs.TryGetValue(eggType, out var egg))
+            return;
+
+        if (!egg.TryGetValue(RoosterItemDataEntries.Probability, out var rawChance))
             return;
 
         if (!int.TryParse(rawChance, out var chance))
             return;
 
-        if (!HatchingContext.RollPercentage(chance))
+        if (!egg.TryGetValue(RoosterItemDataEntries.Name, out var eggId) || string.IsNullOrWhiteSpace(eggId))
             return;
 
-        if (egg.TryGetValue(RoosterItemDataEntries.Name, out var eggId))
+        ctx.RoosterHelper.FemaleEggs.TryGetValue(femaleKey, out var femaleEggs);
+        femaleEggs?.TryGetValue(eggType, out var femaleEggId);
+
+        var decision = HatchingDecisionEngine.DecideEggChance(
+            new EggChanceRule(
+                Enabled: true,
+                ChancePercent: chance,
+                EggId: eggId,
+                FemaleEggIdToRemove: femaleEggId
+            ),
+            ctx.Roller
+        );
+
+        if (decision is null)
+            return;
+
+        data[rooster.FarmAnimalName].EggItemIds ??= new();
+        data[rooster.FarmAnimalName].EggItemIds.Add(decision.EggIdToAddToRooster);
+
+        if (!string.IsNullOrWhiteSpace(decision.FemaleEggIdToRemove))
         {
-            data[rooster.FarmAnimalName].EggItemIds ??= new();
-            data[rooster.FarmAnimalName].EggItemIds.Add(eggId);
+            data[femaleKey].EggItemIds ??= new();
+            data[femaleKey].EggItemIds.Remove(decision.FemaleEggIdToRemove);
+        }
 
-            // remove eggs from females/other animals to avoid duplicates
-            if (ctx.RoosterHelper.FemaleEggs.TryGetValue(femaleKey, out var femaleEggs)
-                && femaleEggs.TryGetValue(eggType, out var femaleEggId))
-            {
-                data[femaleKey].EggItemIds ??= new();
-                data[femaleKey].EggItemIds.Remove(femaleEggId);
-            }
+        foreach (var otherAnimal in otherAnimalsSharingEggs)
+        {
+            if (!data.ContainsKey(otherAnimal) || data[otherAnimal].EggItemIds is null)
+                continue;
 
-            foreach (var otherAnimal in otherAnimalsSharingEggs)
-            {
-                if (!data.ContainsKey(otherAnimal) || data[otherAnimal].EggItemIds is null)
-                    continue;
-
-                data[otherAnimal].EggItemIds.Remove(eggId);
-            }
+            data[otherAnimal].EggItemIds.Remove(decision.EggIdToAddToRooster);
         }
     }
 }

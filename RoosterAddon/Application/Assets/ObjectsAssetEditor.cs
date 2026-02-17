@@ -25,44 +25,6 @@ internal sealed class ObjectsAssetEditor
         if (_ctx.RoosterHelper is null || _ctx.RoosterHelper.Roosters is null)
             return;
 
-        if (_ctx.RoosterHelper.FemaleEggs.Count > 0)
-        {
-            e.Edit(
-                asset =>
-                {
-                    var dataObject = asset.AsDictionary<string, ObjectData>().Data;
-
-                    var mearasFertilizedEggs = new List<string>
-                    {
-                        ItemIds.CustomItems.FertilizedBlueEgg,
-                        ItemIds.CustomItems.FertilizedBrownEgg,
-                        ItemIds.CustomItems.FertilizedGoldEgg,
-                        ItemIds.CustomItems.FertilizedVoidEgg,
-                        ItemIds.CustomItems.FertilizedWhiteEgg
-                    };
-
-                    var eggIdsFromFemaleEggs = _ctx.RoosterHelper
-                        .FemaleEggs.SelectMany(e => e.Value)
-                        .Where(e => e.Key != EggTypeEntries.Fertilized)
-                        .Select(e => e.Value)
-                        .Distinct()
-                        .ToList();
-
-                    var allEggIds = eggIdsFromFemaleEggs.Union(mearasFertilizedEggs).ToList();
-
-                    var originalEggs = dataObject
-                        .Where(o => allEggIds.Contains(o.Key))
-                        .ToDictionary(o => o.Key, o => o.Value);
-
-                    _ctx.GetAndSetFertilizedEggs(
-                        (Dictionary<string, ObjectData>)dataObject,
-                        originalEggs
-                    );
-                },
-                AssetEditPriority.Late + 20000
-            );
-        }
-
         e.Edit(
             asset =>
             {

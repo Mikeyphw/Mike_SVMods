@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using RoosterAddon.Application.Hatching.Decisions;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using StardewValley.GameData.FarmAnimals;
@@ -19,16 +19,32 @@ internal sealed class FertilizedOnlyHatchingStrategy : IHatchingStrategy
         if (!data.ContainsKey(rooster.FarmAnimalName) || !data.ContainsKey(femaleKey))
             return;
 
-        // probabilistic upgrade: female produces fertilized eggs as regular + deluxe produce
-        if (TryGetChance(rooster, EggTypeEntries.Fertilized, out var fertilizedChance)
-            && HatchingContext.RollPercentage(fertilizedChance))
+        if (!TryGetChance(rooster, EggTypeEntries.Fertilized, out var fertilizedChance))
+            fertilizedChance = 0;
+
+        if (!TryGetEggId(rooster, EggTypeEntries.Fertilized, out var roosterFertilizedEggId))
+            return;
+
+        if (!ctx.RoosterHelper.FemaleEggs.TryGetValue(femaleKey, out var femaleEggs)
+            || !femaleEggs.TryGetValue(EggTypeEntries.Fertilized, out var femaleFertilizedEggId))
         {
-            if (ctx.RoosterHelper.FemaleEggs.TryGetValue(femaleKey, out var femaleEggs)
-                && femaleEggs.TryGetValue(EggTypeEntries.Fertilized, out var fertilizedEggId))
-            {
-                data[femaleKey].DeluxeProduceItemIds = new List<FarmAnimalProduce> { new() { ItemId = fertilizedEggId } };
-                data[femaleKey].ProduceItemIds = new List<FarmAnimalProduce> { new() { ItemId = fertilizedEggId } };
-            }
+            return;
+        }
+
+        var decision = HatchingDecisionEngine.DecideFertilizedOnly(
+            new FertilizedOnlyRule(
+                FemaleUpgradeChancePercent: fertilizedChance,
+                RoosterToChickenRatioPercent: ctx.RoosterToChickenRatio,
+                RoosterFertilizedEggId: roosterFertilizedEggId,
+                FemaleFertilizedEggId: femaleFertilizedEggId
+            ),
+            ctx.Roller
+        );
+
+        if (decision.UpgradeFemaleProduceToFertilized)
+        {
+            data[femaleKey].DeluxeProduceItemIds = new List<FarmAnimalProduce> { new() { ItemId = femaleFertilizedEggId } };
+            data[femaleKey].ProduceItemIds = new List<FarmAnimalProduce> { new() { ItemId = femaleFertilizedEggId } };
         }
 
         // clear egg ids across all affected animals
@@ -40,20 +56,15 @@ internal sealed class FertilizedOnlyHatchingStrategy : IHatchingStrategy
                 data[otherAnimal].EggItemIds = null;
         }
 
-        // rooster vs chicken ratio decides which animal hatches fertilized eggs
-        if (TryGetEggId(rooster, EggTypeEntries.Fertilized, out var fertilizedEggName))
+        if (decision.RoosterHatchesFertilizedEgg && !string.IsNullOrWhiteSpace(decision.RoosterEggId))
         {
-            if (HatchingContext.RollPercentage(ctx.RoosterToChickenRatio))
-            {
-                data[rooster.FarmAnimalName].EggItemIds ??= new();
-                data[rooster.FarmAnimalName].EggItemIds.Add(fertilizedEggName);
-            }
-            else if (ctx.RoosterHelper.FemaleEggs.TryGetValue(femaleKey, out var femaleEggs)
-                     && femaleEggs.TryGetValue(EggTypeEntries.Fertilized, out var femaleFertilizedEggId))
-            {
-                data[femaleKey].EggItemIds = new List<string> { femaleFertilizedEggId };
-            }
+            data[rooster.FarmAnimalName].EggItemIds ??= new();
+            data[rooster.FarmAnimalName].EggItemIds.Add(decision.RoosterEggId);
+            return;
         }
+
+        if (!decision.RoosterHatchesFertilizedEgg && !string.IsNullOrWhiteSpace(decision.FemaleEggId))
+            data[femaleKey].EggItemIds = new List<string> { decision.FemaleEggId };
     }
 
     private static bool TryGetChance(RoosterData rooster, EggTypeEntries eggType, out float chance)

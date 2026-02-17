@@ -8,6 +8,7 @@ internal sealed partial class RoosterCoordinator
 {
     private FarmAnimalsAssetEditor? _farmAnimalsEditor;
     private ObjectsAssetEditor? _objectsEditor;
+    private FertilizedEggsAssetEditor? _fertilizedEggsEditor;
 
     public void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
     {
@@ -23,6 +24,9 @@ internal sealed partial class RoosterCoordinator
 
         if (IsObjectsAsset(e))
         {
+            _fertilizedEggsEditor ??= new FertilizedEggsAssetEditor((IRoosterAssetEdits)this);
+            _fertilizedEggsEditor.Edit(e);
+
             _objectsEditor ??= new ObjectsAssetEditor((IRoosterAssetEdits)this);
             _objectsEditor.Edit(e);
             return;
