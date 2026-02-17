@@ -20,6 +20,7 @@ internal sealed partial class RoosterCoordinator
     {
         HasDayStarted = true;
 
+        InvalidateDailyPlanCache("day started");
         EnsureRoostersSetup();
 
         DailyLuck = DailyLuckHelper.GetDailyLuck();
@@ -113,7 +114,29 @@ internal sealed partial class RoosterCoordinator
     )
     {
         var ctx = new HatchingContext(Config, RoosterHelper, _animalExclusions, HatchApi);
-        _farmAnimalHatching.ApplyForRooster(ctx, rooster, data);
+
+        var plan = EnsureDailyPlanForToday(
+            farmAnimalsData: data,
+            forceRecompute: false,
+            usedHostPlan: out _
+        );
+
+        if (plan is null)
+        {
+            _farmAnimalHatching.ApplyForRooster(ctx, rooster, data);
+            return;
+        }
+
+        var buildingKey = ResolveBuildingKey(rooster, data);
+        var otherAnimals = GetOtherAnimalsSharingEggsCached(data, rooster, plan);
+
+        _planApplier.Apply(
+            plan: plan,
+            buildingKey: buildingKey,
+            rooster: rooster,
+            data: data,
+            otherAnimalsSharingEggs: otherAnimals
+        );
     }
 
     private bool GetHatchApiCloneEggsOption()

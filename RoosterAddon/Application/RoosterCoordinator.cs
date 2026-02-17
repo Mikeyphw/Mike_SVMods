@@ -103,7 +103,13 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
             DumpStateCommand
         );
 
-                AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
+                Helper.ConsoleCommands.Add(
+    "ra_plan",
+    "Daily hatching plan commands. Use: ra_plan help",
+    DailyPlanCommand
+);
+
+AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
         AssetHandler.AddAssets(
             new List<AssetData>
             {
@@ -182,6 +188,9 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
         _needsRoosterSetup = true;
         _lastRoosterSetupDay = -1;
         _lastDebugDumpDay = -1;
+        InvalidateDailyPlanCache("save loaded");
+
+        RunStartupValidationV2();
     }
 
     public void OnSaving(object? sender, SavingEventArgs e)
@@ -203,6 +212,7 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
     public void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
         _gmcmRegistered = false;
+        InvalidateDailyPlanCache("returned to title");
         _pendingInvalidations.Clear();
         _nextTickActions.Clear();
 
@@ -217,6 +227,9 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
     {
         if (string.IsNullOrWhiteSpace(assetName))
             return;
+
+        if (assetName.Equals(FarmAnimalsAssetName, StringComparison.OrdinalIgnoreCase))
+            InvalidateRuleCaches("FarmAnimals invalidated");
 
         _pendingInvalidations.Add(assetName);
         QueueNextTickAction(FlushInvalidations);

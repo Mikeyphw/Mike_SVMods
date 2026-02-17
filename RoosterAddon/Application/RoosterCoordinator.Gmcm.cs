@@ -51,6 +51,7 @@ internal sealed partial class RoosterCoordinator
                 RoosterHelper?.UpdateConfig(Config);
                 ConfigManager.Save(Helper, Config);
 
+                InvalidateDailyPlanCache("config reset");
                 _needsRoosterSetup = true;
                 RequestInvalidate(FarmAnimalsAssetName);
                 RequestInvalidate(ObjectsAssetName);
@@ -60,7 +61,7 @@ internal sealed partial class RoosterCoordinator
                 RoosterHelper?.UpdateConfig(Config);
                 ConfigManager.Save(Helper, Config);
 
-
+                InvalidateDailyPlanCache("config saved");
                 _needsRoosterSetup = true;
                 RequestInvalidate(FarmAnimalsAssetName);
                 RequestInvalidate(ObjectsAssetName);
