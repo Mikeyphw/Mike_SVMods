@@ -9,7 +9,6 @@ using LetMeHatchThisEgg.Models;
 using LetMeHatchThisEgg.UI;
 using StardewModdingAPI;
 using StardewValley;
-using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Objects;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
@@ -17,7 +16,6 @@ using static LetMeHatchThisEgg.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 using Object = StardewValley.Object;
-using Mikew.BirdsOfAFeather.Helpers;
 
 using static LetMeHatchThisEgg.ModEntry;
 

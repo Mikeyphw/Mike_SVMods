@@ -2,7 +2,6 @@ using Mikew.BirdsOfAFeather.Helpers;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.Models;
-using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
