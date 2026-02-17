@@ -6,6 +6,7 @@ using Mikew.BirdsOfAFeather.Framework.Random;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
+using RoosterAddon.Application.FarmAnimals;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
@@ -21,6 +22,7 @@ namespace RoosterAddon.Helpers;
 public sealed class RoosterControl
 {
     private static readonly Random Rnd = new();
+    private readonly FarmAnimalRatioWeightingService _weighting = new();
     private readonly IModHelper _helper;
     private readonly IMonitor _monitor;
 
@@ -238,31 +240,11 @@ public sealed class RoosterControl
     {
         var rng = new SystemRandomProvider(Rnd);
 
-        var produceTable = new WeightedTable<Dictionary<RoosterItemDataEntries, string>>(rng);
-        foreach (var (key, val) in rooster.AllProduces[ProduceTypeEntries.Produce])
-        {
-            if (key == ProduceEntries.Chosen)
-                continue;
-
-            _ = int.TryParse(val[RoosterItemDataEntries.Probability], NumberStyles.Integer, CultureInfo.InvariantCulture, out var weight);
-            produceTable.Add(val, weight);
-        }
-
         rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen] =
-            produceTable.RollOrDefault(new Dictionary<RoosterItemDataEntries, string>());
-
-        var deluxeTable = new WeightedTable<Dictionary<RoosterItemDataEntries, string>>(rng);
-        foreach (var (key, val) in rooster.AllProduces[ProduceTypeEntries.Deluxe])
-        {
-            if (key == ProduceEntries.Chosen)
-                continue;
-
-            _ = int.TryParse(val[RoosterItemDataEntries.Probability], NumberStyles.Integer, CultureInfo.InvariantCulture, out var weight);
-            deluxeTable.Add(val, weight);
-        }
+            _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Produce], rng);
 
         rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen] =
-            deluxeTable.RollOrDefault(new Dictionary<RoosterItemDataEntries, string>());
+            _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rng);
     }
 
     private void ApplyFertilizedBoost(RoosterData rooster)
