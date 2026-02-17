@@ -28,7 +28,7 @@ public interface IModFacade
 
     FacadeResult DumpAnimalNotes(AnimalNotesDumpOptions options);
 
-    FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true);
+    FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true, bool force = false);
 
     FacadeResult ValidateAnimalNotes();
 }

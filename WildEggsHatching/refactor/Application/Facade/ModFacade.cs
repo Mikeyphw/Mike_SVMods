@@ -250,7 +250,7 @@ public sealed class ModFacade : IModFacade
         return new FacadeResult(true, _animalNotes.DumpState(options));
     }
 
-    public FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true)
+    public FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true, bool force = false)
     {
         if (_animalNotes is null)
             return new FacadeResult(false, "AnimalNotes service unavailable.");
@@ -261,7 +261,7 @@ public sealed class ModFacade : IModFacade
         if (!_isMainPlayer())
             return new FacadeResult(false, "Host-only.");
 
-        return new FacadeResult(true, _animalNotes.Repair(requeueMail, reconcileNotes));
+        return new FacadeResult(true, _animalNotes.Repair(requeueMail, reconcileNotes, force));
     }
 
 public FacadeResult ValidateAnimalNotes()

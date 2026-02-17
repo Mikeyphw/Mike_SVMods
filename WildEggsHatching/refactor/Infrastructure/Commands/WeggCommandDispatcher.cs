@@ -153,8 +153,9 @@ public sealed class WeggCommandDispatcher
     {
         var requeueMail = !Array.Exists(args, x => string.Equals(x, "--no-mail", StringComparison.OrdinalIgnoreCase));
         var reconcile = !Array.Exists(args, x => string.Equals(x, "--no-reconcile", StringComparison.OrdinalIgnoreCase));
+        var force = Array.Exists(args, x => string.Equals(x, "--force", StringComparison.OrdinalIgnoreCase));
 
-        return ToCommandResult(_facade.RepairAnimalNotes(requeueMail, reconcile));
+        return ToCommandResult(_facade.RepairAnimalNotes(requeueMail, reconcile, force));
     }
 
     private static bool IsHelp(string arg)
@@ -176,10 +177,10 @@ public sealed class WeggCommandDispatcher
             "  wegg spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]",
             "  wegg notes dump [--json] [--farmer <id>] [--animal <token>]",
             "  wegg notes validate",
-            "  wegg notes repair [--no-mail] [--no-reconcile]",
+            "  wegg notes repair [--force] [--no-mail] [--no-reconcile]",
             "  wegg_notes dump [--json] [--farmer <id>] [--animal <token>]",
             "  wegg_notes validate",
-            "  wegg_notes repair [--no-mail] [--no-reconcile]",
+            "  wegg_notes repair [--force] [--no-mail] [--no-reconcile]",
             "",
             "Notes:",
             "  - Host-only mutations; clients will be rejected.",

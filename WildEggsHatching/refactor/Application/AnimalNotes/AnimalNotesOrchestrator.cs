@@ -286,7 +286,7 @@ public sealed class AnimalNotesOrchestrator
     }
 
     
-    public string Repair(bool requeueMail = true, bool reconcileNotes = true)
+    public string Repair(bool requeueMail = true, bool reconcileNotes = true, bool force = false)
     {
         if (!Context.IsWorldReady)
             return "World not ready.";
@@ -296,8 +296,14 @@ public sealed class AnimalNotesOrchestrator
         var day = _game.GetDayNumber();
         var before = _data.Pending.Count;
 
+        if (force)
+            reconcileNotes = true;
+
         if (reconcileNotes)
             ReconcileState();
+
+        if (force)
+            ForceRecomputeStates(day);
 
         TrackQuestCompletionsForAllFarmers(day);
 
@@ -312,7 +318,55 @@ public sealed class AnimalNotesOrchestrator
         var after = _data.Pending.Count;
         Save();
 
-        return $"AnimalNotes repair complete. pending: {before} -> {after} (day={day}).";
+        return $"AnimalNotes repair complete. pending: {before} -> {after} (day={day}) force={force}.";
+    }
+
+    private void ForceRecomputeStates(int dayNumber)
+    {
+        var farmers = SafeGetAllFarmers();
+        if (farmers.Count == 0)
+            return;
+
+        foreach (var p in _data.Pending)
+        {
+            p.NotePlaced = Utility.doesItemExistAnywhere(p.NoteItemId);
+
+            foreach (var farmer in farmers)
+            {
+                var state = GetOrCreateFarmerState(p, farmer.UniqueMultiplayerID);
+
+                var questActive = false;
+                try
+                {
+                    questActive = farmer.questLog.Any(q =>
+                        string.Equals(q.id.Value, p.QuestId, StringComparison.OrdinalIgnoreCase));
+                }
+                catch
+                {
+                    // best-effort
+                }
+
+                var questCompleted = HasCompletedQuest(farmer, p.QuestId);
+
+                state.QuestGiven = questActive || questCompleted;
+                if (!state.QuestGiven)
+                    state.DayQuestGiven = null;
+                else
+                    state.DayQuestGiven ??= dayNumber;
+
+                if (questCompleted && state.DayQuestCompleted is null)
+                    state.DayQuestCompleted = dayNumber;
+
+                var mailReceived = HasReceivedMail(farmer, p.MailId);
+                var mailTomorrow = HasMailForTomorrow(farmer, p.MailId);
+
+                state.MailQueued = mailReceived || mailTomorrow;
+                if (!state.MailQueued)
+                    state.DayMailQueued = null;
+                else
+                    state.DayMailQueued ??= dayNumber;
+            }
+        }
     }
 
     public (List<string> QuestIds, List<string> MailIds) GetPeerSyncPayload(long farmerId)

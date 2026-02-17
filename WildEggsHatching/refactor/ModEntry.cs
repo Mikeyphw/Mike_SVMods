@@ -70,6 +70,23 @@ public sealed class ModEntry : Mod
             throw new InvalidOperationException("BirdsOfAFeather (Mikew.birdsofafeather) is required.");
         }
 
+
+        // Guardrail: BirdsOfAFeather must be installed as its own mod, not copied into this folder.
+        try
+        {
+            var localDll = System.IO.Path.Combine(helper.DirectoryPath, "BirdsOfAFeather.dll");
+            var localFolder = System.IO.Path.Combine(helper.DirectoryPath, "BirdsOfAFeather");
+            if (System.IO.File.Exists(localDll) || System.IO.Directory.Exists(localFolder))
+            {
+                Monitor.Log("Local BirdsOfAFeather files detected inside WildEggsHatching folder. Remove them; BirdsOfAFeather must be installed as its own mod.", LogLevel.Error);
+                throw new InvalidOperationException("Local BirdsOfAFeather duplicate detected.");
+            }
+        }
+        catch
+        {
+            // best-effort; dependency check above already enforced
+        }
+
         var configProvider = new SmapiConfigProvider(helper);
 
         _ctx = new ModContext(helper, Monitor, ModManifest, helper.Translation, configProvider);
