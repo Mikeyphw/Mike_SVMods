@@ -15,6 +15,7 @@ public sealed class ObjectsEditor : AssetEditorBase
 
     private static readonly object LockObj = new();
     private static IReadOnlyList<string>? _eggItemIds;
+    private static IReadOnlyList<string>? _animalKeys;
 
     public override void Edit(IAssetData asset, ContentContext context)
     {
@@ -44,6 +45,15 @@ public sealed class ObjectsEditor : AssetEditorBase
 
         if (context.Step >= ProgressionStep.PartIV)
             items[ModItemIds.ElixirOfRevitalizedEssence] = CreateElixir(context);
+
+        if (context.Step >= ProgressionStep.PartVI)
+        {
+            foreach (var animalKey in GetAnimalKeys(context))
+            {
+                var noteId = WildEggsHatching.Application.AnimalNotes.AnimalNoteIds.NoteItemId(animalKey);
+                items[noteId] = CreateJunimoNote(context, animalKey, noteId);
+            }
+        }
 
         return items;
     }
@@ -93,7 +103,29 @@ public sealed class ObjectsEditor : AssetEditorBase
             ContextTags = new List<string> { "wildegg_item" },
         };
 
-    private static ObjectData CreateElixir(ContentContext context)
+    
+    private static ObjectData CreateJunimoNote(ContentContext context, string animalKey, string noteId)
+        => new()
+        {
+            Name = noteId,
+            DisplayName = $"Junimo Note: {animalKey}",
+            Description = "A small note left behind by the Junimos. It seems important.",
+            Type = "Basic",
+            Category = 0,
+            Price = 0,
+            Texture = $"Mods/Mikew.wildeggshatching/note",
+            SpriteIndex = 0,
+            Edibility = -300,
+            IsDrink = false,
+            ExcludeFromRandomSale = true,
+            ContextTags = new List<string> { "wildegg_item", "wildegg_note" },
+            CustomFields = new Dictionary<string, string>
+            {
+                ["WildEggs.Animal"] = animalKey,
+            },
+        };
+
+private static ObjectData CreateElixir(ContentContext context)
         => new()
         {
             Name = ModItemIds.ElixirOfRevitalizedEssence,
@@ -152,7 +184,38 @@ public sealed class ObjectsEditor : AssetEditorBase
         return new string(chars.ToArray());
     }
 
-    private static IReadOnlyList<string> GetEggItemIds(ContentContext context)
+    private 
+    private static IReadOnlyList<string> GetAnimalKeys(ContentContext context)
+    {
+        if (_animalKeys is not null)
+            return _animalKeys;
+
+        lock (LockObj)
+        {
+            if (_animalKeys is not null)
+                return _animalKeys;
+
+            var path = Path.Combine(context.Helper.DirectoryPath, "ModData", "WildAnimalsList.json");
+            if (!File.Exists(path))
+            {
+                context.Log($"ObjectsEditor: WildAnimalsList.json not found at '{path}'.", StardewModdingAPI.LogLevel.Warn);
+                _animalKeys = Array.Empty<string>();
+                return _animalKeys;
+            }
+
+            using var stream = File.OpenRead(path);
+            using var doc = JsonDocument.Parse(stream);
+
+            var keys = new List<string>();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+                keys.Add(prop.Name);
+
+            _animalKeys = keys;
+            return _animalKeys;
+        }
+    }
+
+static IReadOnlyList<string> GetEggItemIds(ContentContext context)
     {
         if (_eggItemIds is not null)
             return _eggItemIds;

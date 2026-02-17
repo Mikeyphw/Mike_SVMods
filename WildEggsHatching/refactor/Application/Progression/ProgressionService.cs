@@ -70,6 +70,38 @@ public sealed class ProgressionService
         return new Dictionary<string, int>(_data.QuestCompletedDay);
     }
 
+    /// <summary>
+    /// Record completion day for an arbitrary quest ID (including dynamically generated note quests).
+    /// This does not affect progression steps.
+    /// </summary>
+    public void RecordQuestCompletionDayIfCompleted(string questId)
+    {
+        if (string.IsNullOrWhiteSpace(questId))
+            return;
+
+        EnsureInitialized();
+
+        var facts = _facts.GetFacts(_data);
+        if (!facts.IsMainPlayer)
+            return;
+
+        if (_data.QuestCompletedDay.ContainsKey(questId))
+            return;
+
+        if (_quests.HasCompletedQuest(questId))
+        {
+            _data.QuestCompletedDay[questId] = facts.DayNumber;
+            Save();
+        }
+    }
+
+    public bool TryGetQuestCompletionDay(string questId, out int dayNumber)
+    {
+        EnsureInitialized();
+        return _data.QuestCompletedDay.TryGetValue(questId, out dayNumber);
+    }
+
+
     /// <summary>Force progression to a specific step. Intended for host-only console commands.</summary>
     public bool TryForceSetStep(
         ProgressionStep step,

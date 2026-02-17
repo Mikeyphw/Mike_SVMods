@@ -12,6 +12,7 @@ using WildEggsHatching.Infrastructure.DesertTomb.Harmony;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using WildEggsHatching.Application.Facade;
+using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Application.Spawning;
 using WildEggsHatching.Application.Spawning.Diagnostics;
@@ -51,6 +52,8 @@ public sealed class ModEntry : Mod
     private int _tickCounter;
 
     private DesertTombRuntime? _desertTomb;
+
+    private AnimalNotesOrchestrator? _animalNotes;
 
     private DesertTombDiagnostics? _desertTombDiagnostics;
 
@@ -124,6 +127,23 @@ public sealed class ModEntry : Mod
             : new WildEggSpawnOrchestrator(_dataLoader, _game, planner, spawnService, log);
 
         var items = new GameItemRegistry();
+
+        _animalNotes = _dataLoader is null || _saveData is null || _progression is null
+            ? null
+            : new AnimalNotesOrchestrator(
+                store: _saveData,
+                dataLoader: _dataLoader,
+                game: _game,
+                mail: mail,
+                quests: quests,
+                placer: placer,
+                progression: _progression,
+                log: log,
+                getStep: () => _progression?.GetCurrentStep() ?? ProgressionStep.PartI,
+                isMainPlayer: () => Context.IsMainPlayer
+            );
+
+
 
         // DesertTomb runtime (Phase 0): activate tomb floors and spawn tomb monsters.
         var tombConfig = SpawnConfiguration.Default;
@@ -201,12 +221,15 @@ public sealed class ModEntry : Mod
         _progression?.OnDayStarted();
         _spawner?.OnDayStarted();
         _desertTomb?.OnDayStarted();
+        _animalNotes?.OnDayStarted();
     }
 
     private void OnDayEnding(object? sender, DayEndingEventArgs e)
     {
         _spawner?.OnDayEnding();
         _progression?.OnDayEnding();
+        _animalNotes?.OnSaving();
+        _animalNotes?.OnDayEnding();
     }
 
     private void OnWarped(object? sender, WarpedEventArgs e)
@@ -215,6 +238,7 @@ public sealed class ModEntry : Mod
             return;
 
         _desertTomb?.OnWarped(e.NewLocation);
+        _animalNotes?.OnWarped(e.NewLocation);
     }
 
     private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Config.ConfigChangedEventArgs e)
@@ -261,12 +285,14 @@ public sealed class ModEntry : Mod
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         _progression?.OnSaveLoaded();
+        _animalNotes?.OnSaveLoaded();
         _content?.InvalidateAll();
     }
 
     private void OnSaving(object? sender, SavingEventArgs e)
     {
         _progression?.OnDayEnding();
+        _animalNotes?.OnSaving();
     }
 
 

@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System;
+using System.IO;
+using System.Text.Json;
 using StardewModdingAPI.Events;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
@@ -7,6 +10,9 @@ namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 public sealed class QuestEditor : AssetEditorBase
 {
+    private static readonly object LockObj = new();
+    private static IReadOnlyList<string>? _animalKeys;
+
     public override string AssetName => GameAssets.Quests;
 
     public override void Edit(IAssetData asset, ContentContext context)
@@ -51,10 +57,65 @@ public sealed class QuestEditor : AssetEditorBase
             );
         }
 
+        if (context.Step >= ProgressionStep.PartVI)
+        {
+            foreach (var animalKey in GetAnimalKeys(context))
+            {
+                var token = NormalizeToken(animalKey);
+                var questId = $"wildEggs_{token}Note";
+                var noteId = $"{WildEggsHatching.Constants.ModId}_junimoNote_{token}";
+
+                quests[questId] = CreateQuestString(
+                    type: "ItemDelivery",
+                    title: $"Junimo Note: {animalKey}",
+                    details: $"Deliver the note about {animalKey} to Marnie.",
+                    hint: $"A Junimo left a note about {animalKey}.",
+                    solution: $"Marnie {noteId}",
+                    gold: 0,
+                    cancellable: false,
+                    reaction: "Thanks for bringing this to me. I'll take it from here."
+                );
+            }
+        }
+
         return quests;
     }
 
-    private static string CreateQuestString(
+    
+    private static IReadOnlyList<string> GetAnimalKeys(ContentContext context)
+    {
+        if (_animalKeys is not null)
+            return _animalKeys;
+
+        lock (LockObj)
+        {
+            if (_animalKeys is not null)
+                return _animalKeys;
+
+            var path = Path.Combine(context.Helper.DirectoryPath, "ModData", "WildAnimalsList.json");
+            if (!File.Exists(path))
+            {
+                context.Log($"QuestEditor: WildAnimalsList.json not found at '{path}'.", StardewModdingAPI.LogLevel.Warn);
+                _animalKeys = Array.Empty<string>();
+                return _animalKeys;
+            }
+
+            using var stream = File.OpenRead(path);
+            using var doc = JsonDocument.Parse(stream);
+
+            var keys = new List<string>();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+                keys.Add(prop.Name);
+
+            _animalKeys = keys;
+            return _animalKeys;
+        }
+    }
+
+    private static string NormalizeToken(string s)
+        => (s ?? string.Empty).Replace(" ", string.Empty, StringComparison.Ordinal);
+
+private static string CreateQuestString(
         string type,
         string title,
         string details,

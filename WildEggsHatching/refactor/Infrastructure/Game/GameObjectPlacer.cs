@@ -18,7 +18,7 @@ public sealed class GameObjectPlacer : IGameObjectPlacer
         return true;
     }
 
-    public bool TryPlaceObject(GameLocation location, Vector2 tile, string itemId, int stack = 1)
+    public bool TryPlaceObject(GameLocation location, Vector2 tile, string itemId, int stack = 1, bool destroyOvernight = true, bool isSpawnedObject = true)
     {
         if (!IsTilePlaceable(location, tile))
             return false;
@@ -27,8 +27,8 @@ public sealed class GameObjectPlacer : IGameObjectPlacer
         {
             Location = location,
             TileLocation = tile,
-            IsSpawnedObject = true,
-            destroyOvernight = true,
+            IsSpawnedObject = isSpawnedObject,
+            destroyOvernight = destroyOvernight,
         };
 
         return location.objects.TryAdd(tile, obj);
