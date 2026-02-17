@@ -1,5 +1,6 @@
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Integrations.Gmcm;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
@@ -15,7 +16,7 @@ internal sealed class ModEntry : Mod
     internal static CoreModConfig ModCfg { get; private set; } = new();
     internal static CoreContext Context { get; private set; } = null!;
 
-    private IGMCMOptionsHelper _gmcm = null!;
+    private GmcmIntegration? _gmcm;
 
     public override void Entry(IModHelper helper)
     {
@@ -32,36 +33,28 @@ internal sealed class ModEntry : Mod
 
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
-        var gmcmApi = HelperInstance.ModRegistry.GetApi<IGenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
-        if (gmcmApi is null)
-        {
+        _gmcm = GmcmIntegration.TryCreate(
+            helper: HelperInstance,
+            manifest: ModManifest,
+            translation: Context.Translation
+        );
+
+        if (_gmcm is null)
             return;
-        }
 
-        _gmcm = new IGMCMOptionsHelper(extraOptionsAPI: null, configMenuAPI: gmcmApi, translationHelper: Context.Translation, manifest: ModManifest);
-
-        _gmcm.Register(
+        _gmcm.RebuildLayout(
+            getConfig: () => ModCfg,
             reset: () => ModCfg = new CoreModConfig(),
-            save: () => HelperInstance.WriteConfig(ModCfg)
-        );
-
-        SetupGmcm();
-    }
-
-    private void SetupGmcm()
-    {
-        _gmcm.AddBoolOption(
-            optionName: "ExtraDebugInfo",
-            tooltip: true,
-            getValue: () => ModCfg.VerboseLogging,
-            setValue: value => ModCfg.VerboseLogging = value
-        );
-
-        _gmcm.AddBoolOption(
-            optionName: "Testing",
-            tooltip: true,
-            getValue: () => ModCfg.TestingLogging,
-            setValue: value => ModCfg.TestingLogging = value
+            save: () => HelperInstance.WriteConfig(ModCfg),
+            define: layout =>
+            {
+                layout.Root(root =>
+                {
+                    // Keep option ids stable even if config property names change later.
+                    root.Bool(cfg => cfg.VerboseLogging, optionId: "ExtraDebugInfo", tooltip: true);
+                    root.Bool(cfg => cfg.TestingLogging, optionId: "Testing", tooltip: true);
+                });
+            }
         );
     }
 }
