@@ -1,3 +1,4 @@
+using RoosterAddon.Framework.Config;
 using Mikew.BirdsOfAFeather.Framework;
 using RoosterAddon.Constants;
 using RoosterAddon.Integrations;
@@ -49,11 +50,14 @@ internal sealed partial class RoosterCoordinator
                 mod: ModManifest,
                 reset: () =>
                 {
-                    ModCfg = new ModConfig();
+                    Config = RoosterAddonConfig.CreateDefault();
+                    Config.FemalesOptions = new Dictionary<string, string>(_roosterFemales.Females);
+
+                    ModCfg = LegacyConfigAdapter.ToLegacy(Config);
                     if (RoosterHelper is not null)
                         RoosterHelper.ModCfg = ModCfg;
-                    Helper.WriteConfig(ModCfg);
-                    ModCfg.FemalesOptions = new Dictionary<string, string>(_roosterFemales.Females);
+
+                    ConfigManager.Save(Helper, Config);
 
                     _needsRoosterSetup = true;
                     RequestInvalidate(FarmAnimalsAssetName);
@@ -61,11 +65,13 @@ internal sealed partial class RoosterCoordinator
                 },
                 save: () =>
                 {
+                    ModCfg = LegacyConfigAdapter.ToLegacy(Config);
                     if (RoosterHelper is not null)
                         RoosterHelper.ModCfg = ModCfg;
-                    Helper.WriteConfig(ModCfg);
 
-                    _roosterFemales.Females = new Dictionary<string, string>(ModCfg.FemalesOptions);
+                    ConfigManager.Save(Helper, Config);
+
+                    _roosterFemales.Females = new Dictionary<string, string>(Config.FemalesOptions);
                     _roosterFemalesDirty = true;
 
                     _needsRoosterSetup = true;
@@ -74,7 +80,11 @@ internal sealed partial class RoosterCoordinator
                 }
             );
 
-            ModCfg.FemalesOptions = new Dictionary<string, string>(_roosterFemales.Females);
+            Config.FemalesOptions = new Dictionary<string, string>(_roosterFemales.Females);
+            ModCfg = LegacyConfigAdapter.ToLegacy(Config);
+            if (RoosterHelper is not null)
+                RoosterHelper.ModCfg = ModCfg;
+
             var gmcm = ConfigMenu;
             _host.GMCMSetup(ref gmcm);
             ConfigMenu = gmcm;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework;
+using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
 using Mikew.BirdsOfAFeather.Framework;
 using ILetMeHatchApi = Mikew.BirdsOfAFeather.Framework.ILetMeHatchApi;
@@ -27,6 +28,13 @@ internal sealed partial class ModEntry : Mod
     {
         get => EnsureCoordinator().ModCfg;
         set => EnsureCoordinator().ModCfg = value;
+    }
+
+    /// <summary>Typed config (Phase 3).</summary>
+    internal RoosterAddonConfig Config
+    {
+        get => EnsureCoordinator().Config;
+        set => EnsureCoordinator().Config = value;
     }
 
     /// <summary>Exposes coordinator-owned rooster helper for legacy partials.</summary>

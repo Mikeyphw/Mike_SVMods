@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using RoosterAddon.Constants;
 using RoosterAddon.Framework;
+using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
 using RoosterAddon.Infrastructure.SaveData;
 using RoosterAddon.Infrastructure.StateDumps;
@@ -33,6 +34,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     private string SaveStateKey => $"{ModManifest.UniqueID}/save-state";
 
+    internal RoosterAddonConfig Config = null!;
     internal ModConfig ModCfg = null!;
     internal RoosterControl RoosterHelper = null!;
     internal Mikew.BirdsOfAFeather.Framework.IGenericModConfigMenuAPI? ConfigMenu;
@@ -70,11 +72,13 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     internal void Initialize()
     {
-        ModCfg = Helper.ReadConfig<ModConfig>();
-
         LoadRoosterFemales();
         LoadExclusionsData();
-        ModCfg.FemalesOptions = new Dictionary<string, string>(_roosterFemales.Females);
+
+        Config = ConfigManager.LoadOrMigrate(Helper, Monitor);
+        Config.FemalesOptions = new Dictionary<string, string>(_roosterFemales.Females);
+
+        ModCfg = LegacyConfigAdapter.ToLegacy(Config);
 
         Helper.ConsoleCommands.Add(
             "roosteraddon_dump_state",

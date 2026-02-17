@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework;
+using RoosterAddon.Framework.Config;
 using Mikew.BirdsOfAFeather.Framework;
 using RoosterAddon.Helpers;
 using StardewModdingAPI;
@@ -68,7 +69,7 @@ namespace RoosterAddon
                 text: () => Helper.Translation.Get("config.section.general.name")
             );
             AddOptions(OptionsOrder);
-            if (ModCfg.FemalesOptions.Count > 0 && GetHatchApiCloneEggsOption())
+            if (Config.FemalesOptions.Count > 0 && GetHatchApiCloneEggsOption())
             {
                 configMenu.AddPageLink(
                     mod: this.ModManifest,
@@ -177,7 +178,7 @@ namespace RoosterAddon
         )
         {
             foreach (
-                var optionEntries in optionEntriesOrder.Where(x =>
+                var optionEntry in optionEntriesOrder.Where(x =>
                     (
                         roosterType.HasValue
                             ? ModCfg.RoosterOptions[roosterType.Value]
@@ -186,87 +187,61 @@ namespace RoosterAddon
                 )
             )
             {
-                string Type = roosterType.HasValue
-                    ? ModCfg.RoosterOptions[roosterType.Value][optionEntries][OptionDetails.Type]
-                    : ModCfg.Options[optionEntries][OptionDetails.Type];
-                var _name = Helper.Translation.Get(
-                    "config." + Type + "." + ModConfig.GetEnumName(optionEntries) + ".name"
+                var type = roosterType.HasValue
+                    ? ModCfg.RoosterOptions[roosterType.Value][optionEntry][OptionDetails.Type]
+                    : ModCfg.Options[optionEntry][OptionDetails.Type];
+
+                var name = Helper.Translation.Get(
+                    "config." + type + "." + ModConfig.GetEnumName(optionEntry) + ".name"
                 );
-                var _description = Helper.Translation.Get(
-                    "config." + Type + "." + ModConfig.GetEnumName(optionEntries) + ".description"
+                var description = Helper.Translation.Get(
+                    "config." + type + "." + ModConfig.GetEnumName(optionEntry) + ".description"
                 );
 
-                switch (Type)
+                switch (type)
                 {
                     case GMCMTypes.Bool:
                         configMenu.AddBoolOption(
                             mod: this.ModManifest,
-                            getValue: () =>
-                                Convert.ToBoolean(
-                                    (
-                                        roosterType.HasValue
-                                            ? ModCfg.RoosterOptions[roosterType.Value]
-                                            : ModCfg.Options
-                                    )[optionEntries][OptionDetails.Value]
-                                ),
-                            setValue: value =>
-                                (
-                                    roosterType.HasValue
-                                        ? ModCfg.RoosterOptions[roosterType.Value]
-                                        : ModCfg.Options
-                                )[optionEntries][OptionDetails.Value] = value.ToString(),
-                            name: () => _name,
-                            tooltip: () => _description
+                            getValue: () => GetBool(optionEntry, roosterType),
+                            setValue: value => SetBool(optionEntry, roosterType, value),
+                            name: () => name,
+                            tooltip: () => description
                         );
                         break;
+
                     case GMCMTypes.Text:
-                        var allowedVallues = ModCfg.GetAllowedValues(
-                            optionEntries,
+                        var allowedValues = ModCfg.GetAllowedValues(
+                            optionEntry,
                             roosterType.HasValue ? roosterType.Value : null
                         );
+
                         configMenu.AddTextOption(
                             mod: this.ModManifest,
-                            getValue: () =>
-                                (
-                                    roosterType.HasValue
-                                        ? ModCfg.RoosterOptions[roosterType.Value]
-                                        : ModCfg.Options
-                                )[optionEntries][OptionDetails.Value],
-                            setValue: value =>
-                                (
-                                    roosterType.HasValue
-                                        ? ModCfg.RoosterOptions[roosterType.Value]
-                                        : ModCfg.Options
-                                )[optionEntries][OptionDetails.Value] = value,
-                            name: () => _name,
-                            tooltip: () => _description,
-                            allowedValues: allowedVallues != null ? allowedVallues : null!,
-                            formatAllowedValue: value =>
-                                Helper.Translation.Get("config.value." + value)
+                            getValue: () => GetText(optionEntry, roosterType),
+                            setValue: value => SetText(optionEntry, roosterType, value),
+                            name: () => name,
+                            tooltip: () => description,
+                            allowedValues: allowedValues != null ? allowedValues : null!,
+                            formatAllowedValue: value => Helper.Translation.Get("config.value." + value)
                         );
                         break;
+
                     case GMCMTypes.Number:
-                        var OptionEntryName = ModConfig.GetEnumName(optionEntries);
-                        var Format =
-                            OptionEntryName.Contains("Prob")
-                            || OptionEntryName.Contains("Boost")
-                            || OptionEntryName.Contains("Daily");
-                        if (optionEntries == OptionEntries.BoostByRooster)
+                        var entryName = ModConfig.GetEnumName(optionEntry);
+                        var formatPct =
+                            entryName.Contains("Prob")
+                            || entryName.Contains("Boost")
+                            || entryName.Contains("Daily");
+
+                        if (optionEntry == OptionEntries.BoostByRooster)
                         {
                             configMenu.AddNumberOption(
                                 mod: this.ModManifest,
-                                getValue: () =>
-                                    float.Parse(
-                                        ModCfg.Options[OptionEntries.BoostByRooster][
-                                            OptionDetails.Value
-                                        ]
-                                    ),
-                                setValue: value =>
-                                    ModCfg.Options[OptionEntries.BoostByRooster][
-                                        OptionDetails.Value
-                                    ] = value.ToString(),
-                                name: () => _name,
-                                tooltip: () => _description,
+                                getValue: () => Config.General.BoostByRooster,
+                                setValue: value => Config.General.BoostByRooster = value,
+                                name: () => name,
+                                tooltip: () => description,
                                 min: float.Parse(
                                     ModCfg.Options[OptionEntries.BoostByRooster][OptionDetails.Min]
                                 ),
@@ -274,62 +249,33 @@ namespace RoosterAddon
                                     ModCfg.Options[OptionEntries.BoostByRooster][OptionDetails.Max]
                                 ),
                                 interval: float.Parse(
-                                    ModCfg.Options[OptionEntries.BoostByRooster][
-                                        OptionDetails.Interval
-                                    ]
+                                    ModCfg.Options[OptionEntries.BoostByRooster][OptionDetails.Interval]
                                 ),
-                                formatValue: Format ? value => $"{value}%" : null!
+                                formatValue: formatPct ? value => $"{value}%" : null!
                             );
                         }
                         else
                         {
+                            var range = roosterType.HasValue
+                                ? ModCfg.RoosterOptions[roosterType.Value]
+                                : ModCfg.Options;
+
                             configMenu.AddNumberOption(
                                 mod: this.ModManifest,
-                                getValue: () =>
-                                    Int32.Parse(
-                                        (
-                                            roosterType.HasValue
-                                                ? ModCfg.RoosterOptions[roosterType.Value]
-                                                : ModCfg.Options
-                                        )[optionEntries][OptionDetails.Value]
-                                    ),
-                                setValue: value =>
-                                    (
-                                        roosterType.HasValue
-                                            ? ModCfg.RoosterOptions[roosterType.Value]
-                                            : ModCfg.Options
-                                    )[optionEntries][OptionDetails.Value] = value.ToString(),
-                                name: () => _name,
-                                tooltip: () => _description,
-                                min: Convert.ToInt32(
-                                    (
-                                        roosterType.HasValue
-                                            ? ModCfg.RoosterOptions[roosterType.Value]
-                                            : ModCfg.Options
-                                    )[optionEntries][OptionDetails.Min]
-                                ),
-                                max: Convert.ToInt32(
-                                    (
-                                        roosterType.HasValue
-                                            ? ModCfg.RoosterOptions[roosterType.Value]
-                                            : ModCfg.Options
-                                    )[optionEntries][OptionDetails.Max]
-                                ),
-                                interval: Convert.ToInt32(
-                                    (
-                                        roosterType.HasValue
-                                            ? ModCfg.RoosterOptions[roosterType.Value]
-                                            : ModCfg.Options
-                                    )[optionEntries][OptionDetails.Interval]
-                                ),
-                                formatValue: Format ? value => $"{value}%" : null!
+                                getValue: () => GetInt(optionEntry, roosterType),
+                                setValue: value => SetInt(optionEntry, roosterType, value),
+                                name: () => name,
+                                tooltip: () => description,
+                                min: Convert.ToInt32(range[optionEntry][OptionDetails.Min]),
+                                max: Convert.ToInt32(range[optionEntry][OptionDetails.Max]),
+                                interval: Convert.ToInt32(range[optionEntry][OptionDetails.Interval]),
+                                formatValue: formatPct ? value => $"{value}%" : null!
                             );
                         }
                         break;
-                    default:
-                        break;
                 }
-                if (optionEntries == OptionEntries.HatchingMode)
+
+                if (optionEntry == OptionEntries.HatchingMode)
                 {
                     configMenu.AddSectionTitle(
                         mod: this.ModManifest,
@@ -337,11 +283,11 @@ namespace RoosterAddon
                     );
                     configMenu.AddParagraph(
                         mod: this.ModManifest,
-                        text: () =>
-                            Helper.Translation.Get("config.section.originalhatching.description")
+                        text: () => Helper.Translation.Get("config.section.originalhatching.description")
                     );
                 }
-                if (optionEntries == OptionEntries.LargeEggProbability)
+
+                if (optionEntry == OptionEntries.LargeEggProbability)
                 {
                     configMenu.AddSectionTitle(
                         mod: this.ModManifest,
@@ -349,11 +295,351 @@ namespace RoosterAddon
                     );
                     configMenu.AddParagraph(
                         mod: this.ModManifest,
-                        text: () =>
-                            Helper.Translation.Get("config.section.fertilizedhatching.description")
+                        text: () => Helper.Translation.Get("config.section.fertilizedhatching.description")
                     );
                 }
             }
+        }
+
+        private RoosterSettings GetRoosterSettings(RoosterType roosterType)
+        {
+            if (!Config.Roosters.TryGetValue(roosterType, out var settings))
+            {
+                settings = new RoosterSettings();
+                Config.Roosters[roosterType] = settings;
+            }
+
+            EnsureProduceList(settings.ProduceEntries);
+            EnsureProduceList(settings.DeluxeProduceEntries);
+
+            return settings;
+        }
+
+        private static void EnsureProduceList(List<ProduceEntry> list)
+        {
+            while (list.Count < 4)
+                list.Add(new ProduceEntry());
+            if (list.Count > 4)
+                list.RemoveRange(4, list.Count - 4);
+        }
+
+        private bool GetBool(OptionEntries entry, RoosterType? roosterType)
+        {
+            if (!roosterType.HasValue)
+            {
+                return entry switch
+                {
+                    OptionEntries.BetterTrufflesCompat => Config.General.BetterTrufflesCompat,
+                    OptionEntries.EnableStuckInside => Config.General.EnableStuckInside,
+                    OptionEntries.EnableEggProbability => Config.General.EnableEggProbability,
+                    OptionEntries.EnableLargeEggProbability => Config.General.EnableLargeEggProbability,
+                    OptionEntries.EnableDebug => Config.General.EnableDebug,
+                    _ => false
+                };
+            }
+
+            var r = GetRoosterSettings(roosterType.Value);
+            return entry switch
+            {
+                OptionEntries.Buyable => r.Buyable,
+                OptionEntries.EnableRoosterHatching => r.EnableRoosterHatching,
+                OptionEntries.EditAllFemales => r.EditAllFemales,
+                OptionEntries.BypassBlueConditions => r.BypassBlueConditions,
+                _ => false
+            };
+        }
+
+        private void SetBool(OptionEntries entry, RoosterType? roosterType, bool value)
+        {
+            if (!roosterType.HasValue)
+            {
+                switch (entry)
+                {
+                    case OptionEntries.BetterTrufflesCompat:
+                        Config.General.BetterTrufflesCompat = value;
+                        return;
+                    case OptionEntries.EnableStuckInside:
+                        Config.General.EnableStuckInside = value;
+                        return;
+                    case OptionEntries.EnableEggProbability:
+                        Config.General.EnableEggProbability = value;
+                        return;
+                    case OptionEntries.EnableLargeEggProbability:
+                        Config.General.EnableLargeEggProbability = value;
+                        return;
+                    case OptionEntries.EnableDebug:
+                        Config.General.EnableDebug = value;
+                        return;
+                }
+
+                return;
+            }
+
+            var r = GetRoosterSettings(roosterType.Value);
+            switch (entry)
+            {
+                case OptionEntries.Buyable:
+                    r.Buyable = value;
+                    return;
+                case OptionEntries.EnableRoosterHatching:
+                    r.EnableRoosterHatching = value;
+                    return;
+                case OptionEntries.EditAllFemales:
+                    r.EditAllFemales = value;
+                    return;
+                case OptionEntries.BypassBlueConditions:
+                    r.BypassBlueConditions = value;
+                    return;
+            }
+        }
+
+        private int GetInt(OptionEntries entry, RoosterType? roosterType)
+        {
+            if (!roosterType.HasValue)
+            {
+                return entry switch
+                {
+                    OptionEntries.ChosenPercentage_DailyLuckBonus => Config.General.ChosenPercentageDailyLuckBonus,
+                    OptionEntries.EggProbability => Config.General.EggProbability,
+                    OptionEntries.LargeEggProbability => Config.General.LargeEggProbability,
+                    OptionEntries.FertilizedEggProbability => Config.General.FertilizedEggProbability,
+                    OptionEntries.RoosterToChickenRatio => Config.General.RoosterToChickenRatio,
+                    _ => 0
+                };
+            }
+
+            var r = GetRoosterSettings(roosterType.Value);
+
+            if (TryGetProduceField(entry, out var isDeluxe, out var index, out var field)
+                && field == ProduceField.Probability)
+            {
+                return isDeluxe ? r.DeluxeProduceEntries[index].Probability : r.ProduceEntries[index].Probability;
+            }
+
+            return entry switch
+            {
+                OptionEntries.Price => r.Price,
+                OptionEntries.MatureDays => r.MatureDays,
+                OptionEntries.ProduceDays => r.ProduceDays,
+                _ => 0
+            };
+        }
+
+        private void SetInt(OptionEntries entry, RoosterType? roosterType, int value)
+        {
+            if (!roosterType.HasValue)
+            {
+                switch (entry)
+                {
+                    case OptionEntries.ChosenPercentage_DailyLuckBonus:
+                        Config.General.ChosenPercentageDailyLuckBonus = value;
+                        return;
+                    case OptionEntries.EggProbability:
+                        Config.General.EggProbability = value;
+                        return;
+                    case OptionEntries.LargeEggProbability:
+                        Config.General.LargeEggProbability = value;
+                        return;
+                    case OptionEntries.FertilizedEggProbability:
+                        Config.General.FertilizedEggProbability = value;
+                        return;
+                    case OptionEntries.RoosterToChickenRatio:
+                        Config.General.RoosterToChickenRatio = value;
+                        return;
+                }
+
+                return;
+            }
+
+            var r = GetRoosterSettings(roosterType.Value);
+
+            if (TryGetProduceField(entry, out var isDeluxe, out var index, out var field)
+                && field == ProduceField.Probability)
+            {
+                if (isDeluxe)
+                    r.DeluxeProduceEntries[index].Probability = value;
+                else
+                    r.ProduceEntries[index].Probability = value;
+                return;
+            }
+
+            switch (entry)
+            {
+                case OptionEntries.Price:
+                    r.Price = value;
+                    return;
+                case OptionEntries.MatureDays:
+                    r.MatureDays = value;
+                    return;
+                case OptionEntries.ProduceDays:
+                    r.ProduceDays = value;
+                    return;
+            }
+        }
+
+        private string GetText(OptionEntries entry, RoosterType? roosterType)
+        {
+            if (!roosterType.HasValue)
+            {
+                return entry switch
+                {
+                    OptionEntries.UpdateRate => ConfigStringConversions.ToLegacyString(Config.General.UpdateRate),
+                    OptionEntries.HatchingMode => ConfigStringConversions.ToLegacyString(Config.General.HatchingMode),
+                    OptionEntries.HarvestType => ConfigStringConversions.ToLegacyString(Config.General.HarvestType),
+                    _ => string.Empty
+                };
+            }
+
+            var r = GetRoosterSettings(roosterType.Value);
+
+            if (TryGetProduceField(entry, out var isDeluxe, out var index, out var field))
+            {
+                return field switch
+                {
+                    ProduceField.Choice => isDeluxe ? r.DeluxeProduceEntries[index].Choice : r.ProduceEntries[index].Choice,
+                    ProduceField.CustomItemName => isDeluxe ? r.DeluxeProduceEntries[index].CustomItemName : r.ProduceEntries[index].CustomItemName,
+                    _ => string.Empty
+                };
+            }
+
+            return entry switch
+            {
+                OptionEntries.BuildingRequired => ConfigStringConversions.ToLegacyString(r.BuildingRequired),
+                OptionEntries.ProduceOption => ConfigStringConversions.ToLegacyString(r.ProduceOption),
+                OptionEntries.DeluxeProduceOption => ConfigStringConversions.ToLegacyString(r.DeluxeProduceOption),
+                OptionEntries.BlueEggChoice => r.BlueEggChoice,
+                _ => string.Empty
+            };
+        }
+
+        private void SetText(OptionEntries entry, RoosterType? roosterType, string value)
+        {
+            if (!roosterType.HasValue)
+            {
+                switch (entry)
+                {
+                    case OptionEntries.UpdateRate:
+                        Config.General.UpdateRate = ConfigStringConversions.ParseUpdateRate(value);
+                        return;
+                    case OptionEntries.HatchingMode:
+                        Config.General.HatchingMode = ConfigStringConversions.ParseHatchingMode(value);
+                        return;
+                    case OptionEntries.HarvestType:
+                        Config.General.HarvestType = ConfigStringConversions.ParseHarvestType(value);
+                        return;
+                }
+
+                return;
+            }
+
+            var r = GetRoosterSettings(roosterType.Value);
+
+            if (TryGetProduceField(entry, out var isDeluxe, out var index, out var field))
+            {
+                if (isDeluxe)
+                {
+                    if (field == ProduceField.Choice)
+                        r.DeluxeProduceEntries[index].Choice = value;
+                    else if (field == ProduceField.CustomItemName)
+                        r.DeluxeProduceEntries[index].CustomItemName = value;
+                }
+                else
+                {
+                    if (field == ProduceField.Choice)
+                        r.ProduceEntries[index].Choice = value;
+                    else if (field == ProduceField.CustomItemName)
+                        r.ProduceEntries[index].CustomItemName = value;
+                }
+
+                return;
+            }
+
+            switch (entry)
+            {
+                case OptionEntries.BuildingRequired:
+                    r.BuildingRequired = ConfigStringConversions.ParseRequiredBuilding(value);
+                    return;
+                case OptionEntries.ProduceOption:
+                    r.ProduceOption = ConfigStringConversions.ParseProduceMode(value);
+                    return;
+                case OptionEntries.DeluxeProduceOption:
+                    r.DeluxeProduceOption = ConfigStringConversions.ParseDeluxeProduceMode(value);
+                    return;
+                case OptionEntries.BlueEggChoice:
+                    r.BlueEggChoice = value;
+                    return;
+            }
+        }
+
+        private enum ProduceField
+        {
+            Choice,
+            CustomItemName,
+            Probability
+        }
+
+        private static bool TryGetProduceField(
+            OptionEntries entry,
+            out bool isDeluxe,
+            out int index,
+            out ProduceField field
+        )
+        {
+            var name = ModConfig.GetEnumName(entry);
+
+            isDeluxe = false;
+            index = -1;
+            field = ProduceField.Choice;
+
+            if (name == ModConfig.GetEnumName(OptionEntries.ProduceOption) ||
+                name == ModConfig.GetEnumName(OptionEntries.DeluxeProduceOption))
+                return false;
+
+            if (name.StartsWith("CustomDeluxeProduce_", StringComparison.Ordinal))
+            {
+                isDeluxe = true;
+                field = ProduceField.CustomItemName;
+                return TryDigit(name, "CustomDeluxeProduce_", out index);
+            }
+
+            if (name.StartsWith("CustomProduce_", StringComparison.Ordinal))
+            {
+                isDeluxe = false;
+                field = ProduceField.CustomItemName;
+                return TryDigit(name, "CustomProduce_", out index);
+            }
+
+            if (name.StartsWith("DeluxeProduce_", StringComparison.Ordinal))
+            {
+                isDeluxe = true;
+                field = name.EndsWith("_Prob", StringComparison.Ordinal) ? ProduceField.Probability : ProduceField.Choice;
+                return TryDigit(name, "DeluxeProduce_", out index);
+            }
+
+            if (name.StartsWith("Produce_", StringComparison.Ordinal))
+            {
+                isDeluxe = false;
+                field = name.EndsWith("_Prob", StringComparison.Ordinal) ? ProduceField.Probability : ProduceField.Choice;
+                return TryDigit(name, "Produce_", out index);
+            }
+
+            return false;
+        }
+
+        private static bool TryDigit(string name, string prefix, out int index)
+        {
+            index = -1;
+
+            var rest = name.Substring(prefix.Length);
+            if (rest.Length == 0)
+                return false;
+
+            var digitChar = rest[0];
+            if (digitChar < '1' || digitChar > '4')
+                return false;
+
+            index = (digitChar - '1');
+            return true;
         }
 
         private Func<Texture2D> GetRoosterTexture(RoosterType roosterType)
@@ -412,8 +698,8 @@ namespace RoosterAddon
                 {
                     configMenu.AddTextOption(
                         mod: this.ModManifest,
-                        getValue: () => ModCfg.FemalesOptions[female],
-                        setValue: value => ModCfg.FemalesOptions[female] = value,
+                        getValue: () => Config.FemalesOptions.TryGetValue(female, out var v) ? v : OptionValues.Off,
+                        setValue: value => Config.FemalesOptions[female] = value,
                         name: () => female,
                         allowedValues: new string[]
                         {
