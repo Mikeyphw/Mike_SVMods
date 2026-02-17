@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using StardewModdingAPI;
 using StardewValley;
@@ -27,6 +28,8 @@ namespace WildEggsHatching.Application.DesertTomb.Runtime;
 public sealed class DesertTombRuntime
 {
     private const string ProcessedKey = Constants.ModId + "/deserttomb/processed";
+
+    public const string LadderSuppressedKey = Constants.ModId + "/deserttomb/ladderSuppressed";
 
     private readonly IConfigProvider _config;
     private readonly Func<ProgressionStep> _getStep;
@@ -66,13 +69,166 @@ public sealed class DesertTombRuntime
     /// </summary>
     public void OnWarped(GameLocation newLocation)
     {
-        _activeFloor = null;
-
         if (newLocation is MineShaft mineShaft)
+        {
+            if (_activeFloor is not null && !ReferenceEquals(_activeFloor.MineShaft, mineShaft))
+                _activeFloor = null;
+
             _pending = mineShaft;
+        }
         else
+        {
             _pending = null;
+            _activeFloor = null;
+        }
     }
+
+    /// <summary>
+    /// Consolidated eligibility gate for Harmony patches.
+    /// This is intentionally side-effect free.
+    /// </summary>
+    public bool ShouldEdit(MineShaft mineShaft)
+    {
+        if (mineShaft is null)
+            return false;
+
+        if (mineShaft.mineLevel == 77377)
+            return false;
+
+        var cfg = _config.Config;
+
+        if (!cfg.DesertTombModuleEnabled)
+            return false;
+
+        if (!_isMainPlayer())
+            return false;
+
+        var step = _getStep();
+
+        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, step))
+            return false;
+
+        if (!DesertTombRuntimePolicy.IsTombCandidate(mineShaft.mineLevel, mineShaft.mapPath.Value))
+            return false;
+
+        if (AlreadyProcessedToday(mineShaft))
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Harmony hook: force the tomb TMX map layout during MineShaft.loadLevel.
+    /// </summary>
+    public void ApplyTombMapLayoutIfNeeded(MineShaft mineShaft)
+    {
+        if (mineShaft is null)
+            return;
+
+        var cfg = _config.Config;
+
+        if (!cfg.DesertTombModuleEnabled)
+            return;
+
+        if (!_isMainPlayer())
+            return;
+
+        var step = _getStep();
+
+        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, step))
+            return;
+
+        if (mineShaft.mineLevel <= 120 || mineShaft.mineLevel == 77377)
+            return;
+
+        var chosen = ChooseTombMapPath(mineShaft, cfg.ProgressionMode, step);
+
+        if (!string.Equals(mineShaft.mapPath.Value, chosen, StringComparison.OrdinalIgnoreCase))
+        {
+            mineShaft.mapPath.Value = chosen;
+            mineShaft.loadedMapNumber = DesertTombRuntimePolicy.ParseLoadedMapNumber(chosen);
+            mineShaft.updateMap();
+        }
+
+        ResetVanillaSpecialFlagsForTomb(mineShaft);
+    }
+
+    /// <summary>
+    /// Harmony hook: normalize vanilla "special floor" flags after MineShaft.chooseLevelType.
+    /// This prevents infested/dino/quarry rules from leaking into tomb floors.
+    /// </summary>
+    public void ApplyTombChooseLevelTypeOverrides(MineShaft mineShaft)
+    {
+        if (mineShaft is null)
+            return;
+
+        var cfg = _config.Config;
+
+        if (!cfg.DesertTombModuleEnabled)
+            return;
+
+        if (!_isMainPlayer())
+            return;
+
+        var step = _getStep();
+
+        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, step))
+            return;
+
+        if (mineShaft.mineLevel <= 120 || mineShaft.mineLevel == 77377)
+            return;
+
+        // Only touch floors that are (or are about to become) tomb layouts.
+        if (!DesertTombRuntimePolicy.IsTombCandidate(mineShaft.mineLevel, mineShaft.mapPath.Value))
+            return;
+
+        ResetVanillaSpecialFlagsForTomb(mineShaft);
+    }
+
+    private static void ResetVanillaSpecialFlagsForTomb(MineShaft mineShaft)
+    {
+        mineShaft.isMonsterArea = false;
+        mineShaft.isSlimeArea = false;
+        mineShaft.isDinoArea = false;
+        mineShaft.isQuarryArea = false;
+
+        mineShaft.rainbowLights.Value = false;
+        mineShaft.ambientFog = false;
+        mineShaft.fogTime = 0;
+    }
+
+
+    /// <summary>
+    /// Harmony hook: run DesertTomb activation during MineShaft.populateLevel and skip vanilla population.
+    /// </summary>
+    public void PopulateTombFloorFromGeneration(MineShaft mineShaft)
+    {
+        if (!ShouldEdit(mineShaft))
+            return;
+
+        ActivateCore(mineShaft);
+    }
+
+    private static string ChooseTombMapPath(MineShaft mineShaft, bool progressionModeEnabled, ProgressionStep step)
+    {
+        // If progression is enabled and player is not on the last phase: always use Level77377.
+        // If player is on the last phase, or progression is disabled: randomly pick among available maps.
+        if (progressionModeEnabled && step < ProgressionStep.PartVI)
+            return "Maps/Mines/Level77377";
+
+        string[] available =
+        {
+            "Maps/Mines/Level77377",
+            "Maps/Mines/Level39",
+            "Maps/Mines/Level28",
+            "Maps/Mines/Level19",
+            "Maps/Mines/Level14",
+        };
+
+        var r = Utility.CreateDaySaveRandom(Game1.stats.DaysPlayed, mineShaft.mineLevel, 77377);
+        return available[r.Next(available.Length)];
+    }
+
 
     public void OnDayStarted()
     {
@@ -87,7 +243,7 @@ public sealed class DesertTombRuntime
         {
             var mineShaft = _pending;
             _pending = null;
-            TryActivate(mineShaft);
+            ActivateCoreIfEligible(mineShaft);
         }
 
         // Runtime population pacing (Phase 3).
@@ -104,27 +260,21 @@ public sealed class DesertTombRuntime
         }
     }
 
-    private void TryActivate(MineShaft mineShaft)
+    
+    private void ActivateCoreIfEligible(MineShaft mineShaft)
+    {
+        if (!ShouldEdit(mineShaft))
+            return;
+
+        ActivateCore(mineShaft);
+    }
+
+
+    private void ActivateCore(MineShaft mineShaft)
     {
         var cfg = _config.Config;
-
-        if (!cfg.DesertTombModuleEnabled)
-            return;
-
-        if (!_isMainPlayer())
-            return;
-
         var step = _getStep();
-
-        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, step))
-            return;
-
         var mapPath = mineShaft.mapPath.Value;
-        if (!DesertTombRuntimePolicy.IsTombCandidate(mineShaft.mineLevel, mapPath))
-            return;
-
-        if (AlreadyProcessedToday(mineShaft))
-            return;
 
         var layoutLevel = DesertTombRuntimePolicy.GuessMineLevelOrDefault(mapPath);
 
@@ -144,6 +294,8 @@ public sealed class DesertTombRuntime
         var planner = new TombSpawnPlanner(new SystemRandomProvider(mineShaft.mineRandom));
         var progressionFlags = new TombSpawnProgressionFlags(cfg.ProgressionMode, step);
         var plan = planner.BuildPlan(layout, config, config.Difficulty, progressionFlags, mapTags: null);
+
+        TrySuppressLadderForPharaoh(mineShaft, plan);
 
         var areaStates = TombAreaStateBuilder.Build(mineShaft, plan);
 
@@ -177,6 +329,34 @@ public sealed class DesertTombRuntime
             $"Layout={layoutLevel} SpawnedInitial={spawnedInitial} (Planned={plan.TotalPlanned}).",
             LogLevel.Info
         );
+    }
+
+    
+
+    private static void TrySuppressLadderForPharaoh(MineShaft mineShaft, TombSpawnPlan plan)
+    {
+        if (mineShaft is null || plan is null)
+            return;
+
+        if (!plan.TotalsByMonsterType.ContainsKey(TombMonsterType.TheTombPharaoh))
+            return;
+
+        if (mineShaft.tileBeneathLadder == Vector2.Zero)
+            return;
+
+        // Ensure the ladder is unavailable until the Pharaoh is defeated.
+        var ladderTile = mineShaft.tileBeneathLadder + new Vector2(0f, -1f);
+        var buildings = mineShaft.map?.GetLayer("Buildings");
+        if (buildings is not null)
+        {
+            int x = (int)ladderTile.X;
+            int y = (int)ladderTile.Y;
+
+            if (x >= 0 && y >= 0 && x < buildings.LayerWidth && y < buildings.LayerHeight)
+                buildings.Tiles[x, y] = null;
+        }
+
+        mineShaft.modData[LadderSuppressedKey] = "1";
     }
 
     private static void RemoveExistingMonsters(MineShaft mineShaft)

@@ -51,4 +51,18 @@ public static class DesertTombRuntimePolicy
 
     public static MineLevel GuessMineLevelOrDefault(string? mapPath)
         => TryParseMineLevel(mapPath, out var level) ? level : MineLevel.Level77377;
+
+    public static int ParseLoadedMapNumber(string mapPath)
+    {
+        if (string.IsNullOrWhiteSpace(mapPath))
+            return 0;
+
+        var normalized = mapPath.Replace('\\', '/');
+
+        var m = LevelRegex.Match(normalized);
+        if (!m.Success)
+            return 0;
+
+        return int.TryParse(m.Groups["n"].Value, out var n) ? n : 0;
+    }
 }

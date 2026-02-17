@@ -1,4 +1,5 @@
 using System;
+using HarmonyLib;
 using WildEggsHatching.Application.DesertTomb.Generation;
 using WildEggsHatching.Application.DesertTomb.Runtime;
 using WildEggsHatching.Application.DesertTomb.Spawning;
@@ -7,6 +8,7 @@ using WildEggsHatching.Infrastructure.DesertTomb.Monsters;
 using WildEggsHatching.Infrastructure.DesertTomb.Loot;
 using WildEggsHatching.Infrastructure.DesertTomb.Loot.Definitions;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
+using WildEggsHatching.Infrastructure.DesertTomb.Harmony;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using WildEggsHatching.Application.Facade;
@@ -141,6 +143,9 @@ public sealed class ModEntry : Mod
             spawnExecutor: tombSpawnExecutor,
             diagnostics: _desertTombDiagnostics
         );
+        var harmony = new Harmony(ModManifest.UniqueID + ".deserttomb");
+        DesertTombMineShaftPatches.Install(harmony, _desertTomb);
+
 
 
         _facade = new ModFacade(

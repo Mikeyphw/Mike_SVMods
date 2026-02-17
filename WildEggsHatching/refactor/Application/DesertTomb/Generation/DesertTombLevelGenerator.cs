@@ -5,6 +5,7 @@ using StardewValley.Locations;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using xTile.Layers;
+using WildEggsHatching;
 using WildEggsHatching.DesertTomb.Core.Configuration;
 
 namespace WildEggsHatching.Application.DesertTomb.Generation;
@@ -32,11 +33,13 @@ public sealed class DesertTombLevelGenerator
         // The asset loader is responsible for mapping this key to a mod-file PNG.
         mineShaft.mapImageSource.Value = "Maps/Mines/Z_TombTilesheet";
 
-        mineShaft.isDinoArea = true;
+        mineShaft.isDinoArea = false;
         mineShaft.loadedDarkArea = true;
 
         ApplyLighting(mineShaft, mineShaft.mineLevel);
+        ApplyTombAtmosphere(mineShaft);
         PopulateBreakables(mineShaft);
+        PlaceTombLights(mineShaft);
 
         mineShaft.tryToAddOreClumps();
         mineShaft.updateMap();
@@ -147,5 +150,108 @@ public sealed class DesertTombLevelGenerator
                 break;
             }
         }
+    
+
+        ClusterBreakables(mineShaft);
     }
+
+
+    
+
+    private static void ClusterBreakables(MineShaft mineShaft)
+    {
+        // Make placements feel intentional: small urn-like clusters near existing containers.
+        var keys = new System.Collections.Generic.List<Vector2>(mineShaft.objects.Keys);
+        foreach (var origin in keys)
+        {
+            if (mineShaft.mineRandom.NextDouble() > 0.35)
+                continue;
+
+            for (int i = 0; i < 2; i++)
+            {
+                int dx = mineShaft.mineRandom.Next(-1, 2);
+                int dy = mineShaft.mineRandom.Next(-1, 2);
+                if (dx == 0 && dy == 0)
+                    continue;
+
+                var t = origin + new Vector2(dx, dy);
+                if (mineShaft.objects.ContainsKey(t))
+                    continue;
+
+                if (!mineShaft.isTileClearForMineObjects((int)t.X, (int)t.Y))
+                    continue;
+
+                mineShaft.objects[t] = BreakableContainer.GetBarrelForMines(t, mineShaft);
+            }
+        }
+    }
+
+private static void ApplyTombAtmosphere(MineShaft mineShaft)
+    {
+        // Keep this deterministic and subtle: a warm haze reads "ancient tomb" without new assets.
+        mineShaft.rainbowLights.Value = false;
+        mineShaft.ambientFog = true;
+        mineShaft.fogColor = new Color(220, 200, 140) * 0.18f;
+        mineShaft.fogTime = 0;
+
+        // Slightly darker, warmer baseline.
+        mineShaft.isLightingDark.Value = true;
+        mineShaft.lighting = new Color(105, 95, 55);
+    }
+
+    private static void PlaceTombLights(MineShaft mineShaft)
+    {
+        var back = mineShaft.map.RequireLayer("Back");
+        var buildings = mineShaft.map.GetLayer("Buildings");
+
+        int target = Math.Clamp(back.LayerWidth * back.LayerHeight / 220, 10, 40);
+        int placed = 0;
+        int attempts = target * 30;
+
+        for (int i = 0; i < attempts && placed < target; i++)
+        {
+            int x = mineShaft.mineRandom.Next(2, back.LayerWidth - 2);
+            int y = mineShaft.mineRandom.Next(2, back.LayerHeight - 2);
+
+            if (!mineShaft.isTileClearForMineObjects(x, y))
+                continue;
+
+            // Avoid blocking entry/ladder areas.
+            var tile = new Vector2(x, y);
+            if (mineShaft.tileBeneathLadder != Vector2.Zero && Vector2.Distance(tile, mineShaft.tileBeneathLadder) < 4f)
+                continue;
+
+            if (mineShaft.tileBeneathElevator != Vector2.Zero && Vector2.Distance(tile, mineShaft.tileBeneathElevator) < 4f)
+                continue;
+
+            // Prefer "wall-adjacent" placements so lights read like sconces/braziers.
+            if (buildings is not null)
+            {
+                bool wallNear =
+                    buildings.Tiles[x, y - 1] is not null ||
+                    buildings.Tiles[x - 1, y] is not null ||
+                    buildings.Tiles[x + 1, y] is not null;
+
+                if (!wallNear)
+                    continue;
+            }
+
+            string id = $"{Constants.ModId}_tomb_light_{mineShaft.mineLevel}_{x}_{y}";
+            var pos = new Vector2(x * 64f + 32f, y * 64f + 32f);
+
+            mineShaft.sharedLights.AddLight(new LightSource(
+                id,
+                4,
+                pos,
+                1.8f,
+                new Color(255, 210, 120) * 0.7f,
+                LightSource.LightContext.None,
+                0L,
+                mineShaft.NameOrUniqueName
+            ));
+
+            placed++;
+        }
+    }
+
 }
