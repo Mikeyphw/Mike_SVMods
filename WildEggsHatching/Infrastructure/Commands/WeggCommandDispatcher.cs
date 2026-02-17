@@ -25,6 +25,7 @@ public sealed class WeggCommandDispatcher
             "progression" => HandleProgression(args),
             "spawn" => HandleSpawn(args),
             "notes" => HandleNotes(args),
+            "schema" => HandleSchema(args),
             _ => new CommandResult(false, $"Unknown subcommand '{args[0]}'.\n\n{HelpText()}"),
         };
     }
@@ -178,9 +179,11 @@ public sealed class WeggCommandDispatcher
             "  wegg notes dump [--json] [--farmer <id>] [--animal <token>]",
             "  wegg notes validate",
             "  wegg notes repair [--force] [--no-mail] [--no-reconcile]",
+            "  wegg schema wipe --yes",
             "  wegg_notes dump [--json] [--farmer <id>] [--animal <token>]",
             "  wegg_notes validate",
             "  wegg_notes repair [--force] [--no-mail] [--no-reconcile]",
+            "  wegg_schema wipe --yes",
             "",
             "Notes:",
             "  - Host-only mutations; clients will be rejected.",

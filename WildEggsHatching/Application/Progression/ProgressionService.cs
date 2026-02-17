@@ -11,7 +11,7 @@ namespace WildEggsHatching.Application.Progression;
 
 public sealed class ProgressionService
 {
-    private const int SaveDataVersion = 1;
+    private const int SaveDataVersion = SaveKeys.Version;
 
     private readonly ISaveDataStore _store;
     private readonly IConfigProvider _config;
@@ -24,8 +24,6 @@ public sealed class ProgressionService
 
     private ProgressionSaveData _data = new();
     private bool _initialized;
-    private bool _schemaCompatible = true;
-    private string? _schemaError;
 
     public event Action<ProgressionStep>? StepChanged;
 
@@ -53,9 +51,6 @@ public sealed class ProgressionService
     public ProgressionStep GetCurrentStep()
     {
         var config = _config.Config;
-
-        if (_initialized && !_schemaCompatible)
-            return config.ProgressionMode ? ProgressionStep.PartI : ProgressionRules.MaxStep;
 
         if (!_initialized)
             return config.ProgressionMode ? ProgressionStep.PartI : ProgressionRules.MaxStep;
@@ -232,27 +227,21 @@ public void OnSaveLoaded()
         }
         else if (envelope.Version != SaveDataVersion)
         {
-            _schemaCompatible = false;
-            _schemaError = $"Unsupported progression save schema version {envelope.Version} (expected {SaveDataVersion}).";
-            _log.Log($"{_schemaError} NOT resetting. Progression will default to config but will not persist until the save data is cleared or updated.", StardewModdingAPI.LogLevel.Error);
-            _data = envelope.Data ?? new ProgressionSaveData();
+            _log.Log($"Unsupported save data version {envelope.Version}; defaulting progression to PartI.", StardewModdingAPI.LogLevel.Warn);
+            _data = new ProgressionSaveData();
         }
         else
         {
             _data = envelope.Data ?? new ProgressionSaveData();
         }
 
-        if (_schemaCompatible)
-            NormalizeStateForConfig(_config.Config);
+        NormalizeStateForConfig(_config.Config);
 
         _initialized = true;
     }
 
     private void Save()
     {
-        if (!_schemaCompatible)
-            return;
-
         var config = _config.Config;
         var facts = _facts.GetFacts(_data);
 
@@ -315,9 +304,6 @@ public void OnSaveLoaded()
 
     private void Evaluate(ProgressionTrigger trigger)
     {
-        if (!_schemaCompatible)
-            return;
-
         var config = _config.Config;
         var facts = _facts.GetFacts(_data);
 

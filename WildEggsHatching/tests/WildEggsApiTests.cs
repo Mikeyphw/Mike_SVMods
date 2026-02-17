@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using WildEggsHatching.Api;
 using WildEggsHatching.Application.Facade;
+using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Api;
 using WildEggsHatching.Infrastructure.Config;
@@ -47,5 +48,11 @@ public sealed class WildEggsApiTests
         public FacadeResult TrySetProgressionStep(ProgressionStep step, bool applySideEffects, string reason) => new(false, "no");
         public FacadeResult TryPlaceItem(string locationName, string qualifiedItemId, int count, int maxAttempts) => new(false, "no");
         public FacadeResult TryRunSpawnPlanNow() => new(false, "no");
+
+        public FacadeResult DumpAnimalNotes() => new(false, "no");
+        public FacadeResult DumpAnimalNotes(AnimalNotesDumpOptions options) => new(false, "no");
+        public FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true, bool force = false) => new(false, "no");
+        public FacadeResult ValidateAnimalNotes() => new(false, "no");
+        public FacadeResult WipeSchemaData(bool confirmed) => new(false, "no");
     }
 }

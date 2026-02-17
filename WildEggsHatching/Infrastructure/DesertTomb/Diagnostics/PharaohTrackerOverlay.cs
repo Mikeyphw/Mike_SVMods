@@ -25,7 +25,7 @@ public sealed class PharaohTrackerOverlay
         _helper = helper ?? throw new ArgumentNullException(nameof(helper));
         _config = config ?? throw new ArgumentNullException(nameof(config));
 
-        _trackerTexture = new Lazy<Texture2D>(() => _helper.ModContent.Load<Texture2D>("assets/Mines/tracker.png"));
+        _trackerTexture = new Lazy<Texture2D>(() => _helper.ModContent.Load<Texture2D>("assets/mines/tracker.png"));
     }
 
     public void Render(SpriteBatch spriteBatch)

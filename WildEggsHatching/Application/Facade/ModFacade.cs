@@ -12,11 +12,13 @@ using WildEggsHatching.Infrastructure.Config;
 using WildEggsHatching.Infrastructure.Game;
 using WildEggsHatching.Infrastructure.Logging;
 using WildEggsHatching.Infrastructure.ModData;
+using WildEggsHatching.Infrastructure.SaveData;
 
 namespace WildEggsHatching.Application.Facade;
 
 public sealed class ModFacade : IModFacade
 {
+    private readonly ISaveDataStore _store;
     private readonly IConfigProvider _config;
     private readonly ILog _log;
 
@@ -38,6 +40,7 @@ public sealed class ModFacade : IModFacade
     private readonly ITileSearchHistogram _histogram;
 
     public ModFacade(
+        ISaveDataStore store,
         IConfigProvider config,
         ILog log,
         Func<bool> isWorldReady,
@@ -54,6 +57,7 @@ public sealed class ModFacade : IModFacade
         IGameObjectPlacer placer,
         ITileSearchHistogram? histogram = null)
     {
+        _store = store;
         _config = config;
         _log = log;
         _isWorldReady = isWorldReady;
@@ -277,6 +281,33 @@ public FacadeResult ValidateAnimalNotes()
 
         _animalNotesValidator.ValidateAndLog();
         return new FacadeResult(true, "AnimalNotes validation complete (see log).");
+    }
+
+
+    public FacadeResult WipeSchemaData(bool confirmed)
+    {
+        if (!_isWorldReady())
+            return new FacadeResult(false, "World not ready.");
+
+        if (!_isMainPlayer())
+            return new FacadeResult(false, "Host-only.");
+
+        if (!confirmed)
+            return new FacadeResult(false, "Refusing to wipe without confirmation. Usage: wegg schema wipe --yes");
+
+        try
+        {
+            _store.Delete(WildEggsHatching.Application.Progression.SaveKeys.Progression);
+            _store.Delete(WildEggsHatching.Application.AnimalNotes.SaveKeys.AnimalNotes);
+
+            _log.Log("Schema wipe: deleted Progression + AnimalNotes save keys for this mod.", StardewModdingAPI.LogLevel.Warn);
+            return new FacadeResult(true, "Deleted Progression + AnimalNotes save data for this mod. Reload the save to reinitialize.");
+        }
+        catch (Exception ex)
+        {
+            _log.Log($"Schema wipe failed: {ex}", StardewModdingAPI.LogLevel.Error);
+            return new FacadeResult(false, "Schema wipe failed; see log.");
+        }
     }
 
 }

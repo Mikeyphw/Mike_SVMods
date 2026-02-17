@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using WildEggsHatching.Application.Facade;
+using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Commands;
 using WildEggsHatching.Infrastructure.Config;
@@ -112,5 +113,11 @@ public sealed class WeggCommandDispatcherTests
         }
 
         public FacadeResult TryRunSpawnPlanNow() => new(true, "ok");
+
+        public FacadeResult DumpAnimalNotes() => new(true, "ok");
+        public FacadeResult DumpAnimalNotes(AnimalNotesDumpOptions options) => new(true, "ok");
+        public FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true, bool force = false) => new(true, "ok");
+        public FacadeResult ValidateAnimalNotes() => new(true, "ok");
+        public FacadeResult WipeSchemaData(bool confirmed) => new(true, confirmed ? "wiped" : "no");
     }
 }

@@ -39,6 +39,22 @@ public sealed class WeggConsoleCommands
                 var result = _dispatcher.Execute(merged);
                 _monitor.Log(result.Message, result.Success ? LogLevel.Info : LogLevel.Warn);
             });
+        helper.ConsoleCommands.Add(
+            name: "wegg_schema",
+            documentation: "WildEggsHatching schema commands. Type `wegg_schema wipe --yes`.",
+            callback: (_, args) =>
+            {
+                _monitor.Log($"wegg_schema args={string.Join(" ", args)}", LogLevel.Trace);
+
+                var merged = new string[args.Length + 1];
+                merged[0] = "schema";
+                Array.Copy(args, 0, merged, 1, args.Length);
+
+                var result = _dispatcher.Execute(merged);
+                _monitor.Log(result.Message, result.Success ? LogLevel.Info : LogLevel.Warn);
+            });
+
+
 
 
     }

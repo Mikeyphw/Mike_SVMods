@@ -31,4 +31,6 @@ public interface IModFacade
     FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true, bool force = false);
 
     FacadeResult ValidateAnimalNotes();
+
+    FacadeResult WipeSchemaData(bool confirmed);
 }

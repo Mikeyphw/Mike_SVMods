@@ -27,6 +27,7 @@ using WildEggsHatching.Infrastructure.Api;
 using WildEggsHatching.Infrastructure.Assets;
 using WildEggsHatching.Infrastructure.DesertTomb.Assets;
 using WildEggsHatching.Infrastructure.Commands;
+using WildEggsHatching.Infrastructure.Diagnostics;
 using WildEggsHatching.Infrastructure.Game;
 using WildEggsHatching.Infrastructure.Logging;
 using WildEggsHatching.Infrastructure.ModData;
@@ -249,6 +250,7 @@ public sealed class ModEntry : Mod
 
 
         _facade = new ModFacade(
+            store: _saveData!,
             config: configProvider,
             log: log,
             isWorldReady: () => Context.IsWorldReady,
@@ -483,6 +485,16 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
         _progression?.OnSaveLoaded();
         _animalNotes?.OnSaveLoaded();
         _content?.InvalidateAll();
+
+        try
+        {
+            if (_saveData is not null && _config is not null && _log is not null)
+                Phase8HealthReporter.LogPhase8HealthReport(Helper, _saveData, _config, _log);
+        }
+        catch
+        {
+            // best-effort diagnostics
+        }
 
         _pendingAnimalNotesValidation = true;
     }
