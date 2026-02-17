@@ -1,12 +1,11 @@
-using StardewValley;
 using StardewValley.Monsters;
 using WildEggsHatching.DesertTomb.Core.Configuration;
-using WildEggsHatching.Infrastructure.DesertTomb.Loot;
 
 namespace WildEggsHatching.Infrastructure.DesertTomb.Monsters.Base;
 
 /// <summary>
-/// Common monster setup logic (health/resilience/drops) shared across DesertTomb monsters.
+/// Common monster setup logic (speed/health/resilience/stats) shared across DesertTomb monsters.
+/// Drops are applied by <c>DesertTombMonsterFactory</c> using JSON drop tables.
 /// </summary>
 internal static class TombMonsterBuilder
 {
@@ -31,12 +30,8 @@ internal static class TombMonsterBuilder
         monster.BuffForAdditionalDifficulty(difficulty);
         monster.Sprite.LoadTexture($"Characters\\Monsters\\{textureName.Replace(" ", "")}");
 
+        // Phase 6: drop strings removed; drops are JSON-driven and applied by the factory.
         monster.objectsToDrop.Clear();
-        monster.objectsToDrop.AddRange(
-            string.IsNullOrEmpty(customDropData)
-                ? MonsterItemHelper.GetModifiedMonsterItems(monster, luckyBonusEnabled)
-                : MonsterItemHelper.GetModifiedMonsterItems(monster, luckyBonusEnabled, customDropData)
-        );
     }
 
     public static void SetupMonsterWithDoubleDrops(
@@ -49,16 +44,8 @@ internal static class TombMonsterBuilder
         string? customDropData = null
     )
     {
+        // Drops are handled centrally by the factory, so this is now equivalent to basic setup.
         SetupBasicMonster(monster, multipliers, difficulty, textureName, speedToAdd, luckyBonusEnabled, customDropData);
-
-        if (Game1.random.NextDouble() < multipliers.ChanceToDoubleDropItem)
-        {
-            var additionalItems = string.IsNullOrEmpty(customDropData)
-                ? MonsterItemHelper.GetModifiedMonsterItems(monster, luckyBonusEnabled)
-                : MonsterItemHelper.GetModifiedMonsterItems(monster, luckyBonusEnabled, customDropData);
-
-            monster.objectsToDrop.AddRange(additionalItems);
-        }
     }
 
     public static void SetMonsterNames(Monster monster, string baseName)

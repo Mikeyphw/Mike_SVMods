@@ -1,0 +1,102 @@
+{
+  "AssassinBug": {
+    "BaseMonster": "AssassinBug",
+    "BaseName": "Assassin Bug",
+    "DropTableId": "AssassinBug",
+    "Texture": "Assassin Bug"
+  },
+  "Bat": {
+    "BaseMonster": "Bat",
+    "BaseName": "Bat",
+    "DropTableId": "Bat",
+    "Texture": "Bat_dangerous"
+  },
+  "BruteMummy": {
+    "BaseMonster": "BruteMummy",
+    "BaseName": "Brute Mummy",
+    "DropTableId": "BruteMummy",
+    "Texture": "Brute Mummy"
+  },
+  "Crawler": {
+    "BaseMonster": "Crawler",
+    "BaseName": "Crawler",
+    "DropTableId": "Crawler",
+    "Texture": "Crawler"
+  },
+  "Duggy": {
+    "BaseMonster": "Duggy",
+    "BaseName": "Duggy",
+    "DropTableId": "Duggy",
+    "Texture": "Sandy Duggy"
+  },
+  "Ghost": {
+    "BaseMonster": "Ghost",
+    "BaseName": "Ghost",
+    "DropTableId": "Ghost",
+    "Texture": "Carbon Ghost"
+  },
+  "HauntedSkull": {
+    "BaseMonster": "HauntedSkull",
+    "BaseName": "Haunted Skull",
+    "DropTableId": "HauntedSkull",
+    "Texture": "Fly"
+  },
+  "Hurricane": {
+    "BaseMonster": "Hurricane",
+    "BaseName": "Hurricane",
+    "DropTableId": "Hurricane",
+    "Texture": "Hurricane"
+  },
+  "Matango": {
+    "BaseMonster": "Matango",
+    "BaseName": "Matango",
+    "DropTableId": "Matango",
+    "Texture": "Matango"
+  },
+  "Mummy": {
+    "BaseMonster": "Mummy",
+    "BaseName": "Mummy",
+    "DropTableId": "Mummy",
+    "Texture": "Mummy"
+  },
+  "RoyalSerpent": {
+    "BaseMonster": "RoyalSerpent",
+    "BaseName": "Royal Serpent",
+    "DropTableId": "RoyalSerpent",
+    "Texture": "Royal Serpent"
+  },
+  "Sandi": {
+    "BaseMonster": "Sandi",
+    "BaseName": "Sandi",
+    "DropTableId": "Sandi",
+    "Texture": "Sandi"
+  },
+  "Skeleton": {
+    "BaseMonster": "Skeleton",
+    "BaseName": "Skeleton",
+    "DropTableId": "Skeleton",
+    "Texture": "Skeleton"
+  },
+  "SkeletonMage": {
+    "BaseMonster": "SkeletonMage",
+    "BaseName": "Skeleton Mage",
+    "DropTableId": "Skeleton",
+    "Texture": "Skeleton Mage"
+  },
+  "Spider": {
+    "BaseMonster": "Spider",
+    "BaseName": "Spider",
+    "DropTableId": "Spider",
+    "Texture": "Spider"
+  },
+  "TheTombPharaoh": {
+    "BaseMonster": "TheTombPharaoh",
+    "BaseName": "Pharaoh",
+    "DropTableId": "TheTombPharaoh",
+    "Flags": {
+      "HostAuthoritative": true,
+      "IsBoss": true
+    },
+    "Texture": "ThePharaoh"
+  }
+}

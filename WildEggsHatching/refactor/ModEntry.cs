@@ -4,6 +4,8 @@ using WildEggsHatching.Application.DesertTomb.Runtime;
 using WildEggsHatching.Application.DesertTomb.Spawning;
 using WildEggsHatching.DesertTomb.Core.Configuration;
 using WildEggsHatching.Infrastructure.DesertTomb.Monsters;
+using WildEggsHatching.Infrastructure.DesertTomb.Loot;
+using WildEggsHatching.Infrastructure.DesertTomb.Loot.Definitions;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -63,7 +65,8 @@ public sealed class ModEntry : Mod
         _log = new SmapiLog(Monitor);
 
         var log = _log;
-        _dataLoader = new ModDataLoader(new SmapiJsonFileReader(helper), log);
+        var jsonReader = new SmapiJsonFileReader(helper);
+        _dataLoader = new ModDataLoader(jsonReader, log);
 
         LoadModData(log);
 
@@ -123,7 +126,10 @@ public sealed class ModEntry : Mod
         // DesertTomb runtime (Phase 0): activate tomb floors and spawn tomb monsters.
         var tombConfig = SpawnConfiguration.Default;
         var tombGenerator = new DesertTombLevelGenerator(tombConfig);
-        var tombFactory = new DesertTombMonsterFactory();
+        var tombDefinitions = new WildEggsHatching.Infrastructure.DesertTomb.Monsters.Definitions.TombMonsterDefinitions(jsonReader, log);
+        var tombDropTables = new TombDropTables(jsonReader, log);
+        var tombDropEngine = new TombDropTableEngine();
+        var tombFactory = new DesertTombMonsterFactory(tombDefinitions, tombDropTables, tombDropEngine, log);
         var tombSpawnExecutor = new DesertTombSpawnExecutor(tombFactory, log);
         _desertTombDiagnostics = new DesertTombDiagnostics(helper, configProvider, log);
         _desertTomb = new DesertTombRuntime(
