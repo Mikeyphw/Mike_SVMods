@@ -18,6 +18,9 @@ internal sealed class ModEntry : Mod
 
     private GmcmIntegration? _gmcm;
 
+
+    public override object GetApi() => new BirdsOfAFeatherApi();
+
     public override void Entry(IModHelper helper)
     {
         HelperInstance = helper;
