@@ -41,6 +41,10 @@ public sealed class AnimalNotesOrchestrator
 
     private AnimalNotesSaveData _data = new();
     private bool _initialized;
+    private bool _schemaCompatible = true;
+    private string? _schemaError;
+    private bool _schemaCompatible = true;
+    private string? _schemaError;
 
     public AnimalNotesOrchestrator(
         ISaveDataStore store,
@@ -100,6 +104,8 @@ public sealed class AnimalNotesOrchestrator
 
         var model = new DumpModel
         {
+            SchemaCompatible = _schemaCompatible,
+            SchemaError = _schemaError,
             Step = _getStep().ToString(),
             Day = day,
             PendingCount = _data.Pending.Count,
@@ -112,6 +118,9 @@ public sealed class AnimalNotesOrchestrator
             },
             Farmers = farmers.Select(f => new DumpFarmerModel { Name = f.Name, FarmerId = f.UniqueMultiplayerID }).ToList(),
         };
+
+        if (!model.SchemaCompatible && !string.IsNullOrWhiteSpace(model.SchemaError))
+            lines.Insert(1, $"schemaError: {model.SchemaError}");
 
         foreach (var p in pending.OrderBy(x => x.FarmAnimalName).ThenBy(x => x.AnimalId))
         {
@@ -181,10 +190,13 @@ public sealed class AnimalNotesOrchestrator
         // text format (previous output + extras)
         var lines = new List<string>
         {
-            $"AnimalNotes: step={model.Step} day={model.Day} pending={model.PendingCount} registeredTypes={model.RegisteredTypesCount}",
+            $"AnimalNotes: step={model.Step} day={model.Day} pending={model.PendingCount} registeredTypes={model.RegisteredTypesCount} schemaCompatible={model.SchemaCompatible}",
             $"Config: debug={model.Config.DebugMode} warnAfterDays={model.Config.WarnAfterDays} placementRadius={model.Config.PlacementRadius}",
             $"Farmers: {string.Join(", ", model.Farmers.Select(f => $"{f.Name}({f.FarmerId})"))}"
         };
+
+        if (!model.SchemaCompatible && !string.IsNullOrWhiteSpace(model.SchemaError))
+            lines.Insert(1, $"schemaError: {model.SchemaError}");
 
         foreach (var r in model.Records)
         {
@@ -220,6 +232,9 @@ public sealed class AnimalNotesOrchestrator
 
     private sealed class DumpModel
     {
+        public bool SchemaCompatible { get; set; }
+        public string? SchemaError { get; set; }
+
         public string Step { get; set; } = string.Empty;
         public int Day { get; set; }
         public int PendingCount { get; set; }
@@ -293,6 +308,9 @@ public sealed class AnimalNotesOrchestrator
             return "World not ready.";
 
         EnsureInitialized();
+
+        if (!_schemaCompatible)
+            return _schemaError ?? "AnimalNotes is disabled due to incompatible save data.";
 
         var day = _game.GetDayNumber();
         var before = _data.Pending.Count;
@@ -434,6 +452,8 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
             return false;
 
         EnsureInitialized();
+        if (!_schemaCompatible)
+            return false;
         ReconcileState();
 
         if (!IsJunimoNoteId(message.NoteItemId))
@@ -491,6 +511,8 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
             return false;
 
         EnsureInitialized();
+        if (!_schemaCompatible)
+            return false;
         ReconcileState();
 
         var rec = _data.Pending.FirstOrDefault(p => string.Equals(p.QuestId, message.QuestId, StringComparison.OrdinalIgnoreCase));
@@ -509,6 +531,8 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
     public void OnSaveLoaded()
     {
         EnsureInitialized();
+        if (!_schemaCompatible)
+            return;
         ReconcileState();
         Save(); // normalize envelope/version + ensure file exists for debugging.
     }
@@ -530,6 +554,8 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
             return;
 
         EnsureInitialized();
+        if (!_schemaCompatible)
+            return;
 
         RefreshAnimalsOnFarm();
         ReconcileState();
@@ -546,6 +572,8 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
             return;
 
         EnsureInitialized();
+        if (!_schemaCompatible)
+            return;
         ProcessPending();
     }
 
@@ -558,6 +586,8 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
             return;
 
         EnsureInitialized();
+        if (!_schemaCompatible)
+            return;
 
         HandleLocation(newLocation);
         ProcessPending();
@@ -583,18 +613,21 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
         }
         else if (envelope.Version != SaveDataVersion)
         {
-            _log.Log($"AnimalNotes: save data version {envelope.Version} != {SaveDataVersion}; resetting AnimalNotes state.", StardewModdingAPI.LogLevel.Warn);
-            _data = new AnimalNotesSaveData();
+            _schemaCompatible = false;
+            _schemaError = $"AnimalNotes: unsupported save schema version {envelope.Version} (expected {SaveDataVersion}).";
+            _log.Log($"{_schemaError} NOT resetting. AnimalNotes is disabled until the save data is cleared or updated.", StardewModdingAPI.LogLevel.Error);
+            _data = envelope.Data ?? new AnimalNotesSaveData();
         }
         else
         {
             _data = envelope.Data ?? new AnimalNotesSaveData();
         }
 
-        if (!ValidateSaveData(_data, out var reason))
+        if (_schemaCompatible && !ValidateSaveData(_data, out var reason))
         {
-            _log.Log($"AnimalNotes: invalid save data ({reason}); resetting AnimalNotes state.", StardewModdingAPI.LogLevel.Error);
-            _data = new AnimalNotesSaveData();
+            _schemaCompatible = false;
+            _schemaError = $"AnimalNotes: invalid save data ({reason}).";
+            _log.Log($"{_schemaError} NOT resetting. AnimalNotes is disabled until the save data is cleared or updated.", StardewModdingAPI.LogLevel.Error);
         }
 
         _initialized = true;
@@ -648,9 +681,13 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
     }
 
     private void Save()
-        => _store.WriteEnvelope(SaveKeys.AnimalNotes, new SaveDataEnvelope<AnimalNotesSaveData>(SaveDataVersion, _data));
+    {
+        if (!_schemaCompatible)
+            return;
 
-    private HashSet<string> GetEligibleAnimalTypes()
+        _store.WriteEnvelope(SaveKeys.AnimalNotes, new SaveDataEnvelope<AnimalNotesSaveData>(SaveDataVersion, _data));
+    }
+private HashSet<string> GetEligibleAnimalTypes()
     {
         var snapshot = _dataLoader.Load();
 
