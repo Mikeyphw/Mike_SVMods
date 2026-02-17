@@ -39,6 +39,220 @@ internal sealed partial class RoosterCoordinator
         InvalidateRuleCaches(reason);
     }
 
+
+private string DailyPlanBackupSaveKey => $"{ModManifest.UniqueID}/daily-hatching-plan-v1.backup";
+
+private bool TryValidateDailyPlan(
+    DailyHatchingPlanEnvelope plan,
+    IDictionary<string, FarmAnimalData> farmAnimalsData,
+    string expectedFingerprint,
+    out string reason,
+    bool requireCompleteness
+)
+{
+    reason = string.Empty;
+
+    if (plan is null)
+    {
+        reason = "Plan is null.";
+        return false;
+    }
+
+    if (plan.Version != 1)
+    {
+        reason = $"Unsupported plan version: {plan.Version}.";
+        return false;
+    }
+
+    if (plan.FarmId <= 0)
+    {
+        reason = "FarmId missing/invalid.";
+        return false;
+    }
+
+    if (plan.Day < 0)
+    {
+        reason = "Day missing/invalid.";
+        return false;
+    }
+
+    if (string.IsNullOrWhiteSpace(plan.Fingerprint))
+    {
+        reason = "Fingerprint missing.";
+        return false;
+    }
+
+    if (plan.Buildings is null)
+    {
+        reason = "Buildings map is null.";
+        return false;
+    }
+
+    foreach (var (bKey, building) in plan.Buildings)
+    {
+        if (building is null)
+        {
+            reason = $"Building '{bKey}' is null.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(building.BuildingKey))
+        {
+            reason = $"Building '{bKey}' has empty BuildingKey.";
+            return false;
+        }
+
+        if (building.Roosters is null)
+        {
+            reason = $"Building '{building.BuildingKey}' has null roosters map.";
+            return false;
+        }
+
+        foreach (var (rKey, roosterPlan) in building.Roosters)
+        {
+            if (roosterPlan is null)
+            {
+                reason = $"Rooster plan '{rKey}' in '{building.BuildingKey}' is null.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(roosterPlan.RoosterKey))
+            {
+                reason = $"Rooster plan '{rKey}' in '{building.BuildingKey}' has empty RoosterKey.";
+                return false;
+            }
+
+            if (roosterPlan.Females is null)
+            {
+                reason = $"Rooster '{roosterPlan.RoosterKey}' in '{building.BuildingKey}' has null females map.";
+                return false;
+            }
+
+            foreach (var (fKey, femalePlan) in roosterPlan.Females)
+            {
+                if (femalePlan is null)
+                {
+                    reason = $"Female plan '{fKey}' in rooster '{roosterPlan.RoosterKey}' is null.";
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(femalePlan.FemaleKey))
+                {
+                    reason = $"Female plan '{fKey}' in rooster '{roosterPlan.RoosterKey}' has empty FemaleKey.";
+                    return false;
+                }
+
+                if (femalePlan.NormalEgg is not null && (femalePlan.NormalEgg.ChancePercent < 0 || femalePlan.NormalEgg.ChancePercent > 100))
+                {
+                    reason = $"NormalEgg chance out of range for '{femalePlan.FemaleKey}'.";
+                    return false;
+                }
+
+                if (femalePlan.LargeEgg is not null && (femalePlan.LargeEgg.ChancePercent < 0 || femalePlan.LargeEgg.ChancePercent > 100))
+                {
+                    reason = $"LargeEgg chance out of range for '{femalePlan.FemaleKey}'.";
+                    return false;
+                }
+
+                if (femalePlan.FertilizedOnly is not null)
+                {
+                    var fo = femalePlan.FertilizedOnly;
+                    if (fo.FemaleUpgradeChancePercent < 0f || fo.FemaleUpgradeChancePercent > 100f)
+                    {
+                        reason = $"Fertilized upgrade chance out of range for '{femalePlan.FemaleKey}'.";
+                        return false;
+                    }
+
+                    if (fo.RoosterToChickenRatioPercent < 0 || fo.RoosterToChickenRatioPercent > 100)
+                    {
+                        reason = $"Rooster ratio out of range for '{femalePlan.FemaleKey}'.";
+                        return false;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(fo.RoosterFertilizedEggId) || string.IsNullOrWhiteSpace(fo.FemaleFertilizedEggId))
+                    {
+                        reason = $"Fertilized egg ids missing for '{femalePlan.FemaleKey}'.";
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    // Completeness checks only if the loaded plan claims to match today's fingerprint.
+    if (requireCompleteness && string.Equals(plan.Fingerprint, expectedFingerprint, StringComparison.OrdinalIgnoreCase))
+    {
+        foreach (var rooster in RoosterHelper.Roosters.Values)
+        {
+            var buildingKey = ResolveBuildingKey(rooster, farmAnimalsData);
+
+            if (!plan.Buildings.TryGetValue(buildingKey, out var building))
+            {
+                reason = $"Missing building '{buildingKey}' for rooster '{rooster.FarmAnimalName}'.";
+                return false;
+            }
+
+            if (!building.Roosters.TryGetValue(rooster.FarmAnimalName, out var roosterPlan))
+            {
+                reason = $"Missing rooster '{rooster.FarmAnimalName}' in building '{buildingKey}'.";
+                return false;
+            }
+
+            foreach (var femaleKey in rooster.Females)
+            {
+                if (!roosterPlan.Females.TryGetValue(femaleKey, out _))
+                {
+                    reason = $"Missing female '{femaleKey}' under rooster '{rooster.FarmAnimalName}'.";
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+private void BackupAndDeleteCorruptPlan(DailyHatchingPlanEnvelope plan, string reason)
+{
+    var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+    try
+    {
+        var backup = new DailyHatchingPlanCorruptBackup
+        {
+            TimestampUtcUnixMs = now,
+            Reason = reason,
+            Plan = plan
+        };
+
+        _saveData.Write(DailyPlanBackupSaveKey, backup);
+    }
+    catch (Exception ex)
+    {
+        Monitor.Log($"Failed to write daily plan backup: {ex}", LogLevel.Warn);
+    }
+
+    try
+    {
+        var fileName = Infrastructure.StateDumps.StateDumpJson.BuildFileName("roosteraddon_daily_plan_corrupt", DateTimeOffset.UtcNow);
+        WriteStateDump(fileName, new { reason, plan });
+        Monitor.Log($"Wrote corrupt plan dump: {fileName}", LogLevel.Info);
+    }
+    catch
+    {
+        // best effort
+    }
+
+    try
+    {
+        _saveData.Delete(DailyPlanSaveKey);
+    }
+    catch (Exception ex)
+    {
+        Monitor.Log($"Failed to delete corrupt daily plan save data: {ex}", LogLevel.Warn);
+    }
+}
+
     private DailyHatchingPlanEnvelope? EnsureDailyPlanForToday(
         IDictionary<string, FarmAnimalData> farmAnimalsData,
         bool forceRecompute,
@@ -81,6 +295,22 @@ internal sealed partial class RoosterCoordinator
             loaded = null;
         }
 
+if (loaded is not null && loaded.Day == today && loaded.FarmId == farmId)
+{
+    // Corruption recovery: if the saved plan is structurally invalid or incomplete (when matching fingerprint),
+    // back it up and rebuild (host) or ignore (client).
+    var requireCompleteness = true;
+    if (!TryValidateDailyPlan(loaded, farmAnimalsData, fingerprint, out var invalidReason, requireCompleteness))
+    {
+        Monitor.Log($"Daily plan appears corrupt/partial. {invalidReason}", LogLevel.Warn);
+
+        if (Context.IsMainPlayer)
+            BackupAndDeleteCorruptPlan(loaded, invalidReason);
+
+        loaded = null;
+    }
+}
+
         if (!forceRecompute
             && loaded is not null
             && loaded.Day == today
@@ -94,10 +324,24 @@ internal sealed partial class RoosterCoordinator
             return _dailyPlan;
         }
 
-        // If not host, try to use what we loaded even if fingerprint mismatched (best effort).
-        if (!Context.IsMainPlayer && loaded is not null && loaded.Day == today && loaded.FarmId == farmId)
-        {
-            _dailyPlan = loaded;
+        // If not host, try to use what we loaded even if fingerprint mismatched (best effort),
+// but ignore structurally invalid plans.
+if (!Context.IsMainPlayer && loaded is not null && loaded.Day == today && loaded.FarmId == farmId)
+{
+    if (!TryValidateDailyPlan(loaded, farmAnimalsData, expectedFingerprint: fingerprint, out var invalidReason, requireCompleteness: false))
+    {
+        Monitor.Log($"Ignoring invalid saved plan on client. {invalidReason}", LogLevel.Warn);
+    }
+    else
+    {
+        _dailyPlan = loaded;
+        _dailyPlanDay = today;
+        _dailyPlanFingerprint = loaded.Fingerprint;
+        usedHostPlan = false;
+        return _dailyPlan;
+    }
+}
+
             _dailyPlanDay = today;
             _dailyPlanFingerprint = loaded.Fingerprint;
             usedHostPlan = false;
