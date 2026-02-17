@@ -160,12 +160,17 @@ public sealed class AnimalNotesOrchestrator
                     MailQueued = state.MailQueued,
                     MailTomorrow = mailTomorrow,
                     MailReceived = mailReceived,
+                    IsInProgress = (state.QuestGiven || questActive) && !questCompleted,
+                    UnlockEligibleInDays = TryGetDaysToMature(p.FarmAnimalName, out var dtm) && state.DayQuestCompleted is not null
+                        ? AnimalNotesUnlockLogic.DaysUntilUnlockMailEligible(day, state.DayQuestCompleted.Value, dtm)
+                        : null,
                     QuestBlocked = string.IsNullOrWhiteSpace(questBlock) ? null : questBlock,
                     MailBlocked = string.IsNullOrWhiteSpace(mailBlock) ? null : mailBlock
                 });
             }
 
             rec.CleanupReadyBalanced = AnimalNotesUnlockLogic.ShouldCleanupBalanced(cleanupStatuses);
+            rec.CleanupBlockedBy = BuildCleanupBlockers(cleanupStatuses, farmers, p, day);
             model.Records.Add(rec);
         }
 
@@ -185,6 +190,9 @@ public sealed class AnimalNotesOrchestrator
             lines.Add(
                 $" - {r.AnimalToken} id={r.AnimalId} home='{r.HomeNameOrUniqueName}' token='{r.UniqueToken}' " +
                 $"note='{r.NoteItemId}' notePlaced={r.NotePlaced} noteExistsNow={r.NoteExistsNow} quest='{r.QuestId}' mail='{r.MailId}' cleanupReadyBalanced={r.CleanupReadyBalanced}");
+
+            if (r.CleanupBlockedBy.Count > 0)
+                lines.Add($"    cleanupBlockedBy: {string.Join(", ", r.CleanupBlockedBy)}");
 
             if (!string.IsNullOrWhiteSpace(r.NoteBlocked))
                 lines.Add($"    noteBlocked: {r.NoteBlocked}");
@@ -251,6 +259,7 @@ public sealed class AnimalNotesOrchestrator
         public string? LastPlacementFailureReason { get; set; }
 
         public bool CleanupReadyBalanced { get; set; }
+        public List<string> CleanupBlockedBy { get; set; } = new();
 
         public List<DumpRecordFarmerModel> Farmers { get; set; } = new();
     }
@@ -268,6 +277,9 @@ public sealed class AnimalNotesOrchestrator
         public bool MailQueued { get; set; }
         public bool MailTomorrow { get; set; }
         public bool MailReceived { get; set; }
+
+        public bool IsInProgress { get; set; }
+        public int? UnlockEligibleInDays { get; set; }
 
         public string? QuestBlocked { get; set; }
         public string? MailBlocked { get; set; }
@@ -315,6 +327,7 @@ public sealed class AnimalNotesOrchestrator
         if (farmer is null)
             return (new List<string>(), new List<string>());
 
+        var day = _game.GetDayNumber();
         var quests = new List<string>();
         var mail = new List<string>();
 
@@ -322,18 +335,42 @@ public sealed class AnimalNotesOrchestrator
         {
             var state = GetOrCreateFarmerState(p, farmerId);
 
-            if (state.QuestGiven && state.DayQuestCompleted is null && !HasCompletedQuest(farmer, p.QuestId))
+            var questActive = false;
+            try { questActive = farmer.questLog.Any(q => string.Equals(q.id.Value, p.QuestId, StringComparison.OrdinalIgnoreCase)); }
+            catch { /* ignored */ }
+
+            var questCompleted = state.DayQuestCompleted is not null || HasCompletedQuest(farmer, p.QuestId);
+
+            if ((state.QuestGiven || questActive) && !questCompleted)
                 quests.Add(p.QuestId);
 
-            if (HasMailForTomorrow(farmer, p.MailId) && !HasReceivedMail(farmer, p.MailId))
+            var mailReceived = HasReceivedMail(farmer, p.MailId);
+            var mailTomorrow = HasMailForTomorrow(farmer, p.MailId);
+
+            if (mailReceived)
+                continue;
+
+            if (mailTomorrow)
+            {
                 mail.Add(p.MailId);
+                continue;
+            }
+
+            if (state.DayQuestCompleted is not null
+                && HasReceivedMail(farmer, ProgressionIds.Mail.SpecialOrderDoneII)
+                && TryGetDaysToMature(p.FarmAnimalName, out var daysToMature)
+                && AnimalNotesUnlockLogic.IsUnlockMailEligible(day, state.DayQuestCompleted.Value, daysToMature))
+            {
+                mail.Add(p.MailId);
+            }
         }
 
         return (quests.Distinct(StringComparer.OrdinalIgnoreCase).ToList(), mail.Distinct(StringComparer.OrdinalIgnoreCase).ToList());
     }
-public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmerId, out string questId)
+public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmerId, out string questId, out bool shouldGrantQuest)
     {
         questId = string.Empty;
+        shouldGrantQuest = false;
 
         if (!Context.IsWorldReady)
             return false;
@@ -384,6 +421,7 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
 
         state.QuestGiven = true;
         state.DayQuestGiven ??= _game.GetDayNumber();
+        shouldGrantQuest = true;
 
         Save();
         return true;

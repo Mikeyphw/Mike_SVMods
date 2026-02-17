@@ -341,10 +341,10 @@ public sealed class ModEntry : Mod
         {
             var found = e.ReadAs<AnimalNoteFoundMessage>();
 
-            if (!_animalNotes.TryHandleClientNoteFound(found, e.FromPlayerID, out var questId))
+            if (!_animalNotes.TryHandleClientNoteFound(found, e.FromPlayerID, out var questId, out var shouldGrantQuest))
                 return;
 
-            if (string.IsNullOrWhiteSpace(questId))
+            if (!shouldGrantQuest || string.IsNullOrWhiteSpace(questId))
                 return;
 
             try
