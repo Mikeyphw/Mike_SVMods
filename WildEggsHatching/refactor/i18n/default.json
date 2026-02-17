@@ -16,5 +16,6 @@
   "mail.animalAvaliable0": "Dear @,^^Thanks a bunch for the note! The tips about the animal were really useful.^The animals are thriving and have settled in nicely. I've been able to reproduce them, and they're now available in my shop.^If you ever need anything or have more notes, just give me a shout.^^Best, Marnie",
   "mail.animalAvaliable1": "Hi @,^^Just wanted to say thanks for the great note! The information was spot on.^The animals are doing great and have adapted perfectly. I've even managed to reproduce them, and they're now up for sale in my shop.^If you have any more notes or need anything, feel free to reach out.^Cheers!^- Marnie^^^",
   "mail.animalAvaliable2": "Hey @,^^Thanks for the note! The information about the animal was super helpful.^I'm excited to tell you that the animals have settled in really well. I was able to reproduce them, and now they're available in my shop for everyone.^If you ever discover new animals or need anything, please let me know.^^Thanks again!^- Marnie^^^",
-  "mail.animalAvaliable3": "Dear @,^^Thanks for bringing me that note!"
+  "mail.animalAvaliable3": "Dear @,^^Thanks for bringing me that note!",
+  "hudmessage.notePlacementFailed": "AnimalNotes: couldn't place a Junimo note."
 }

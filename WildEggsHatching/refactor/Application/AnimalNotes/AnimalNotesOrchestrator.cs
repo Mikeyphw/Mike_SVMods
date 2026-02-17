@@ -6,6 +6,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Extensions;
+using WildEggsHatching.Application.AnimalNotes.Messages;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
@@ -23,6 +24,9 @@ public sealed class AnimalNotesOrchestrator
     private readonly ISaveDataStore _store;
     private readonly IModDataLoader _dataLoader;
     private readonly IGameStateReader _game;
+    private readonly bool _debugMode;
+    private readonly int _warnAfterDays;
+    private readonly int _placementRadius;
     private readonly ITranslationHelper _i18n;
     private readonly IGameMailService _mail;
     private readonly IGameQuestService _quests;
@@ -40,6 +44,9 @@ public sealed class AnimalNotesOrchestrator
         IModDataLoader dataLoader,
         IGameStateReader game,
         ITranslationHelper i18n,
+        bool debugMode,
+        int warnAfterDays,
+        int placementRadius,
         IGameMailService mail,
         IGameQuestService quests,
         IGameObjectPlacer placer,
@@ -52,6 +59,9 @@ public sealed class AnimalNotesOrchestrator
         _dataLoader = dataLoader;
         _game = game;
         _i18n = i18n;
+        _debugMode = debugMode;
+        _warnAfterDays = Math.Max(1, warnAfterDays);
+        _placementRadius = Math.Max(1, placementRadius);
         _mail = mail;
         _quests = quests;
         _placer = placer;
@@ -60,10 +70,107 @@ public sealed class AnimalNotesOrchestrator
         _getStep = getStep;
         _isMainPlayer = isMainPlayer;
     }
+    public string DumpState()
+    {
+        if (!Context.IsWorldReady)
+            return "World not ready.";
+
+        try { EnsureInitialized(); }
+        catch (Exception ex) { return $"AnimalNotes init failed: {ex.Message}"; }
+
+        var lines = new List<string>
+        {
+            $"AnimalNotes: step={_getStep()} pending={_data.Pending.Count} registeredTypes={_data.RegisteredAnimalTypes.Count}",
+        };
+
+        foreach (var p in _data.Pending.OrderBy(x => x.FarmAnimalName).ThenBy(x => x.AnimalId))
+        {
+            var noteExists = Utility.doesItemExistAnywhere(p.NoteItemId);
+            var questActive = Game1.player?.questLog?.Any(q => string.Equals(q.id.Value, p.QuestId, StringComparison.OrdinalIgnoreCase)) ?? false;
+            var questCompleted = _quests.HasCompletedQuest(p.QuestId);
+
+            var mailReceived = _mail.HasReceivedMail(p.MailId);
+            var mailTomorrow = Game1.player?.mailForTomorrow?.Contains(p.MailId) ?? false;
+
+            lines.Add(
+                $" - {p.FarmAnimalName} id={p.AnimalId} home='{p.HomeNameOrUniqueName}' " +
+                $"note='{p.NoteItemId}' notePlaced={p.NotePlaced} noteExistsNow={noteExists} " +
+                $"quest='{p.QuestId}' questGiven={p.QuestGiven} questActive={questActive} questCompleted={questCompleted} " +
+                $"mail='{p.MailId}' mailTomorrow={mailTomorrow} mailReceived={mailReceived} " +
+                $"failDays={p.ConsecutivePlacementFailureDays} lastFail='{p.LastPlacementFailureReason}'");
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    public void OnClientNoteFound(AnimalNoteFoundMessage message)
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        if (message is null)
+            return;
+
+        EnsureInitialized();
+        ReconcileState();
+
+        if (!IsJunimoNoteId(message.NoteItemId))
+            return;
+
+        if (!Utility.doesItemExistAnywhere(message.NoteItemId))
+        {
+            _log.Log($"AnimalNotes: client '{message.FoundByFarmerName}' reported note '{message.NoteItemId}', but it no longer exists.", StardewModdingAPI.LogLevel.Trace);
+            return;
+        }
+
+        var token = ExtractAnimalTokenFromNoteId(message.NoteItemId);
+        if (string.IsNullOrWhiteSpace(token))
+            return;
+
+        var rec = _data.Pending.FirstOrDefault(p => string.Equals(p.NoteItemId, message.NoteItemId, StringComparison.OrdinalIgnoreCase));
+        if (rec is null)
+        {
+            rec = new HatchedAnimalRecord
+            {
+                FarmAnimalName = token,
+                AnimalId = 0,
+                HomeNameOrUniqueName = message.HomeNameOrUniqueName ?? string.Empty,
+                HouseType = string.Empty,
+                UniqueToken = CreateUniqueToken(0, message.NoteItemId),
+                NoteItemId = message.NoteItemId,
+                QuestId = AnimalNoteIds.NoteQuestId(token),
+                MailId = AnimalNoteIds.NoteMailId(token),
+                NotePlaced = true,
+                QuestGiven = false,
+            };
+
+            _data.Pending.Add(rec);
+        }
+
+        if (rec.QuestGiven)
+            return;
+
+        try
+        {
+            _quests.AddQuest(rec.QuestId);
+            rec.QuestGiven = true;
+            rec.DayQuestGiven ??= _game.GetDayNumber();
+            _log.Log($"AnimalNotes: host issued quest '{rec.QuestId}' from client discovery (player='{message.FoundByFarmerName}').", StardewModdingAPI.LogLevel.Info);
+        }
+        catch (Exception ex)
+        {
+            _log.Log($"AnimalNotes: failed to issue quest '{rec.QuestId}' from client discovery: {ex}", StardewModdingAPI.LogLevel.Warn);
+        }
+
+        Save();
+    }
+
+
 
     public void OnSaveLoaded()
     {
         EnsureInitialized();
+        ReconcileState();
         Save(); // normalize envelope/version + ensure file exists for debugging.
     }
 
@@ -86,6 +193,7 @@ public sealed class AnimalNotesOrchestrator
         EnsureInitialized();
 
         RefreshAnimalsOnFarm();
+        ReconcileState();
         FindNewHatchedAnimals();
         ProcessPending();
     }
@@ -221,12 +329,11 @@ public sealed class AnimalNotesOrchestrator
         var today = ToHashSetDict(_data.AnimalsOnTheFarm);
         var yesterday = ToHashSetDict(_data.AnimalsOnTheFarmYesterday);
 
+        var addedAny = false;
+
         foreach (var (type, idsToday) in today)
         {
             if (_data.RegisteredAnimalTypes.Contains(type))
-                continue;
-
-            if (_data.Pending.Any(p => string.Equals(p.FarmAnimalName, type, StringComparison.OrdinalIgnoreCase)))
                 continue;
 
             var added = !yesterday.TryGetValue(type, out var idsYesterday)
@@ -236,38 +343,51 @@ public sealed class AnimalNotesOrchestrator
             if (added.Count == 0)
                 continue;
 
-            var animalId = added.First();
+            var noteItemId = AnimalNoteIds.NoteItemId(type);
 
-            FarmAnimal? animal = null;
-            try { animal = Utility.getAnimal(animalId); }
-            catch { /* ignored */ }
-
-            if (animal is null)
-                continue;
-
-            var home = animal.home?.GetIndoors();
-            var homeName = home?.NameOrUniqueName ?? string.Empty;
-
-            var rec = new HatchedAnimalRecord
+            foreach (var animalId in added)
             {
-                FarmAnimalName = type,
-                AnimalId = animalId,
-                HomeNameOrUniqueName = homeName,
-                HouseType = animal.buildingTypeILiveIn?.Name ?? string.Empty,
-                NoteItemId = AnimalNoteIds.NoteItemId(type),
-                QuestId = AnimalNoteIds.NoteQuestId(type),
-                MailId = AnimalNoteIds.NoteMailId(type),
-                NotePlaced = false,
-                QuestGiven = false,
-                DayNotePlaced = null,
-                DayQuestGiven = null,
-            };
+                if (_data.Pending.Any(p => p.AnimalId == animalId))
+                    continue;
 
-            _data.Pending.Add(rec);
-            _log.Log($"AnimalNotes: detected new '{type}' (id={animalId}) home='{homeName}'.", StardewModdingAPI.LogLevel.Trace);
+                FarmAnimal? animal = null;
+                try { animal = Utility.getAnimal(animalId); }
+                catch { /* ignored */ }
+
+                if (animal is null)
+                    continue;
+
+                var home = animal.home?.GetIndoors();
+                var homeName = home?.NameOrUniqueName ?? string.Empty;
+
+                var rec = new HatchedAnimalRecord
+                {
+                    FarmAnimalName = type,
+                    AnimalId = animalId,
+                    HomeNameOrUniqueName = homeName,
+                    HouseType = animal.buildingTypeILiveIn?.Name ?? string.Empty,
+                    UniqueToken = CreateUniqueToken(animalId, noteItemId),
+                    NoteItemId = noteItemId,
+                    QuestId = AnimalNoteIds.NoteQuestId(type),
+                    MailId = AnimalNoteIds.NoteMailId(type),
+                    NotePlaced = false,
+                    QuestGiven = false,
+                    DayNotePlaced = null,
+                    DayQuestGiven = null,
+                };
+
+                _data.Pending.Add(rec);
+                addedAny = true;
+
+                _log.Log($"AnimalNotes: detected new '{type}' (id={animalId}) home='{homeName}'.", StardewModdingAPI.LogLevel.Trace);
+            }
         }
 
-        Save();
+        if (addedAny)
+        {
+            DeduplicatePending();
+            Save();
+        }
     }
 
     private static Dictionary<string, HashSet<long>> ToHashSetDict(Dictionary<string, List<long>> raw)
@@ -278,7 +398,186 @@ public sealed class AnimalNotesOrchestrator
         return dict;
     }
 
-    private void ProcessPending()
+    
+    private void ReconcileState()
+    {
+        EnsureUniqueTokens();
+        UpdateHomeReferencesFromCurrentAnimals();
+        ReconcileExistingNotesInAnimalHouses();
+        NormalizeFlagsFromWorldState();
+        DeduplicatePending();
+    }
+
+    private static string CreateUniqueToken(long animalId, string noteItemId)
+        => $"{animalId}:{noteItemId}";
+
+    private void EnsureUniqueTokens()
+    {
+        foreach (var p in _data.Pending)
+        {
+            if (string.IsNullOrWhiteSpace(p.UniqueToken))
+                p.UniqueToken = CreateUniqueToken(p.AnimalId, p.NoteItemId);
+        }
+    }
+
+    private void UpdateHomeReferencesFromCurrentAnimals()
+    {
+        foreach (var p in _data.Pending)
+        {
+            if (p.AnimalId <= 0)
+                continue;
+
+            FarmAnimal? animal = null;
+            try { animal = Utility.getAnimal(p.AnimalId); }
+            catch { /* ignored */ }
+
+            if (animal is null)
+                continue;
+
+            var home = animal.home?.GetIndoors();
+            if (home is not null)
+                p.HomeNameOrUniqueName = home.NameOrUniqueName;
+        }
+    }
+
+    private void ReconcileExistingNotesInAnimalHouses()
+    {
+        // If a note exists in-world but there is no record, recreate the record so quest/mail still function.
+        foreach (var b in Game1.getFarm().buildings.Where(IsCoopOrBarn))
+        {
+            if (b.indoors.Value is not AnimalHouse ah)
+                continue;
+
+            foreach (var obj in ah.objects.Values)
+            {
+                if (obj is null)
+                    continue;
+
+                var noteId = obj.ItemId;
+                if (!IsJunimoNoteId(noteId))
+                    continue;
+
+                var token = ExtractAnimalTokenFromNoteId(noteId);
+                if (string.IsNullOrWhiteSpace(token))
+                    continue;
+
+                var animalId = TryFindAnimalIdInHouse(ah, token);
+
+                var exists = _data.Pending.Any(p =>
+                    string.Equals(p.NoteItemId, noteId, StringComparison.OrdinalIgnoreCase)
+                    && (animalId <= 0 || p.AnimalId == animalId));
+
+                if (exists)
+                    continue;
+
+                var rec = new HatchedAnimalRecord
+                {
+                    FarmAnimalName = token,
+                    AnimalId = animalId,
+                    HomeNameOrUniqueName = ah.NameOrUniqueName,
+                    HouseType = b.buildingType.Value,
+                    UniqueToken = CreateUniqueToken(animalId, noteId),
+                    NoteItemId = noteId,
+                    QuestId = AnimalNoteIds.NoteQuestId(token),
+                    MailId = AnimalNoteIds.NoteMailId(token),
+                    NotePlaced = true,
+                    QuestGiven = false,
+                };
+
+                _data.Pending.Add(rec);
+            }
+        }
+    }
+
+    private static long TryFindAnimalIdInHouse(AnimalHouse house, string animalType)
+    {
+        try
+        {
+            foreach (var a in house.animals.Values)
+            {
+                if (string.Equals(a.type.Value, animalType, StringComparison.OrdinalIgnoreCase))
+                    return a.myID.Value;
+            }
+        }
+        catch
+        {
+            // ignored
+        }
+
+        return 0;
+    }
+
+    private static bool IsJunimoNoteId(string itemId)
+        => !string.IsNullOrWhiteSpace(itemId) && itemId.StartsWith($"{Constants.ModId}_junimoNote_", StringComparison.OrdinalIgnoreCase);
+
+    private static string ExtractAnimalTokenFromNoteId(string noteId)
+        => noteId.Replace($"{Constants.ModId}_junimoNote_", string.Empty, StringComparison.OrdinalIgnoreCase);
+
+    private void NormalizeFlagsFromWorldState()
+    {
+        foreach (var p in _data.Pending)
+        {
+            p.NotePlaced = Utility.doesItemExistAnywhere(p.NoteItemId);
+
+            try
+            {
+                if (_quests.HasCompletedQuest(p.QuestId) || Game1.player.questLog.Any(q => string.Equals(q.id.Value, p.QuestId, StringComparison.OrdinalIgnoreCase)))
+                    p.QuestGiven = true;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+    }
+
+    private void DeduplicatePending()
+    {
+        if (_data.Pending.Count <= 1)
+            return;
+
+        var map = new Dictionary<long, HatchedAnimalRecord>();
+        var keep = new List<HatchedAnimalRecord>();
+
+        foreach (var p in _data.Pending)
+        {
+            if (p.AnimalId <= 0)
+            {
+                keep.Add(p);
+                continue;
+            }
+
+            if (!map.TryGetValue(p.AnimalId, out var existing))
+            {
+                map[p.AnimalId] = p;
+                keep.Add(p);
+                continue;
+            }
+
+            existing.NotePlaced |= p.NotePlaced;
+            existing.QuestGiven |= p.QuestGiven;
+
+            existing.DayNotePlaced ??= p.DayNotePlaced;
+            existing.DayQuestGiven ??= p.DayQuestGiven;
+
+            if (string.IsNullOrWhiteSpace(existing.HomeNameOrUniqueName))
+                existing.HomeNameOrUniqueName = p.HomeNameOrUniqueName;
+
+            if (string.IsNullOrWhiteSpace(existing.UniqueToken))
+                existing.UniqueToken = p.UniqueToken;
+        }
+
+        _data.Pending = keep;
+    }
+
+
+    private string TranslateOrFallback(string key, string fallback)
+    {
+        var translated = _i18n.Get(key).ToString();
+        return string.Equals(translated, key, StringComparison.OrdinalIgnoreCase) ? fallback : translated;
+    }
+
+private void ProcessPending()
     {
         if (_data.Pending.Count == 0)
             return;
@@ -299,39 +598,38 @@ public sealed class AnimalNotesOrchestrator
         {
             if (Utility.doesItemExistAnywhere(p.NoteItemId))
             {
-                p.NotePlaced = true; // already exists somewhere, avoid duplicating.
+                p.NotePlaced = true;
+                ResetPlacementFailures(p);
                 continue;
             }
 
             var home = ResolveAnimalHome(p.HomeNameOrUniqueName);
             if (home is null)
+            {
+                RecordPlacementFailure(p, dayNumber, "Animal home location not found.");
                 continue;
+            }
 
-            var tile = GetAdjacentOpenTileNearIncubator(home);
-            if (tile is null)
+            if (!TryFindPlacementTile(home, out var tile, out var reason))
+            {
+                RecordPlacementFailure(p, dayNumber, reason);
                 continue;
+            }
 
-            if (_placer.TryPlaceObject(home, tile.Value, p.NoteItemId, stack: 1, destroyOvernight: false))
+            if (_placer.TryPlaceObject(home, tile, p.NoteItemId, stack: 1, destroyOvernight: false, isSpawnedObject: true))
             {
                 p.NotePlaced = true;
-                p.DayNotePlaced = dayNumber;
-                _log.Log($"AnimalNotes: placed note '{p.NoteItemId}' for '{p.FarmAnimalName}' at {tile.Value}.", StardewModdingAPI.LogLevel.Trace);
+                p.DayNotePlaced ??= dayNumber;
+                ResetPlacementFailures(p);
+                _log.Log($"AnimalNotes: placed note '{p.NoteItemId}' for '{p.FarmAnimalName}' at {tile}.", StardewModdingAPI.LogLevel.Trace);
+            }
+            else
+            {
+                RecordPlacementFailure(p, dayNumber, "Failed to place object at chosen tile.");
             }
         }
 
         Save();
-    }
-
-    private static Vector2? GetAdjacentOpenTileNearIncubator(GameLocation location)
-    {
-        var incubator = location.objects.Values.FirstOrDefault(o => string.Equals(o.ItemId, ModItemIds.WildEggIncubator, StringComparison.OrdinalIgnoreCase));
-        var reference = incubator?.TileLocation ?? location.getRandomTile(Game1.random);
-
-        Vector2 tile;
-        try { tile = Utility.getRandomAdjacentOpenTile(reference, location); }
-        catch { return null; }
-
-        return tile;
     }
 
     private GameLocation? ResolveAnimalHome(string homeNameOrUniqueName)
@@ -358,9 +656,11 @@ public sealed class AnimalNotesOrchestrator
 
         var locName = location.NameOrUniqueName;
 
-        foreach (var p in _data.Pending.Where(x => !x.QuestGiven && string.Equals(x.HomeNameOrUniqueName, locName, StringComparison.OrdinalIgnoreCase)).ToList())
+        foreach (var p in _data.Pending
+                     .Where(x => !x.QuestGiven && string.Equals(x.HomeNameOrUniqueName, locName, StringComparison.OrdinalIgnoreCase))
+                     .ToList())
         {
-            if (!Utility.ForEachItemIn(location, item => item is not null && item.ItemId.EqualsIgnoreCase(p.NoteItemId)))
+            if (!Utility.doesItemExistAnywhere(p.NoteItemId))
                 continue;
 
             try
@@ -372,16 +672,16 @@ public sealed class AnimalNotesOrchestrator
                 };
                 Game1.addHUDMessage(hud);
             }
-            catch { /* HUD is best-effort */ }
-
-            try
+            catch
             {
-                _quests.AddQuest(p.QuestId);
+                // HUD is best-effort.
             }
+
+            try { _quests.AddQuest(p.QuestId); }
             catch { /* ignored */ }
 
             p.QuestGiven = true;
-            p.DayQuestGiven = _game.GetDayNumber();
+            p.DayQuestGiven ??= _game.GetDayNumber();
             _log.Log($"AnimalNotes: quest '{p.QuestId}' issued for '{p.FarmAnimalName}'.", StardewModdingAPI.LogLevel.Trace);
         }
 

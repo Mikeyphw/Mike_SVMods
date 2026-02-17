@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Mikew.BirdsOfAFeather.Framework.Random;
 using StardewValley;
+using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Application.Spawning;
 using WildEggsHatching.Application.Spawning.Diagnostics;
@@ -26,6 +27,8 @@ public sealed class ModFacade : IModFacade
 
     private readonly ProgressionService? _progression;
     private readonly WildEggSpawnOrchestrator? _spawner;
+    private readonly AnimalNotesOrchestrator? _animalNotes;
+    private readonly AnimalNotesStartupValidator? _animalNotesValidator;
 
     private readonly IWorldLocations _world;
     private readonly IItemRegistry _items;
@@ -42,6 +45,8 @@ public sealed class ModFacade : IModFacade
         SmapiReloadAll reloadAll,
         ProgressionService? progression,
         WildEggSpawnOrchestrator? spawner,
+        AnimalNotesOrchestrator? animalNotes,
+        AnimalNotesStartupValidator? animalNotesValidator,
         IWorldLocations world,
         IItemRegistry items,
         IGameStateReader game,
@@ -57,6 +62,8 @@ public sealed class ModFacade : IModFacade
 
         _progression = progression;
         _spawner = spawner;
+        _animalNotes = animalNotes;
+        _animalNotesValidator = animalNotesValidator;
 
         _world = world;
         _items = items;
@@ -206,6 +213,36 @@ public sealed class ModFacade : IModFacade
             VoidChickenPrice = c.VoidChickenPrice,
             OstrichPrice = c.OstrichPrice,
         };
+
+    public FacadeResult DumpAnimalNotes()
+    {
+        if (_animalNotes is null)
+            return new FacadeResult(false, "AnimalNotes service unavailable.");
+
+        if (!_isWorldReady())
+            return new FacadeResult(false, "World not ready.");
+
+        if (!_isMainPlayer())
+            return new FacadeResult(false, "Host-only.");
+
+        return new FacadeResult(true, _animalNotes.DumpState());
+    }
+
+    public FacadeResult ValidateAnimalNotes()
+    {
+        if (_animalNotesValidator is null)
+            return new FacadeResult(false, "AnimalNotes validator unavailable.");
+
+        if (!_isWorldReady())
+            return new FacadeResult(false, "World not ready.");
+
+        if (!_isMainPlayer())
+            return new FacadeResult(false, "Host-only.");
+
+        _animalNotesValidator.ValidateAndLog();
+        return new FacadeResult(true, "AnimalNotes validation complete (see log).");
+    }
+
 }
 
 /// <summary>Delegate used to keep reloading logic centralized in ModEntry.</summary>

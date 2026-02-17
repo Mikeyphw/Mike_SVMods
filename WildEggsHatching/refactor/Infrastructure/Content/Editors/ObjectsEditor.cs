@@ -122,6 +122,7 @@ public sealed class ObjectsEditor : AssetEditorBase
             CustomFields = new Dictionary<string, string>
             {
                 ["WildEggs.Animal"] = animalKey,
+                ["WildEggs.IsNote"] = "true",
             },
         };
 

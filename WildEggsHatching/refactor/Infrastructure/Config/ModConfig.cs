@@ -30,4 +30,33 @@ public sealed class ModConfig
     public string DinoPrice { get; set; } = "6000";
     public string VoidChickenPrice { get; set; } = "default";
     public string OstrichPrice { get; set; } = "500";
+
+
+    /// <summary>
+    /// Enable extra AnimalNotes HUD warnings + trace logs (debug/optional).
+    /// </summary>
+    public bool AnimalNotesDebugMode { get; set; } = false;
+
+    /// <summary>
+    /// Show a warning HUD message after this many consecutive in-game days of placement failures.
+    /// </summary>
+    public int AnimalNotesWarnAfterDays { get; set; } = 2;
+
+    /// <summary>
+    /// Max search radius (tiles) when placing Junimo notes inside animal houses.
+    /// </summary>
+    public int AnimalNotesPlacementRadius { get; set; } = 8;
+
+
+    /// <summary>
+    /// In multiplayer: only the host may add quests and queue mail for AnimalNotes.
+    /// If false, clients may also add quests/mail locally (not recommended unless you understand the sync implications).
+    /// </summary>
+    public bool AnimalNotesQuestMailHostOnly { get; set; } = true;
+
+    /// <summary>
+    /// In multiplayer: allow clients to send "note found" messages to the host so the host can issue the quest.
+    /// </summary>
+    public bool AnimalNotesAllowClientDiscoveries { get; set; } = true;
+
 }

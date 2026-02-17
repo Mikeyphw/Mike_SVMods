@@ -24,6 +24,7 @@ public sealed class WeggCommandDispatcher
             "step" => HandleStep(args),
             "progression" => HandleProgression(args),
             "spawn" => HandleSpawn(args),
+            "notes" => HandleNotes(args),
             _ => new CommandResult(false, $"Unknown subcommand '{args[0]}'.\n\n{HelpText()}"),
         };
     }
@@ -102,6 +103,20 @@ public sealed class WeggCommandDispatcher
         return ToCommandResult(_facade.TryPlaceItem(location, itemId, count, maxAttempts));
     }
 
+    private CommandResult HandleNotes(string[] args)
+    {
+        if (args.Length < 2)
+            return new CommandResult(false, $"Missing notes subcommand.\n\n{HelpText()}");
+
+        var sub = args[1].ToLowerInvariant();
+        return sub switch
+        {
+            "dump" => ToCommandResult(_facade.DumpAnimalNotes()),
+            "validate" => ToCommandResult(_facade.ValidateAnimalNotes()),
+            _ => new CommandResult(false, $"Unknown notes subcommand '{args[1]}'.\n\n{HelpText()}"),
+        };
+    }
+
     private static bool IsHelp(string arg)
         => arg is "-h" or "--help" or "help" or "?";
 
@@ -119,6 +134,10 @@ public sealed class WeggCommandDispatcher
             "  wegg progression eval",
             "  wegg spawn now",
             "  wegg spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]",
+            "  wegg notes dump",
+            "  wegg notes validate",
+            "  wegg_notes dump",
+            "  wegg_notes validate",
             "",
             "Notes:",
             "  - Host-only mutations; clients will be rejected.",

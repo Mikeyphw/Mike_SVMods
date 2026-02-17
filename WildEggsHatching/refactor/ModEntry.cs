@@ -9,10 +9,12 @@ using WildEggsHatching.Infrastructure.DesertTomb.Loot;
 using WildEggsHatching.Infrastructure.DesertTomb.Loot.Definitions;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 using WildEggsHatching.Infrastructure.DesertTomb.Harmony;
+using WildEggsHatching.Infrastructure.Harmony;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using WildEggsHatching.Application.Facade;
 using WildEggsHatching.Application.AnimalNotes;
+using WildEggsHatching.Application.AnimalNotes.Messages;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Application.Spawning;
 using WildEggsHatching.Application.Spawning.Diagnostics;
@@ -54,6 +56,9 @@ public sealed class ModEntry : Mod
     private DesertTombRuntime? _desertTomb;
 
     private AnimalNotesOrchestrator? _animalNotes;
+    private AnimalNotesClientObserver? _animalNotesClient;
+    private AnimalNotesStartupValidator? _animalNotesValidator;
+    private bool _pendingAnimalNotesValidation;
 
     private DesertTombDiagnostics? _desertTombDiagnostics;
 
@@ -128,13 +133,17 @@ public sealed class ModEntry : Mod
 
         var items = new GameItemRegistry();
 
-        _animalNotes = _dataLoader is null || _saveData is null || _progression is null
+
+        _animalNotes = !Context.IsMainPlayer || _dataLoader is null || _saveData is null || _progression is null
             ? null
             : new AnimalNotesOrchestrator(
                 store: _saveData,
                 dataLoader: _dataLoader,
                 game: _game,
                 i18n: Helper.Translation,
+                debugMode: configProvider.Config.AnimalNotesDebugMode,
+                warnAfterDays: configProvider.Config.AnimalNotesWarnAfterDays,
+                placementRadius: configProvider.Config.AnimalNotesPlacementRadius,
                 mail: mail,
                 quests: quests,
                 placer: placer,
@@ -143,6 +152,25 @@ public sealed class ModEntry : Mod
                 getStep: () => _progression?.GetCurrentStep() ?? ProgressionStep.PartI,
                 isMainPlayer: () => Context.IsMainPlayer
             );
+
+        _animalNotesClient = _dataLoader is null
+            ? null
+            : new AnimalNotesClientObserver(
+                helper: helper,
+                log: log,
+                modUniqueId: ModManifest.UniqueID,
+                getStep: () => _progression?.GetCurrentStep() ?? ProgressionStep.PartI,
+                allowClientDiscoveries: () => configProvider.Config.AnimalNotesAllowClientDiscoveries
+            );
+
+        _animalNotesValidator = _dataLoader is null
+            ? null
+            : new AnimalNotesStartupValidator(
+                dataLoader: _dataLoader,
+                log: log,
+                getStep: () => _progression?.GetCurrentStep() ?? ProgressionStep.PartI
+            );
+
 
 
 
@@ -167,6 +195,9 @@ public sealed class ModEntry : Mod
         var harmony = new Harmony(ModManifest.UniqueID + ".deserttomb");
         DesertTombMineShaftPatches.Install(harmony, _desertTomb);
 
+        var harmonyNotes = new Harmony(ModManifest.UniqueID + ".animalnotes");
+        AnimalNotesItemPatches.Install(harmonyNotes);
+
 
 
         _facade = new ModFacade(
@@ -177,6 +208,8 @@ public sealed class ModEntry : Mod
             reloadAll: () => ReloadAll(log),
             progression: _progression,
             spawner: _spawner,
+            animalNotes: _animalNotes,
+            animalNotesValidator: _animalNotesValidator,
             world: _world,
             items: items,
             game: _game,
@@ -191,6 +224,7 @@ public sealed class ModEntry : Mod
 
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         helper.Events.GameLoop.Saving += OnSaving;
+        helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
         helper.Events.GameLoop.DayStarted += OnDayStarted;
         helper.Events.GameLoop.DayEnding += OnDayEnding;
         helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
@@ -220,9 +254,16 @@ public sealed class ModEntry : Mod
     private void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
         _progression?.OnDayStarted();
+
+        if (Context.IsMainPlayer && _pendingAnimalNotesValidation)
+        {
+            _pendingAnimalNotesValidation = false;
+            _animalNotesValidator?.ValidateAndLog();
+        }
         _spawner?.OnDayStarted();
         _desertTomb?.OnDayStarted();
         _animalNotes?.OnDayStarted();
+        _animalNotesClient?.OnDayStarted();
     }
 
     private void OnDayEnding(object? sender, DayEndingEventArgs e)
@@ -239,7 +280,27 @@ public sealed class ModEntry : Mod
 
         _desertTomb?.OnWarped(e.NewLocation);
         _animalNotes?.OnWarped(e.NewLocation);
+        _animalNotesClient?.OnWarped(e.NewLocation);
     }
+    private void OnModMessageReceived(object? sender, ModMessageReceivedEventArgs e)
+    {
+        if (!Context.IsMainPlayer)
+            return;
+
+
+        if (_ctx?.ConfigProvider.Config.AnimalNotesAllowClientDiscoveries != true)
+            return;
+        if (!string.Equals(e.FromModID, ModManifest.UniqueID, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (string.Equals(e.Type, "WeggAnimalNoteFound", StringComparison.OrdinalIgnoreCase))
+        {
+            var msg = e.ReadAs<AnimalNoteFoundMessage>();
+            _animalNotes?.OnClientNoteFound(msg);
+        }
+    }
+
+
 
     private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Config.ConfigChangedEventArgs e)
     {
@@ -287,6 +348,8 @@ public sealed class ModEntry : Mod
         _progression?.OnSaveLoaded();
         _animalNotes?.OnSaveLoaded();
         _content?.InvalidateAll();
+
+        _pendingAnimalNotesValidation = true;
     }
 
     private void OnSaving(object? sender, SavingEventArgs e)

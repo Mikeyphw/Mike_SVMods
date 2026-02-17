@@ -22,4 +22,8 @@ public interface IModFacade
     FacadeResult TryPlaceItem(string locationName, string qualifiedItemId, int count, int maxAttempts);
 
     FacadeResult TryRunSpawnPlanNow();
+
+    FacadeResult DumpAnimalNotes();
+
+    FacadeResult ValidateAnimalNotes();
 }

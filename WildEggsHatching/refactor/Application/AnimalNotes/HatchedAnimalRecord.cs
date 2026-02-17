@@ -10,9 +10,17 @@ public sealed class HatchedAnimalRecord
 
     public string HouseType { get; set; } = string.Empty;
 
+    /// <summary>Stable identity token used for deduping across moves/loads.</summary>
+    public string UniqueToken { get; set; } = string.Empty;
+
     public string NoteItemId { get; set; } = string.Empty;
     public string QuestId { get; set; } = string.Empty;
     public string MailId { get; set; } = string.Empty;
+
+    public string LastPlacementFailureReason { get; set; } = string.Empty;
+    public int ConsecutivePlacementFailureDays { get; set; }
+    public int? LastPlacementAttemptDay { get; set; }
+    public int? LastDevWarningDay { get; set; }
 
     /// <summary>True once the note object has been placed into the home location.</summary>
     public bool NotePlaced { get; set; }
