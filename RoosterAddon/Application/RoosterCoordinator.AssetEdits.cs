@@ -32,6 +32,9 @@ internal sealed partial class RoosterCoordinator : IRoosterAssetEdits
     RoosterAddonConfig IRoosterAssetEdits.Config => Config;
     RoosterControl IRoosterAssetEdits.RoosterHelper => RoosterHelper;
 
+    Dictionary<Textures, Dictionary<TextureDetails, string>> IRoosterAssetEdits.ModTextures => ModTextures;
+    bool IRoosterAssetEdits.IsStuckInside => isStuckInside;
+
     bool IRoosterAssetEdits.CloneEggsEnabled => HatchApi is not null && HatchApi.GetClonedAnimalsInfo().Count > 0;
 
     void IRoosterAssetEdits.EnsureRoostersSetup() => EnsureRoostersSetup();

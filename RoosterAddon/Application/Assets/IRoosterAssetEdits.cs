@@ -30,6 +30,9 @@ internal interface IRoosterAssetEdits
     RoosterAddonConfig Config { get; }
     RoosterControl RoosterHelper { get; }
 
+    Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures { get; }
+    bool IsStuckInside { get; }
+
     bool CloneEggsEnabled { get; }
 
     void EnsureRoostersSetup();

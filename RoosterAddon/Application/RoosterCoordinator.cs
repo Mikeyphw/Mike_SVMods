@@ -67,9 +67,8 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     
     private readonly FarmAnimalExclusionsService _farmAnimalExclusionsService = new();
-    private readonly FarmAnimalProduceRulesService _produceRulesService = new();
-    private readonly FarmAnimalHatchingService _farmAnimalHatching = new();
-    private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
+private readonly FarmAnimalHatchingService _farmAnimalHatching = new();
+private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
     private readonly Queue<Action> _nextTickActions = new();
     private bool _nextTickHooked;
     private bool _gmcmRegistered;
@@ -259,6 +258,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
         Helper.Events.GameLoop.UpdateTicked -= OnNextTick;
         _nextTickHooked = false;
     }
+
 
 
     private void LoadExclusionsData()

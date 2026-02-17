@@ -4,6 +4,7 @@ using System.Linq;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Helpers;
+using RoosterAddon.Application.FarmAnimals;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -17,8 +18,8 @@ namespace RoosterAddon.Application.Assets;
 internal sealed class FarmAnimalsAssetEditor
 {
     private readonly IRoosterAssetEdits _ctx;
-
-    public FarmAnimalsAssetEditor(IRoosterAssetEdits context)
+    private readonly FarmAnimalsRoosterEditsService _edits = new();
+public FarmAnimalsAssetEditor(IRoosterAssetEdits context)
     {
         _ctx = context;
     }
@@ -32,7 +33,7 @@ internal sealed class FarmAnimalsAssetEditor
 
                 _ctx.EnsureRoostersSetup();
                 foreach (var rooster in _ctx.RoosterHelper.Roosters.Values)
-                    _ctx.SetRoosterData(rooster, data);
+                    _edits.Apply(rooster, data, _ctx.Config, _ctx.RoosterHelper, _ctx.Helper.Translation, _ctx.ModTextures, _ctx.Config.General.EnableStuckInside, _ctx.IsStuckInside, _ctx.Helper.ModRegistry.IsLoaded("6480.blueegg"));
 
                 foreach (var roosterFarmAnimal in RoosterControl.GetRoostersFromCoops())
                     roosterFarmAnimal.reload(roosterFarmAnimal.home);

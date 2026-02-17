@@ -18,10 +18,17 @@ internal sealed class FarmAnimalExclusionsService
         var raw = helper.Data.ReadJsonFile<AnimalExclusion>("exclusions.json") ?? new AnimalExclusion();
         helper.Data.WriteJsonFile("exclusions.json", raw);
 
+        var normalizedTokens = NormalizeTokens(raw.AnimalExclusions ?? new List<string>());
+        var normalizedModIds = (raw.AnimalExclusionsModID ?? new List<string>())
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         return new AnimalExclusion
         {
-            AnimalExclusions = NormalizeTokens(raw.AnimalExclusions),
-            AnimalExclusionsModID = NormalizeModIds(raw.AnimalExclusionsModID)
+            AnimalExclusions = normalizedTokens,
+            AnimalExclusionsModID = normalizedModIds
         };
     }
 
@@ -48,16 +55,6 @@ internal sealed class FarmAnimalExclusionsService
         }
 
         return tokens
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
-
-    internal static List<string> NormalizeModIds(IEnumerable<string> rawIds)
-    {
-        return (rawIds ?? Array.Empty<string>())
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .Select(s => s.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
             .ToList();

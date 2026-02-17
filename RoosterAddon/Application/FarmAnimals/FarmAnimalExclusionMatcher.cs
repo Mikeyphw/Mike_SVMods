@@ -7,14 +7,13 @@ namespace RoosterAddon.Application.FarmAnimals;
 
 /// <summary>
 /// Unit-testable exclusion matcher.
-/// Supported token forms in <see cref="AnimalExclusion.AnimalExclusions"/>:
+/// Supports tokens:
 /// <list type="bullet">
-/// <item><description><c>SomeAnimalKey</c> excludes by key.</description></item>
-/// <item><description><c>building:Big Coop</c> excludes animals requiring that building.</description></item>
-/// <item><description><c>mod:Author.ModId</c> excludes animals whose custom fields indicate that mod id.</description></item>
-/// <item><description><c>cf:Field=Value</c> excludes animals where <c>CustomFields[Field] == Value</c>.</description></item>
+/// <item><description>direct key: <c>Chicken</c></description></item>
+/// <item><description>building: <c>building:Big Coop</c></description></item>
+/// <item><description>mod: <c>mod:Author.ModId</c> (or <c>AnimalExclusionsModID</c>)</description></item>
+/// <item><description>custom field equality: <c>cf:Field=Value</c></description></item>
 /// </list>
-/// Also checks <see cref="AnimalExclusion.AnimalExclusionsModID"/> as mod-id excludes.
 /// </summary>
 internal sealed class FarmAnimalExclusionMatcher
 {

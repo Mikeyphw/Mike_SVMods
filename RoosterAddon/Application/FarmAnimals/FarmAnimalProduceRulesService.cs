@@ -9,7 +9,7 @@ using StardewValley.GameData.FarmAnimals;
 namespace RoosterAddon.Application.FarmAnimals;
 
 /// <summary>
-/// Applies RoosterAddon FarmAnimals produce-related edits.
+/// Applies RoosterAddon FarmAnimals "produce rules" edits (including BlueEgg override).
 /// </summary>
 internal sealed class FarmAnimalProduceRulesService
 {

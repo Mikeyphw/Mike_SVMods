@@ -7,9 +7,9 @@ using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
 using RoosterAddon.Infrastructure.SaveData;
 using StardewValley.GameData.FarmAnimals;
+using RoosterAddon.Application.FarmAnimals;
 
 using ILetMeHatchApi = Mikew.BirdsOfAFeather.Framework.ILetMeHatchApi;
-using RoosterAddon.Application.FarmAnimals;
 
 namespace RoosterAddon.Application.Hatching;
 
