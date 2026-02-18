@@ -1,5 +1,7 @@
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Helpers.Config;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using Mikew.BirdsOfAFeather.Integrations.Gmcm;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -16,8 +18,9 @@ internal sealed class ModEntry : Mod
     internal static CoreModConfig ModCfg { get; private set; } = new();
     internal static CoreContext Context { get; private set; } = null!;
 
+    private SmapiConfigProvider<CoreModConfig>? _configProvider;
+    private ILog? _log;
     private GmcmIntegration? _gmcm;
-
 
     public override object GetApi() => new BirdsOfAFeatherApi();
 
@@ -27,15 +30,22 @@ internal sealed class ModEntry : Mod
         MonitorInstance = Monitor;
         ModManifestInstance = ModManifest;
 
-        ModCfg = helper.ReadConfig<CoreModConfig>();
+        _configProvider = new SmapiConfigProvider<CoreModConfig>(helper, Monitor);
+        ModCfg = _configProvider.Get();
+
+        _log = new SmapiLog(Monitor, verboseEnabled: () => ModCfg.VerboseLogging, testingEnabled: () => ModCfg.TestingLogging);
+
         var translation = new I18TranslationHelper(helper);
-        Context = new CoreContext(helper, Monitor, ModManifest, translation);
+        Context = new CoreContext(helper, Monitor, ModManifest, translation, _log);
 
         helper.Events.GameLoop.GameLaunched += OnGameLaunched;
     }
 
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
+        if (_configProvider is null)
+            return;
+
         _gmcm = GmcmIntegration.TryCreate(
             helper: HelperInstance,
             manifest: ModManifest,
@@ -46,16 +56,19 @@ internal sealed class ModEntry : Mod
             return;
 
         _gmcm.RebuildLayout(
-            getConfig: () => ModCfg,
-            reset: () => ModCfg = new CoreModConfig(),
-            save: () => HelperInstance.WriteConfig(ModCfg),
+            getConfig: () => _configProvider.Get(),
+            reset: () => _configProvider.Update(cfg =>
+            {
+                cfg.VerboseLogging = false;
+                cfg.TestingLogging = false;
+            }),
+            save: _configProvider.Save,
             define: layout =>
             {
                 layout.Root(root =>
                 {
-                    // Keep option ids stable even if config property names change later.
-                    root.Bool(cfg => cfg.VerboseLogging, optionId: "ExtraDebugInfo", tooltip: true);
-                    root.Bool(cfg => cfg.TestingLogging, optionId: "Testing", tooltip: true);
+                    root.Bool(cfg => cfg.VerboseLogging, tooltip: true);
+                    root.Bool(cfg => cfg.TestingLogging, tooltip: true);
                 });
             }
         );

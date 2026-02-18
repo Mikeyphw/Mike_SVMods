@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mikew.BirdsOfAFeather.Framework;
@@ -5,10 +6,11 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Enums;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 
 namespace Mikew.BirdsOfAFeather.Helpers
 {
-    public class Logger
+    public class Logger : ILog
     {
         private readonly IMonitor _monitor;
         private readonly CoreModConfig _config;
@@ -39,15 +41,25 @@ namespace Mikew.BirdsOfAFeather.Helpers
         }
 
         public void TestingLog(string text, LogLevel logLevel = LogLevel.Debug, bool enabled = true)
-        {
-            var invalidLogging = !enabled || !_config.TestingLogging;
-            if (!invalidLogging)
-            {
-                _monitor.Log(text, logLevel);
-            }
-        }
+{
+    var invalidLogging = !enabled || !_config.TestingLogging;
+    if (!invalidLogging)
+    {
+        _monitor.Log(text, logLevel);
+    }
+}
 
-        // WildEggs
+public void LogException(Exception exception, string message, LogLevel logLevel = LogLevel.Error, bool enabled = true)
+{
+    var invalidLogging = !enabled;
+    if (!invalidLogging)
+    {
+        _monitor.Log($"{message}\n{exception}", logLevel);
+    }
+}
+
+// WildEggs
+
         public void LogFarmAnimals(string chosenAnimal, LogLevel logLevel = LogLevel.Trace)
         {
             var animalData = Game1.farmAnimalData[chosenAnimal];

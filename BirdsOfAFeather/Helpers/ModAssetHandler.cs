@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.BirdsOfAFeather.Models;
 using StardewModdingAPI;
@@ -18,6 +19,12 @@ namespace Mikew.BirdsOfAFeather.Helpers
         
         internal readonly List<AssetData> AssetsData = new();
         public List<string> GamePaths { get; private set; } = new();
+
+        private readonly HashSet<string> _gamePathSet = new(StringComparer.OrdinalIgnoreCase);
+
+        public IReadOnlySet<string> GamePathSet => _gamePathSet;
+
+        public bool HasGamePath(string assetBaseName) => _gamePathSet.Contains(assetBaseName);
 
         public ModAssetHandler(string modID, IMonitor monitor)
         {
@@ -129,7 +136,9 @@ namespace Mikew.BirdsOfAFeather.Helpers
                         { AssetPathType.ModFolderPath, modFolderPathString.ToLower() }
                     }
                 );
-                GamePaths.Add(ModAssets[asset.ToLower()][AssetPathType.GamePath]);
+                var gp = ModAssets[asset.ToLower()][AssetPathType.GamePath];
+                GamePaths.Add(gp);
+                _gamePathSet.Add(gp);
             }
         }
 
