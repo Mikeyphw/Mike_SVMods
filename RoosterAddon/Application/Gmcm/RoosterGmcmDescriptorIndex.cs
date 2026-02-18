@@ -10,12 +10,16 @@ namespace RoosterAddon.Application.Gmcm;
 internal sealed record RoosterGmcmDescriptorIndex(
     IReadOnlyList<string> OptionIds,
     IReadOnlyList<string> SectionIds,
+    IReadOnlyList<string> ParagraphIds,
+    IReadOnlyList<string> PageLinkIds,
     IReadOnlyList<string> PageIds)
 {
     public static RoosterGmcmDescriptorIndex Build()
     {
         var optionIds = new List<string>();
         var sectionIds = new List<string>();
+        var paragraphIds = new List<string>();
+        var pageLinkIds = new List<string>();
         var pageIds = new List<string>();
 
         void Scan(IEnumerable<IGmcmDescriptor<RoosterAddonConfig>> ds)
@@ -30,16 +34,23 @@ internal sealed record RoosterGmcmDescriptorIndex(
                     case GmcmDescriptorKind.Section:
                         sectionIds.Add(d.Id);
                         break;
+                    case GmcmDescriptorKind.Paragraph:
+                        paragraphIds.Add(d.Id);
+                        break;
+                    case GmcmDescriptorKind.PageLink:
+                        pageLinkIds.Add(d.Id);
+                        break;
                 }
             }
         }
 
-        Scan(Descriptors.RoosterGmcmDescriptorRegistry.RootGeneral());
-        Scan(Descriptors.RoosterGmcmDescriptorRegistry.RootRoostersLinks());
+        Scan(RoosterGmcmDescriptorRegistry.RootGeneral());
+        Scan(RoosterGmcmDescriptorRegistry.RootRoostersLinks());
 
         var defaults = CatalogDefaults.CreateDefaults();
+        var cfg = RoosterAddonConfig.CreateDefault();
 
-            foreach (var page in Descriptors.RoosterGmcmDescriptorRegistry.Pages(() => RoosterAddonConfig.CreateDefault(), () => defaults))
+        foreach (var page in RoosterGmcmDescriptorRegistry.Pages(() => cfg, () => defaults, () => { }))
         {
             pageIds.Add(page.PageId);
             Scan(page.Content);
@@ -48,6 +59,8 @@ internal sealed record RoosterGmcmDescriptorIndex(
         return new RoosterGmcmDescriptorIndex(
             OptionIds: optionIds,
             SectionIds: sectionIds,
+            ParagraphIds: paragraphIds,
+            PageLinkIds: pageLinkIds,
             PageIds: pageIds);
     }
 

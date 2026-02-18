@@ -43,6 +43,10 @@ internal static class GmcmDescriptorSanityChecker
                         requiredKeys.Add($"config.section.{s.SectionId}.description");
                     break;
 
+                case GmcmParagraphDescriptor<RoosterAddonConfig> p:
+                    requiredKeys.Add($"config.paragraph.{p.ParagraphId}.text");
+                    break;
+
                 case GmcmPageLinkDescriptor<RoosterAddonConfig> l:
                     requiredKeys.Add($"config.pagelink.{l.PageId}.name");
                     if (l.Tooltip)
@@ -57,8 +61,10 @@ internal static class GmcmDescriptorSanityChecker
             }
         }
 
-        foreach (var p in pages)
-            requiredKeys.Add($"config.page.{p}.name");
+        foreach (var pageId in pages)
+            requiredKeys.Add($"config.page.{pageId}.name");
+
+        AddEnumAllowedKeys(requiredKeys);
 
         var missing = requiredKeys
             .Where(k => !i18n.Get(k).HasValue())
@@ -76,6 +82,30 @@ internal static class GmcmDescriptorSanityChecker
             monitor.Log("  missing: " + k, LogLevel.Warn);
     }
 
+    private static void AddEnumAllowedKeys(HashSet<string> keys)
+    {
+        void Add(string optionId, Type enumType)
+        {
+            foreach (var v in Enum.GetNames(enumType))
+                keys.Add($"config.{optionId}.allowed.{v}");
+        }
+
+        Add("general.updateRate", typeof(UpdateRateMode));
+        Add("general.catalogApplyMode", typeof(CatalogApplyMode));
+        Add("general.hatchingMode", typeof(HatchingMode));
+        Add("general.harvestType", typeof(HarvestType));
+
+        foreach (var c in new[] { "white", "brown", "blue", "void", "gold" })
+        {
+            Add($"roosters.{c}.buildingRequired", typeof(RequiredBuilding));
+            Add($"roosters.{c}.produceMode", typeof(ProduceMode));
+            Add($"roosters.{c}.deluxeProduceMode", typeof(DeluxeProduceMode));
+        }
+
+        foreach (var s in new[] { "whiteChicken", "brownChicken", "blueChicken", "voidChicken", "goldenChicken" })
+            Add($"females.{s}.assignment", typeof(FemaleRoosterAssignment));
+    }
+
     private static (List<IGmcmDescriptor<RoosterAddonConfig>> descriptors, List<string> pages) Collect()
     {
         var descriptors = new List<IGmcmDescriptor<RoosterAddonConfig>>();
@@ -86,7 +116,7 @@ internal static class GmcmDescriptorSanityChecker
         var cfg = RoosterAddonConfig.CreateDefault();
         var catalogs = CatalogDefaults.CreateDefaults();
 
-        var pages = RoosterGmcmDescriptorRegistry.Pages(() => cfg, () => catalogs);
+        var pages = RoosterGmcmDescriptorRegistry.Pages(() => cfg, () => catalogs, () => { });
         var pageIds = new List<string>();
 
         foreach (var p in pages)

@@ -10,6 +10,17 @@ namespace RoosterAddon.Application.Gmcm.Descriptors;
 
 internal static class RoosterGmcmDescriptorRegistry
 {
+    private const int ProduceEntryCount = 4;
+
+    private static readonly RoosterType[] RoosterOrder =
+    {
+        RoosterType.White,
+        RoosterType.Brown,
+        RoosterType.Blue,
+        RoosterType.Void,
+        RoosterType.Gold,
+    };
+
     public static IReadOnlyList<IGmcmDescriptor<RoosterAddonConfig>> RootGeneral()
         => new IGmcmDescriptor<RoosterAddonConfig>[]
         {
@@ -40,38 +51,115 @@ internal static class RoosterGmcmDescriptorRegistry
         };
 
     public static IReadOnlyList<IGmcmDescriptor<RoosterAddonConfig>> RootRoostersLinks()
-        => new IGmcmDescriptor<RoosterAddonConfig>[]
+    {
+        var links = new List<IGmcmDescriptor<RoosterAddonConfig>>
         {
             new GmcmSectionDescriptor<RoosterAddonConfig>("root.roosters", Tooltip: false),
-            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_white", Tooltip: true),
-            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_brown", Tooltip: true),
-            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_blue", Tooltip: true),
-            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_void", Tooltip: true),
-            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_gold", Tooltip: true),
+            new GmcmPageLinkDescriptor<RoosterAddonConfig>("females", Tooltip: true),
         };
 
-    public static IReadOnlyList<GmcmPageDescriptor<RoosterAddonConfig>> Pages(Func<RoosterAddonConfig> getConfig, Func<CatalogBundle> getCatalogs)
+        foreach (var rt in RoosterOrder)
+            links.Add(new GmcmPageLinkDescriptor<RoosterAddonConfig>(RoosterPageId(rt), Tooltip: true));
+
+        return links;
+    }
+
+    public static IReadOnlyList<GmcmPageDescriptor<RoosterAddonConfig>> Pages(
+        Func<RoosterAddonConfig> getConfig,
+        Func<CatalogBundle> getCatalogs,
+        Action requestRebuild)
     {
         if (getConfig is null) throw new ArgumentNullException(nameof(getConfig));
+        if (getCatalogs is null) throw new ArgumentNullException(nameof(getCatalogs));
+        if (requestRebuild is null) throw new ArgumentNullException(nameof(requestRebuild));
 
-        return new[]
+        var pages = new List<GmcmPageDescriptor<RoosterAddonConfig>>
         {
-            RoosterPage(getConfig, getCatalogs, RoosterType.White, "roosters_white", "white", includeBlueOnly: false),
-            RoosterPage(getConfig, getCatalogs, RoosterType.Brown, "roosters_brown", "brown", includeBlueOnly: false),
-            RoosterPage(getConfig, getCatalogs, RoosterType.Blue, "roosters_blue", "blue", includeBlueOnly: true),
-            RoosterPage(getConfig, getCatalogs, RoosterType.Void, "roosters_void", "void", includeBlueOnly: false),
-            RoosterPage(getConfig, getCatalogs, RoosterType.Gold, "roosters_gold", "gold", includeBlueOnly: false),
+            FemalesPage(getConfig, getCatalogs),
         };
+
+        foreach (var rt in RoosterOrder)
+            pages.Add(RoosterPage(getConfig, getCatalogs, requestRebuild, rt, includeBlueOnly: rt == RoosterType.Blue));
+
+        return pages;
+    }
+
+    private static GmcmPageDescriptor<RoosterAddonConfig> FemalesPage(
+        Func<RoosterAddonConfig> getConfig,
+        Func<CatalogBundle> getCatalogs)
+    {
+        var p = new List<IGmcmDescriptor<RoosterAddonConfig>>
+        {
+            new GmcmSectionDescriptor<RoosterAddonConfig>("females.assignments", Tooltip: true),
+            new GmcmParagraphDescriptor<RoosterAddonConfig>("females.instructions"),
+        };
+
+        var femaleKeys = BuildFemaleKeys(getCatalogs());
+        foreach (var fk in femaleKeys)
+        {
+            var slug = ToCamelSlug(fk);
+            var optionId = $"females.{slug}.assignment";
+
+            p.Add(Opt(optionId, b => EnumTextOption(
+                b,
+                optionId: optionId,
+                getValue: () => GetFemaleAssignment(getConfig(), fk),
+                setValue: v => SetFemaleAssignment(getConfig(), fk, v),
+                tooltip: true)));
+        }
+
+        return new GmcmPageDescriptor<RoosterAddonConfig>("females", p);
+    }
+
+    private static IReadOnlyList<string> BuildFemaleKeys(CatalogBundle catalogs)
+    {
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var r in catalogs.Roosters.Roosters.Values)
+        {
+            if (!string.IsNullOrWhiteSpace(r.DefaultFemaleKey))
+                keys.Add(r.DefaultFemaleKey);
+
+            foreach (var k in r.AdditionalFemaleKeys)
+            {
+                if (!string.IsNullOrWhiteSpace(k))
+                    keys.Add(k);
+            }
+        }
+
+        return keys.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static FemaleRoosterAssignment GetFemaleAssignment(RoosterAddonConfig cfg, string femaleKey)
+    {
+        cfg.FemalesOptions ??= new Dictionary<string, FemaleRoosterAssignment>(StringComparer.OrdinalIgnoreCase);
+
+        return cfg.FemalesOptions.TryGetValue(femaleKey, out var v) ? v : FemaleRoosterAssignment.Off;
+    }
+
+    private static void SetFemaleAssignment(RoosterAddonConfig cfg, string femaleKey, FemaleRoosterAssignment value)
+    {
+        cfg.FemalesOptions ??= new Dictionary<string, FemaleRoosterAssignment>(StringComparer.OrdinalIgnoreCase);
+
+        if (value == FemaleRoosterAssignment.Off)
+        {
+            cfg.FemalesOptions.Remove(femaleKey);
+            return;
+        }
+
+        cfg.FemalesOptions[femaleKey] = value;
     }
 
     private static GmcmPageDescriptor<RoosterAddonConfig> RoosterPage(
-            Func<RoosterAddonConfig> getConfig,
-            Func<CatalogBundle> getCatalogs,
-            RoosterType type,
-        string pageId,
-        string colorId,
+        Func<RoosterAddonConfig> getConfig,
+        Func<CatalogBundle> getCatalogs,
+        Action requestRebuild,
+        RoosterType type,
         bool includeBlueOnly)
     {
+        var colorId = RoosterColorId(type);
+        var pageId = RoosterPageId(type);
+
         var p = new List<IGmcmDescriptor<RoosterAddonConfig>>();
 
         p.Add(new GmcmSectionDescriptor<RoosterAddonConfig>("roosters.availability"));
@@ -140,26 +228,34 @@ internal static class RoosterGmcmDescriptorRegistry
         p.Add(new GmcmSectionDescriptor<RoosterAddonConfig>("roosters.produce"));
 
         p.Add(Opt($"roosters.{colorId}.produceMode",
-            b => EnumTextOption(
+            b => EnumTextOptionWithRebuild(
                 b,
                 optionId: $"roosters.{colorId}.produceMode",
                 getValue: () => GetSettings(getConfig(), type).ProduceOption,
                 setValue: v => GetSettings(getConfig(), type).ProduceOption = v,
-                tooltip: true)));
+                tooltip: true,
+                requestRebuild: requestRebuild)));
 
-        AddProduceEntries(p, getConfig, getCatalogs, type, colorId, deluxe: false);
+        if (GetSettings(getConfig(), type).ProduceOption == ProduceMode.CustomizeBelow)
+            AddProduceEntries(p, getConfig, getCatalogs, type, colorId, deluxe: false);
+        else
+            p.Add(new GmcmParagraphDescriptor<RoosterAddonConfig>("roosters.entriesHint.produce"));
 
         p.Add(new GmcmSectionDescriptor<RoosterAddonConfig>("roosters.deluxeProduce", Tooltip: true));
 
         p.Add(Opt($"roosters.{colorId}.deluxeProduceMode",
-            b => EnumTextOption(
+            b => EnumTextOptionWithRebuild(
                 b,
                 optionId: $"roosters.{colorId}.deluxeProduceMode",
                 getValue: () => GetSettings(getConfig(), type).DeluxeProduceOption,
                 setValue: v => GetSettings(getConfig(), type).DeluxeProduceOption = v,
-                tooltip: true)));
+                tooltip: true,
+                requestRebuild: requestRebuild)));
 
-        AddProduceEntries(p, getConfig, getCatalogs, type, colorId, deluxe: true);
+        if (GetSettings(getConfig(), type).DeluxeProduceOption == DeluxeProduceMode.CustomizeBelow)
+            AddProduceEntries(p, getConfig, getCatalogs, type, colorId, deluxe: true);
+        else
+            p.Add(new GmcmParagraphDescriptor<RoosterAddonConfig>("roosters.entriesHint.deluxe"));
 
         if (includeBlueOnly)
         {
@@ -184,16 +280,17 @@ internal static class RoosterGmcmDescriptorRegistry
     }
 
     private static void AddProduceEntries(
-            List<IGmcmDescriptor<RoosterAddonConfig>> p,
-            Func<RoosterAddonConfig> getConfig,
-            Func<CatalogBundle> getCatalogs,
-            RoosterType type,
+        List<IGmcmDescriptor<RoosterAddonConfig>> p,
+        Func<RoosterAddonConfig> getConfig,
+        Func<CatalogBundle> getCatalogs,
+        RoosterType type,
         string colorId,
         bool deluxe)
     {
         var listKind = deluxe ? "deluxe" : "produce";
         var allowedChoices = BuildAllowedChoices(getCatalogs(), type, deluxe);
-        for (var i = 0; i < 4; i++)
+
+        for (var i = 0; i < ProduceEntryCount; i++)
         {
             var idx = i;
 
@@ -225,13 +322,34 @@ internal static class RoosterGmcmDescriptorRegistry
         }
     }
 
+    private static string[] BuildAllowedChoices(CatalogBundle catalogs, RoosterType type, bool deluxe)
+    {
+        var id = type.ToString();
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ItemIds.CustomItems.Custom,
+        };
+
+        if (catalogs.Produce.Roosters.TryGetValue(id, out var rooster))
+        {
+            var src = deluxe ? rooster.Deluxe : rooster.Produce;
+            foreach (var e in src)
+            {
+                if (!string.IsNullOrWhiteSpace(e.Choice))
+                    set.Add(e.Choice);
+            }
+        }
+
+        return set.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
     private static ProduceEntry GetEntry(RoosterAddonConfig config, RoosterType type, bool deluxe, int idx)
     {
         var s = GetSettings(config, type);
         var list = deluxe ? s.DeluxeProduceEntries : s.ProduceEntries;
 
         list ??= new List<ProduceEntry>();
-        while (list.Count < 4)
+        while (list.Count < ProduceEntryCount)
             list.Add(new ProduceEntry());
 
         if (deluxe)
@@ -257,6 +375,38 @@ internal static class RoosterGmcmDescriptorRegistry
         return s;
     }
 
+    private static string RoosterColorId(RoosterType type)
+        => type switch
+        {
+            RoosterType.White => "white",
+            RoosterType.Brown => "brown",
+            RoosterType.Blue => "blue",
+            RoosterType.Void => "void",
+            RoosterType.Gold => "gold",
+            _ => "white",
+        };
+
+    private static string RoosterPageId(RoosterType type)
+        => $"roosters_{RoosterColorId(type)}";
+
+    private static string ToCamelSlug(string value)
+    {
+        var parts = value
+            .Split(new[] { ' ', '-', '_', '/', '\\', '.' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Trim())
+            .Where(p => p.Length > 0)
+            .ToList();
+
+        if (parts.Count == 0)
+            return "unknown";
+
+        var camel = string.Concat(parts.Select(Capitalize));
+        return char.ToLowerInvariant(camel[0]) + camel[1..];
+    }
+
+    private static string Capitalize(string s)
+        => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s[1..];
+
     private static int Clamp(int value, int min, int max) => Math.Min(max, Math.Max(min, value));
 
     private static IGmcmDescriptor<RoosterAddonConfig> Opt(string optionId, Action<Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmPageBuilder<RoosterAddonConfig>> add)
@@ -278,6 +428,37 @@ internal static class RoosterGmcmDescriptorRegistry
             {
                 if (Enum.TryParse<TEnum>(v, ignoreCase: true, out var parsed))
                     setValue(parsed);
+            },
+            tooltip: tooltip,
+            allowedValues: allowedValues,
+            formatAllowedValue: true);
+    }
+
+    private static void EnumTextOptionWithRebuild<TEnum>(
+        Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmPageBuilder<RoosterAddonConfig> b,
+        string optionId,
+        Func<TEnum> getValue,
+        Action<TEnum> setValue,
+        bool tooltip,
+        Action requestRebuild)
+        where TEnum : struct, Enum
+    {
+        var allowedValues = Enum.GetNames(typeof(TEnum));
+
+        b.Text(
+            optionId: optionId,
+            getValue: () => getValue().ToString(),
+            setValue: v =>
+            {
+                if (!Enum.TryParse<TEnum>(v, ignoreCase: true, out var parsed))
+                    return;
+
+                var current = getValue();
+                if (!EqualityComparer<TEnum>.Default.Equals(current, parsed))
+                {
+                    setValue(parsed);
+                    requestRebuild();
+                }
             },
             tooltip: tooltip,
             allowedValues: allowedValues,
