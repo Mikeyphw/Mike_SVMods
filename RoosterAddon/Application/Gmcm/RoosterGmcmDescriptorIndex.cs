@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RoosterAddon.Application.Catalogs;
 using RoosterAddon.Application.Gmcm.Descriptors;
 using RoosterAddon.Framework.Config;
 
@@ -36,7 +37,9 @@ internal sealed record RoosterGmcmDescriptorIndex(
         Scan(Descriptors.RoosterGmcmDescriptorRegistry.RootGeneral());
         Scan(Descriptors.RoosterGmcmDescriptorRegistry.RootRoostersLinks());
 
-        foreach (var page in Descriptors.RoosterGmcmDescriptorRegistry.Pages(() => RoosterAddonConfig.CreateDefault()))
+        var defaults = CatalogDefaults.CreateDefaults();
+
+            foreach (var page in Descriptors.RoosterGmcmDescriptorRegistry.Pages(() => RoosterAddonConfig.CreateDefault(), () => defaults))
         {
             pageIds.Add(page.PageId);
             Scan(page.Content);

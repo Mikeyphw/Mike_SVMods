@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RoosterAddon.Application.Catalogs;
+using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
 
@@ -48,23 +50,24 @@ internal static class RoosterGmcmDescriptorRegistry
             new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_gold", Tooltip: true),
         };
 
-    public static IReadOnlyList<GmcmPageDescriptor<RoosterAddonConfig>> Pages(Func<RoosterAddonConfig> getConfig)
+    public static IReadOnlyList<GmcmPageDescriptor<RoosterAddonConfig>> Pages(Func<RoosterAddonConfig> getConfig, Func<CatalogBundle> getCatalogs)
     {
         if (getConfig is null) throw new ArgumentNullException(nameof(getConfig));
 
         return new[]
         {
-            RoosterPage(getConfig, RoosterType.White, "roosters_white", "white", includeBlueOnly: false),
-            RoosterPage(getConfig, RoosterType.Brown, "roosters_brown", "brown", includeBlueOnly: false),
-            RoosterPage(getConfig, RoosterType.Blue, "roosters_blue", "blue", includeBlueOnly: true),
-            RoosterPage(getConfig, RoosterType.Void, "roosters_void", "void", includeBlueOnly: false),
-            RoosterPage(getConfig, RoosterType.Gold, "roosters_gold", "gold", includeBlueOnly: false),
+            RoosterPage(getConfig, getCatalogs, RoosterType.White, "roosters_white", "white", includeBlueOnly: false),
+            RoosterPage(getConfig, getCatalogs, RoosterType.Brown, "roosters_brown", "brown", includeBlueOnly: false),
+            RoosterPage(getConfig, getCatalogs, RoosterType.Blue, "roosters_blue", "blue", includeBlueOnly: true),
+            RoosterPage(getConfig, getCatalogs, RoosterType.Void, "roosters_void", "void", includeBlueOnly: false),
+            RoosterPage(getConfig, getCatalogs, RoosterType.Gold, "roosters_gold", "gold", includeBlueOnly: false),
         };
     }
 
     private static GmcmPageDescriptor<RoosterAddonConfig> RoosterPage(
-        Func<RoosterAddonConfig> getConfig,
-        RoosterType type,
+            Func<RoosterAddonConfig> getConfig,
+            Func<CatalogBundle> getCatalogs,
+            RoosterType type,
         string pageId,
         string colorId,
         bool includeBlueOnly)
@@ -144,7 +147,7 @@ internal static class RoosterGmcmDescriptorRegistry
                 setValue: v => GetSettings(getConfig(), type).ProduceOption = v,
                 tooltip: true)));
 
-        AddProduceEntries(p, getConfig, type, colorId, deluxe: false);
+        AddProduceEntries(p, getConfig, getCatalogs, type, colorId, deluxe: false);
 
         p.Add(new GmcmSectionDescriptor<RoosterAddonConfig>("roosters.deluxeProduce", Tooltip: true));
 
@@ -156,7 +159,7 @@ internal static class RoosterGmcmDescriptorRegistry
                 setValue: v => GetSettings(getConfig(), type).DeluxeProduceOption = v,
                 tooltip: true)));
 
-        AddProduceEntries(p, getConfig, type, colorId, deluxe: true);
+        AddProduceEntries(p, getConfig, getCatalogs, type, colorId, deluxe: true);
 
         if (includeBlueOnly)
         {
@@ -181,13 +184,15 @@ internal static class RoosterGmcmDescriptorRegistry
     }
 
     private static void AddProduceEntries(
-        List<IGmcmDescriptor<RoosterAddonConfig>> p,
-        Func<RoosterAddonConfig> getConfig,
-        RoosterType type,
+            List<IGmcmDescriptor<RoosterAddonConfig>> p,
+            Func<RoosterAddonConfig> getConfig,
+            Func<CatalogBundle> getCatalogs,
+            RoosterType type,
         string colorId,
         bool deluxe)
     {
         var listKind = deluxe ? "deluxe" : "produce";
+        var allowedChoices = BuildAllowedChoices(getCatalogs(), type, deluxe);
         for (var i = 0; i < 4; i++)
         {
             var idx = i;
@@ -197,7 +202,9 @@ internal static class RoosterGmcmDescriptorRegistry
                     optionId: $"roosters.{colorId}.{listKind}.{idx + 1}.choice",
                     getValue: () => GetEntry(getConfig(), type, deluxe, idx).Choice ?? string.Empty,
                     setValue: v => GetEntry(getConfig(), type, deluxe, idx).Choice = v ?? string.Empty,
-                    tooltip: true)));
+                    tooltip: true,
+                    allowedValues: allowedChoices,
+                    formatAllowedValue: false)));
 
             p.Add(Opt($"roosters.{colorId}.{listKind}.{idx + 1}.customItemName",
                 b => b.Text(

@@ -32,6 +32,10 @@ internal sealed partial class RoosterCoordinator
         if (boaf.ApiVersion < RequiredBoafApiVersion)
             throw new InvalidOperationException($"BirdsOfAFeather API is too old (have {boaf.ApiVersion}, need {RequiredBoafApiVersion}+).");
 
+
+        if (Config.General.EnableDebug)
+            GmcmDescriptorSanityChecker.Run(Monitor, Helper.Translation);
+
         _gmcm = boaf.RegisterGmcmMenu(
             helper: Helper,
             manifest: ModManifest,
@@ -84,7 +88,7 @@ internal sealed partial class RoosterCoordinator
         layout.Root(b => GmcmLayoutCompiler.Apply(b, RoosterGmcmDescriptorRegistry.RootGeneral()));
         layout.Root(b => GmcmLayoutCompiler.Apply(b, RoosterGmcmDescriptorRegistry.RootRoostersLinks()));
 
-        foreach (var page in RoosterGmcmDescriptorRegistry.Pages(() => Config))
+        foreach (var page in RoosterGmcmDescriptorRegistry.Pages(() => Config, () => _catalogs))
             layout.Page(page.PageId, b => GmcmLayoutCompiler.Apply(b, page.Content));
     }
 }
