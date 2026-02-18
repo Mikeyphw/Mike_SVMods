@@ -1,314 +1,279 @@
 using System;
-using RoosterAddon.Application.Gmcm;
+using System.Collections.Generic;
+using System.Linq;
+using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
 
 namespace RoosterAddon.Application.Gmcm.Descriptors;
 
 internal static class RoosterGmcmDescriptorRegistry
 {
-    public static GmcmSectionDescriptor RootGeneral()
-        => new(
-            SectionId: "general",
-            Tooltip: false,
-            Entries: new IGmcmEntryDescriptor[]
-            {
-                new GmcmBoolOptionDescriptor(
-                    OptionId: "general.enableDebug",
-                    Member: c => c.General.EnableDebug,
-                    Tooltip: true),
+    public static IReadOnlyList<IGmcmDescriptor<RoosterAddonConfig>> RootGeneral()
+        => new IGmcmDescriptor<RoosterAddonConfig>[]
+        {
+            new GmcmSectionDescriptor<RoosterAddonConfig>("root.general", Tooltip: false),
 
-                new GmcmEnumOptionDescriptor<UpdateRateMode>(
-                    OptionId: "general.updateRate",
-                    Member: c => c.General.UpdateRate,
-                    Tooltip: true),
+            Opt("general.updateRate", b => b.Enum(c => c.General.UpdateRate, optionId: "general.updateRate", tooltip: true)),
+            Opt("general.catalogApplyMode", b => b.Enum(c => c.General.CatalogApplyMode, optionId: "general.catalogApplyMode", tooltip: true)),
+            Opt("general.dailyLuckBonusPercent", b => b.Int(c => c.General.ChosenPercentageDailyLuckBonus, optionId: "general.dailyLuckBonusPercent", tooltip: true, min: 0, max: 100, interval: 1)),
+            Opt("general.hatchingMode", b => b.Enum(c => c.General.HatchingMode, optionId: "general.hatchingMode", tooltip: true)),
+            Opt("general.harvestType", b => b.Enum(c => c.General.HarvestType, optionId: "general.harvestType", tooltip: true)),
 
-                new GmcmIntOptionDescriptor(
-                    OptionId: "general.chosenPercentageDailyLuckBonus",
-                    Member: c => c.General.ChosenPercentageDailyLuckBonus,
-                    Min: 0,
-                    Max: 100,
-                    Interval: 1,
-                    Tooltip: true),
+            Opt("general.betterTrufflesCompat", b => b.Bool(c => c.General.BetterTrufflesCompat, optionId: "general.betterTrufflesCompat", tooltip: true)),
+            Opt("general.enableStuckInside", b => b.Bool(c => c.General.EnableStuckInside, optionId: "general.enableStuckInside", tooltip: true)),
 
-                new GmcmEnumOptionDescriptor<HarvestType>(
-                    OptionId: "general.harvestType",
-                    Member: c => c.General.HarvestType,
-                    Tooltip: true),
+            Opt("general.enableEggProbability", b => b.Bool(c => c.General.EnableEggProbability, optionId: "general.enableEggProbability", tooltip: true)),
+            Opt("general.eggProbabilityPercent", b => b.Int(c => c.General.EggProbability, optionId: "general.eggProbabilityPercent", tooltip: true, min: 0, max: 100, interval: 1)),
 
-                new GmcmBoolOptionDescriptor(
-                    OptionId: "general.enableStuckInside",
-                    Member: c => c.General.EnableStuckInside,
-                    Tooltip: true),
+            Opt("general.enableLargeEggProbability", b => b.Bool(c => c.General.EnableLargeEggProbability, optionId: "general.enableLargeEggProbability", tooltip: true)),
+            Opt("general.largeEggProbabilityPercent", b => b.Int(c => c.General.LargeEggProbability, optionId: "general.largeEggProbabilityPercent", tooltip: true, min: 0, max: 100, interval: 1)),
 
-                new GmcmBoolOptionDescriptor(
-                    OptionId: "general.betterTrufflesCompat",
-                    Member: c => c.General.BetterTrufflesCompat,
-                    Tooltip: true),
+            Opt("general.enableFertilizedEggProbability", b => b.Bool(c => c.General.EnableFertilizedEggProbability, optionId: "general.enableFertilizedEggProbability", tooltip: true)),
+            Opt("general.fertilizedEggProbabilityPercent", b => b.Int(c => c.General.FertilizedEggProbability, optionId: "general.fertilizedEggProbabilityPercent", tooltip: true, min: 0, max: 100, interval: 1)),
 
-                new GmcmEnumOptionDescriptor<HatchingMode>(
-                    OptionId: "general.hatchingMode",
-                    Member: c => c.General.HatchingMode,
-                    Tooltip: true),
+            Opt("general.roosterToChickenRatioPercent", b => b.Int(c => c.General.RoosterToChickenRatio, optionId: "general.roosterToChickenRatioPercent", tooltip: true, min: 0, max: 100, interval: 1)),
+            Opt("general.boostByRooster", b => b.Float(c => c.General.BoostByRooster, optionId: "general.boostByRooster", tooltip: true, min: 0f, max: 1000f, interval: 0.01f)),
 
-                new GmcmBoolOptionDescriptor(
-                    OptionId: "general.enableEggProbability",
-                    Member: c => c.General.EnableEggProbability,
-                    Tooltip: true),
+            Opt("general.enableDebug", b => b.Bool(c => c.General.EnableDebug, optionId: "general.enableDebug", tooltip: true)),
+        };
 
-                new GmcmIntOptionDescriptor(
-                    OptionId: "general.eggProbability",
-                    Member: c => c.General.EggProbability,
-                    Min: 0,
-                    Max: 100,
-                    Interval: 1,
-                    Tooltip: true),
+    public static IReadOnlyList<IGmcmDescriptor<RoosterAddonConfig>> RootRoostersLinks()
+        => new IGmcmDescriptor<RoosterAddonConfig>[]
+        {
+            new GmcmSectionDescriptor<RoosterAddonConfig>("root.roosters", Tooltip: false),
+            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_white", Tooltip: true),
+            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_brown", Tooltip: true),
+            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_blue", Tooltip: true),
+            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_void", Tooltip: true),
+            new GmcmPageLinkDescriptor<RoosterAddonConfig>("roosters_gold", Tooltip: true),
+        };
 
-                new GmcmBoolOptionDescriptor(
-                    OptionId: "general.enableLargeEggProbability",
-                    Member: c => c.General.EnableLargeEggProbability,
-                    Tooltip: true),
-
-                new GmcmIntOptionDescriptor(
-                    OptionId: "general.largeEggProbability",
-                    Member: c => c.General.LargeEggProbability,
-                    Min: 0,
-                    Max: 100,
-                    Interval: 1,
-                    Tooltip: true),
-
-                new GmcmIntOptionDescriptor(
-                    OptionId: "general.fertilizedEggProbability",
-                    Member: c => c.General.FertilizedEggProbability,
-                    Min: 0,
-                    Max: 100,
-                    Interval: 1,
-                    Tooltip: true),
-
-                new GmcmIntOptionDescriptor(
-                    OptionId: "general.roosterToChickenRatio",
-                    Member: c => c.General.RoosterToChickenRatio,
-                    Min: 0,
-                    Max: 100,
-                    Interval: 1,
-                    Tooltip: true),
-
-                new GmcmFloatOptionDescriptor(
-                    OptionId: "general.boostByRooster",
-                    Member: c => c.General.BoostByRooster,
-                    Min: 0f,
-                    Max: 10f,
-                    Interval: 0.01f,
-                    Tooltip: true),
-            });
-
-    public static GmcmSectionDescriptor RootRoostersLinks()
-        => new(
-            SectionId: "roosters",
-            Tooltip: false,
-            Entries: new IGmcmEntryDescriptor[]
-            {
-                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersWhite),
-                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersBrown),
-                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersBlue),
-                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersVoid),
-                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersGold),
-            });
-
-    public static GmcmSectionDescriptor[] RoostersWhite(Func<RoosterSettings> getSettings)
-        => BuildRoosterPage(getSettings, includeBlue: false);
-
-    public static GmcmSectionDescriptor[] RoostersBrown(Func<RoosterSettings> getSettings)
-        => BuildRoosterPage(getSettings, includeBlue: false);
-
-    public static GmcmSectionDescriptor[] RoostersBlue(Func<RoosterSettings> getSettings)
-        => BuildRoosterPage(getSettings, includeBlue: true);
-
-private static GmcmSectionDescriptor[] BuildRoosterPage(Func<RoosterSettings> getSettings, bool includeBlue)
+    public static IReadOnlyList<GmcmPageDescriptor<RoosterAddonConfig>> Pages(Func<RoosterAddonConfig> getConfig)
     {
-        var availability = new GmcmSectionDescriptor(
-            SectionId: "rooster.availability",
-            Tooltip: false,
-            Entries: new IGmcmEntryDescriptor[]
-            {
-                new GmcmBoolFuncOptionDescriptor(
-                    OptionId: "rooster.buyable",
-                    GetValue: () => getSettings().Buyable,
-                    SetValue: v => getSettings().Buyable = v,
-                    Tooltip: true),
+        if (getConfig is null) throw new ArgumentNullException(nameof(getConfig));
 
-                new GmcmIntFuncOptionDescriptor(
-                    OptionId: "rooster.price",
-                    GetValue: () => getSettings().Price,
-                    SetValue: v => getSettings().Price = ClampInt(v, 0, 100000),
-                    Min: 0,
-                    Max: 100000,
-                    Interval: 100,
-                    Tooltip: true),
-
-                new GmcmTextFuncOptionDescriptor(
-                    OptionId: "rooster.buildingRequired",
-                    GetValue: () => getSettings().BuildingRequired.ToString(),
-                    SetValue: v => getSettings().BuildingRequired = ParseEnum(v, RequiredBuilding.BigCoop),
-                    AllowedValues: System.Enum.GetNames(typeof(RequiredBuilding)),
-                    FormatAllowedValue: true,
-                    Tooltip: true),
-            });
-
-        var behavior = new GmcmSectionDescriptor(
-            SectionId: "rooster.behavior",
-            Tooltip: false,
-            Entries: new IGmcmEntryDescriptor[]
-            {
-                new GmcmBoolFuncOptionDescriptor(
-                    OptionId: "rooster.enableRoosterHatching",
-                    GetValue: () => getSettings().EnableRoosterHatching,
-                    SetValue: v => getSettings().EnableRoosterHatching = v,
-                    Tooltip: true),
-
-                new GmcmBoolFuncOptionDescriptor(
-                    OptionId: "rooster.editAllFemales",
-                    GetValue: () => getSettings().EditAllFemales,
-                    SetValue: v => getSettings().EditAllFemales = v,
-                    Tooltip: true),
-
-                new GmcmIntFuncOptionDescriptor(
-                    OptionId: "rooster.matureDays",
-                    GetValue: () => getSettings().MatureDays,
-                    SetValue: v => getSettings().MatureDays = ClampInt(v, 0, 999),
-                    Min: 0,
-                    Max: 999,
-                    Interval: 1,
-                    Tooltip: true),
-
-                new GmcmIntFuncOptionDescriptor(
-                    OptionId: "rooster.produceDays",
-                    GetValue: () => getSettings().ProduceDays,
-                    SetValue: v => getSettings().ProduceDays = ClampInt(v, 1, 999),
-                    Min: 1,
-                    Max: 999,
-                    Interval: 1,
-                    Tooltip: true),
-            });
-
-        var produceEntries = new System.Collections.Generic.List<IGmcmEntryDescriptor>
+        return new[]
         {
-            new GmcmTextFuncOptionDescriptor(
-                OptionId: "rooster.produceMode",
-                GetValue: () => getSettings().ProduceOption.ToString(),
-                SetValue: v => getSettings().ProduceOption = ParseEnum(v, ProduceMode.CustomizeBelow),
-                AllowedValues: System.Enum.GetNames(typeof(ProduceMode)),
-                FormatAllowedValue: true,
-                Tooltip: true),
+            RoosterPage(getConfig, RoosterType.White, "roosters_white", "white", includeBlueOnly: false),
+            RoosterPage(getConfig, RoosterType.Brown, "roosters_brown", "brown", includeBlueOnly: false),
+            RoosterPage(getConfig, RoosterType.Blue, "roosters_blue", "blue", includeBlueOnly: true),
+            RoosterPage(getConfig, RoosterType.Void, "roosters_void", "void", includeBlueOnly: false),
+            RoosterPage(getConfig, RoosterType.Gold, "roosters_gold", "gold", includeBlueOnly: false),
         };
-
-        for (var i = 0; i < 4; i++)
-        {
-            var idx = i;
-            var n = idx + 1;
-
-            produceEntries.Add(
-                new GmcmTextFuncOptionDescriptor(
-                    OptionId: $"rooster.produce.entry{n}.choice",
-                    GetValue: () => getSettings().ProduceEntries[idx].Choice,
-                    SetValue: v => getSettings().ProduceEntries[idx].Choice = v,
-                    Tooltip: true));
-
-            produceEntries.Add(
-                new GmcmTextFuncOptionDescriptor(
-                    OptionId: $"rooster.produce.entry{n}.customName",
-                    GetValue: () => getSettings().ProduceEntries[idx].CustomItemName,
-                    SetValue: v => getSettings().ProduceEntries[idx].CustomItemName = v,
-                    Tooltip: true));
-
-            produceEntries.Add(
-                new GmcmIntFuncOptionDescriptor(
-                    OptionId: $"rooster.produce.entry{n}.probability",
-                    GetValue: () => getSettings().ProduceEntries[idx].Probability,
-                    SetValue: v => getSettings().ProduceEntries[idx].Probability = ClampInt(v, 0, 100),
-                    Min: 0,
-                    Max: 100,
-                    Interval: 1,
-                    Tooltip: true));
-        }
-
-        var produce = new GmcmSectionDescriptor(
-            SectionId: "rooster.produce",
-            Tooltip: false,
-            Entries: produceEntries);
-
-        var deluxeEntries = new System.Collections.Generic.List<IGmcmEntryDescriptor>
-        {
-            new GmcmTextFuncOptionDescriptor(
-                OptionId: "rooster.deluxeMode",
-                GetValue: () => getSettings().DeluxeProduceOption.ToString(),
-                SetValue: v => getSettings().DeluxeProduceOption = ParseEnum(v, DeluxeProduceMode.CustomizeBelow),
-                AllowedValues: System.Enum.GetNames(typeof(DeluxeProduceMode)),
-                FormatAllowedValue: true,
-                Tooltip: true),
-        };
-
-        for (var i = 0; i < 4; i++)
-        {
-            var idx = i;
-            var n = idx + 1;
-
-            deluxeEntries.Add(
-                new GmcmTextFuncOptionDescriptor(
-                    OptionId: $"rooster.deluxe.entry{n}.choice",
-                    GetValue: () => getSettings().DeluxeProduceEntries[idx].Choice,
-                    SetValue: v => getSettings().DeluxeProduceEntries[idx].Choice = v,
-                    Tooltip: true));
-
-            deluxeEntries.Add(
-                new GmcmTextFuncOptionDescriptor(
-                    OptionId: $"rooster.deluxe.entry{n}.customName",
-                    GetValue: () => getSettings().DeluxeProduceEntries[idx].CustomItemName,
-                    SetValue: v => getSettings().DeluxeProduceEntries[idx].CustomItemName = v,
-                    Tooltip: true));
-
-            deluxeEntries.Add(
-                new GmcmIntFuncOptionDescriptor(
-                    OptionId: $"rooster.deluxe.entry{n}.probability",
-                    GetValue: () => getSettings().DeluxeProduceEntries[idx].Probability,
-                    SetValue: v => getSettings().DeluxeProduceEntries[idx].Probability = ClampInt(v, 0, 100),
-                    Min: 0,
-                    Max: 100,
-                    Interval: 1,
-                    Tooltip: true));
-        }
-
-        var deluxe = new GmcmSectionDescriptor(
-            SectionId: "rooster.deluxe",
-            Tooltip: false,
-            Entries: deluxeEntries);
-
-        if (!includeBlue)
-            return new[] { availability, behavior, produce, deluxe };
-
-        var blue = new GmcmSectionDescriptor(
-            SectionId: "rooster.blue",
-            Tooltip: false,
-            Entries: new IGmcmEntryDescriptor[]
-            {
-                new GmcmBoolFuncOptionDescriptor(
-                    OptionId: "rooster.bypassBlueConditions",
-                    GetValue: () => getSettings().BypassBlueConditions,
-                    SetValue: v => getSettings().BypassBlueConditions = v,
-                    Tooltip: true),
-
-                new GmcmTextFuncOptionDescriptor(
-                    OptionId: "rooster.blueEggChoice",
-                    GetValue: () => getSettings().BlueEggChoice ?? string.Empty,
-                    SetValue: v => getSettings().BlueEggChoice = v,
-                    Tooltip: true),
-            });
-
-        return new[] { availability, behavior, produce, deluxe, blue };
     }
 
-    private static int ClampInt(int value, int min, int max) => System.Math.Max(min, System.Math.Min(max, value));
+    private static GmcmPageDescriptor<RoosterAddonConfig> RoosterPage(
+        Func<RoosterAddonConfig> getConfig,
+        RoosterType type,
+        string pageId,
+        string colorId,
+        bool includeBlueOnly)
+    {
+        var p = new List<IGmcmDescriptor<RoosterAddonConfig>>();
 
-    private static TEnum ParseEnum<TEnum>(string value, TEnum fallback) where TEnum : struct, System.Enum
-        => System.Enum.TryParse<TEnum>(value, out var parsed) ? parsed : fallback;
+        p.Add(new GmcmSectionDescriptor<RoosterAddonConfig>("roosters.availability"));
 
+        p.Add(Opt($"roosters.{colorId}.buyable",
+            b => b.Bool(
+                optionId: $"roosters.{colorId}.buyable",
+                getValue: () => GetSettings(getConfig(), type).Buyable,
+                setValue: v => GetSettings(getConfig(), type).Buyable = v,
+                tooltip: true)));
+
+        p.Add(Opt($"roosters.{colorId}.price",
+            b => b.Int(
+                optionId: $"roosters.{colorId}.price",
+                getValue: () => GetSettings(getConfig(), type).Price,
+                setValue: v => GetSettings(getConfig(), type).Price = Clamp(v, 0, 100000),
+                tooltip: true,
+                min: 0,
+                max: 100000,
+                interval: 100)));
+
+        p.Add(Opt($"roosters.{colorId}.buildingRequired",
+            b => EnumTextOption(
+                b,
+                optionId: $"roosters.{colorId}.buildingRequired",
+                getValue: () => GetSettings(getConfig(), type).BuildingRequired,
+                setValue: v => GetSettings(getConfig(), type).BuildingRequired = v,
+                tooltip: true)));
+
+        p.Add(new GmcmSectionDescriptor<RoosterAddonConfig>("roosters.behavior"));
+
+        p.Add(Opt($"roosters.{colorId}.enableRoosterHatching",
+            b => b.Bool(
+                optionId: $"roosters.{colorId}.enableRoosterHatching",
+                getValue: () => GetSettings(getConfig(), type).EnableRoosterHatching,
+                setValue: v => GetSettings(getConfig(), type).EnableRoosterHatching = v,
+                tooltip: true)));
+
+        p.Add(Opt($"roosters.{colorId}.editAllFemales",
+            b => b.Bool(
+                optionId: $"roosters.{colorId}.editAllFemales",
+                getValue: () => GetSettings(getConfig(), type).EditAllFemales,
+                setValue: v => GetSettings(getConfig(), type).EditAllFemales = v,
+                tooltip: true)));
+
+        p.Add(Opt($"roosters.{colorId}.matureDays",
+            b => b.Int(
+                optionId: $"roosters.{colorId}.matureDays",
+                getValue: () => GetSettings(getConfig(), type).MatureDays,
+                setValue: v => GetSettings(getConfig(), type).MatureDays = Clamp(v, 0, 999),
+                tooltip: true,
+                min: 0,
+                max: 999,
+                interval: 1)));
+
+        p.Add(Opt($"roosters.{colorId}.produceDays",
+            b => b.Int(
+                optionId: $"roosters.{colorId}.produceDays",
+                getValue: () => GetSettings(getConfig(), type).ProduceDays,
+                setValue: v => GetSettings(getConfig(), type).ProduceDays = Clamp(v, 1, 999),
+                tooltip: true,
+                min: 1,
+                max: 999,
+                interval: 1)));
+
+        p.Add(new GmcmSectionDescriptor<RoosterAddonConfig>("roosters.produce"));
+
+        p.Add(Opt($"roosters.{colorId}.produceMode",
+            b => EnumTextOption(
+                b,
+                optionId: $"roosters.{colorId}.produceMode",
+                getValue: () => GetSettings(getConfig(), type).ProduceOption,
+                setValue: v => GetSettings(getConfig(), type).ProduceOption = v,
+                tooltip: true)));
+
+        AddProduceEntries(p, getConfig, type, colorId, deluxe: false);
+
+        p.Add(new GmcmSectionDescriptor<RoosterAddonConfig>("roosters.deluxeProduce", Tooltip: true));
+
+        p.Add(Opt($"roosters.{colorId}.deluxeProduceMode",
+            b => EnumTextOption(
+                b,
+                optionId: $"roosters.{colorId}.deluxeProduceMode",
+                getValue: () => GetSettings(getConfig(), type).DeluxeProduceOption,
+                setValue: v => GetSettings(getConfig(), type).DeluxeProduceOption = v,
+                tooltip: true)));
+
+        AddProduceEntries(p, getConfig, type, colorId, deluxe: true);
+
+        if (includeBlueOnly)
+        {
+            p.Add(new GmcmSectionDescriptor<RoosterAddonConfig>("roosters.blueOnly", Tooltip: true));
+
+            p.Add(Opt($"roosters.{colorId}.bypassBlueConditions",
+                b => b.Bool(
+                    optionId: $"roosters.{colorId}.bypassBlueConditions",
+                    getValue: () => GetSettings(getConfig(), type).BypassBlueConditions,
+                    setValue: v => GetSettings(getConfig(), type).BypassBlueConditions = v,
+                    tooltip: true)));
+
+            p.Add(Opt($"roosters.{colorId}.blueEggChoice",
+                b => b.Text(
+                    optionId: $"roosters.{colorId}.blueEggChoice",
+                    getValue: () => GetSettings(getConfig(), type).BlueEggChoice ?? string.Empty,
+                    setValue: v => GetSettings(getConfig(), type).BlueEggChoice = v ?? string.Empty,
+                    tooltip: true)));
+        }
+
+        return new GmcmPageDescriptor<RoosterAddonConfig>(pageId, p);
+    }
+
+    private static void AddProduceEntries(
+        List<IGmcmDescriptor<RoosterAddonConfig>> p,
+        Func<RoosterAddonConfig> getConfig,
+        RoosterType type,
+        string colorId,
+        bool deluxe)
+    {
+        var listKind = deluxe ? "deluxe" : "produce";
+        for (var i = 0; i < 4; i++)
+        {
+            var idx = i;
+
+            p.Add(Opt($"roosters.{colorId}.{listKind}.{idx + 1}.choice",
+                b => b.Text(
+                    optionId: $"roosters.{colorId}.{listKind}.{idx + 1}.choice",
+                    getValue: () => GetEntry(getConfig(), type, deluxe, idx).Choice ?? string.Empty,
+                    setValue: v => GetEntry(getConfig(), type, deluxe, idx).Choice = v ?? string.Empty,
+                    tooltip: true)));
+
+            p.Add(Opt($"roosters.{colorId}.{listKind}.{idx + 1}.customItemName",
+                b => b.Text(
+                    optionId: $"roosters.{colorId}.{listKind}.{idx + 1}.customItemName",
+                    getValue: () => GetEntry(getConfig(), type, deluxe, idx).CustomItemName ?? string.Empty,
+                    setValue: v => GetEntry(getConfig(), type, deluxe, idx).CustomItemName = v ?? string.Empty,
+                    tooltip: true)));
+
+            p.Add(Opt($"roosters.{colorId}.{listKind}.{idx + 1}.probabilityPercent",
+                b => b.Int(
+                    optionId: $"roosters.{colorId}.{listKind}.{idx + 1}.probabilityPercent",
+                    getValue: () => GetEntry(getConfig(), type, deluxe, idx).Probability,
+                    setValue: v => GetEntry(getConfig(), type, deluxe, idx).Probability = Clamp(v, 0, 100),
+                    tooltip: true,
+                    min: 0,
+                    max: 100,
+                    interval: 1)));
+        }
+    }
+
+    private static ProduceEntry GetEntry(RoosterAddonConfig config, RoosterType type, bool deluxe, int idx)
+    {
+        var s = GetSettings(config, type);
+        var list = deluxe ? s.DeluxeProduceEntries : s.ProduceEntries;
+
+        list ??= new List<ProduceEntry>();
+        while (list.Count < 4)
+            list.Add(new ProduceEntry());
+
+        if (deluxe)
+            s.DeluxeProduceEntries = list;
+        else
+            s.ProduceEntries = list;
+
+        return list[idx];
+    }
+
+    private static RoosterSettings GetSettings(RoosterAddonConfig config, RoosterType type)
+    {
+        config.Roosters ??= RoosterAddonConfig.CreateDefaultRoosters();
+        if (!config.Roosters.TryGetValue(type, out var s) || s is null)
+        {
+            s = new RoosterSettings();
+            config.Roosters[type] = s;
+        }
+
+        s.ProduceEntries ??= ProduceEntry.CreateDefaultFour();
+        s.DeluxeProduceEntries ??= ProduceEntry.CreateDefaultFour();
+
+        return s;
+    }
+
+    private static int Clamp(int value, int min, int max) => Math.Min(max, Math.Max(min, value));
+
+    private static IGmcmDescriptor<RoosterAddonConfig> Opt(string optionId, Action<Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmPageBuilder<RoosterAddonConfig>> add)
+        => new GmcmOptionDescriptor<RoosterAddonConfig>(optionId, add, Tooltip: true);
+
+    private static void EnumTextOption<TEnum>(
+        Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmPageBuilder<RoosterAddonConfig> b,
+        string optionId,
+        Func<TEnum> getValue,
+        Action<TEnum> setValue,
+        bool tooltip)
+        where TEnum : struct, Enum
+    {
+        var allowedValues = Enum.GetNames(typeof(TEnum));
+        b.Text(
+            optionId: optionId,
+            getValue: () => getValue().ToString(),
+            setValue: v =>
+            {
+                if (Enum.TryParse<TEnum>(v, ignoreCase: true, out var parsed))
+                    setValue(parsed);
+            },
+            tooltip: tooltip,
+            allowedValues: allowedValues,
+            formatAllowedValue: true);
+    }
 }

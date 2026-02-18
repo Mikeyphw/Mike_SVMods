@@ -29,6 +29,7 @@ public sealed class RoosterControl
 
     private readonly RoosterCatalog? _roosterCatalog;
 
+
     public RoosterAddonConfig Config { get; private set; }
     public LuckyTypes DailyLuck { private get; set; } = LuckyTypes.SuperUnlucky;
 
@@ -653,4 +654,3 @@ var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<R
         return new List<string>();
     }
 }
-

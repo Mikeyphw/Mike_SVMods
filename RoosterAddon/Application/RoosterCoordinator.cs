@@ -35,6 +35,11 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
     private readonly ModEntry _host;
     private readonly ISaveDataStore _saveData;
 
+    
+
+    private readonly CatalogManager _catalogManager = new();
+    private CatalogBundle _catalogs = new();
+
     private IModHelper Helper => _host.Helper;
     private IMonitor Monitor => _host.Monitor;
     private IManifest ModManifest => _host.ModManifest;
@@ -53,8 +58,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
         }
     }
     internal RoosterControl RoosterHelper = null!;
-    internal Mikew.BirdsOfAFeather.Framework.IGenericModConfigMenuAPI? ConfigMenu;
-    internal ILetMeHatchApi? HatchApi;
+internal ILetMeHatchApi? HatchApi;
 
     internal Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures = new();
 
@@ -102,7 +106,7 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
         Config = ConfigManager.LoadOrCreate(Helper, Monitor);
 
         _catalogs = _catalogManager.LoadOrCreateAll(Helper, Monitor);
-        var catalogsChangedConfig = _catalogManager.ApplyToConfig(Config, _catalogs, isNewConfig, Monitor);
+        var catalogsChangedConfig = _catalogManager.ApplyToConfig(Config, _catalogs, isNewConfig, Config.General.CatalogApplyMode, Monitor);
         if (catalogsChangedConfig)
             Helper.WriteConfig(Config);
 

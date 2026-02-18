@@ -5,6 +5,7 @@ using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
 using RoosterAddon.Infrastructure.SaveData;
 using RoosterAddon.Infrastructure.Smapi;
+using Mikew.BirdsOfAFeather.Framework;
 using StardewModdingAPI;
 
 namespace RoosterAddon;

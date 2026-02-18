@@ -39,15 +39,6 @@ internal sealed partial class RoosterCoordinator
         }
 
         Dictionary<string, FarmAnimalData>? farmAnimals = null;
-
-        try
-        {
-            farmAnimals = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
-        }
-        catch (Exception ex)
-        {
-            warnings.Add($"Failed to load {FarmAnimalsAssetName} for validation: {ex.Message}");
-        }
         try
         {
             farmAnimals = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);

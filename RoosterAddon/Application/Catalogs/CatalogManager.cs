@@ -34,6 +34,7 @@ internal sealed class CatalogManager
         RoosterAddonConfig config,
         CatalogBundle catalogs,
         bool isNewConfig,
+        CatalogApplyMode mode,
         IMonitor monitor
     )
     {
@@ -43,7 +44,7 @@ internal sealed class CatalogManager
 
         var changed = false;
 
-        // New config: seed config from catalogs so validation passes and GMCM has something sane.
+        // New config: always seed from catalogs (so validation passes and GMCM has sane defaults).
         if (isNewConfig)
         {
             changed |= ApplyProduceDefaults(config, catalogs.Produce);
@@ -54,8 +55,30 @@ internal sealed class CatalogManager
             return changed;
         }
 
-        // Existing config: only fix clearly-invalid produce tables (avoid clobbering user edits).
-        changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
+        switch (mode)
+        {
+            case CatalogApplyMode.SeedOnly:
+                // No-op for existing configs.
+                break;
+
+            case CatalogApplyMode.RepairInvalid:
+                changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
+                break;
+
+            case CatalogApplyMode.MergeMissing:
+                changed |= MergeMissing(config, catalogs, monitor);
+                changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
+                break;
+
+            case CatalogApplyMode.Authoritative:
+                changed |= ApplyProduceDefaults(config, catalogs.Produce);
+                changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
+                break;
+
+            default:
+                changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
+                break;
+        }
 
         return changed;
     }

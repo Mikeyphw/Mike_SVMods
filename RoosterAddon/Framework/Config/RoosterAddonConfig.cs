@@ -37,6 +37,10 @@ public sealed class GeneralSettings
 {
     public UpdateRateMode UpdateRate { get; set; } = UpdateRateMode.OnDayStart;
 
+    
+
+    public CatalogApplyMode CatalogApplyMode { get; set; } = CatalogApplyMode.RepairInvalid;
+
     /// <summary>Percent (0-100).</summary>
     public int ChosenPercentageDailyLuckBonus { get; set; } = 10;
 
@@ -117,6 +121,22 @@ public sealed class ProduceEntry
             new ProduceEntry(),
             new ProduceEntry(),
         };
+}
+
+
+public enum CatalogApplyMode
+{
+    /// <summary>Only apply catalogs when config is newly created.</summary>
+    SeedOnly,
+
+    /// <summary>Repair clearly-invalid entries only (default).</summary>
+    RepairInvalid,
+
+    /// <summary>Fill missing values without overwriting user edits.</summary>
+    MergeMissing,
+
+    /// <summary>Catalogs overwrite config values each load/reload.</summary>
+    Authoritative
 }
 
 public enum UpdateRateMode
