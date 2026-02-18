@@ -4,7 +4,9 @@ using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.Helpers;
 using LetMeHatchThisEgg.Integrations;
 using LetMeHatchThisEgg.Models;
+using LetMeHatchThisEgg.Core.Random;
 using Mikew.BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Framework.Random;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
@@ -556,16 +558,29 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
             var validBreedingData = GetBreedingDataGroupedByFemale();
             foreach (var (femaleKey, breedingDataList) in validBreedingData)
             {
+                IRandomProvider? rng = null;
+                if (config.DeterministicBreedingRng)
+                {
+                    var seed = DeterministicSeed.For(
+                        Game1.uniqueIDForThisGame,
+                        Game1.Date.Year,
+                        Game1.Date.Season,
+                        Game1.Date.DayOfMonth,
+                        femaleKey,
+                        "hatching"
+                    );
+                    rng = new SeededRandomProvider(seed);
+                }
                 foreach (var male in breedingDataList.SelectMany(x => x.BreedingData.Males))
                 {
                     male.Value.SetQuantity(male.Key);
                 }
                 var chosenFemaleData = breedingDataList
                     .Where(x => x.BreedingData.Males.Any())
-                    .GetRandomItem(i => 1);
+                    .GetRandomItem(i => 1, randomProvider: rng);
                 var chosenMaleData = chosenFemaleData
                     .BreedingData.Males.Where(x => x.Value.GetQuantity() > 0)
-                    .GetRandomItem(m => m.Value.GetQuantity());
+                    .GetRandomItem(m => m.Value.GetQuantity(), randomProvider: rng);
                 if (chosenFemaleData.BreedingData == null)
                 {
                     LoggerHelper.VerboseLog(
@@ -587,7 +602,8 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
                     femaleKey,
                     chosenFemaleData,
                     chosenMaleData,
-                    farmAnimalsData
+                    farmAnimalsData,
+                    rng
                 );
                 currentBreedingSystem.Run();
             }

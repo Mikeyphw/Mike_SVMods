@@ -18,3 +18,6 @@ This doc is a lightweight “seam map” used to keep the refactor honest.
 - `Core/Random/DeterministicSeed` (stable FNV-1a seeding)
 - `Core/Breeding/EggSelectionService` using BoAF `IRandomProvider`
 - `BreedingSystem` now takes an optional BoAF RNG provider and uses `EggSelectionService` instead of `Game1.random` directly.
+
+- `ModConfig.DeterministicBreedingRng` (optional deterministic hatching RNG)
+- `Core/Cloning/CloneMappingService` (BoAF `GetOriginalPurchaseAnimal` + alternate purchase mapping rules)

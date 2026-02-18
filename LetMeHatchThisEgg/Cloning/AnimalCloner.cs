@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using ContentPatcher;
 using LetMeHatchThisEgg.Models;
+using LetMeHatchThisEgg.Core.Cloning;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewValley;
@@ -19,6 +20,8 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
         private readonly List<IContentPack> LoadedContentPacks;
         private readonly IContentPatcherAPI ContentPatcherAPI;
 
+        private readonly CloneMappingService _cloneMappingService;
+
         public AnimalCloner(
             IContentPatcherAPI contentPatcherAPI,
             List<ClonedAnimalInfo> clonedAnimalInfos,
@@ -28,6 +31,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
             ContentPatcherAPI = contentPatcherAPI;
             ClonedAnimalsInfoList = clonedAnimalInfos;
             LoadedContentPacks = loadedContentPacks;
+            _cloneMappingService = new CloneMappingService();
         }
 
         // private void CreateAndAddAnimalClonesDebug(
@@ -139,17 +143,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
                 var contentPack = GetContentPack(clonedAnimalInfo.ContentPackID);
                 var clonedAnimalData = data[maleKey];
                 EditClonedAnimal(contentPack, maleKey, data[femaleKey], clonedAnimalData);
-
-                if (IsVoidChicken(femaleKey, data))
-                {
-                    AddAlternatePurchaseType(data, VanillaAnimals.WhiteChicken, maleKey, femaleKey);
-                }
-                else if (ShouldAddAsAlternatePurchase(clonedAnimalInfo, data, femaleKey))
-                {
-                    SetPurchasePrice(clonedAnimalData, -1);
-                    AddAlternatePurchaseType(data, femaleKey, maleKey);
-                }
-
+                _cloneMappingService.ApplyAlternatePurchaseRules(clonedAnimalInfo, data);
                 //InsertClonedAnimalData(asset, data, femaleKey, maleKey, clonedAnimalData);
             }
         }
@@ -174,68 +168,6 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
             int index = dataAsList.IndexOf(femaleKvp);
             dataAsList.Insert(index + 1, new(maleKey, clonedAnimalData));
             asset.ReplaceWith(dataAsList.ToDictionary(x => x.Key, x => x.Value));
-        }
-
-        private bool IsVoidChicken(string femaleKey, IDictionary<string, FarmAnimalData> data)
-        {
-            return femaleKey == VanillaAnimals.VoidChicken
-                && data[VanillaAnimals.VoidChicken].PurchasePrice == -1;
-        }
-
-        private bool ShouldAddAsAlternatePurchase(
-            ClonedAnimalInfo clonedAnimalInfo,
-            IDictionary<string, FarmAnimalData> data,
-            string femaleKey
-        )
-        {
-            return clonedAnimalInfo.AddAsAlternatePurchase
-                || (
-                    !clonedAnimalInfo.AddAsAlternatePurchase && data[femaleKey].PurchasePrice == -1
-                );
-        }
-
-        private void AddAlternatePurchaseType(
-            IDictionary<string, FarmAnimalData> data,
-            string targetKey,
-            string maleKey,
-            string femaleKey = null
-        )
-        {
-            var targetShopAnimalEntry = GetTargetShopAnimalEntry(data, targetKey, femaleKey);
-            targetShopAnimalEntry.AlternatePurchaseTypes ??= new();
-            if (targetShopAnimalEntry.AlternatePurchaseTypes.Any(x => x.Condition == null))
-            {
-                targetShopAnimalEntry
-                    .AlternatePurchaseTypes.First(x => x.Condition == null)
-                    .AnimalIds.Add(maleKey);
-            }
-            else
-            {
-                targetShopAnimalEntry.AlternatePurchaseTypes.Add(
-                    new()
-                    {
-                        AnimalIds = new() { maleKey },
-                        Id = maleKey
-                    }
-                );
-            }
-        }
-
-        private FarmAnimalData GetTargetShopAnimalEntry(
-            IDictionary<string, FarmAnimalData> data,
-            string targetKey,
-            string femaleKey = null
-        )
-        {
-            var originalPurchaseAnimal = data.GetOriginalPurchaseAnimal(femaleKey);
-            return originalPurchaseAnimal != null && originalPurchaseAnimal.Value.Key != null
-                ? originalPurchaseAnimal.Value.Value
-                : data[targetKey];
-        }
-
-        private void SetPurchasePrice(FarmAnimalData maleData, int purchasePrice)
-        {
-            maleData.PurchasePrice = purchasePrice;
         }
 
         public void EditClonedAnimal(

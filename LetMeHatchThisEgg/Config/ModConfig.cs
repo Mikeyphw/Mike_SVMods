@@ -18,6 +18,8 @@ public class ModConfig : CoreModConfig
     public bool OnlyFertilizedEggs { get; set; }
     public bool ColorClonedMilk { get; set; }
     public bool BreedingSystemEnabled { get; set; }
+
+    public bool DeterministicBreedingRng { get; set; }
     public Dictionary<
         string,
         Dictionary<CloneItemType, Dictionary<ItemType, string>>
@@ -57,6 +59,7 @@ public class ModConfig : CoreModConfig
         EditedEggListsOptions = new();
         ClonedVanillaEggsOptions = new();
         BreedingSystemEnabled = true;
+        DeterministicBreedingRng = false;
         EggChances = new Dictionary<ItemType, float>()
         {
             { ItemType.Normal, 0.2f },
