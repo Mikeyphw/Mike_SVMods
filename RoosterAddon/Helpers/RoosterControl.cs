@@ -27,8 +27,8 @@ public sealed class RoosterControl
     private readonly IModHelper _helper;
     private readonly IMonitor _monitor;
 
-
     private readonly RoosterCatalog? _roosterCatalog;
+
     public RoosterAddonConfig Config { get; private set; }
     public LuckyTypes DailyLuck { private get; set; } = LuckyTypes.SuperUnlucky;
 

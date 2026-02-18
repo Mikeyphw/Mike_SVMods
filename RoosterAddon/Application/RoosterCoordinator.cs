@@ -53,6 +53,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
         }
     }
     internal RoosterControl RoosterHelper = null!;
+    internal Mikew.BirdsOfAFeather.Framework.IGenericModConfigMenuAPI? ConfigMenu;
     internal ILetMeHatchApi? HatchApi;
 
     internal Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures = new();
@@ -71,6 +72,7 @@ private readonly FarmAnimalHatchingService _farmAnimalHatching = new();
 private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
     private readonly Queue<Action> _nextTickActions = new();
     private bool _nextTickHooked;
+    private bool _gmcmRegistered;
     private bool _femaleAssignmentsDirty;
     private bool _needsRoosterSetup = true;
     private int _lastRoosterSetupDay = -1;
@@ -114,13 +116,6 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
     "ra_plan",
     "Daily hatching plan commands. Use: ra_plan help",
     DailyPlanCommand
-);
-
-
-Helper.ConsoleCommands.Add(
-    "ra_catalog",
-    "Catalog commands. Use: ra_catalog help",
-    CatalogCommand
 );
 
 AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);

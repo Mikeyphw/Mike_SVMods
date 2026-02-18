@@ -1,38 +1,115 @@
-using System.Collections.Generic;
-using RoosterAddon.Application.Gmcm.Descriptors;
+using RoosterAddon.Application.Gmcm;
 using RoosterAddon.Framework.Config;
 
 namespace RoosterAddon.Application.Gmcm.Descriptors;
 
-/// <summary>Descriptor registry for GMCM layout (Phase 9, page-by-page migration).</summary>
 internal static class RoosterGmcmDescriptorRegistry
 {
-    public static IReadOnlyList<IGmcmElementDescriptor<RoosterAddonConfig>> RootGeneral()
-        => new IGmcmElementDescriptor<RoosterAddonConfig>[]
-        {
-            new GmcmSectionDescriptor<RoosterAddonConfig>("general"),
+    public static GmcmSectionDescriptor RootGeneral()
+        => new(
+            SectionId: "general",
+            Tooltip: false,
+            Entries: new IGmcmEntryDescriptor[]
+            {
+                new GmcmBoolOptionDescriptor(
+                    OptionId: "general.enableDebug",
+                    Member: c => c.General.EnableDebug,
+                    Tooltip: true),
 
-            new GmcmOptionDescriptors.Bool<RoosterAddonConfig>(c => c.General.EnableDebug, "general.enable_debug"),
-            new GmcmOptionDescriptors.EnumOption<RoosterAddonConfig, UpdateRateMode>(c => c.General.UpdateRate, "general.update_rate"),
-            new GmcmOptionDescriptors.Int<RoosterAddonConfig>(c => c.General.ChosenPercentageDailyLuckBonus, "general.daily_luck_bonus", Min: 0, Max: 100, Interval: 1),
-            new GmcmOptionDescriptors.EnumOption<RoosterAddonConfig, HarvestType>(c => c.General.HarvestType, "general.harvest_type"),
+                new GmcmEnumOptionDescriptor<UpdateRateMode>(
+                    OptionId: "general.updateRate",
+                    Member: c => c.General.UpdateRate,
+                    Tooltip: true),
 
-            new GmcmOptionDescriptors.Bool<RoosterAddonConfig>(c => c.General.EnableStuckInside, "general.enable_stuck_inside"),
-            new GmcmOptionDescriptors.Bool<RoosterAddonConfig>(c => c.General.BetterTrufflesCompat, "general.better_truffles_compat"),
+                new GmcmIntOptionDescriptor(
+                    OptionId: "general.chosenPercentageDailyLuckBonus",
+                    Member: c => c.General.ChosenPercentageDailyLuckBonus,
+                    Min: 0,
+                    Max: 100,
+                    Interval: 1,
+                    Tooltip: true),
 
-            new GmcmOptionDescriptors.EnumOption<RoosterAddonConfig, HatchingMode>(c => c.General.HatchingMode, "general.hatching_mode"),
+                new GmcmEnumOptionDescriptor<HarvestType>(
+                    OptionId: "general.harvestType",
+                    Member: c => c.General.HarvestType,
+                    Tooltip: true),
 
-            new GmcmOptionDescriptors.Bool<RoosterAddonConfig>(c => c.General.EnableEggProbability, "general.enable_egg_probability"),
-            new GmcmOptionDescriptors.Int<RoosterAddonConfig>(c => c.General.EggProbability, "general.egg_probability", Min: 0, Max: 100, Interval: 1),
+                new GmcmBoolOptionDescriptor(
+                    OptionId: "general.enableStuckInside",
+                    Member: c => c.General.EnableStuckInside,
+                    Tooltip: true),
 
-            new GmcmOptionDescriptors.Bool<RoosterAddonConfig>(c => c.General.EnableLargeEggProbability, "general.enable_large_egg_probability"),
-            new GmcmOptionDescriptors.Int<RoosterAddonConfig>(c => c.General.LargeEggProbability, "general.large_egg_probability", Min: 0, Max: 100, Interval: 1),
+                new GmcmBoolOptionDescriptor(
+                    OptionId: "general.betterTrufflesCompat",
+                    Member: c => c.General.BetterTrufflesCompat,
+                    Tooltip: true),
 
-            new GmcmOptionDescriptors.Int<RoosterAddonConfig>(c => c.General.FertilizedEggProbability, "general.fertilized_egg_probability", Min: 0, Max: 100, Interval: 1),
-            new GmcmOptionDescriptors.Int<RoosterAddonConfig>(c => c.General.RoosterToChickenRatio, "general.rooster_to_chicken_ratio", Min: 0, Max: 100, Interval: 1),
+                new GmcmEnumOptionDescriptor<HatchingMode>(
+                    OptionId: "general.hatchingMode",
+                    Member: c => c.General.HatchingMode,
+                    Tooltip: true),
 
-            new GmcmOptionDescriptors.Float<RoosterAddonConfig>(c => c.General.BoostByRooster, "general.boost_by_rooster", Min: 0f, Max: 10f, Interval: 0.01f),
+                new GmcmBoolOptionDescriptor(
+                    OptionId: "general.enableEggProbability",
+                    Member: c => c.General.EnableEggProbability,
+                    Tooltip: true),
 
-            new GmcmOptionDescriptors.EnumOption<RoosterAddonConfig, CatalogApplyMode>(c => c.General.CatalogApplyMode, "general.catalog_apply_mode"),
-        };
+                new GmcmIntOptionDescriptor(
+                    OptionId: "general.eggProbability",
+                    Member: c => c.General.EggProbability,
+                    Min: 0,
+                    Max: 100,
+                    Interval: 1,
+                    Tooltip: true),
+
+                new GmcmBoolOptionDescriptor(
+                    OptionId: "general.enableLargeEggProbability",
+                    Member: c => c.General.EnableLargeEggProbability,
+                    Tooltip: true),
+
+                new GmcmIntOptionDescriptor(
+                    OptionId: "general.largeEggProbability",
+                    Member: c => c.General.LargeEggProbability,
+                    Min: 0,
+                    Max: 100,
+                    Interval: 1,
+                    Tooltip: true),
+
+                new GmcmIntOptionDescriptor(
+                    OptionId: "general.fertilizedEggProbability",
+                    Member: c => c.General.FertilizedEggProbability,
+                    Min: 0,
+                    Max: 100,
+                    Interval: 1,
+                    Tooltip: true),
+
+                new GmcmIntOptionDescriptor(
+                    OptionId: "general.roosterToChickenRatio",
+                    Member: c => c.General.RoosterToChickenRatio,
+                    Min: 0,
+                    Max: 100,
+                    Interval: 1,
+                    Tooltip: true),
+
+                new GmcmFloatOptionDescriptor(
+                    OptionId: "general.boostByRooster",
+                    Member: c => c.General.BoostByRooster,
+                    Min: 0f,
+                    Max: 10f,
+                    Interval: 0.01f,
+                    Tooltip: true),
+            });
+
+    public static GmcmSectionDescriptor RootRoostersLinks()
+        => new(
+            SectionId: "roosters",
+            Tooltip: false,
+            Entries: new IGmcmEntryDescriptor[]
+            {
+                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersWhite),
+                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersBrown),
+                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersBlue),
+                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersVoid),
+                new GmcmPageLinkDescriptor(RoosterGmcmPageIds.RoostersGold),
+            });
 }

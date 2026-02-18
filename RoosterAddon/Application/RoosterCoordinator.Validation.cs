@@ -39,6 +39,15 @@ internal sealed partial class RoosterCoordinator
         }
 
         Dictionary<string, FarmAnimalData>? farmAnimals = null;
+
+        try
+        {
+            farmAnimals = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        }
+        catch (Exception ex)
+        {
+            warnings.Add($"Failed to load {FarmAnimalsAssetName} for validation: {ex.Message}");
+        }
         try
         {
             farmAnimals = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
@@ -50,34 +59,29 @@ internal sealed partial class RoosterCoordinator
 
         if (farmAnimals is not null)
         {
-            string GetFarmAnimalKeyForRooster(RoosterType rt)
+            var requiredRoosterTypes = new[] { RoosterType.White, RoosterType.Brown, RoosterType.Blue, RoosterType.Void, RoosterType.Gold };
+foreach (var rt in requiredRoosterTypes)
+{
+    var key =
+        _catalogs?.Roosters?.Roosters is not null
+        && _catalogs.Roosters.Roosters.TryGetValue(rt.ToString(), out var entry)
+        && !string.IsNullOrWhiteSpace(entry.FarmAnimalKey)
+            ? entry.FarmAnimalKey.Trim()
+            : rt switch
             {
-                if (_catalogs?.Roosters?.Roosters is not null
-                    && _catalogs.Roosters.Roosters.TryGetValue(rt.ToString(), out var entry)
-                    && !string.IsNullOrWhiteSpace(entry.FarmAnimalKey))
-                {
-                    return entry.FarmAnimalKey.Trim();
-                }
-
-                return rt switch
-                {
-                    RoosterType.White => RoosterKeys.White,
-                    RoosterType.Brown => RoosterKeys.Brown,
-                    RoosterType.Blue => RoosterKeys.Blue,
-                    RoosterType.Void => RoosterKeys.Void,
-                    RoosterType.Gold => RoosterKeys.Gold,
-                    _ => RoosterKeys.White
-                };
-            }
-
-            var requiredRoosterTypes = new[]
-            {
-                RoosterType.White, RoosterType.Brown, RoosterType.Blue, RoosterType.Void, RoosterType.Gold
+                RoosterType.White => RoosterKeys.White,
+                RoosterType.Brown => RoosterKeys.Brown,
+                RoosterType.Blue => RoosterKeys.Blue,
+                RoosterType.Void => RoosterKeys.Void,
+                RoosterType.Gold => RoosterKeys.Gold,
+                _ => RoosterKeys.White
             };
 
-            foreach (var rt in requiredRoosterTypes)
+    if (!farmAnimals.ContainsKey(key))
+        errors.Add($"Missing required FarmAnimals key: '{key}'.");
+}
+)
             {
-                var key = GetFarmAnimalKeyForRooster(rt);
                 if (!farmAnimals.ContainsKey(key))
                     errors.Add($"Missing required FarmAnimals key: '{key}'.");
             }

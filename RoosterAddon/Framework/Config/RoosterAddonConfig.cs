@@ -68,8 +68,6 @@ public sealed class GeneralSettings
 
     /// <summary>Percent (0-1000).</summary>
     public float BoostByRooster { get; set; } = 0.1f;
-
-    public CatalogApplyMode CatalogApplyMode { get; set; } = CatalogApplyMode.RepairInvalid;
 }
 
 public sealed class RoosterSettings
@@ -119,14 +117,6 @@ public sealed class ProduceEntry
             new ProduceEntry(),
             new ProduceEntry(),
         };
-}
-
-public enum CatalogApplyMode
-{
-    SeedOnly,
-    RepairInvalid,
-    MergeMissing,
-    Authoritative
 }
 
 public enum UpdateRateMode
