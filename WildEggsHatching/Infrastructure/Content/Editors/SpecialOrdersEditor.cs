@@ -33,7 +33,7 @@ public sealed class SpecialOrdersEditor : AssetEditorBase
 
     private static SpecialOrderData CreateOrderI(ContentContext context)
     {
-        // Parity intent: condition blocks after completion and in winter.
+        // condition blocks after completion and in winter.
         return new SpecialOrderData
         {
             Condition = $"!PLAYER_HAS_MAIL Host {ProgressionIds.Mail.SpecialOrderDoneI} Received, !SEASON winter",
@@ -47,7 +47,7 @@ public sealed class SpecialOrdersEditor : AssetEditorBase
                 new()
                 {
                     Type = "Collect",
-                    Data = new Dictionary<string, string> { { "AcceptedContextTags", "wildegg_item" } },
+                    Data = new Dictionary<string, string> { { "AcceptedContextTags", "wegg_item" } },
                     RequiredCount = "5",
                     Text = T(context, "specialOrder.WildEggIncubatorI.objective.0", "Collect 5 wild eggs.")
                 },
@@ -59,7 +59,7 @@ public sealed class SpecialOrdersEditor : AssetEditorBase
                         { "DropBox", "ForestWildEgg" },
                         { "DropBoxGameLocation", "Forest" },
                         { "DropBoxIndicatorLocation", "87 16" },
-                        { "AcceptedContextTags", "wildegg_item" },
+                        { "AcceptedContextTags", "wegg_item" },
                     },
                     RequiredCount = "5",
                     Text = T(context, "specialOrder.WildEggIncubatorI.objective.1", "Deliver them to Marnie's drop box.")
@@ -79,7 +79,7 @@ public sealed class SpecialOrdersEditor : AssetEditorBase
 
     private static SpecialOrderData CreateOrderII(ContentContext context)
     {
-        // Parity intent: requires WizardDone flag mail.
+        // requires WizardDone flag mail.
         return new SpecialOrderData
         {
             Condition = $"!PLAYER_HAS_MAIL Host {ProgressionIds.Mail.SpecialOrderDoneII} Received, PLAYER_HAS_MAIL Host {ProgressionIds.Mail.WizardDone} Received",

@@ -273,7 +273,7 @@ public void OnSaveLoaded()
 
             if (id == ProgressionIds.Quests.SpecialOrderWildEggsI)
             {
-                // Parity with orig: completion day is recorded when the special-order "done" mail is received.
+                // Completion day is recorded when the special-order "done" mail is received.
                 if (!_mail.HasReceivedMail(ProgressionIds.Mail.SpecialOrderDoneI))
                     continue;
 
@@ -336,7 +336,7 @@ public void OnSaveLoaded()
 
         var next = (ProgressionStep)((int)current + 1);
 
-        // Auto-skip DesertTomb-dependent step(s) while preserving parity IDs.
+        // Auto-skip DesertTomb-dependent step(s) while preserving progression IDs.
         if (!config.DesertTombModuleEnabled && next == ProgressionStep.PartV)
             next = ProgressionStep.PartVI;
 

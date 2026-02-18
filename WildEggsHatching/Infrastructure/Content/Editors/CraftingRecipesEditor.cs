@@ -26,7 +26,7 @@ public sealed class CraftingRecipesEditor : AssetEditorBase
     }
 
     private static string CreateElixirRecipe(string unlock)
-        => CreateLegacyRecipeString(
+        => CreateRecipeString(
             new List<(string itemId, int qty)>
             {
                 ("118", 1),
@@ -48,11 +48,11 @@ public sealed class CraftingRecipesEditor : AssetEditorBase
             (ModItemIds.ElixirOfRevitalizedEssence, 1),
         };
 
-        // Parity with legacy behavior: if the incubator doesn't consume ferns per-use, add a fern cost to craft it.
+        // If the incubator doesn't consume ferns per-use, add a fern cost to craft it.
         if (!context.Config.NeedsFern)
             ingredients.Add(("259", 3));
 
-        return CreateLegacyRecipeString(
+        return CreateRecipeString(
             ingredients,
             (ModItemIds.WildEggIncubator, 1),
             isBigCraftable: true,
@@ -60,7 +60,7 @@ public sealed class CraftingRecipesEditor : AssetEditorBase
         );
     }
 
-    private static string CreateLegacyRecipeString(
+    private static string CreateRecipeString(
         IReadOnlyList<(string itemId, int qty)> ingredients,
         (string outputId, int qty) output,
         bool isBigCraftable,
@@ -73,7 +73,7 @@ public sealed class CraftingRecipesEditor : AssetEditorBase
         var ingredientsString = string.Join(' ', parts);
         var outputString = $"{output.outputId} {output.qty}";
 
-        // Legacy format: "<ingredients>//<output>/<isBigCraftable>/<unlockConditions>/"
+        // Recipe format: "<ingredients>//<output>/<isBigCraftable>/<unlockConditions>/"
         return $"{ingredientsString}//{outputString}/{(isBigCraftable ? "true" : "false")}/{unlockConditions}/";
     }
 }

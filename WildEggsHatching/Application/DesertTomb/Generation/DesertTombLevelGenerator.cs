@@ -111,7 +111,7 @@ public sealed class DesertTombLevelGenerator
 
         numBarrels += backLayer.LayerWidth * backLayer.LayerHeight / 40;
 
-        // Preserve the legacy "edge-to-interior scan" placement style for containers.
+        // Preserve the "edge-to-interior scan" placement style for containers.
         for (int i = 0; i < numBarrels; i++)
         {
             Point p;
@@ -144,7 +144,7 @@ public sealed class DesertTombLevelGenerator
 
                 var tile = new Vector2(p.X, p.Y);
 
-                // Prefer barrels; the legacy plant decoration uses a custom TombCosmeticPlant
+                // Prefer barrels; plant decoration uses a custom TombCosmeticPlant
                 // which is ported later as part of the monster/visual system.
                 mineShaft.objects[tile] = BreakableContainer.GetBarrelForMines(tile, mineShaft);
                 break;

@@ -1,7 +1,7 @@
 namespace WildEggsHatching.Core.Ids;
 
 /// <summary>
-/// Minimal item IDs required for progression and content parity.
+/// Minimal item IDs required for progression and content.
 /// These are carried over from the original mod IDs.
 /// </summary>
 public static class ModItemIds

@@ -33,7 +33,7 @@ public sealed class ObjectsEditor : AssetEditorBase
         {
             var kind = EggKindExtensions.FromEggItemId(eggId);
 
-            // Keep magic eggs progression-gated for cleaner parity/diagnosis.
+            // Keep magic eggs progression-gated for cleaner diagnosis.
             if (kind.IsMagic() && context.Step < ProgressionStep.PartVI)
                 continue;
 
@@ -77,11 +77,11 @@ public sealed class ObjectsEditor : AssetEditorBase
             Edibility = 15,
             IsDrink = false,
             ExcludeFromRandomSale = true,
-            ContextTags = new List<string> { "category_egg", "wildegg_item" },
+            ContextTags = new List<string> { "category_egg", "wegg_item" },
             CustomFields = new Dictionary<string, string>
             {
-                ["WildEggs.Region"] = region,
-                ["WildEggs.Kind"] = kind.ToString()
+                ["WildEggsHatching.Region"] = region,
+                ["WildEggsHatching.Kind"] = kind.ToString()
             }
         };
     }
@@ -100,7 +100,7 @@ public sealed class ObjectsEditor : AssetEditorBase
             Edibility = 15,
             IsDrink = false,
             ExcludeFromRandomSale = true,
-            ContextTags = new List<string> { "wildegg_item" },
+            ContextTags = new List<string> { "wegg_item" },
         };
 
     
@@ -118,11 +118,11 @@ public sealed class ObjectsEditor : AssetEditorBase
             Edibility = -300,
             IsDrink = false,
             ExcludeFromRandomSale = true,
-            ContextTags = new List<string> { "wildegg_item", "wildegg_note" },
+            ContextTags = new List<string> { "wegg_item", "wegg_note" },
             CustomFields = new Dictionary<string, string>
             {
-                ["WildEggs.Animal"] = animalKey,
-                ["WildEggs.IsNote"] = "true",
+                ["WildEggsHatching.Animal"] = animalKey,
+                ["WildEggsHatching.IsNote"] = "true",
             },
         };
 
@@ -141,7 +141,7 @@ public sealed class ObjectsEditor : AssetEditorBase
             Edibility = 15,
             IsDrink = false,
             ExcludeFromRandomSale = true,
-            ContextTags = new List<string> { "wildegg_item" },
+            ContextTags = new List<string> { "wegg_item" },
         };
 
     private static int EggSpriteIndex(EggKind kind)
