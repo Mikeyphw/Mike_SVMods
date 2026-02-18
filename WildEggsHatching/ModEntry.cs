@@ -21,6 +21,7 @@ using WildEggsHatching.Application.AnimalNotes.Messages;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Application.Spawning;
 using WildEggsHatching.Application.Spawning.Diagnostics;
+using WildEggsHatching.Application.Incubation;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Content;
 using WildEggsHatching.Infrastructure.Content.Editors;
@@ -40,7 +41,9 @@ namespace WildEggsHatching;
 
 public sealed class ModEntry : Mod
 {
-    private CoreContext? _core;
+        private const string MpMessageTypeWeightsSync = \"weights_sync_v1\";
+
+private CoreContext? _core;
     private IConfigProvider? _config;
     private ILog? _log;
     private IModFacade? _facade;
@@ -52,6 +55,10 @@ public sealed class ModEntry : Mod
     private ISaveDataStore? _saveData;
     private IModDataLoader? _dataLoader;
     private WildEggsHatching.Infrastructure.ModData.AnimalCatalog? _catalog;
+
+    private WildEggHatchService? _hatchService;
+    private HashSet<string>? _wildEggItemIds;
+
 
     private IGameStateReader? _game;
     private IWorldLocations? _world;
@@ -96,6 +103,8 @@ public sealed class ModEntry : Mod
 
         var configProvider = new SmapiConfigProvider(helper);
         _config = configProvider;
+        _config.ConfigChanged += OnConfigChanged;
+
 
         var i18n = new I18TranslationHelper(helper);
         _core = new CoreContext(helper, Monitor, ModManifest, i18n);
@@ -252,7 +261,10 @@ public sealed class ModEntry : Mod
 
 
 
-        _facade = new ModFacade(
+        
+        var harmonyIncubator = new Harmony(ModManifest.UniqueID + \".incubator\");
+        // Installed after data load; see ReloadAll.
+_facade = new ModFacade(
             store: _saveData!,
             config: configProvider,
             log: log,
@@ -292,6 +304,13 @@ public sealed class ModEntry : Mod
             documentation: "Reload config + ModData JSON (Phase 1).",
             callback: (_, _) => _facade?.ReloadAll()
         );
+
+        helper.ConsoleCommands.Add(
+            name: "wegg_verify",
+            documentation: "Verify Phase 8+ health + weights override sanity.",
+            callback: (_, _) => Monitor.Log(BuildVerifyReport(), StardewModdingAPI.LogLevel.Info)
+        );
+
 
         _log?.Log("WildEggsHatching refactor Phase 3 loaded.", LogLevel.Info);
     }
@@ -476,7 +495,11 @@ private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Con
 
         _catalog = catalog;
 
-        var count = 0;
+        
+        _wildEggItemIds = new HashSet<string>(snapshot.SpawnAreas.Keys, StringComparer.OrdinalIgnoreCase);
+        _hatchService = new WildEggHatchService(catalog, _config!, log);
+        InstallIncubatorPatchIfNeeded(log);
+var count = 0;
         foreach (var _ in catalog.All())
             count++;
 
