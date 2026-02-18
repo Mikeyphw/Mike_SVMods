@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using WildEggsHatching.Core.Enums;
 
 namespace WildEggsHatching.Api;
@@ -12,13 +11,26 @@ public interface IWildEggsApi
     int ApiVersion { get; }
 
     /// <summary>Farm animal IDs considered valid for WildEggs-related birth text behavior.</summary>
-    IReadOnlyCollection<string> ValidAnimals { get; }
+    HashSet<string> ValidAnimals { get; }
+
+    void SetValidAnimals(HashSet<string> animals);
 
     /// <summary>Object IDs for eggs treated as "wild eggs" by this mod.</summary>
-    IReadOnlyCollection<string> WildEggsIDs { get; }
+    HashSet<string> WildEggsIDs { get; }
+
+    void SetWildEggsIDs(HashSet<string> ids);
 
     /// <summary>Birth text mode string used by downstream mods (e.g. "Mysterious").</summary>
     string BirthTextMode { get; }
+
+    void SetBirthTextMode(string mode);
+
+    string? ChosenAnimal_Coop { get; }
+    string? ChosenAnimal_Barn { get; }
+    string? ChosenAnimal_MagicCoop { get; }
+    string? ChosenAnimal_MagicBarn { get; }
+
+    void SetChosenAnimal(string chosenAnimal, string home, bool isMagic);
 
     ProgressionStep GetProgressionStep();
 

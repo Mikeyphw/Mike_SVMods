@@ -30,6 +30,10 @@ public sealed class WildEggsApiTests
 
         Assert.NotNull(api.BirthTextMode);
         Assert.NotNull(api.ValidAnimals);
+        api.SetBirthTextMode("Mysterious");
+        Assert.Equal("Mysterious", api.BirthTextMode);
+        api.SetChosenAnimal("Chicken", "Coop", isMagic: false);
+        Assert.Equal("Chicken", api.ChosenAnimal_Coop);
         Assert.NotNull(api.WildEggsIDs);
 
         var days = api.GetQuestCompletionDays();
