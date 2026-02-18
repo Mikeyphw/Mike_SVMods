@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using HarmonyLib;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
@@ -50,6 +51,7 @@ public sealed class ModEntry : Mod
     private IBirdsOfAFeatherApi? _boafApi;
     private ISaveDataStore? _saveData;
     private IModDataLoader? _dataLoader;
+    private WildEggsHatching.Infrastructure.ModData.AnimalCatalog? _catalog;
 
     private IGameStateReader? _game;
     private IWorldLocations? _world;
@@ -469,8 +471,10 @@ private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Con
 
         var snapshot = _dataLoader.Load();
 
-        var modAvailability = new SmapiModAvailability(Helper.ModRegistry);
-var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.WildAnimals);
+                var modAvailability = new SmapiModAvailability(Helper.ModRegistry);
+        var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.WildAnimals);
+
+        _catalog = catalog;
 
         var count = 0;
         foreach (var _ in catalog.All())
@@ -530,8 +534,126 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
         _config.Update(cfg => cfg.Reset(), "gmcm-reset");
     }
 
-    
-    private static void DefineGmcmLayout(Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmMenuLayout<Infrastructure.Config.ModConfig> layout)
+    private enum WeightsCategory
+{
+    Coop,
+    Barn,
+    MagicCoop,
+    MagicBarn,
+}
+
+private static string PrettyKey(string key)
+    => string.IsNullOrWhiteSpace(key) ? key : key.Replace('_', ' ').Replace('-', ' ');
+
+private string BuildCollectionLine(WildEggsHatching.Core.Models.WildAnimalDefinition def)
+{
+    var locations = string.Join(
+        ", ",
+        def.LocationTypes.Where(kvp => kvp.Value).Select(kvp => kvp.Key.ToString())
+    );
+
+    var farm = def.FarmAnimalIdsWeighted.Count > 0
+        ? string.Join(", ", def.FarmAnimalIdsWeighted.Select(w => $"{w.Id} ({w.Weight:0.##})"))
+        : string.Join(", ", def.FarmAnimalIdsSameWeight);
+
+    return $"{PrettyKey(def.WildAnimalKey)}\n" +
+           $"Key: {def.WildAnimalKey}\n" +
+           $"Magic: {def.IsMagic}   LargeEgg: {def.LargeEgg}   Price: {def.Price}\n" +
+           $"Locations: {locations}\n" +
+           $"Farm animals: {farm}";
+}
+
+private void BuildWeightsPage(Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmPageBuilder<Infrastructure.Config.ModConfig> page, WeightsCategory category)
+{
+    if (_catalog is null || _config is null)
+    {
+        page.DynamicParagraph("weights_empty", "Catalog not loaded yet.");
+        return;
+    }
+
+    var defs = _catalog.All()
+        .Where(d => MatchesCategory(d, category))
+        .OrderBy(d => d.WildAnimalKey)
+        .ToList();
+
+    if (defs.Count == 0)
+    {
+        page.DynamicParagraph("weights_none", "No animals in this category.");
+        return;
+    }
+
+    foreach (var def in defs)
+    {
+        page.DynamicParagraph($"weights_head_{def.WildAnimalKey}", PrettyKey(def.WildAnimalKey));
+        foreach (var w in def.FarmAnimalIdsWeighted)
+        {
+            var localFarmId = w.Id;
+            var localDefKey = def.WildAnimalKey;
+            page.Float(
+                optionId: localFarmId,
+                getValue: () => GetChosenWeight(localDefKey, localFarmId, (float)w.Weight),
+                setValue: v => SetChosenWeight(localDefKey, localFarmId, v),
+                tooltip: false,
+                min: 0f,
+                max: 1f,
+                interval: 0.05f,
+                fieldId: $"weights:{localDefKey}:{localFarmId}"
+            );
+        }
+
+        if (def.FarmAnimalIdsSameWeight.Count > 0)
+        {
+            page.DynamicParagraph(
+                $"weights_same_{def.WildAnimalKey}",
+                $"Same-weight: {string.Join(", ", def.FarmAnimalIdsSameWeight)}"
+            );
+        }
+
+        page.Separator();
+    }
+}
+
+private static bool MatchesCategory(WildEggsHatching.Core.Models.WildAnimalDefinition def, WeightsCategory category)
+{
+    var isBarn = def.LargeEgg;
+    return category switch
+    {
+        WeightsCategory.Coop => !def.IsMagic && !isBarn,
+        WeightsCategory.Barn => !def.IsMagic && isBarn,
+        WeightsCategory.MagicCoop => def.IsMagic && !isBarn,
+        WeightsCategory.MagicBarn => def.IsMagic && isBarn,
+        _ => false,
+    };
+}
+
+private float GetChosenWeight(string wildKey, string farmId, float fallback)
+{
+    if (_config is null)
+        return fallback;
+
+    var cfg = _config.Config;
+
+    if (cfg.SetZero)
+        return 0f;
+
+    if (cfg.SetRandom)
+        return fallback; // deterministic random handled elsewhere; GMCM is display-only
+
+    var key = $"{wildKey}:{farmId}";
+    return cfg.ChosenWeights.TryGetValue(key, out var v) ? v : fallback;
+}
+
+private void SetChosenWeight(string wildKey, string farmId, float value)
+{
+    if (_config is null)
+        return;
+
+    var cfg = _config.Config;
+    var key = $"{wildKey}:{farmId}";
+    cfg.ChosenWeights[key] = value;
+}
+
+void DefineGmcmLayout(Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmMenuLayout<Infrastructure.Config.ModConfig> layout)
     {
         var getCfg = layout.GetConfigFunc();
 
@@ -588,11 +710,29 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
             root.Link("barn_animals");
             root.Link("magic_coop_animals");
             root.Link("magic_barn_animals");
+
+            root.Section("phase8");
+            root.Link("desert_tomb");
+            root.Link("animal_notes");
+            root.Link("prices_phase8");
+            root.Link("debug_phase8");
+
         });
 
         layout.Page("collection", page =>
         {
-            page.DynamicParagraph("collection_note", "config.paragraph.collection_note.text");
+            if (_catalog is null)
+            {
+                page.DynamicParagraph("collection_empty", "Catalog not loaded yet.");
+                return;
+            }
+
+            foreach (var def in _catalog.All().OrderBy(d => d.WildAnimalKey))
+            {
+                var text = BuildCollectionLine(def);
+                page.DynamicParagraph($"collection_{def.WildAnimalKey}", text);
+                page.Separator();
+            }
         });
 
         layout.Page("exclusions", page =>
@@ -617,22 +757,22 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
 
         layout.Page("coop_animals", page =>
         {
-            page.DynamicParagraph("weights_note_coop", "config.paragraph.weights_note.text");
+            BuildWeightsPage(page, WeightsCategory.Coop);
         });
 
         layout.Page("barn_animals", page =>
         {
-            page.DynamicParagraph("weights_note_barn", "config.paragraph.weights_note.text");
+            BuildWeightsPage(page, WeightsCategory.Barn);
         });
 
         layout.Page("magic_coop_animals", page =>
         {
-            page.DynamicParagraph("weights_note_magic_coop", "config.paragraph.weights_note.text");
+            BuildWeightsPage(page, WeightsCategory.MagicCoop);
         });
 
         layout.Page("magic_barn_animals", page =>
         {
-            page.DynamicParagraph("weights_note_magic_barn", "config.paragraph.weights_note.text");
+            BuildWeightsPage(page, WeightsCategory.MagicBarn);
         });
     }
 
