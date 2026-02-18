@@ -7,10 +7,12 @@ namespace WildEggsHatching.Infrastructure.DesertTomb.Assets;
 
 /// <summary>
 /// Edits the AdditionalMineMaps mod dictionary (if present) to register DesertTomb floors.
-/// /// </summary>
+/// This keeps the legacy dependency model (aedenthorn.AdditionalMineMaps) without taking a
+/// compile-time reference on the mod assembly.
+/// </summary>
 public sealed class DesertTombAdditionalMineMapsEditor : IAssetEditor
 {
-    // AdditionalMineMaps asset key.
+    // Legacy AdditionalMineMaps asset key.
     public string AssetName => "aedenthorn.AdditionalMineMaps/dictionary";
 
     public AssetEditPriority Priority => AssetEditPriority.Default;
@@ -48,7 +50,7 @@ public sealed class DesertTombAdditionalMineMapsEditor : IAssetEditor
         var obj = Activator.CreateInstance(mapDataType)
             ?? throw new InvalidOperationException($"Failed to create {mapDataType.FullName}.");
 
-        // Match the expected values.
+        // Match the legacy values.
         SetMember(obj, mapDataType, "forceLevel", -1);
         SetMember(obj, mapDataType, "mapPath", "Maps/Mines/Level77377");
         SetMember(obj, mapDataType, "mapType", "M");

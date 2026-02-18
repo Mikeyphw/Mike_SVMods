@@ -65,10 +65,10 @@ public static class AnimalNotesValidationRules
 
     public static bool IsNoteQuestId(string key)
         => !string.IsNullOrWhiteSpace(key)
-           && key.StartsWith("wegg_", StringComparison.OrdinalIgnoreCase)
+           && key.StartsWith("wildEggs_", StringComparison.OrdinalIgnoreCase)
            && key.EndsWith("Note", StringComparison.OrdinalIgnoreCase);
 
     public static bool IsNoteMailId(string key)
         => !string.IsNullOrWhiteSpace(key)
-           && key.StartsWith("wegg_NoteMail_", StringComparison.OrdinalIgnoreCase);
+           && key.StartsWith("wildEggs_NoteMail_", StringComparison.OrdinalIgnoreCase);
 }

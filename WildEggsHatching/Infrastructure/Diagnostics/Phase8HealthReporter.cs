@@ -15,33 +15,22 @@ namespace WildEggsHatching.Infrastructure.Diagnostics;
 /// <summary>Concise startup health report for Phase 8 refactor.</summary>
 public static class Phase8HealthReporter
 {
-
-    public static IEnumerable<string> CollectPhase8Issues(IModHelper helper, ISaveDataStore store, IConfigProvider config, ILog log)
-    {
-        var issues = new List<string>();
-
-        var boafOk = helper.ModRegistry.IsLoaded("Mikew.BirdsOfAFeather");
-        if (!boafOk)
-            issues.Add("boaf: missing Mikew.BirdsOfAFeather");
-
-        issues.AddRange(CheckAssets(helper));
-        issues.AddRange(CheckTmxImages(helper));
-        issues.AddRange(CheckSchema(store));
-
-        issues.AddRange(CheckConfig(config.Config));
-
-        return issues;
-    }
-
     private static readonly Regex ImageSourceRegex = new("<image\s+source=\"(?<src>[^\"]+)\"", RegexOptions.Compiled);
 
     public static void LogPhase8HealthReport(IModHelper helper, ISaveDataStore store, IConfigProvider config, ILog log)
     {
         try
         {
-            var issues = CollectPhase8Issues(helper, store, config, log).ToList();
+            var issues = new List<string>();
 
-            var boafOk = helper.ModRegistry.IsLoaded("Mikew.BirdsOfAFeather");
+            var boafOk = helper.ModRegistry.IsLoaded("Mikew.birdsofafeather");
+            if (!boafOk)
+                issues.Add("BOAF missing: Mikew.birdsofafeather");
+
+            issues.AddRange(CheckAssets(helper));
+            issues.AddRange(CheckTmxImages(helper));
+            issues.AddRange(CheckSchema(store));
+
             var configIssues = CheckConfig(config.Config).ToList();
             issues.AddRange(configIssues);
 

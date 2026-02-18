@@ -23,7 +23,7 @@ internal sealed class BruteMummy : Mummy
             multipliers,
             difficulty,
             textureName,
-            speedToAdd + 1, // extra speed increment
+            speedToAdd + 1, // legacy extra speed increment
             luckyBonusEnabled: true,
             customDropData: customDropData
         );

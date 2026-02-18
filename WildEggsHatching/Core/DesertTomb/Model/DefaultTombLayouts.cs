@@ -5,7 +5,7 @@ using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 namespace WildEggsHatching.DesertTomb.Core.Model;
 
 /// <summary>
-/// Default tomb layouts ported from the DesertTomb implementation.
+/// Default tomb layouts ported from the legacy DesertTomb implementation.
 /// </summary>
 public static class DefaultTombLayouts
 {

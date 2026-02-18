@@ -101,7 +101,7 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
         if (!string.IsNullOrWhiteSpace(definition.DropTableId))
             monster.modData[DesertTombMonsterModDataKeys.DropTableId] = definition.DropTableId!;
 
-        // Ensure the visible name matches the template even if a older constructor hardcodes names.
+        // Ensure the visible name matches the template even if a legacy constructor hardcodes names.
         var baseName = string.IsNullOrWhiteSpace(definition.BaseName) ? requestedType.ToString() : definition.BaseName;
         monster.Name = $"Tomb {baseName}";
         monster.displayName = $"Tomb {baseName}";
@@ -124,7 +124,7 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
         if (multipliers is null)
             throw new ArgumentNullException(nameof(multipliers));
 
-        // Phase 6: JSON-only drops. Always clear any older constructor drops.
+        // Phase 6: JSON-only drops. Always clear any legacy constructor drops.
         monster.objectsToDrop.Clear();
 
         if (string.IsNullOrWhiteSpace(definition.DropTableId))

@@ -24,3 +24,7 @@
 
 Files to complete:
 - SmapiContentEditor - needs GameAssetManager logic ported
+
+## Phase 6: Legacy - NOT STARTED
+
+- ModEntry not refactored

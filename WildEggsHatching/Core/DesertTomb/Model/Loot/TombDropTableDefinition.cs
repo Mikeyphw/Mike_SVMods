@@ -60,7 +60,7 @@ public sealed record TombDropEntry(
         => new(itemId, Chance: null, Weight: weight, MinQuantity: minQty, MaxQuantity: maxQty);
 }
 
-/// <summary>Luck inputs used to apply lucky bonus adjustments.</summary>
+/// <summary>Luck inputs used to apply legacy-style lucky bonus adjustments.</summary>
 public sealed record TombLuckContext(double DailyLuck, double TeamAverageDailyLuck)
 {
     public static TombLuckContext Neutral => new(0, 0);

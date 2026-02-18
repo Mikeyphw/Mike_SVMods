@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using StardewModdingAPI;
 using Microsoft.Xna.Framework;
 using Mikew.BirdsOfAFeather.Framework.Random;
 using StardewValley;
@@ -12,6 +9,7 @@ using WildEggsHatching.Application.Spawning;
 using WildEggsHatching.Application.Spawning.Diagnostics;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Config;
+using WildEggsHatching.Infrastructure.Diagnostics;
 using WildEggsHatching.Infrastructure.Game;
 using WildEggsHatching.Infrastructure.Logging;
 using WildEggsHatching.Infrastructure.ModData;
@@ -21,7 +19,6 @@ namespace WildEggsHatching.Application.Facade;
 
 public sealed class ModFacade : IModFacade
 {
-    private readonly IModHelper _helper;
     private readonly ISaveDataStore _store;
     private readonly IConfigProvider _config;
     private readonly ILog _log;
@@ -30,6 +27,8 @@ public sealed class ModFacade : IModFacade
     private readonly Func<bool> _isMainPlayer;
 
     private readonly SmapiReloadAll _reloadAll;
+
+    private readonly WeggVerifier _verifier;
 
     private readonly ProgressionService? _progression;
     private readonly WildEggSpawnOrchestrator? _spawner;
@@ -44,7 +43,6 @@ public sealed class ModFacade : IModFacade
     private readonly ITileSearchHistogram _histogram;
 
     public ModFacade(
-        IModHelper helper,
         ISaveDataStore store,
         IConfigProvider config,
         ILog log,
@@ -60,15 +58,17 @@ public sealed class ModFacade : IModFacade
         IGameStateReader game,
         ITileFinder tileFinder,
         IGameObjectPlacer placer,
-        ITileSearchHistogram? histogram = null)
+        ITileSearchHistogram? histogram = null,
+        WeggVerifier? verifier = null)
     {
-        _helper = helper;
         _store = store;
         _config = config;
         _log = log;
         _isWorldReady = isWorldReady;
         _isMainPlayer = isMainPlayer;
         _reloadAll = reloadAll;
+
+        _verifier = verifier ?? throw new ArgumentNullException(nameof(verifier));
 
         _progression = progression;
         _spawner = spawner;
@@ -290,6 +290,27 @@ public FacadeResult ValidateAnimalNotes()
     }
 
 
+
+
+public FacadeResult Verify(string[] args)
+{
+    var asJson = Array.Exists(args, x => string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase));
+    var full = Array.Exists(args, x => string.Equals(x, "--full", StringComparison.OrdinalIgnoreCase));
+
+    if (full && !_isMainPlayer())
+        return new FacadeResult(false, "Verify --full is host-only.");
+
+    var report = _verifier.Run(new WeggVerifyOptions(
+        AsJson: asJson,
+        Full: full,
+        IsWorldReady: _isWorldReady(),
+        IsMainPlayer: _isMainPlayer(),
+        ProgressionStep: _progression?.GetCurrentStep() ?? ProgressionStep.PartI
+    ));
+
+    return new FacadeResult(report.Success, report.Rendered);
+}
+
     public FacadeResult WipeSchemaData(bool confirmed)
     {
         if (!_isWorldReady())
@@ -313,39 +334,6 @@ public FacadeResult ValidateAnimalNotes()
         {
             _log.Log($"Schema wipe failed: {ex}", StardewModdingAPI.LogLevel.Error);
             return new FacadeResult(false, "Schema wipe failed; see log.");
-        }
-    }
-
-
-
-    public FacadeResult Verify(bool full, bool asJson)
-    {
-        try
-        {
-            var report = WildEggsHatching.Infrastructure.Diagnostics.WeggVerifier.Run(
-                helper: _helper,
-                store: _store,
-                config: _config,
-                log: _log,
-                full: full);
-
-            if (asJson)
-            {
-                var json = System.Text.Json.JsonSerializer.Serialize(report, new System.Text.Json.JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                });
-                return new FacadeResult(report.Success, json);
-            }
-
-            var msg = report.Summary + Environment.NewLine +
-                      string.Join(Environment.NewLine, report.Checks.Select(c => $"{c.Status.ToUpperInvariant()}: {c.Id} - {c.Message}"));
-            return new FacadeResult(report.Success, msg);
-        }
-        catch (Exception ex)
-        {
-            _log.Log($"verify failed: {ex}", StardewModdingAPI.LogLevel.Error);
-            return new FacadeResult(false, $"verify failed: {ex.Message}");
         }
     }
 

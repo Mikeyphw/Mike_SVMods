@@ -47,7 +47,6 @@ public sealed class ModEntry : Mod
     private WeggConsoleCommands? _weggCommands;
     private SmapiContentCoordinator? _content;
     private BoafAssetRegistry? _assets;
-    private IBirdsOfAFeatherApi? _boafApi;
     private ISaveDataStore? _saveData;
     private IModDataLoader? _dataLoader;
 
@@ -69,10 +68,22 @@ public sealed class ModEntry : Mod
 
     public override void Entry(IModHelper helper)
     {
-        if (!helper.ModRegistry.IsLoaded("Mikew.BirdsOfAFeather"))
+        if (!helper.ModRegistry.IsLoaded("Mikew.birdsofafeather"))
         {
-            Monitor.Log("Missing required dependency: BirdsOfAFeather (UniqueID: Mikew.BirdsOfAFeather). Install it and try again.", LogLevel.Error);
-            throw new InvalidOperationException("BirdsOfAFeather (Mikew.BirdsOfAFeather) is required.");
+            Monitor.Log("Missing required dependency: BirdsOfAFeather (UniqueID: Mikew.birdsofafeather). Install it and try again.", LogLevel.Error);
+            throw new InvalidOperationException("BirdsOfAFeather (Mikew.birdsofafeather) is required.");
+
+        if (!helper.ModRegistry.IsLoaded("Pathoschild.ContentPatcher"))
+        {
+            Monitor.Log("Missing required dependency: Content Patcher (UniqueID: Pathoschild.ContentPatcher).", LogLevel.Error);
+            throw new InvalidOperationException("Content Patcher (Pathoschild.ContentPatcher) is required.");
+        }
+
+        if (!helper.ModRegistry.IsLoaded("yourdorkbrains.cp.wildeggsforage"))
+        {
+            Monitor.Log("Missing required dependency: wildeggsforage content pack (UniqueID: yourdorkbrains.cp.wildeggsforage).", LogLevel.Error);
+            throw new InvalidOperationException("yourdorkbrains.cp.wildeggsforage is required.");
+        }
         }
 
 
@@ -250,8 +261,9 @@ public sealed class ModEntry : Mod
 
 
 
+        var verifier = new WeggVerifier(helper, _saveData!, configProvider, _dataLoader!, log);
+
         _facade = new ModFacade(
-            helper: helper,
             store: _saveData!,
             config: configProvider,
             log: log,
@@ -267,14 +279,14 @@ public sealed class ModEntry : Mod
             game: _game,
             tileFinder: tileFinder,
             placer: placer,
-            histogram: histogram
+            histogram: histogram,
+            verifier: verifier
         );
 
         _weggCommands = new WeggConsoleCommands(Monitor, new WeggCommandDispatcher(_facade));
         _weggCommands.Register(helper);
 
 
-        helper.Events.GameLoop.GameLaunched += OnGameLaunched;
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         helper.Events.GameLoop.Saving += OnSaving;
         helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
@@ -285,6 +297,13 @@ public sealed class ModEntry : Mod
         helper.Events.Player.Warped += OnWarped;
         helper.Events.Display.RenderingHud += OnRenderingHud;
         configProvider.ConfigChanged += OnConfigChanged;
+
+        helper.ConsoleCommands.Add(
+            name: "wildeggs_reload_all",
+            documentation: "Reload config + ModData JSON (Phase 1).",
+            callback: (_, _) => _facade?.ReloadAll()
+        );
+
         _log?.Log("WildEggsHatching refactor Phase 3 loaded.", LogLevel.Info);
     }
 
@@ -474,66 +493,6 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
             $"Loaded ModData: {snapshot.WildAnimals.Count} wild-animal entries, {snapshot.SpawnAreas.Count} spawn-area sets, {snapshot.LocationPacks.Count} location packs. Catalog={count}.",
             LogLevel.Debug
         );
-    }
-    private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
-    {
-        // Phase 2: typed BOAF API retrieval for shared integrations (e.g., GMCM builder)
-        _boafApi = Helper.ModRegistry.GetApi<IBirdsOfAFeatherApi>("Mikew.BirdsOfAFeather");
-        if (_boafApi is null)
-            throw new InvalidOperationException("BirdsOfAFeather is installed but did not expose a compatible API.");
-
-        const int minApi = 1;
-        if (_boafApi.ApiVersion < minApi)
-            throw new InvalidOperationException($"BirdsOfAFeather API too old. Need >= {minApi}, found {_boafApi.ApiVersion}.");
-
-        WeggDiagnosticsState.BoafApiVersion = _boafApi.ApiVersion;
-
-
-        try
-        {
-            var gmcm = _boafApi.RegisterGmcmMenu(
-                helper: Helper,
-                manifest: ModManifest,
-                translation: _core!.I18n,
-                getConfig: () => _config!.Config,
-                reset: () => _config!.ResetToDefaults(),
-                save: () => _config!.Save(),
-                define: layout =>
-                {
-                    layout.Root(root =>
-                    {
-                        root.Bool(c => c.ProgressionMode, optionId: "progressionMode", tooltip: true);
-                        root.Bool(c => c.DesertTombModuleEnabled, optionId: "desertTomb.enabled", tooltip: true);
-                        root.Enum(c => c.TombChance, optionId: "desertTomb.tombChance", tooltip: true);
-                        root.Bool(c => c.DesertTombPharaohTrackerEnabled, optionId: "desertTomb.pharaohTracker", tooltip: true);
-                        root.Bool(c => c.DesertTombDebugLogging, optionId: "desertTomb.debugLogging", tooltip: true);
-
-                        root.Bool(c => c.AnimalNotesDebugMode, optionId: "animalNotes.debugMode", tooltip: true);
-                        root.Int(c => c.AnimalNotesWarnAfterDays, optionId: "animalNotes.warnAfterDays", tooltip: true, min: 1, max: 30, interval: 1);
-                        root.Int(c => c.AnimalNotesPlacementRadius, optionId: "animalNotes.placementRadius", tooltip: true, min: 1, max: 50, interval: 1);
-                        root.Bool(c => c.AnimalNotesQuestMailHostOnly, optionId: "animalNotes.questMailHostOnly", tooltip: true);
-                        root.Bool(c => c.AnimalNotesAllowClientDiscoveries, optionId: "animalNotes.allowClientDiscoveries", tooltip: true);
-
-                        root.Bool(c => c.HatchDinoEggs, optionId: "prices.hatchDinoEggs", tooltip: true);
-                        root.Bool(c => c.DinoEggsExclusiveHatch, optionId: "prices.dinoEggsExclusiveHatch", tooltip: true);
-                        root.Text(c => c.DinoPrice, optionId: "prices.dinoPrice", tooltip: true);
-                        root.Text(c => c.VoidChickenPrice, optionId: "prices.voidChickenPrice", tooltip: true);
-                        root.Text(c => c.OstrichPrice, optionId: "prices.ostrichPrice", tooltip: true);
-                        root.Bool(c => c.NeedsFern, optionId: "incubator.needsFern", tooltip: true);
-                        root.Bool(c => c.AlternatePotionSprite, optionId: "incubator.alternatePotionSprite", tooltip: true);
-                    });
-                });
-
-            _gmcmRegistered = gmcm is not null;
-            WeggDiagnosticsState.GmcmRegistered = _gmcmRegistered;
-        }
-        catch (Exception ex)
-        {
-            _gmcmRegistered = false;
-            WeggDiagnosticsState.GmcmRegistered = false;
-            Monitor.Log($"GMCM registration failed: {ex}", LogLevel.Warn);
-        }
-
     }
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)

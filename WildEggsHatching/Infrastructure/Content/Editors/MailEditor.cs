@@ -62,7 +62,7 @@ public sealed class MailEditor : AssetEditorBase
                 bodyKey: "mail.WizardFindings",
                 bodyFallback: "These findings may help you craft a potent elixir.",
                 itemType: "craftingRecipe",
-                itemId: "Elixir Of Revitalized Essence",
+                itemId: "WildEggs_ElixirCrafting",
                 autoAccept: false,
                 displayName: "Wizard Findings"
             );
@@ -133,7 +133,8 @@ public sealed class MailEditor : AssetEditorBase
     {
         var body = TranslateOrFallback(context, bodyKey, bodyFallback);
 
-        // Item IDs here are quest IDs or crafting recipe keys depending on itemType.
+        // Format aligns with the legacy Data/mail schema used by the original mod.
+        // Item IDs here are quest IDs or crafting recipe IDs depending on itemType.
         return $"{body} %item {itemType} {itemId}{(autoAccept ? " true" : "")} %% [#]{displayName}";
     }
 
