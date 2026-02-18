@@ -315,7 +315,7 @@ public sealed class LmhCoordinator
     {
         var config = _config.Config;
 
-        if (ModIdEvaluator.Evaluate("cantabilechaos.BFAVChickens") && config.CloneVanillaEggs)
+        if (ModIdEvaluator.Evaluate("cantabilechaos.BFAVChickens", _core.Helper.ModRegistry) && config.CloneVanillaEggs)
         {
             // EditAssetWithFancyChickensEggs(e, AssetEditPriority.Late);
         }

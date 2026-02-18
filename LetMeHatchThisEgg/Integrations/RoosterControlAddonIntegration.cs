@@ -17,7 +17,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integration
             var goldChicken = GetFemaleBreedingDataGroup();
             var transRooster = GetFemaleBreedingDataGroup();
 
-            if (ModIdEvaluator.Evaluate("Meara.Roosters"))
+            if (ModIdEvaluator.Evaluate("Meara.Roosters", HelperInstance.ModRegistry))
             {
                 AddMales(
                     whiteChicken,
@@ -91,7 +91,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integration
                 );
             }
 
-            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster"))
+            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster", HelperInstance.ModRegistry))
             {
                 AddMales(
                     whiteChicken,
@@ -179,7 +179,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integration
                 },
             };
 
-            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster"))
+            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster", HelperInstance.ModRegistry))
             {
                 data["Trans Rooster"] =  transRooster ;
             }

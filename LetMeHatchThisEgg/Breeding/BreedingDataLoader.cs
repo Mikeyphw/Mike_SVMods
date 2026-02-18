@@ -361,7 +361,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
 
         public static bool ShouldUseMearasFertilizedEggs(string roosterKey, string femaleKey)
         {
-            var hasMearaRoostersMod = ModIdEvaluator.Evaluate("Meara.Roosters");
+            var hasMearaRoostersMod = ModIdEvaluator.Evaluate("Meara.Roosters", HelperInstance.ModRegistry);
 
             var malesForMearaMod = new string[]
             {
