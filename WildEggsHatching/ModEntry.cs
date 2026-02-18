@@ -527,79 +527,112 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
         if (_config is null)
             return;
 
-        var defaults = new Infrastructure.Config.ModConfig();
-        _config.Update(cfg =>
-        {
-            cfg.ProgressionMode = defaults.ProgressionMode;
-
-            cfg.DesertTombModuleEnabled = defaults.DesertTombModuleEnabled;
-            cfg.DesertTombPharaohTrackerEnabled = defaults.DesertTombPharaohTrackerEnabled;
-            cfg.DesertTombDebugLogging = defaults.DesertTombDebugLogging;
-            cfg.TombChance = defaults.TombChance;
-
-            cfg.AlternatePotionSprite = defaults.AlternatePotionSprite;
-            cfg.NeedsFern = defaults.NeedsFern;
-            cfg.HatchDinoEggs = defaults.HatchDinoEggs;
-            cfg.DinoEggsExclusiveHatch = defaults.DinoEggsExclusiveHatch;
-
-            cfg.DinoPrice = defaults.DinoPrice;
-            cfg.VoidChickenPrice = defaults.VoidChickenPrice;
-            cfg.OstrichPrice = defaults.OstrichPrice;
-
-            cfg.AnimalNotesDebugMode = defaults.AnimalNotesDebugMode;
-            cfg.AnimalNotesWarnAfterDays = defaults.AnimalNotesWarnAfterDays;
-            cfg.AnimalNotesPlacementRadius = defaults.AnimalNotesPlacementRadius;
-            cfg.AnimalNotesQuestMailHostOnly = defaults.AnimalNotesQuestMailHostOnly;
-            cfg.AnimalNotesAllowClientDiscoveries = defaults.AnimalNotesAllowClientDiscoveries;
-        }, "gmcm-reset");
+        _config.Update(cfg => cfg.Reset(), "gmcm-reset");
     }
 
+    
     private static void DefineGmcmLayout(Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmMenuLayout<Infrastructure.Config.ModConfig> layout)
     {
+        var getCfg = layout.GetConfigFunc();
+
         layout.Root(root =>
         {
-            root.Bool(c => c.ProgressionMode, optionId: "progression_mode", tooltip: true);
+            root.Section("general");
 
-            root.PageLink("desert_tomb", optionId: "page_desert_tomb", tooltip: true);
-            root.PageLink("animal_notes", optionId: "page_animal_notes", tooltip: true);
-            root.PageLink("prices", optionId: "page_prices", tooltip: true);
-            root.PageLink("debug", optionId: "page_debug", tooltip: true);
+            root.Bool(cfg => cfg.ExtraDebugInfo, optionId: "extradebuginfo", tooltip: true);
+            root.Enum(cfg => cfg.UpdateRate, optionId: "UpdateRate", tooltip: false);
+            root.Enum(cfg => cfg.BirthText, optionId: "BirthText", tooltip: true);
+
+            root.Bool(cfg => cfg.ShowCoopAnimal, optionId: "ShowCoopAnimal", tooltip: true);
+            root.Bool(cfg => cfg.ShowBarnAnimal, optionId: "ShowBarnAnimal", tooltip: true);
+            root.Bool(cfg => cfg.ShowMagicCoopAnimal, optionId: "ShowMagicCoopAnimal", tooltip: true);
+            root.Bool(cfg => cfg.ShowMagicBarnAnimal, optionId: "ShowMagicBarnAnimal", tooltip: true);
+
+            root.Bool(cfg => cfg.WildEggEdit, optionId: "wildeggedit", tooltip: true);
+            root.Bool(cfg => cfg.AlternatePotionSprite, optionId: "alternatepotion", tooltip: true);
+
+            root.Bool(cfg => cfg.ProgressionMode, optionId: "progressionmode", tooltip: true);
+
+            root.Link("exclusions");
+            root.Link("collection");
+
+            root.Section("incubator");
+
+            root.Bool(cfg => cfg.HatchDinoEggs, optionId: "hatchdinoeggs", tooltip: true);
+            root.Bool(cfg => cfg.DinoEggsExclusiveHatch, optionId: "dinoexclusivehatch", tooltip: true);
+            root.Bool(cfg => cfg.NeedsFern, optionId: "needsfern", tooltip: true);
+
+            root.Section("quest");
+
+            root.Bool(cfg => cfg.FruitInsteadOfSeed, optionId: "ancientfruitinsteadofseed", tooltip: true);
+            root.Bool(cfg => cfg.KeepMineLevel, optionId: "keepminelevel", tooltip: true);
+            root.Bool(cfg => cfg.EnableSpiders, optionId: "enablespiders", tooltip: true);
+            root.Enum(cfg => cfg.TombChance, optionId: "tombchance", tooltip: true);
+            root.Enum(cfg => cfg.TombDifficulty, optionId: "TombDifficulty", tooltip: true);
+
+            root.Section("animals");
+
+            root.Text(cfg => cfg.DinoPrice, optionId: "dinoprice", tooltip: true);
+            root.Text(cfg => cfg.OstrichPrice, optionId: "ostrichprice", tooltip: true);
+            root.Text(cfg => cfg.VoidChickenPrice, optionId: "voidchickenprice", tooltip: true);
+
+            root.Bool(cfg => cfg.SetRandom, optionId: "setRandom", tooltip: true);
+            root.Bool(
+                optionId: "setZero",
+                getValue: () => getCfg().SetZero,
+                setValue: v => getCfg().SetZero = v && !getCfg().SetRandom,
+                tooltip: true
+            );
+
+            root.Link("coop_animals");
+            root.Link("barn_animals");
+            root.Link("magic_coop_animals");
+            root.Link("magic_barn_animals");
         });
 
-        layout.Page("desert_tomb", page =>
+        layout.Page("collection", page =>
         {
-            page.Bool(c => c.DesertTombModuleEnabled, optionId: "desert_tomb_enabled", tooltip: true);
-            page.Enum(c => c.TombChance, optionId: "tomb_chance", tooltip: true);
-            page.Bool(c => c.DesertTombPharaohTrackerEnabled, optionId: "pharaoh_tracker", tooltip: true);
-            page.Bool(c => c.DesertTombDebugLogging, optionId: "desert_tomb_debug", tooltip: true);
+            page.DynamicParagraph("collection_note", "config.paragraph.collection_note.text");
         });
 
-        layout.Page("animal_notes", page =>
+        layout.Page("exclusions", page =>
         {
-            page.Int(c => c.AnimalNotesWarnAfterDays, optionId: "notes_warn_after_days", tooltip: true, min: 0, max: 30);
-            page.Int(c => c.AnimalNotesPlacementRadius, optionId: "notes_placement_radius", tooltip: true, min: 1, max: 64);
-            page.Bool(c => c.AnimalNotesQuestMailHostOnly, optionId: "notes_host_only", tooltip: true);
-            page.Bool(c => c.AnimalNotesAllowClientDiscoveries, optionId: "notes_allow_client_discoveries", tooltip: true);
-            page.Bool(c => c.AnimalNotesDebugMode, optionId: "notes_debug", tooltip: true);
+            if (getCfg().AnimalProgressionMode.Count == 0)
+            {
+                page.DynamicParagraph("exclusions_empty", "config.paragraph.exclusions_empty.text");
+                return;
+            }
+
+            foreach (var key in getCfg().AnimalProgressionMode.Keys.OrderBy(k => k))
+            {
+                var local = key;
+                page.Bool(
+                    optionId: local,
+                    getValue: () => getCfg().AnimalProgressionMode[local],
+                    setValue: v => getCfg().AnimalProgressionMode[local] = v,
+                    tooltip: false
+                );
+            }
         });
 
-        layout.Page("prices", page =>
+        layout.Page("coop_animals", page =>
         {
-            page.Bool(c => c.HatchDinoEggs, optionId: "hatch_dino_eggs", tooltip: true);
-            page.Bool(c => c.DinoEggsExclusiveHatch, optionId: "dino_exclusive", tooltip: true);
-
-            page.Text(c => c.DinoPrice, optionId: "price_dino", tooltip: true);
-            page.Text(c => c.VoidChickenPrice, optionId: "price_void_chicken", tooltip: true);
-            page.Text(c => c.OstrichPrice, optionId: "price_ostrich", tooltip: true);
-
-            page.Bool(c => c.AlternatePotionSprite, optionId: "alt_potion_sprite", tooltip: true);
-            page.Bool(c => c.NeedsFern, optionId: "needs_fern", tooltip: true);
+            page.DynamicParagraph("weights_note_coop", "config.paragraph.weights_note.text");
         });
 
-        layout.Page("debug", page =>
+        layout.Page("barn_animals", page =>
         {
-            page.Bool(c => c.DesertTombDebugLogging, optionId: "desert_tomb_debug", tooltip: true);
-            page.Bool(c => c.AnimalNotesDebugMode, optionId: "notes_debug", tooltip: true);
+            page.DynamicParagraph("weights_note_barn", "config.paragraph.weights_note.text");
+        });
+
+        layout.Page("magic_coop_animals", page =>
+        {
+            page.DynamicParagraph("weights_note_magic_coop", "config.paragraph.weights_note.text");
+        });
+
+        layout.Page("magic_barn_animals", page =>
+        {
+            page.DynamicParagraph("weights_note_magic_barn", "config.paragraph.weights_note.text");
         });
     }
 
