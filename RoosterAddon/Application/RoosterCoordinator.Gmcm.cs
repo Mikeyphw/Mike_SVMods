@@ -2,6 +2,8 @@ using System;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Integrations.Gmcm;
 using RoosterAddon.Framework.Config;
+using RoosterAddon.Application.Gmcm;
+using RoosterAddon.Application.Gmcm.Descriptors;
 using RoosterAddon.Integrations;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -78,33 +80,10 @@ internal sealed partial class RoosterCoordinator
     {
         layout.Root(root =>
         {
-            root.Section("general");
-
-            root.Bool(c => c.General.EnableDebug, optionId: "general.enable_debug");
-            root.Enum(c => c.General.UpdateRate, optionId: "general.update_rate");
-            root.Int(c => c.General.ChosenPercentageDailyLuckBonus, optionId: "general.daily_luck_bonus", min: 0, max: 100, interval: 1);
-            root.Enum(c => c.General.HarvestType, optionId: "general.harvest_type");
-
-            root.Bool(c => c.General.EnableStuckInside, optionId: "general.enable_stuck_inside");
-            root.Bool(c => c.General.BetterTrufflesCompat, optionId: "general.better_truffles_compat");
-
-            root.Enum(c => c.General.HatchingMode, optionId: "general.hatching_mode");
-
-            root.Bool(c => c.General.EnableEggProbability, optionId: "general.enable_egg_probability");
-            root.Int(c => c.General.EggProbability, optionId: "general.egg_probability", min: 0, max: 100, interval: 1);
-
-            root.Bool(c => c.General.EnableLargeEggProbability, optionId: "general.enable_large_egg_probability");
-            root.Int(c => c.General.LargeEggProbability, optionId: "general.large_egg_probability", min: 0, max: 100, interval: 1);
-
-            root.Int(c => c.General.FertilizedEggProbability, optionId: "general.fertilized_egg_probability", min: 0, max: 100, interval: 1);
-            root.Int(c => c.General.RoosterToChickenRatio, optionId: "general.rooster_to_chicken_ratio", min: 0, max: 100, interval: 1);
-
-            root.Float(c => c.General.BoostByRooster, optionId: "general.boost_by_rooster", min: 0f, max: 10f, interval: 0.01f);
-
-            root.Enum(c => c.General.CatalogApplyMode, optionId: "general.catalog_apply_mode");
+            GmcmLayoutCompiler.Apply(root, RoosterGmcmDescriptorRegistry.RootGeneral());
         });
 
-        layout.Root(root =>
+layout.Root(root =>
         {
             root.Section("roosters");
             root.Link("roosters_white");
