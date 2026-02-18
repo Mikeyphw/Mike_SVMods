@@ -7,10 +7,10 @@ public static class ProgressionIds
 {
     public static class Quests
     {
-        public const string SpecialOrderWildEggsI = "wildEggs_specialOrderI";
-        public const string SpecialOrderWildEggsII = "wildEggs_specialOrderII";
-        public const string WizardStudy = "wildEggs_WizardStudy";
-        public const string TheDesertScroll = "wildEggs_theDesertScroll";
+        public const string SpecialOrderWildEggsI = "wegg_specialOrderI";
+        public const string SpecialOrderWildEggsII = "wegg_specialOrderII";
+        public const string WizardStudy = "wegg_WizardStudy";
+        public const string TheDesertScroll = "wegg_theDesertScroll";
 
         public static readonly IReadOnlyList<string> Tracked =
             new[]
@@ -27,13 +27,13 @@ public static class ProgressionIds
 
     public static class Mail
     {
-        public const string SpecialOrderDoneI = "wildEggs_specialOrderDoneI";
-        public const string SpecialOrderDoneII = "wildEggs_specialOrderDoneII";
-        public const string MarnieThanks = "wildEggs_marnieThanks";
-        public const string WizardThanks = "wildEggs_wizardThanks";
-        public const string WizardDone = "wildEggs_wizardStudyDone";
-        public const string WizardFindings = "wildEggs_wizardFindings";
-        public const string MarnieGotIncubator = "wildEggs_marnieIncubator";
+        public const string SpecialOrderDoneI = "wegg_specialOrderDoneI";
+        public const string SpecialOrderDoneII = "wegg_specialOrderDoneII";
+        public const string MarnieThanks = "wegg_marnieThanks";
+        public const string WizardThanks = "wegg_wizardThanks";
+        public const string WizardDone = "wegg_wizardStudyDone";
+        public const string WizardFindings = "wegg_wizardFindings";
+        public const string MarnieGotIncubator = "wegg_marnieIncubator";
 
         public static readonly IReadOnlyList<string> Tracked =
             new[]

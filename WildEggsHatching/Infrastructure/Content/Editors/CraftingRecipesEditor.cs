@@ -48,7 +48,7 @@ public sealed class CraftingRecipesEditor : AssetEditorBase
             (ModItemIds.ElixirOfRevitalizedEssence, 1),
         };
 
-        // Parity with legacy behavior: if the incubator doesn't consume ferns per-use, add a fern cost to craft it.
+        //  if the incubator doesn't consume ferns per-use, add a fern cost to craft it.
         if (!context.Config.NeedsFern)
             ingredients.Add(("259", 3));
 
@@ -73,7 +73,7 @@ public sealed class CraftingRecipesEditor : AssetEditorBase
         var ingredientsString = string.Join(' ', parts);
         var outputString = $"{output.outputId} {output.qty}";
 
-        // Legacy format: "<ingredients>//<output>/<isBigCraftable>/<unlockConditions>/"
+        // Recipe format: "<ingredients>//<output>/<isBigCraftable>/<unlockConditions>/"
         return $"{ingredientsString}//{outputString}/{(isBigCraftable ? "true" : "false")}/{unlockConditions}/";
     }
 }

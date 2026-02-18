@@ -33,7 +33,7 @@ public sealed class SpecialOrdersEditor : AssetEditorBase
 
     private static SpecialOrderData CreateOrderI(ContentContext context)
     {
-        // Parity intent: condition blocks after completion and in winter.
+        //  condition blocks after completion and in winter.
         return new SpecialOrderData
         {
             Condition = $"!PLAYER_HAS_MAIL Host {ProgressionIds.Mail.SpecialOrderDoneI} Received, !SEASON winter",
@@ -79,7 +79,7 @@ public sealed class SpecialOrdersEditor : AssetEditorBase
 
     private static SpecialOrderData CreateOrderII(ContentContext context)
     {
-        // Parity intent: requires WizardDone flag mail.
+        //  requires WizardDone flag mail.
         return new SpecialOrderData
         {
             Condition = $"!PLAYER_HAS_MAIL Host {ProgressionIds.Mail.SpecialOrderDoneII} Received, PLAYER_HAS_MAIL Host {ProgressionIds.Mail.WizardDone} Received",

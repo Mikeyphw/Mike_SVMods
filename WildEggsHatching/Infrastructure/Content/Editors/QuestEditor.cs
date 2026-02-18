@@ -18,8 +18,8 @@ public sealed class QuestEditor : AssetEditorBase
 
     public override void Edit(IAssetData asset, ContentContext context)
     {
-        // The original mod uses the legacy Data/Quests string schema.
-        // Keeping this format maintains parity and avoids binding to SDV internal quest-data models.
+        // The original mod uses the prior Data/Quests string schema.
+        // Keeping this format maintains validation and avoids binding to SDV internal quest-data models.
         var data = asset.AsDictionary<string, string>().Data;
 
         foreach (var (id, value) in BuildQuests(context))
@@ -63,7 +63,7 @@ public sealed class QuestEditor : AssetEditorBase
             foreach (var animalKey in GetAnimalKeys(context))
             {
                 var token = NormalizeToken(animalKey);
-                var questId = $"wildEggs_{token}Note";
+                var questId = WildEggsHatching.Application.AnimalNotes.AnimalNoteIds.NoteQuestId(animalKey);
                 var noteId = $"{WildEggsHatching.Constants.ModId}_junimoNote_{token}";
 
                 var baseTitle = TranslateOrFallback(context, "quest.NoteDelivery.title", "Note Delivery");

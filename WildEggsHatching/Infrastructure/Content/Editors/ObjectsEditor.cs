@@ -33,7 +33,7 @@ public sealed class ObjectsEditor : AssetEditorBase
         {
             var kind = EggKindExtensions.FromEggItemId(eggId);
 
-            // Keep magic eggs progression-gated for cleaner parity/diagnosis.
+            // Keep magic eggs progression-gated for cleaner validation/diagnosis.
             if (kind.IsMagic() && context.Step < ProgressionStep.PartVI)
                 continue;
 

@@ -23,14 +23,14 @@ public sealed class AnimalNotesValidationRulesTests
         var tokens = new[] { "Chicken", "Duck" };
 
         var presentNotes = new[] { AnimalNoteIds.NoteItemId("Chicken") }; // Duck missing
-        var presentQuests = new[] { AnimalNoteIds.NoteQuestId("Chicken"), AnimalNoteIds.NoteQuestId("Duck"), "wildEggs_ExtraNote" };
-        var presentMail = new[] { AnimalNoteIds.NoteMailId("Chicken"), AnimalNoteIds.NoteMailId("Duck"), "wildEggs_NoteMail_Extra" };
+        var presentQuests = new[] { AnimalNoteIds.NoteQuestId("Chicken"), AnimalNoteIds.NoteQuestId("Duck"), "wegg_ExtraNote" };
+        var presentMail = new[] { AnimalNoteIds.NoteMailId("Chicken"), AnimalNoteIds.NoteMailId("Duck"), "wegg_NoteMail_Extra" };
 
         var result = AnimalNotesValidationRules.Analyze(tokens, presentNotes, presentQuests, presentMail);
 
         Assert.False(result.IsOk);
         Assert.Contains(AnimalNoteIds.NoteItemId("Duck"), result.MissingNotes);
-        Assert.Contains("wildEggs_ExtraNote", result.ExtraQuests);
-        Assert.Contains("wildEggs_NoteMail_Extra", result.ExtraMail);
+        Assert.Contains("wegg_ExtraNote", result.ExtraQuests);
+        Assert.Contains("wegg_NoteMail_Extra", result.ExtraMail);
     }
 }

@@ -13,6 +13,9 @@ using WildEggsHatching.Infrastructure.Config;
 using WildEggsHatching.Infrastructure.Logging;
 using WildEggsHatching.Infrastructure.ModData;
 using WildEggsHatching.Infrastructure.SaveData;
+using WildEggsHatching.Application.Animals;
+using WildEggsHatching.Infrastructure.ModData;
+using WildEggsHatching.Infrastructure.ModData.Models;
 using xTile;
 
 namespace WildEggsHatching.Infrastructure.Diagnostics;

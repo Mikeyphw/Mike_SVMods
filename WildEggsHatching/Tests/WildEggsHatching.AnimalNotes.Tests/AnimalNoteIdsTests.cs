@@ -6,8 +6,8 @@ namespace WildEggsHatching.AnimalNotes.Tests;
 public sealed class AnimalNoteIdsTests
 {
     [Theory]
-    [InlineData("Blue Chicken", "Mikew.wildeggshatching_junimoNote_BlueChicken", "wildEggs_BlueChickenNote", "wildEggs_NoteMail_BlueChicken")]
-    [InlineData("  Void  Chicken ", "Mikew.wildeggshatching_junimoNote_VoidChicken", "wildEggs_VoidChickenNote", "wildEggs_NoteMail_VoidChicken")]
+    [InlineData("Blue Chicken", "Mikew.wildeggshatching_junimoNote_BlueChicken", "wegg_BlueChickenNote", "wegg_NoteMail_BlueChicken")]
+    [InlineData("  Void  Chicken ", "Mikew.wildeggshatching_junimoNote_VoidChicken", "wegg_VoidChickenNote", "wegg_NoteMail_VoidChicken")]
     public void GeneratesStableIds(string token, string expectedItem, string expectedQuest, string expectedMail)
     {
         Assert.Equal(expectedItem, AnimalNoteIds.NoteItemId(token));

@@ -297,13 +297,6 @@ public sealed class ModEntry : Mod
         helper.Events.Player.Warped += OnWarped;
         helper.Events.Display.RenderingHud += OnRenderingHud;
         configProvider.ConfigChanged += OnConfigChanged;
-
-        helper.ConsoleCommands.Add(
-            name: "wildeggs_reload_all",
-            documentation: "Reload config + ModData JSON (Phase 1).",
-            callback: (_, _) => _facade?.ReloadAll()
-        );
-
         _log?.Log("WildEggsHatching refactor Phase 3 loaded.", LogLevel.Info);
     }
 

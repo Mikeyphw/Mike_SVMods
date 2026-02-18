@@ -34,8 +34,8 @@ Implemented:
 
 Not yet finalized:
 - SMAPI routing boundary (`SmapiEventRouter`) is not isolated
-- `ModEntry` still owns substantial legacy orchestration
-- some services still rely on legacy/static game APIs
+- `ModEntry` still owns substantial substantial orchestration
+- some services still rely on static game APIs
 - save DTO versioning/migration (`V1/V2`) is not complete
 
 Use this folder as the implementation baseline when applying:
@@ -159,9 +159,8 @@ Main wiring class:
 1. **Phase 1:** Boundary isolation (event router + `ModEntry` slimming) - in progress
 2. **Phase 2:** Save migration (versioned DTOs + compatibility mapping) - in progress
 3. **Phase 3:** Spawn isolation (remove remaining direct game coupling) - in progress
-4. **Phase 4:** Progression isolation (remove temporary legacy/static access) - in progress
+4. **Phase 4:** Progression isolation (remove temporary static access) - in progress
 5. **Phase 5:** Asset/content isolation boundary - not started
-6. **Phase 6:** Legacy manager removal after parity checks - not started
 
 ## Event Flow Example
 
@@ -224,7 +223,7 @@ MailService sends appropriate mail
 1. Isolate SMAPI event registration into a router boundary.
 2. Move remaining `ModEntry` orchestration into coordinator/infrastructure adapters.
 3. Complete save migration strategy (versioned DTOs and compatibility mapping).
-4. Remove legacy manager dependencies after parity checks.
+4. Remove transitional manager dependencies after validation checks.
 5. Keep DesertTomb migration separate under module plan phases.
 
 ## Notes

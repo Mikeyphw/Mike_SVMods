@@ -62,7 +62,7 @@ public sealed class TombDropTableEngine
     {
         var entries = new List<TombDropEntry>(table.Entries);
 
-        // Shuffle for fairness (mirrors legacy behavior).
+        // Shuffle for fairness (mirrors prior behavior).
         for (var i = entries.Count - 1; i > 0; i--)
         {
             var j = rng.Next(0, i + 1);

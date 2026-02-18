@@ -8,10 +8,10 @@ public static class AnimalNoteIds
         => $"{WildEggsHatching.Constants.ModId}_junimoNote_{NormalizeToken(farmAnimalName)}";
 
     public static string NoteQuestId(string farmAnimalName)
-        => $"wildEggs_{NormalizeToken(farmAnimalName)}Note";
+        => $"wegg_{NormalizeToken(farmAnimalName)}Note";
 
     public static string NoteMailId(string farmAnimalName)
-        => $"wildEggs_NoteMail_{NormalizeToken(farmAnimalName)}";
+        => $"wegg_NoteMail_{NormalizeToken(farmAnimalName)}";
 
     private static string NormalizeToken(string s)
         => (s ?? string.Empty).Replace(" ", string.Empty, StringComparison.Ordinal);
