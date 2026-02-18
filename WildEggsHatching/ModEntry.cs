@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using HarmonyLib;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
@@ -21,7 +20,6 @@ using WildEggsHatching.Application.AnimalNotes.Messages;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Application.Spawning;
 using WildEggsHatching.Application.Spawning.Diagnostics;
-using WildEggsHatching.Application.Incubation;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Content;
 using WildEggsHatching.Infrastructure.Content.Editors;
@@ -41,9 +39,7 @@ namespace WildEggsHatching;
 
 public sealed class ModEntry : Mod
 {
-        private const string MpMessageTypeWeightsSync = \"weights_sync_v1\";
-
-private CoreContext? _core;
+    private CoreContext? _core;
     private IConfigProvider? _config;
     private ILog? _log;
     private IModFacade? _facade;
@@ -54,11 +50,6 @@ private CoreContext? _core;
     private IBirdsOfAFeatherApi? _boafApi;
     private ISaveDataStore? _saveData;
     private IModDataLoader? _dataLoader;
-    private WildEggsHatching.Infrastructure.ModData.AnimalCatalog? _catalog;
-
-    private WildEggHatchService? _hatchService;
-    private HashSet<string>? _wildEggItemIds;
-
 
     private IGameStateReader? _game;
     private IWorldLocations? _world;
@@ -103,8 +94,6 @@ private CoreContext? _core;
 
         var configProvider = new SmapiConfigProvider(helper);
         _config = configProvider;
-        _config.ConfigChanged += OnConfigChanged;
-
 
         var i18n = new I18TranslationHelper(helper);
         _core = new CoreContext(helper, Monitor, ModManifest, i18n);
@@ -261,10 +250,7 @@ private CoreContext? _core;
 
 
 
-        
-        var harmonyIncubator = new Harmony(ModManifest.UniqueID + \".incubator\");
-        // Installed after data load; see ReloadAll.
-_facade = new ModFacade(
+        _facade = new ModFacade(
             store: _saveData!,
             config: configProvider,
             log: log,
@@ -298,20 +284,6 @@ _facade = new ModFacade(
         helper.Events.Player.Warped += OnWarped;
         helper.Events.Display.RenderingHud += OnRenderingHud;
         configProvider.ConfigChanged += OnConfigChanged;
-
-        helper.ConsoleCommands.Add(
-            name: "wildeggs_reload_all",
-            documentation: "Reload config + ModData JSON (Phase 1).",
-            callback: (_, _) => _facade?.ReloadAll()
-        );
-
-        helper.ConsoleCommands.Add(
-            name: "wegg_verify",
-            documentation: "Verify Phase 8+ health + weights override sanity.",
-            callback: (_, _) => Monitor.Log(BuildVerifyReport(), StardewModdingAPI.LogLevel.Info)
-        );
-
-
         _log?.Log("WildEggsHatching refactor Phase 3 loaded.", LogLevel.Info);
     }
 
@@ -490,16 +462,10 @@ private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Con
 
         var snapshot = _dataLoader.Load();
 
-                var modAvailability = new SmapiModAvailability(Helper.ModRegistry);
-        var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.WildAnimals);
+        var modAvailability = new SmapiModAvailability(Helper.ModRegistry);
+var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.WildAnimals);
 
-        _catalog = catalog;
-
-        
-        _wildEggItemIds = new HashSet<string>(snapshot.SpawnAreas.Keys, StringComparer.OrdinalIgnoreCase);
-        _hatchService = new WildEggHatchService(catalog, _config!, log);
-        InstallIncubatorPatchIfNeeded(log);
-var count = 0;
+        var count = 0;
         foreach (var _ in catalog.All())
             count++;
 
@@ -508,7 +474,6 @@ var count = 0;
             LogLevel.Debug
         );
     }
-    
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
         // Phase 2: typed BOAF API retrieval for shared integrations (e.g., GMCM builder)
@@ -519,288 +484,9 @@ var count = 0;
         const int minApi = 1;
         if (_boafApi.ApiVersion < minApi)
             throw new InvalidOperationException($"BirdsOfAFeather API too old. Need >= {minApi}, found {_boafApi.ApiVersion}.");
-
-        TryRegisterGmcm();
     }
 
-    private void TryRegisterGmcm()
-    {
-        if (_boafApi is null || _config is null)
-            return;
-
-        try
-        {
-            // Returns null when GMCM isn't installed; that's fine.
-            _boafApi.RegisterGmcmMenu(
-                helper: Helper,
-                manifest: ModManifest,
-                getConfig: () => _config.Config,
-                reset: ResetConfigToDefaults,
-                save: _config.Save,
-                define: DefineGmcmLayout,
-                titleScreenOnly: false,
-                force: true,
-                attachLocaleHandler: true
-            );
-        }
-        catch (Exception ex)
-        {
-            Monitor.Log($"GMCM registration failed (non-fatal). {ex}", LogLevel.Warn);
-        }
-    }
-
-    private void ResetConfigToDefaults()
-    {
-        if (_config is null)
-            return;
-
-        _config.Update(cfg => cfg.Reset(), "gmcm-reset");
-    }
-
-    private enum WeightsCategory
-{
-    Coop,
-    Barn,
-    MagicCoop,
-    MagicBarn,
-}
-
-private static string PrettyKey(string key)
-    => string.IsNullOrWhiteSpace(key) ? key : key.Replace('_', ' ').Replace('-', ' ');
-
-private string BuildCollectionLine(WildEggsHatching.Core.Models.WildAnimalDefinition def)
-{
-    var locations = string.Join(
-        ", ",
-        def.LocationTypes.Where(kvp => kvp.Value).Select(kvp => kvp.Key.ToString())
-    );
-
-    var farm = def.FarmAnimalIdsWeighted.Count > 0
-        ? string.Join(", ", def.FarmAnimalIdsWeighted.Select(w => $"{w.Id} ({w.Weight:0.##})"))
-        : string.Join(", ", def.FarmAnimalIdsSameWeight);
-
-    return $"{PrettyKey(def.WildAnimalKey)}\n" +
-           $"Key: {def.WildAnimalKey}\n" +
-           $"Magic: {def.IsMagic}   LargeEgg: {def.LargeEgg}   Price: {def.Price}\n" +
-           $"Locations: {locations}\n" +
-           $"Farm animals: {farm}";
-}
-
-private void BuildWeightsPage(Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmPageBuilder<Infrastructure.Config.ModConfig> page, WeightsCategory category)
-{
-    if (_catalog is null || _config is null)
-    {
-        page.DynamicParagraph("weights_empty", "Catalog not loaded yet.");
-        return;
-    }
-
-    var defs = _catalog.All()
-        .Where(d => MatchesCategory(d, category))
-        .OrderBy(d => d.WildAnimalKey)
-        .ToList();
-
-    if (defs.Count == 0)
-    {
-        page.DynamicParagraph("weights_none", "No animals in this category.");
-        return;
-    }
-
-    foreach (var def in defs)
-    {
-        page.DynamicParagraph($"weights_head_{def.WildAnimalKey}", PrettyKey(def.WildAnimalKey));
-        foreach (var w in def.FarmAnimalIdsWeighted)
-        {
-            var localFarmId = w.Id;
-            var localDefKey = def.WildAnimalKey;
-            page.Float(
-                optionId: localFarmId,
-                getValue: () => GetChosenWeight(localDefKey, localFarmId, (float)w.Weight),
-                setValue: v => SetChosenWeight(localDefKey, localFarmId, v),
-                tooltip: false,
-                min: 0f,
-                max: 1f,
-                interval: 0.05f,
-                fieldId: $"weights:{localDefKey}:{localFarmId}"
-            );
-        }
-
-        if (def.FarmAnimalIdsSameWeight.Count > 0)
-        {
-            page.DynamicParagraph(
-                $"weights_same_{def.WildAnimalKey}",
-                $"Same-weight: {string.Join(", ", def.FarmAnimalIdsSameWeight)}"
-            );
-        }
-
-        page.Separator();
-    }
-}
-
-private static bool MatchesCategory(WildEggsHatching.Core.Models.WildAnimalDefinition def, WeightsCategory category)
-{
-    var isBarn = def.LargeEgg;
-    return category switch
-    {
-        WeightsCategory.Coop => !def.IsMagic && !isBarn,
-        WeightsCategory.Barn => !def.IsMagic && isBarn,
-        WeightsCategory.MagicCoop => def.IsMagic && !isBarn,
-        WeightsCategory.MagicBarn => def.IsMagic && isBarn,
-        _ => false,
-    };
-}
-
-private float GetChosenWeight(string wildKey, string farmId, float fallback)
-{
-    if (_config is null)
-        return fallback;
-
-    var cfg = _config.Config;
-
-    if (cfg.SetZero)
-        return 0f;
-
-    if (cfg.SetRandom)
-        return fallback; // deterministic random handled elsewhere; GMCM is display-only
-
-    var key = $"{wildKey}:{farmId}";
-    return cfg.ChosenWeights.TryGetValue(key, out var v) ? v : fallback;
-}
-
-private void SetChosenWeight(string wildKey, string farmId, float value)
-{
-    if (_config is null)
-        return;
-
-    var cfg = _config.Config;
-    var key = $"{wildKey}:{farmId}";
-    cfg.ChosenWeights[key] = value;
-}
-
-void DefineGmcmLayout(Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmMenuLayout<Infrastructure.Config.ModConfig> layout)
-    {
-        var getCfg = layout.GetConfigFunc();
-
-        layout.Root(root =>
-        {
-            root.Section("general");
-
-            root.Bool(cfg => cfg.ExtraDebugInfo, optionId: "extradebuginfo", tooltip: true);
-            root.Enum(cfg => cfg.UpdateRate, optionId: "UpdateRate", tooltip: false);
-            root.Enum(cfg => cfg.BirthText, optionId: "BirthText", tooltip: true);
-
-            root.Bool(cfg => cfg.ShowCoopAnimal, optionId: "ShowCoopAnimal", tooltip: true);
-            root.Bool(cfg => cfg.ShowBarnAnimal, optionId: "ShowBarnAnimal", tooltip: true);
-            root.Bool(cfg => cfg.ShowMagicCoopAnimal, optionId: "ShowMagicCoopAnimal", tooltip: true);
-            root.Bool(cfg => cfg.ShowMagicBarnAnimal, optionId: "ShowMagicBarnAnimal", tooltip: true);
-
-            root.Bool(cfg => cfg.WildEggEdit, optionId: "wildeggedit", tooltip: true);
-            root.Bool(cfg => cfg.AlternatePotionSprite, optionId: "alternatepotion", tooltip: true);
-
-            root.Bool(cfg => cfg.ProgressionMode, optionId: "progressionmode", tooltip: true);
-
-            root.Link("exclusions");
-            root.Link("collection");
-
-            root.Section("incubator");
-
-            root.Bool(cfg => cfg.HatchDinoEggs, optionId: "hatchdinoeggs", tooltip: true);
-            root.Bool(cfg => cfg.DinoEggsExclusiveHatch, optionId: "dinoexclusivehatch", tooltip: true);
-            root.Bool(cfg => cfg.NeedsFern, optionId: "needsfern", tooltip: true);
-
-            root.Section("quest");
-
-            root.Bool(cfg => cfg.FruitInsteadOfSeed, optionId: "ancientfruitinsteadofseed", tooltip: true);
-            root.Bool(cfg => cfg.KeepMineLevel, optionId: "keepminelevel", tooltip: true);
-            root.Bool(cfg => cfg.EnableSpiders, optionId: "enablespiders", tooltip: true);
-            root.Enum(cfg => cfg.TombChance, optionId: "tombchance", tooltip: true);
-            root.Enum(cfg => cfg.TombDifficulty, optionId: "TombDifficulty", tooltip: true);
-
-            root.Section("animals");
-
-            root.Text(cfg => cfg.DinoPrice, optionId: "dinoprice", tooltip: true);
-            root.Text(cfg => cfg.OstrichPrice, optionId: "ostrichprice", tooltip: true);
-            root.Text(cfg => cfg.VoidChickenPrice, optionId: "voidchickenprice", tooltip: true);
-
-            root.Bool(cfg => cfg.SetRandom, optionId: "setRandom", tooltip: true);
-            root.Bool(
-                optionId: "setZero",
-                getValue: () => getCfg().SetZero,
-                setValue: v => getCfg().SetZero = v && !getCfg().SetRandom,
-                tooltip: true
-            );
-
-            root.Link("coop_animals");
-            root.Link("barn_animals");
-            root.Link("magic_coop_animals");
-            root.Link("magic_barn_animals");
-
-            root.Section("phase8");
-            root.Link("desert_tomb");
-            root.Link("animal_notes");
-            root.Link("prices_phase8");
-            root.Link("debug_phase8");
-
-        });
-
-        layout.Page("collection", page =>
-        {
-            if (_catalog is null)
-            {
-                page.DynamicParagraph("collection_empty", "Catalog not loaded yet.");
-                return;
-            }
-
-            foreach (var def in _catalog.All().OrderBy(d => d.WildAnimalKey))
-            {
-                var text = BuildCollectionLine(def);
-                page.DynamicParagraph($"collection_{def.WildAnimalKey}", text);
-                page.Separator();
-            }
-        });
-
-        layout.Page("exclusions", page =>
-        {
-            if (getCfg().AnimalProgressionMode.Count == 0)
-            {
-                page.DynamicParagraph("exclusions_empty", "config.paragraph.exclusions_empty.text");
-                return;
-            }
-
-            foreach (var key in getCfg().AnimalProgressionMode.Keys.OrderBy(k => k))
-            {
-                var local = key;
-                page.Bool(
-                    optionId: local,
-                    getValue: () => getCfg().AnimalProgressionMode[local],
-                    setValue: v => getCfg().AnimalProgressionMode[local] = v,
-                    tooltip: false
-                );
-            }
-        });
-
-        layout.Page("coop_animals", page =>
-        {
-            BuildWeightsPage(page, WeightsCategory.Coop);
-        });
-
-        layout.Page("barn_animals", page =>
-        {
-            BuildWeightsPage(page, WeightsCategory.Barn);
-        });
-
-        layout.Page("magic_coop_animals", page =>
-        {
-            BuildWeightsPage(page, WeightsCategory.MagicCoop);
-        });
-
-        layout.Page("magic_barn_animals", page =>
-        {
-            BuildWeightsPage(page, WeightsCategory.MagicBarn);
-        });
-    }
-
-
-    private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
+$1object? sender, SaveLoadedEventArgs e)
     {
         _progression?.OnSaveLoaded();
         _animalNotes?.OnSaveLoaded();
