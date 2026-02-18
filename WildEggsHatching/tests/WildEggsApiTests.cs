@@ -28,6 +28,10 @@ public sealed class WildEggsApiTests
         Assert.True(api.IsProgressionModeEnabled());
         Assert.False(api.IsDesertTombModuleEnabled());
 
+        Assert.NotNull(api.BirthTextMode);
+        Assert.NotNull(api.ValidAnimals);
+        Assert.NotNull(api.WildEggsIDs);
+
         var days = api.GetQuestCompletionDays();
         Assert.Equal(5, days["q1"]);
     }
