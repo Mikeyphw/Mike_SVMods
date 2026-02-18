@@ -3,6 +3,8 @@ using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.Models;
 using Mikew.BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Framework.Random;
+using LetMeHatchThisEgg.Core.Breeding;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
@@ -26,6 +28,9 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
         private readonly float _boostByMale;
         private readonly HashSet<string> WildEggsIDs;
 
+        private readonly IRandomProvider _rng;
+        private readonly EggSelectionService _eggSelector;
+
         public BreedingSystem(
             HashSet<string> wildEggsIDs,
             Dictionary<string, Dictionary<string, BreedingConfig>> breedingConfigsByPack,
@@ -33,11 +38,15 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
             string femaleKey,
             (string ContentPackID, BreedingDataFemale BreedingData) chosenFemaleData,
             KeyValuePair<string, BreedingDataMale> chosenMaleData,
-            IDictionary<string, FarmAnimalData> farmAnimalsData
+            IDictionary<string, FarmAnimalData> farmAnimalsData,
+            IRandomProvider? rng = null
         )
         {
             WildEggsIDs = wildEggsIDs;
             _gameAnimalData = farmAnimalsData;
+
+            _rng = rng ?? new GameRandomProvider();
+            _eggSelector = new EggSelectionService(_rng);
 
             var generalConfig = breedingConfigsByPack[chosenFemaleData.ContentPackID][femaleKey];
 
@@ -61,7 +70,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
         {
             return males
                 .Where(m => m.Value.Enabled)
-                .GetRandomItem(male => GetMaleQuantity(male.Key));
+                .GetRandomItem(male => GetMaleQuantity(male.Key), randomProvider: _rng);
         }
 
         private Dictionary<ItemType, (string? ID, float Chance)> GetEggs(
@@ -168,8 +177,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
                 return;
             }
             if (
-                Game1.random.NextDouble()
-                < _eggs[ItemType.FertilizedEgg].Chance + _chosenMaleQuantity * _boostByMale
+                _eggSelector.RollChance(_eggs[ItemType.FertilizedEgg].Chance + _chosenMaleQuantity * _boostByMale)
             )
             {
                 _gameDataFemale.DeluxeProduceItemIds ??= new();
@@ -180,7 +188,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
                 _gameDataFemale.ProduceItemIds.Clear();
                 _gameDataFemale.ProduceItemIds.Add(CreateFarmAnimalProduce(fertilizedEgg));
             }
-            if (Game1.random.NextDouble() <= _maleChance)
+            if (_eggSelector.RollChanceInclusive(_maleChance))
             {
                 _gameDataMale.EggItemIds.Add(fertilizedEgg);
             }
@@ -244,7 +252,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
                 )
                 : Chance;
 
-            if (Game1.random.NextDouble() < adjustedChance)
+            if (_eggSelector.ChooseRecipient(adjustedChance) == EggRecipient.Male)
             {
                 _gameDataMale.EggItemIds.Add(ID);
             }
