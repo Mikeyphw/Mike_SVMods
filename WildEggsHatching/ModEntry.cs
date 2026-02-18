@@ -47,6 +47,7 @@ public sealed class ModEntry : Mod
     private WeggConsoleCommands? _weggCommands;
     private SmapiContentCoordinator? _content;
     private BoafAssetRegistry? _assets;
+    private IBirdsOfAFeatherApi? _boafApi;
     private ISaveDataStore? _saveData;
     private IModDataLoader? _dataLoader;
 
@@ -68,10 +69,10 @@ public sealed class ModEntry : Mod
 
     public override void Entry(IModHelper helper)
     {
-        if (!helper.ModRegistry.IsLoaded("Mikew.birdsofafeather"))
+        if (!helper.ModRegistry.IsLoaded("Mikew.BirdsOfAFeather"))
         {
-            Monitor.Log("Missing required dependency: BirdsOfAFeather (UniqueID: Mikew.birdsofafeather). Install it and try again.", LogLevel.Error);
-            throw new InvalidOperationException("BirdsOfAFeather (Mikew.birdsofafeather) is required.");
+            Monitor.Log("Missing required dependency: BirdsOfAFeather (UniqueID: Mikew.BirdsOfAFeather). Install it and try again.", LogLevel.Error);
+            throw new InvalidOperationException("BirdsOfAFeather (Mikew.BirdsOfAFeather) is required.");
         }
 
 
@@ -249,8 +250,6 @@ public sealed class ModEntry : Mod
 
 
 
-        var verifier = new WeggVerifier(helper, _saveData!, configProvider, _dataLoader!, log);
-
         _facade = new ModFacade(
             store: _saveData!,
             config: configProvider,
@@ -267,14 +266,14 @@ public sealed class ModEntry : Mod
             game: _game,
             tileFinder: tileFinder,
             placer: placer,
-            histogram: histogram,
-            verifier: verifier
+            histogram: histogram
         );
 
         _weggCommands = new WeggConsoleCommands(Monitor, new WeggCommandDispatcher(_facade));
         _weggCommands.Register(helper);
 
 
+        helper.Events.GameLoop.GameLaunched += OnGameLaunched;
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         helper.Events.GameLoop.Saving += OnSaving;
         helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
@@ -482,6 +481,128 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
             LogLevel.Debug
         );
     }
+    
+    private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+    {
+        // Phase 2: typed BOAF API retrieval for shared integrations (e.g., GMCM builder)
+        _boafApi = Helper.ModRegistry.GetApi<IBirdsOfAFeatherApi>("Mikew.BirdsOfAFeather");
+        if (_boafApi is null)
+            throw new InvalidOperationException("BirdsOfAFeather is installed but did not expose a compatible API.");
+
+        const int minApi = 1;
+        if (_boafApi.ApiVersion < minApi)
+            throw new InvalidOperationException($"BirdsOfAFeather API too old. Need >= {minApi}, found {_boafApi.ApiVersion}.");
+
+        TryRegisterGmcm();
+    }
+
+    private void TryRegisterGmcm()
+    {
+        if (_boafApi is null || _config is null)
+            return;
+
+        try
+        {
+            // Returns null when GMCM isn't installed; that's fine.
+            _boafApi.RegisterGmcmMenu(
+                helper: Helper,
+                manifest: ModManifest,
+                getConfig: () => _config.Config,
+                reset: ResetConfigToDefaults,
+                save: _config.Save,
+                define: DefineGmcmLayout,
+                titleScreenOnly: false,
+                force: true,
+                attachLocaleHandler: true
+            );
+        }
+        catch (Exception ex)
+        {
+            Monitor.Log($"GMCM registration failed (non-fatal). {ex}", LogLevel.Warn);
+        }
+    }
+
+    private void ResetConfigToDefaults()
+    {
+        if (_config is null)
+            return;
+
+        var defaults = new Infrastructure.Config.ModConfig();
+        _config.Update(cfg =>
+        {
+            cfg.ProgressionMode = defaults.ProgressionMode;
+
+            cfg.DesertTombModuleEnabled = defaults.DesertTombModuleEnabled;
+            cfg.DesertTombPharaohTrackerEnabled = defaults.DesertTombPharaohTrackerEnabled;
+            cfg.DesertTombDebugLogging = defaults.DesertTombDebugLogging;
+            cfg.TombChance = defaults.TombChance;
+
+            cfg.AlternatePotionSprite = defaults.AlternatePotionSprite;
+            cfg.NeedsFern = defaults.NeedsFern;
+            cfg.HatchDinoEggs = defaults.HatchDinoEggs;
+            cfg.DinoEggsExclusiveHatch = defaults.DinoEggsExclusiveHatch;
+
+            cfg.DinoPrice = defaults.DinoPrice;
+            cfg.VoidChickenPrice = defaults.VoidChickenPrice;
+            cfg.OstrichPrice = defaults.OstrichPrice;
+
+            cfg.AnimalNotesDebugMode = defaults.AnimalNotesDebugMode;
+            cfg.AnimalNotesWarnAfterDays = defaults.AnimalNotesWarnAfterDays;
+            cfg.AnimalNotesPlacementRadius = defaults.AnimalNotesPlacementRadius;
+            cfg.AnimalNotesQuestMailHostOnly = defaults.AnimalNotesQuestMailHostOnly;
+            cfg.AnimalNotesAllowClientDiscoveries = defaults.AnimalNotesAllowClientDiscoveries;
+        }, "gmcm-reset");
+    }
+
+    private static void DefineGmcmLayout(Mikew.BirdsOfAFeather.Integrations.Gmcm.GmcmMenuLayout<Infrastructure.Config.ModConfig> layout)
+    {
+        layout.Root(root =>
+        {
+            root.Bool(c => c.ProgressionMode, optionId: "progression_mode", tooltip: true);
+
+            root.PageLink("desert_tomb", optionId: "page_desert_tomb", tooltip: true);
+            root.PageLink("animal_notes", optionId: "page_animal_notes", tooltip: true);
+            root.PageLink("prices", optionId: "page_prices", tooltip: true);
+            root.PageLink("debug", optionId: "page_debug", tooltip: true);
+        });
+
+        layout.Page("desert_tomb", page =>
+        {
+            page.Bool(c => c.DesertTombModuleEnabled, optionId: "desert_tomb_enabled", tooltip: true);
+            page.Enum(c => c.TombChance, optionId: "tomb_chance", tooltip: true);
+            page.Bool(c => c.DesertTombPharaohTrackerEnabled, optionId: "pharaoh_tracker", tooltip: true);
+            page.Bool(c => c.DesertTombDebugLogging, optionId: "desert_tomb_debug", tooltip: true);
+        });
+
+        layout.Page("animal_notes", page =>
+        {
+            page.Int(c => c.AnimalNotesWarnAfterDays, optionId: "notes_warn_after_days", tooltip: true, min: 0, max: 30);
+            page.Int(c => c.AnimalNotesPlacementRadius, optionId: "notes_placement_radius", tooltip: true, min: 1, max: 64);
+            page.Bool(c => c.AnimalNotesQuestMailHostOnly, optionId: "notes_host_only", tooltip: true);
+            page.Bool(c => c.AnimalNotesAllowClientDiscoveries, optionId: "notes_allow_client_discoveries", tooltip: true);
+            page.Bool(c => c.AnimalNotesDebugMode, optionId: "notes_debug", tooltip: true);
+        });
+
+        layout.Page("prices", page =>
+        {
+            page.Bool(c => c.HatchDinoEggs, optionId: "hatch_dino_eggs", tooltip: true);
+            page.Bool(c => c.DinoEggsExclusiveHatch, optionId: "dino_exclusive", tooltip: true);
+
+            page.Text(c => c.DinoPrice, optionId: "price_dino", tooltip: true);
+            page.Text(c => c.VoidChickenPrice, optionId: "price_void_chicken", tooltip: true);
+            page.Text(c => c.OstrichPrice, optionId: "price_ostrich", tooltip: true);
+
+            page.Bool(c => c.AlternatePotionSprite, optionId: "alt_potion_sprite", tooltip: true);
+            page.Bool(c => c.NeedsFern, optionId: "needs_fern", tooltip: true);
+        });
+
+        layout.Page("debug", page =>
+        {
+            page.Bool(c => c.DesertTombDebugLogging, optionId: "desert_tomb_debug", tooltip: true);
+            page.Bool(c => c.AnimalNotesDebugMode, optionId: "notes_debug", tooltip: true);
+        });
+    }
+
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {

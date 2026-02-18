@@ -26,7 +26,6 @@ public sealed class WeggCommandDispatcher
             "spawn" => HandleSpawn(args),
             "notes" => HandleNotes(args),
             "schema" => HandleSchema(args),
-            "verify" => ToCommandResult(_facade.Verify(args)),
             _ => new CommandResult(false, $"Unknown subcommand '{args[0]}'.\n\n{HelpText()}"),
         };
     }
@@ -181,7 +180,6 @@ public sealed class WeggCommandDispatcher
             "  wegg notes validate",
             "  wegg notes repair [--force] [--no-mail] [--no-reconcile]",
             "  wegg schema wipe --yes",
-            "  wegg verify [--json] [--full]",
             "  wegg_notes dump [--json] [--farmer <id>] [--animal <token>]",
             "  wegg_notes validate",
             "  wegg_notes repair [--force] [--no-mail] [--no-reconcile]",

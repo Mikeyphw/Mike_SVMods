@@ -32,7 +32,5 @@ public interface IModFacade
 
     FacadeResult ValidateAnimalNotes();
 
-    FacadeResult Verify(string[] args);
-
     FacadeResult WipeSchemaData(bool confirmed);
 }
