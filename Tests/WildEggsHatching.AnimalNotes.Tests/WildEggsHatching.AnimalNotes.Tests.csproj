@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageReference Include="xunit" Version="2.8.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\WildEggsHatching\Constants.cs" Link="WildEggsHatching\Constants.cs" />
+    <Compile Include="..\..\WildEggsHatching\Application\AnimalNotes\AnimalNoteIds.cs" Link="WildEggsHatching\Application\AnimalNotes\AnimalNoteIds.cs" />
+    <Compile Include="..\..\WildEggsHatching\Application\AnimalNotes\AnimalNotesValidationRules.cs" Link="WildEggsHatching\Application\AnimalNotes\AnimalNotesValidationRules.cs" />
+    <Compile Include="..\..\WildEggsHatching\Application\AnimalNotes\AnimalNotesFarmerState.cs" Link="WildEggsHatching\Application\AnimalNotes\AnimalNotesFarmerState.cs" />
+    <Compile Include="..\..\WildEggsHatching\Application\AnimalNotes\AnimalNotesUnlockLogic.cs" Link="WildEggsHatching\Application\AnimalNotes\AnimalNotesUnlockLogic.cs" />
+  </ItemGroup>
+
+</Project>
