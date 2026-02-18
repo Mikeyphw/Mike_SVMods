@@ -25,6 +25,106 @@ public static class CatalogDefaults
         return new RoosterCatalog
         {
             SchemaVersion = 1,
+
+            RandomGroups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                [ItemIds.RandomProduces.RandomColorEgg] = new List<string>
+                {
+                    ItemIds.AnimalProducts.BrownEgg,
+                    ItemIds.AnimalProducts.WhiteEgg
+                },
+                [ItemIds.RandomProduces.RandomColorLargeEgg] = new List<string>
+                {
+                    ItemIds.AnimalProducts.LargeBrownEgg,
+                    ItemIds.AnimalProducts.LargeWhiteEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeWhiteEgg] = new List<string>
+                {
+                    ItemIds.AnimalProducts.LargeWhiteEgg,
+                    ItemIds.AnimalProducts.WhiteEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeBrownEgg] = new List<string>
+                {
+                    ItemIds.AnimalProducts.BrownEgg,
+                    ItemIds.AnimalProducts.LargeBrownEgg
+                },
+                [ItemIds.RandomProduces.RandomColorSizeEgg] = new List<string>
+                {
+                    ItemIds.AnimalProducts.BrownEgg,
+                    ItemIds.AnimalProducts.WhiteEgg,
+                    ItemIds.AnimalProducts.LargeBrownEgg,
+                    ItemIds.AnimalProducts.LargeWhiteEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeBlueEgg] = new List<string>
+                {
+                    ItemIds.CustomItems.MearaBlueEgg,
+                    ItemIds.CustomItems.MearaLargeBlueEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeVoidEgg] = new List<string>
+                {
+                    ItemIds.CustomItems.MearaLargeVoidEgg,
+                    ItemIds.AnimalProducts.VoidEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeGoldenEgg] = new List<string>
+                {
+                    ItemIds.CustomItems.MearaLargeGoldEgg,
+                    ItemIds.AnimalProducts.GoldenEgg
+                },
+                [ItemIds.RandomProduces.RandomGems] = new List<string>
+                {
+                    ItemIds.Gemstones.Amethyst,
+                    ItemIds.Gemstones.Aquamarine,
+                    ItemIds.Gemstones.Emerald,
+                    ItemIds.Gemstones.Jade,
+                    ItemIds.Gemstones.Ruby,
+                    ItemIds.Gemstones.Topaz
+                },
+                [ItemIds.RandomProduces.RandomMinerals] = new List<string>
+                {
+                    ItemIds.Minerals.Aerinite,
+                    ItemIds.Minerals.Alamite,
+                    ItemIds.Minerals.Baryte,
+                    ItemIds.Minerals.Basalt,
+                    ItemIds.Minerals.Bixite,
+                    ItemIds.Minerals.Calcite,
+                    ItemIds.Minerals.Celestine,
+                    ItemIds.Minerals.Dolomite,
+                    ItemIds.Minerals.EarthCrystal,
+                    ItemIds.Minerals.Esperite,
+                    ItemIds.Minerals.FairyStone,
+                    ItemIds.Minerals.FireOpal,
+                    ItemIds.Minerals.FireQuartz,
+                    ItemIds.Minerals.FrozenTear,
+                    ItemIds.Minerals.Geminite,
+                    ItemIds.Minerals.GhostCrystal,
+                    ItemIds.Minerals.Granite,
+                    ItemIds.Minerals.Helvite,
+                    ItemIds.Minerals.Hematite,
+                    ItemIds.Minerals.Jagoite,
+                    ItemIds.Minerals.Jamborite,
+                    ItemIds.Minerals.Kyanite,
+                    ItemIds.Minerals.LemonStone,
+                    ItemIds.Minerals.Limestone,
+                    ItemIds.Minerals.Lunarite,
+                    ItemIds.Minerals.Malachite,
+                    ItemIds.Minerals.Marble,
+                    ItemIds.Minerals.Mudstone,
+                    ItemIds.Minerals.Nekoite,
+                    ItemIds.Minerals.Neptunite,
+                    ItemIds.Minerals.Obsidian,
+                    ItemIds.Minerals.OceanStone,
+                    ItemIds.Minerals.Opal,
+                    ItemIds.Minerals.Orpiment,
+                    ItemIds.Minerals.PetrifiedSlime,
+                    ItemIds.Minerals.Pyrite,
+                    ItemIds.Minerals.Sandstone,
+                    ItemIds.Minerals.Slate,
+                    ItemIds.Minerals.Soapstone,
+                    ItemIds.Minerals.StarShards,
+                    ItemIds.Minerals.ThunderEgg,
+                    ItemIds.Minerals.TigersEye
+                }
+            },
             Roosters = new Dictionary<string, RoosterCatalogEntry>(StringComparer.OrdinalIgnoreCase)
             {
                 ["White"] = new RoosterCatalogEntry

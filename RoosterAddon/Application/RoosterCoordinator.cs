@@ -157,7 +157,7 @@ AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
             };
         }
 
-        RoosterHelper = new RoosterControl(Config, Helper, Monitor, _catalogs.Roosters);
+        RoosterHelper = new RoosterControl(Config, Helper, Monitor, _catalogs.Roosters, _catalogs.Produce);
     }
 
     public bool HasModCheck(string modID) => Helper.ModRegistry.IsLoaded(modID);

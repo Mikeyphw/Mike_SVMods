@@ -86,5 +86,93 @@
         }
       ]
     }
+  },
+  "RandomGroups": {
+    "Random Color Egg": [
+      "Brown Egg",
+      "White Egg"
+    ],
+    "Random Color Large Egg": [
+      "Large Brown Egg",
+      "Large White Egg"
+    ],
+    "Random Size White Egg": [
+      "Large White Egg",
+      "White Egg"
+    ],
+    "Random Size Brown Egg": [
+      "Brown Egg",
+      "Large Brown Egg"
+    ],
+    "Random Color Size Egg": [
+      "Brown Egg",
+      "White Egg",
+      "Large Brown Egg",
+      "Large White Egg"
+    ],
+    "Random Size Blue Egg": [
+      "MearaBlueEgg",
+      "MearaLargeBlueEgg"
+    ],
+    "Random Size Void Egg": [
+      "MearaLargeVoidEgg",
+      "Void Egg"
+    ],
+    "Random Size Golden Egg": [
+      "MearaLargeGoldEgg",
+      "Golden Egg"
+    ],
+    "Random Gems": [
+      "Amethyst",
+      "Aquamarine",
+      "Emerald",
+      "Jade",
+      "Ruby",
+      "Topaz"
+    ],
+    "Random Minerals": [
+      "Aerinite",
+      "Alamite",
+      "Baryte",
+      "Basalt",
+      "Bixite",
+      "Calcite",
+      "Celestine",
+      "Dolomite",
+      "Earth Crystal",
+      "Esperite",
+      "Fairy Stone",
+      "Fire Opal",
+      "Fire Quartz",
+      "Frozen Tear",
+      "Geminite",
+      "Ghost Crystal",
+      "Granite",
+      "Helvite",
+      "Hematite",
+      "Jagoite",
+      "Jamborite",
+      "Kyanite",
+      "LemonStone",
+      "Limestone",
+      "Lunarite",
+      "Malachite",
+      "Marble",
+      "Mudstone",
+      "Nekoite",
+      "Neptunite",
+      "Obsidian",
+      "Ocean Stone",
+      "Opal",
+      "Orpiment",
+      "Petrified Slime",
+      "Pyrite",
+      "Sandstone",
+      "Slate",
+      "Soapstone",
+      "Star Shards",
+      "Thunder Egg",
+      "Tigers Eye"
+    ]
   }
 }

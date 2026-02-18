@@ -1,432 +1,174 @@
-# RoosterAddon Refactor Plan (Phased)
+# RoosterAddon Detailed Refactor Phase Plan (BOAF-first)
 
-## Scope and Goals
+This plan is the single source of truth for the refactor phases in this workspace. It assumes:
 
-This plan refactors `RoosterAddon` into a modular, testable architecture aligned with the patterns used in `WildEggsHatching/_refactor`:
-
-- thin `ModEntry` and SMAPI boundary
-- separated domain logic and infrastructure
-- typed configuration instead of nested string dictionaries
-- data-driven rooster/produce/egg definitions
-- strategy-based hatching behavior
-- incremental migration with parity checks at each phase
-
-Primary source project analyzed: `/home/mike/Documents/Projects/RoosterAddon`.
+- **BirdsOfAFeather (BOAF) is mandatory**. If BOAF provides an equivalent service/API, RoosterAddon must not ship a duplicate.
+- **No legacy compatibility**. Old runtime config strings/paths should be removed, not supported indefinitely.
+- **Data-driven first**. Prefer JSON catalogs and typed config over hardcoded tables.
 
 ---
 
-## Architectural Target
+## Packaging rules (zip2git)
 
-### Directory Structure (Target)
-
-```text
-RoosterAddon/
-├── Core/
-│   ├── Models/
-│   ├── Enums/
-│   ├── Rules/
-│   └── Services/
-├── Data/
-│   ├── Catalogs/
-│   └── Defaults/
-├── Infrastructure/
-│   ├── Smapi/
-│   ├── Game/
-│   ├── Content/
-│   └── Config/
-├── Coordination/
-├── UI/
-│   └── Gmcm/
-└── Legacy/
-```
-
-### Core Design Choices
-
-- `ModEntry` becomes composition root only.
-- `SmapiEventRouter` owns event subscriptions and forwards to coordinator.
-- `RoosterCoordinator` orchestrates application flow.
-- Core services are pure C# where possible.
-- Game and SMAPI interactions are accessed through interfaces (`IGameStateReader`, `IFarmAnimalEditor`, `IObjectDataEditor`, `IModRegistry`, etc.).
-- Config is versioned and strongly typed.
-- Rooster definitions and defaults are data-driven.
+- Every patch zip must contain **at zip root**:
+  - `zip2git.json` (metadata only)
+  - `Mike_SVMods/RoosterAddon/...` (repo folder)
+- Zip filename: `RoosterAddon_<patch.id>_<brief_patch_name>.zip`
+- Never mix multiple `subdir`s in one zip.
 
 ---
 
-## Phase 0: Baseline, Safety, and Documentation
+## Phases
 
-### Objectives
+### Phase 0 — Baseline & guardrails
+**Goal:** Establish parity signals and safe refactor scaffolding.
 
-- Freeze behavior before structural changes.
-- Establish parity checks and migration safety.
+**Deliverables**
+- `roosteraddon_dump_state` console command (JSON snapshot)
+- `PARITY_CHECKLIST.md`
+- Known-good save + baseline dumps
 
-### Tasks
-
-1. Create architecture notes documenting current responsibilities per class:
-   - `ModEntry.cs`
-   - `RoosterControl.cs`
-   - `ModConfig.cs`
-   - `GMCMenu.cs`
-2. Add temporary diagnostics snapshot command/log for:
-   - rooster data
-   - farm animals edits
-   - object data edits
-3. Add "behavior baseline checklist" for manual validation:
-   - GMCM options render and persist
-   - farm animal patches applied
-   - hatching behavior (original + fertilized mode)
-   - clone eggs compatibility behavior
-4. Create a migration tracking file (`TODO_REFRACTOR_CHECKLIST.md`) with per-phase checkboxes.
-
-### Deliverables
-
-- Baseline behavior checklist
-- Migration checklist
-- Current architecture notes
-
-### Exit Criteria
-
-- Baseline captured and reproducible.
-- No refactor begins without a pre-change behavior reference.
+**DoD**
+- Baseline dumps can be generated before/after each phase.
 
 ---
 
-## Phase 1: Extract Boundaries (ModEntry Slimming)
+### Phase 1 — Stop-the-bleeding fixes
+**Goal:** Remove high-risk runtime behaviors and obvious correctness bugs.
 
-### Objectives
+**Deliverables**
+- GMCM registration only once on `GameLaunched`
+- No file IO during `AssetRequested`
+- No cache invalidation inside asset edits
+- Correct percent-roll behavior (0% never, 100% always)
 
-- Remove orchestration and logic from `ModEntry`.
-- Introduce explicit app boundary and coordination layer.
-
-### Tasks
-
-1. Add `Infrastructure/Smapi/SmapiEventRouter.cs`:
-   - registers SMAPI events
-   - forwards callbacks to coordinator
-2. Add `Coordination/RoosterCoordinator.cs`:
-   - handles day start lifecycle
-   - handles asset request pipeline dispatch
-   - coordinates config/UI/api sync
-3. Refactor `ModEntry` to:
-   - build dependencies
-   - instantiate coordinator + router
-   - expose API only
-4. Move API retrieval and optional dependency checks into infrastructure services:
-   - Content Patcher API provider
-   - LetMeHatch API provider
-5. Keep existing behavior unchanged (same patch order, same triggers).
-
-### Deliverables
-
-- `SmapiEventRouter`
-- `RoosterCoordinator`
-- reduced `ModEntry` (<200 lines target)
-
-### Exit Criteria
-
-- Events still fire in the same scenarios.
-- Asset edits still occur with same priorities.
-- Baseline checklist passes.
+**DoD**
+- No per-tick GMCM work; no asset edit re-entrancy hazards.
 
 ---
 
-## Phase 2: Typed Config Model (No Legacy)
+### Phase 2 — Typed config only (no legacy compatibility) ✅
+**Goal:** Typed, stable config surface with self-healing schema behavior.
 
-### Objectives
+**Deliverables**
+- `Framework/Config/*` typed config (`RoosterAddonConfig`, `ConfigManager`, `ConfigSchema`)
+- Remove legacy config artifacts
 
-- Replace nested string dictionaries with typed DTOs.
-- Keep config schema versioning + self-healing load behavior.
-- Remove legacy config compatibility code (full refactor).
-
-### Tasks
-
-1. Maintain typed config classes in `Framework/Config`:
-   - `RoosterAddonConfig`
-   - `GeneralSettings`
-   - `RoosterSettings`
-   - `ProduceEntry`
-2. Maintain enums for previously stringly-typed values:
-   - update rate
-   - harvest type
-   - hatching mode
-   - rooster assignment values
-3. Maintain `ConfigManager`:
-   - `LoadOrCreate()`, `Save()`
-   - normalize defaults for missing fields
-   - backup invalid config and write defaults
-   - handle schema mismatch without legacy migration
-4. Delete legacy config artifacts:
-   - `Framework/ModConfig.cs`
-   - `Framework/Config/LegacyConfigAdapter.cs`
-
-### Deliverables
-
-- typed config DTOs used by runtime + GMCM
-- robust load/save with backups + normalization
-- no legacy config classes/adapters shipped
-
-### Exit Criteria
-
-- Project contains no `ModConfig` legacy schema and no legacy adapter.
-- `config.json` loads without warnings about missing migrators.
-- GMCM persists values correctly via typed config.
+**DoD**
+- No `Framework/ModConfig.cs` or legacy adapters.
+- Schema mismatch is handled via backup + upgrade/warn; no “migrator missing” paths.
 
 ---
 
+### Phase 3 — Catalog-driven produce + random groups ✅
+**Goal:** Remove hardcoded produce randomization and make produce resolution data-driven.
 
+**Deliverables**
+- `ProduceCatalog.RandomGroups` in `data/catalogs/produce.json`
+- `Application/Produces/IProduceResolver` + `RandomGroupProduceResolver`
+- No `RoosterControl.ProduceTranslation` / hardcoded random tables
 
-## Phase 3: Data-Driven Catalogs (Roosters, Eggs, Produces)
-
-### Objectives
-
-- Move hardcoded rooster/produce/egg data out of logic methods.
-- Centralize definitions in catalogs.
-
-### Tasks
-
-1. Create `Data/Catalogs/RoosterCatalog`:
-   - rooster key
-   - default female mapping
-   - base egg definitions
-   - default shop metadata
-2. Create `Data/Catalogs/ProduceCatalog`:
-   - allowed produce values per rooster type
-   - default produce slots and weights
-   - random-group definitions (gems, minerals, random egg variants)
-3. Move large switch/dictionary blocks out of:
-   - `ModConfig.BuildProducesDictionaries`
-   - `RoosterControl.ProduceTranslation`
-4. Replace random produce switch with resolver service:
-   - `IProduceResolver`
-   - `RandomGroupProduceResolver`
-5. Keep constants for IDs centralized, but source selection from catalog data.
-
-### Deliverables
-
-- `RoosterCatalog`
-- `ProduceCatalog`
-- produce resolver service
-
-### Exit Criteria
-
-- No large produce switch remains in runtime path.
-- Adding a new rooster or produce set does not require touching core logic.
+**DoD**
+- Any “Random …” selection is defined purely in catalog JSON.
+- Eggs + produce choices are resolved into concrete IDs via resolver.
 
 ---
 
-## Phase 4: Hatching and FarmAnimal Logic into Services
+### Phase 4 — Asset edit boundaries + services
+**Goal:** Asset editors become thin; all decisions live in services.
 
-### Objectives
+**Deliverables**
+- FarmAnimals edits fully delegated to services (produce rules, exclusions, building/location rules)
+- Object edits fully delegated to services (fertilized eggs, custom fields, tagging)
+- Coordinator orchestrates only
 
-- Separate mutation logic from event callbacks.
-- Introduce strategy pattern for hatching modes.
-
-### Tasks
-
-1. Create `Core/Services/FarmAnimalPatchService`:
-   - applies rooster settings to `FarmAnimalData`
-   - purchase/sell/building/harvest/shop metadata
-2. Create `Core/Services/HatchingService` with strategies:
-   - `IHatchingModeStrategy`
-   - `OriginalHatchingStrategy`
-   - `FertilizedOnlyHatchingStrategy`
-3. Move methods from `ModEntry` into services:
-   - `SetRoosterData`
-   - `RunHatchingSystem`
-   - normal/fertilized mode logic
-4. Add `Core/Services/LuckAdjustmentService`:
-   - daily luck evaluation
-   - percentage adjustment rules
-5. Add `Core/Services/FemaleAssignmentService`:
-   - discovery of compatible females
-   - exclusion filtering
-   - persisted mapping update
-
-### Deliverables
-
-- farm animal patch service
-- strategy-based hatching service
-- luck and female assignment services
-
-### Exit Criteria
-
-- `ModEntry`/router only invoke coordinator methods.
-- Hatching behavior remains parity-equivalent under baseline checks.
+**DoD**
+- `AssetRequested` handlers call services that are pure (no SMAPI calls inside decision logic).
 
 ---
 
-## Phase 5: ObjectData/Fertilized Egg Pipeline Isolation
+### Phase 5 — Daily plan pipeline
+**Goal:** Make day-start behavior deterministic and testable.
 
-### Objectives
+**Deliverables**
+- Daily planning service that computes actions without touching game state
+- Execution layer that applies a plan (edits, swaps, updates)
 
-- Isolate object edits and fertilized egg generation into dedicated services.
-
-### Tasks
-
-1. Create `Core/Services/FertilizedEggService`:
-   - detect base egg source
-   - generate fertilized variants
-   - maintain mapping to female egg table
-2. Create `Core/Services/ObjectDataPatchService`:
-   - applies object data changes
-   - BetterTruffles compatibility tag updates
-3. Move regex/item-id normalization into utility service:
-   - egg id parsing and conversion helpers
-4. Add deterministic handling when source object entries are missing.
-
-### Deliverables
-
-- object patch service
-- fertilized egg service
-- egg ID utility helpers
-
-### Exit Criteria
-
-- Object edits are isolated behind one entrypoint.
-- Edge cases (missing custom fields, missing large egg variants) handled safely.
+**DoD**
+- Planning can run in isolation with injected state snapshots.
 
 ---
 
-## Phase 6: GMCM Refactor to Descriptor-Driven UI
+### Phase 6 — Legacy purge + service hardening
+**Goal:** Remove dead/legacy types and harden service contracts.
 
-### Objectives
+**Deliverables**
+- Legacy folder quarantined or deleted
+- Eliminate duplicate/unused code paths and stringly-typed remnants
+- Improve logging + error handling (fail fast on invalid catalogs)
 
-- Replace manual option rendering/switch logic with reusable option descriptors.
-
-### Tasks
-
-1. Create `UI/Gmcm/OptionDescriptor` model:
-   - key
-   - type
-   - title/description translation keys
-   - getter/setter delegates
-   - constraints (min/max/interval/allowed values)
-2. Create `GmcmPageBuilder`:
-   - renders sections/pages from descriptor collections
-   - supports rooster-scoped and global descriptors
-3. Replace `GMCMenu.AddOptions` switch with descriptor registry + renderer map.
-4. Keep existing page layout and translations.
-
-### Deliverables
-
-- descriptor-driven GMCM framework
-- reduced `GMCMenu.cs` complexity
-
-### Exit Criteria
-
-- UI behavior unchanged for users.
-- Adding a new option requires descriptor registration only.
+**DoD**
+- No “legacy” runtime fallbacks; invalid inputs produce actionable errors.
 
 ---
 
-## Phase 7: Testability Layer + Initial Automated Tests
+### Phase 7 — Tests (xUnit) + deterministic harness
+**Goal:** Lock behavior with fast, deterministic tests.
 
-### Objectives
+**Deliverables**
+- `RoosterAddon.Tests` project
+- Deterministic RNG injection for services that roll randomness
+- Coverage for random groups, hatching strategies, and catalog validation
 
-- Add test coverage for core logic without SMAPI runtime.
-
-### Tasks
-
-1. Add test project (if not present) and cover pure services:
-   - luck adjustment logic
-   - weighted produce selection
-   - hatching strategy outcomes
-   - exclusion parsing and female assignment
-2. Add interfaces and fakes for game-bound dependencies.
-3. Add regression tests derived from baseline scenarios.
-4. Add serialization tests for config migration V1 -> V2.
-
-### Deliverables
-
-- unit tests for core services
-- migration tests for config compatibility
-
-### Exit Criteria
-
-- Critical logic has deterministic tests.
-- Major regressions are caught in CI/local test run.
+**DoD**
+- Tests run locally and in CI with stable outputs.
 
 ---
 
-## Phase 8: Legacy Cleanup and Hardening
+### Phase 8 — JSON catalogs (all knobs)
+**Goal:** All per-rooster and general knobs are catalog-driven, with clear precedence.
 
-### Objectives
+**Deliverables**
+- `data/catalogs/roosters.json`, `produce.json`, `hatching.json` complete
+- Catalog apply mode (seed/merge/repair) behaves predictably
 
-- Remove deprecated code paths and finalize the new architecture.
-
-### Tasks
-
-1. Remove or archive legacy helpers no longer used.
-2. Eliminate duplicated logic remaining in coordinator/router.
-3. Standardize naming, comments, and file organization.
-4. Add `README` architecture section with module responsibilities.
-5. Add changelog migration notes for mod users.
-
-### Deliverables
-
-- legacy removal PR
-- finalized docs
-
-### Exit Criteria
-
-- No active production path depends on legacy dictionary-driven architecture.
-- New architecture is documented and maintainable.
+**DoD**
+- A new install can run purely from catalogs + typed config seed.
 
 ---
 
-## Cross-Phase Standards
+### Phase 8.1 — Catalog tooling + validation
+**Goal:** Make catalogs safe to edit and easy to troubleshoot.
 
-### Coding Standards
+**Deliverables**
+- `ra_catalog` command suite: `validate`, `reload`, `export`, `diff`, `mode`
+- Validation output is actionable per-file (OK/migrated/errors)
 
-- Prefer typed models over dictionary-string maps.
-- Keep pure logic free of SMAPI and `Game1` where possible.
-- No large condition chains where a map/table/strategy applies.
-- Small methods with single responsibilities.
-
-### Compatibility Standards
-
-- Preserve save and config compatibility unless explicitly version-bumped.
-- Preserve behavior of existing GMCM options.
-- Preserve current mod dependency semantics.
-
-### Performance Standards
-
-- Avoid repeated full scans of farm/object datasets where cached indexes can be used.
-- Keep asset patch callbacks minimal and delegate logic to services.
+**DoD**
+- Editing JSON + `ra_catalog reload` updates runtime without restart.
 
 ---
 
-## Risk Register and Mitigations
+### Phase 9 — Descriptor-driven GMCM via BOAF API
+**Goal:** GMCM UI is generated from descriptors and registered through BOAF.
 
-1. Behavior drift during migration  
-Mitigation: baseline checklist + parity snapshots each phase.
+**Deliverables**
+- Descriptor model + layout compiler
+- `IBirdsOfAFeatherApi.RegisterGmcmMenu(...)` wiring
+- No direct GMCM `Add*Option` calls in RoosterAddon
 
-2. Config migration edge cases  
-Mitigation: V1 adapter tests + safe defaults + validation/clamping logs.
-
-3. Compatibility regressions with optional mods  
-Mitigation: explicit integration checks for `Mikew.letmehatchthisegg.smapi` and `6480.blueegg`.
-
-4. Event ordering regressions  
-Mitigation: preserve callback timing and asset edit priorities in boundary layer.
+**DoD**
+- Full GMCM is produced from descriptors; localization keys resolve cleanly.
 
 ---
 
-## Suggested Phase Milestones
+### Phase 10 — CI build gate + release hardening
+**Goal:** Prevent regressions and make patches compile-verified.
 
-1. Milestone A (Phases 0-2): Boundary and typed config foundation complete.
-2. Milestone B (Phases 3-5): Core behavior logic fully service-driven and data-driven.
-3. Milestone C (Phases 6-8): UI modernization, tests, and legacy removal complete.
+**Deliverables**
+- Minimal GitHub Actions: restore/build/test
+- Fail build on warnings-as-errors (where safe)
+- Add guard tests (no legacy strings, orphaned i18n keys)
 
----
-
-## Definition of Done (Project Level)
-
-- `ModEntry` is composition-only.
-- Coordinator + event router control application flow.
-- Config is typed and versioned with migration support.
-- Rooster/produce/egg definitions are data-driven.
-- Hatching logic uses strategy pattern.
-- Object/farm edits are isolated services.
-- GMCM is descriptor-driven.
-- Core behaviors are covered by unit tests.
-- Documentation explains module responsibilities and extension points.
+**DoD**
+- Every patch is compile-verified; tests run on PR/push.

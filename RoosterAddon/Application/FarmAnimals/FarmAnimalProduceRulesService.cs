@@ -44,7 +44,7 @@ internal sealed class FarmAnimalProduceRulesService
         if (rooster.RoosterType != RoosterType.Blue)
             return;
 
-        var newBlueEgg = RoosterControl.ProduceTranslation(config.Roosters[RoosterType.Blue].BlueEggChoice);
+        var newBlueEgg = roosterHelper.ProduceResolver.Resolve(config.Roosters[RoosterType.Blue].BlueEggChoice);
 
         roosterHelper.Roosters[RoosterType.Blue].Eggs[EggTypeEntries.Normal][RoosterItemDataEntries.Name] = newBlueEgg;
 

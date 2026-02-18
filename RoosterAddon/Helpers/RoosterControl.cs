@@ -8,6 +8,7 @@ using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
 using RoosterAddon.Application.FarmAnimals;
 using RoosterAddon.Application.Catalogs;
+using RoosterAddon.Application.Produces;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
@@ -27,6 +28,8 @@ public sealed class RoosterControl
     private readonly IModHelper _helper;
     private readonly IMonitor _monitor;
 
+    private readonly IProduceResolver _produceResolver;
+
     private readonly RoosterCatalog? _roosterCatalog;
 
 
@@ -37,12 +40,15 @@ public sealed class RoosterControl
     public Dictionary<string, Dictionary<EggTypeEntries, string>> FemaleEggs { get; } =
         new(StringComparer.OrdinalIgnoreCase);
 
-    public RoosterControl(RoosterAddonConfig config, IModHelper helper, IMonitor monitor, RoosterCatalog? roosterCatalog = null)
+    public IProduceResolver ProduceResolver => _produceResolver;
+
+    public RoosterControl(RoosterAddonConfig config, IModHelper helper, IMonitor monitor, RoosterCatalog? roosterCatalog = null, ProduceCatalog? produceCatalog = null)
     {
         Config = config ?? throw new ArgumentNullException(nameof(config));
         _helper = helper ?? throw new ArgumentNullException(nameof(helper));
         _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
         _roosterCatalog = roosterCatalog;
+        _produceResolver = new RandomGroupProduceResolver(produceCatalog, Rnd);
     }
 
     public void UpdateConfig(RoosterAddonConfig config)
@@ -102,7 +108,7 @@ public sealed class RoosterControl
                 Price = settings.Price,
                 Buyable = settings.Buyable,
                 Eggs = eggsByType[roosterType],
-                AllProduces = BuildProduces(settings),
+                AllProduces = BuildProduces(settings, _produceResolver),
                 Quantity = UpdateRoosterQuantity(farmAnimalName),
                 Females = GetAdditionalFemaleKeys(roosterType),
             };
@@ -130,65 +136,10 @@ public sealed class RoosterControl
     )
     {
         var eggProbabilities = new[] { normalEggProbability, largeEggProbability, fertilizedEggProbability };
+        var defaultCatalog = CatalogDefaults.CreateRoosterCatalogDefaults();
 
-        var eggIds = new Dictionary<RoosterType, string[]>
-        {
-            [RoosterType.White] = new[]
-            {
-                ItemIds.AnimalProducts.WhiteEgg,
-                ItemIds.AnimalProducts.LargeWhiteEgg,
-                ItemIds.CustomItems.FertilizedWhiteEgg,
-            },
-            [RoosterType.Brown] = new[]
-            {
-                ItemIds.AnimalProducts.BrownEgg,
-                ItemIds.AnimalProducts.LargeBrownEgg,
-                ItemIds.CustomItems.FertilizedBrownEgg,
-            },
-            [RoosterType.Blue] = new[]
-            {
-                ItemIds.CustomItems.MearaBlueEgg,
-                ItemIds.CustomItems.MearaLargeBlueEgg,
-                ItemIds.CustomItems.FertilizedBlueEgg,
-            },
-            [RoosterType.Void] = new[]
-            {
-                ItemIds.AnimalProducts.VoidEgg,
-                ItemIds.CustomItems.MearaLargeVoidEgg,
-                ItemIds.CustomItems.FertilizedVoidEgg,
-            },
-            [RoosterType.Gold] = new[]
-            {
-                ItemIds.AnimalProducts.GoldenEgg,
-                ItemIds.CustomItems.MearaLargeGoldEgg,
-                ItemIds.CustomItems.FertilizedGoldEgg,
-            },
-        };
-if (_roosterCatalog?.Roosters is not null)
-{
-    foreach (var (key, entry) in _roosterCatalog.Roosters)
-    {
-        if (!Enum.TryParse<RoosterType>(key, ignoreCase: true, out var rt))
-            continue;
-
-        if (entry?.Eggs is null)
-            continue;
-
-        var normal = string.IsNullOrWhiteSpace(entry.Eggs.Normal) ? null : entry.Eggs.Normal.Trim();
-        var large = string.IsNullOrWhiteSpace(entry.Eggs.Large) ? null : entry.Eggs.Large.Trim();
-        var fert = string.IsNullOrWhiteSpace(entry.Eggs.Fertilized) ? null : entry.Eggs.Fertilized.Trim();
-
-        if (normal is not null && large is not null && fert is not null)
-            eggIds[rt] = new[] { normal, large, fert };
-    }
-}
-
-
-        static string TranslateEggId(string eggKey)
-    => ItemIds.VariableValues.TryGetValue(eggKey, out var translated) ? translated : eggKey;
-
-var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>>();
-        foreach (var roosterType in eggIds.Keys)
+        var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>>();
+        foreach (var roosterType in RoosterAddonConfig.CreateDefaultRoosters().Keys)
         {
             var settings = Config.Roosters[roosterType];
             var enableHatching = settings.EnableRoosterHatching;
@@ -200,16 +151,26 @@ var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<R
                 probs[1] = 0;
             }
 
-            var eggs = eggIds[roosterType];
-            var eggsDict = new Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>();
-            for (var i = 0; i < eggs.Length; i++)
+            var eggCatalog = GetEggCatalog(roosterType, defaultCatalog);
+
+            var eggsDict = new Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>
             {
-                eggsDict[(EggTypeEntries)i] = new Dictionary<RoosterItemDataEntries, string>
+                [EggTypeEntries.Normal] = new Dictionary<RoosterItemDataEntries, string>
                 {
-                    [RoosterItemDataEntries.Name] = eggs[i],
-                    [RoosterItemDataEntries.Probability] = enableHatching ? probs[i].ToString(CultureInfo.InvariantCulture) : "0",
-                };
-            }
+                    [RoosterItemDataEntries.Name] = _produceResolver.Resolve(eggCatalog.Normal),
+                    [RoosterItemDataEntries.Probability] = enableHatching ? probs[0].ToString(CultureInfo.InvariantCulture) : "0",
+                },
+                [EggTypeEntries.Large] = new Dictionary<RoosterItemDataEntries, string>
+                {
+                    [RoosterItemDataEntries.Name] = _produceResolver.Resolve(eggCatalog.Large),
+                    [RoosterItemDataEntries.Probability] = enableHatching ? probs[1].ToString(CultureInfo.InvariantCulture) : "0",
+                },
+                [EggTypeEntries.Fertilized] = new Dictionary<RoosterItemDataEntries, string>
+                {
+                    [RoosterItemDataEntries.Name] = _produceResolver.Resolve(eggCatalog.Fertilized),
+                    [RoosterItemDataEntries.Probability] = enableHatching ? probs[2].ToString(CultureInfo.InvariantCulture) : "0",
+                }
+            };
 
             result[roosterType] = eggsDict;
         }
@@ -217,10 +178,25 @@ var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<R
         return result;
     }
 
-    private static Dictionary<ProduceTypeEntries, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>> BuildProduces(RoosterSettings settings)
+    private EggCatalog GetEggCatalog(RoosterType roosterType, RoosterCatalog defaults)
     {
-        var produce = BuildProduceEntries(settings.ProduceEntries);
-        var deluxe = BuildProduceEntries(settings.DeluxeProduceEntries);
+        if (_roosterCatalog?.Roosters is not null
+            && _roosterCatalog.Roosters.TryGetValue(roosterType.ToString(), out var entry)
+            && entry.Eggs is not null
+            && !string.IsNullOrWhiteSpace(entry.Eggs.Normal)
+            && !string.IsNullOrWhiteSpace(entry.Eggs.Large)
+            && !string.IsNullOrWhiteSpace(entry.Eggs.Fertilized))
+        {
+            return entry.Eggs;
+        }
+
+        return defaults.Roosters[roosterType.ToString()].Eggs;
+    }
+
+    private static Dictionary<ProduceTypeEntries, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>> BuildProduces, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>> BuildProduces(RoosterSettings settings, IProduceResolver resolver)
+    {
+        var produce = BuildProduceEntries(settings.ProduceEntries, resolver);
+        var deluxe = BuildProduceEntries(settings.DeluxeProduceEntries, resolver);
 
         return new Dictionary<ProduceTypeEntries, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>>
         {
@@ -229,7 +205,7 @@ var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<R
         };
     }
 
-    private static Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>> BuildProduceEntries(List<ProduceEntry> entries)
+    private static Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>> BuildProduceEntries(List<ProduceEntry> entries, IProduceResolver resolver)
     {
         entries ??= ProduceEntry.CreateDefaultFour();
         while (entries.Count < 4)
@@ -237,24 +213,24 @@ var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<R
 
         var mapped = new Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>
         {
-            [ProduceEntries.First] = MapProduceEntry(entries[0]),
-            [ProduceEntries.Second] = MapProduceEntry(entries[1]),
-            [ProduceEntries.Third] = MapProduceEntry(entries[2]),
-            [ProduceEntries.Fourth] = MapProduceEntry(entries[3]),
+            [ProduceEntries.First] = MapProduceEntry(entries[0], resolver),
+            [ProduceEntries.Second] = MapProduceEntry(entries[1], resolver),
+            [ProduceEntries.Third] = MapProduceEntry(entries[2], resolver),
+            [ProduceEntries.Fourth] = MapProduceEntry(entries[3], resolver),
             [ProduceEntries.Chosen] = new Dictionary<RoosterItemDataEntries, string>(),
         };
 
         return mapped;
     }
 
-    private static Dictionary<RoosterItemDataEntries, string> MapProduceEntry(ProduceEntry entry)
+    private static Dictionary<RoosterItemDataEntries, string> MapProduceEntry(ProduceEntry entry, IProduceResolver resolver)
     {
         entry ??= new ProduceEntry();
 
         var choice = entry.Choice ?? string.Empty;
         var name = choice.Equals(ItemIds.CustomItems.Custom, StringComparison.OrdinalIgnoreCase)
-            ? (entry.CustomItemName ?? ItemIds.CustomItems.Custom)
-            : ProduceTranslation(choice);
+            ? resolver.Resolve(entry.CustomItemName ?? ItemIds.CustomItems.Custom)
+            : resolver.Resolve(choice);
 
         return new Dictionary<RoosterItemDataEntries, string>
         {
@@ -372,189 +348,6 @@ var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<R
 
         return Math.Clamp(originalPercentage + adjustment, 0, 100);
     }
-    internal static string ProduceTranslation(string produceName)
-        {
-            string GetNewName(string[] namesList)
-            {
-                int index = Rnd.Next(namesList.Length);
-
-                return ProduceTranslation(namesList[index]);
-            }
-            if (produceName.Contains("Random"))
-            {
-                return produceName switch
-                {
-                    ItemIds.RandomProduces.RandomColorEgg
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.AnimalProducts.BrownEgg,
-                                ItemIds.AnimalProducts.WhiteEgg
-                            }
-                        ),
-                    ItemIds.RandomProduces.RandomColorLargeEgg
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.AnimalProducts.LargeBrownEgg,
-                                ItemIds.AnimalProducts.LargeWhiteEgg
-                            }
-                        ),
-                    ItemIds.RandomProduces.RandomSizeWhiteEgg
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.AnimalProducts.LargeWhiteEgg,
-                                ItemIds.AnimalProducts.WhiteEgg
-                            }
-                        ),
-                    ItemIds.RandomProduces.RandomSizeBrownEgg
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.AnimalProducts.BrownEgg,
-                                ItemIds.AnimalProducts.LargeBrownEgg
-                            }
-                        ),
-                    ItemIds.RandomProduces.RandomColorSizeEgg
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.AnimalProducts.BrownEgg,
-                                ItemIds.AnimalProducts.WhiteEgg,
-                                ItemIds.AnimalProducts.LargeBrownEgg,
-                                ItemIds.AnimalProducts.LargeWhiteEgg
-                            }
-                        ),
-                    ItemIds.RandomProduces.RandomSizeBlueEgg
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.CustomItems.MearaBlueEgg,
-                                ItemIds.CustomItems.MearaLargeBlueEgg,
-                            }
-                        ),
-                    ItemIds.RandomProduces.RandomSizeVoidEgg
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.CustomItems.MearaLargeVoidEgg,
-                                ItemIds.AnimalProducts.VoidEgg,
-                            }
-                        ),
-                    ItemIds.RandomProduces.RandomSizeGoldenEgg
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.CustomItems.MearaLargeGoldEgg,
-                                ItemIds.AnimalProducts.GoldenEgg,
-                            }
-                        ),
-                    ItemIds.RandomProduces.RandomGems
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.Gemstones.Amethyst,
-                                ItemIds.Gemstones.Aquamarine,
-                                ItemIds.Gemstones.Emerald,
-                                ItemIds.Gemstones.Jade,
-                                ItemIds.Gemstones.Ruby,
-                                ItemIds.Gemstones.Topaz
-                            }
-                        ),
-                    ItemIds.RandomProduces.RandomMinerals
-                        => GetNewName(
-                            new string[]
-                            {
-                                ItemIds.Minerals.Aerinite,
-                                ItemIds.Minerals.Alamite,
-                                ItemIds.Minerals.Baryte,
-                                ItemIds.Minerals.Basalt,
-                                ItemIds.Minerals.Bixite,
-                                ItemIds.Minerals.Calcite,
-                                ItemIds.Minerals.Celestine,
-                                ItemIds.Minerals.Dolomite,
-                                ItemIds.Minerals.EarthCrystal,
-                                ItemIds.Minerals.Esperite,
-                                ItemIds.Minerals.FairyStone,
-                                ItemIds.Minerals.FireOpal,
-                                ItemIds.Minerals.FireQuartz,
-                                ItemIds.Minerals.FrozenTear,
-                                ItemIds.Minerals.Geminite,
-                                ItemIds.Minerals.GhostCrystal,
-                                ItemIds.Minerals.Granite,
-                                ItemIds.Minerals.Helvite,
-                                ItemIds.Minerals.Hematite,
-                                ItemIds.Minerals.Jagoite,
-                                ItemIds.Minerals.Jamborite,
-                                ItemIds.Minerals.Kyanite,
-                                ItemIds.Minerals.LemonStone,
-                                ItemIds.Minerals.Limestone,
-                                ItemIds.Minerals.Lunarite,
-                                ItemIds.Minerals.Malachite,
-                                ItemIds.Minerals.Marble,
-                                ItemIds.Minerals.Mudstone,
-                                ItemIds.Minerals.Nekoite,
-                                ItemIds.Minerals.Neptunite,
-                                ItemIds.Minerals.Obsidian,
-                                ItemIds.Minerals.OceanStone,
-                                ItemIds.Minerals.Opal,
-                                ItemIds.Minerals.Orpiment,
-                                ItemIds.Minerals.PetrifiedSlime,
-                                ItemIds.Minerals.Pyrite,
-                                ItemIds.Minerals.Sandstone,
-                                ItemIds.Minerals.Slate,
-                                ItemIds.Minerals.Soapstone,
-                                ItemIds.Minerals.StarShards,
-                                ItemIds.Minerals.ThunderEgg,
-                                ItemIds.Minerals.TigersEye
-                            }
-                        ),
-                    _ => "",
-                    //TODO ADD MISSING RANDOMS
-                };
-            }
-            return ItemIds.VariableValues.TryGetValue(produceName, out var translated) ? translated : produceName;
-        }
-
-        if (produceName.Contains("Random", StringComparison.Ordinal))
-        {
-            return produceName switch
-            {
-                ItemIds.RandomProduces.RandomColorEgg
-                    => PickOne(new[] { ItemIds.AnimalProducts.BrownEgg, ItemIds.AnimalProducts.WhiteEgg }),
-                ItemIds.RandomProduces.RandomColorLargeEgg
-                    => PickOne(new[] { ItemIds.AnimalProducts.LargeBrownEgg, ItemIds.AnimalProducts.LargeWhiteEgg }),
-                ItemIds.RandomProduces.RandomSizeWhiteEgg
-                    => PickOne(new[] { ItemIds.AnimalProducts.LargeWhiteEgg, ItemIds.AnimalProducts.WhiteEgg }),
-                ItemIds.RandomProduces.RandomSizeBrownEgg
-                    => PickOne(new[] { ItemIds.AnimalProducts.BrownEgg, ItemIds.AnimalProducts.LargeBrownEgg }),
-                ItemIds.RandomProduces.RandomColorSizeEgg
-                    => PickOne(new[] { ItemIds.AnimalProducts.BrownEgg, ItemIds.AnimalProducts.WhiteEgg, ItemIds.AnimalProducts.LargeBrownEgg, ItemIds.AnimalProducts.LargeWhiteEgg }),
-                ItemIds.RandomProduces.RandomSizeBlueEgg
-                    => PickOne(new[] { ItemIds.CustomItems.MearaBlueEgg, ItemIds.CustomItems.MearaLargeBlueEgg }),
-                ItemIds.RandomProduces.RandomSizeVoidEgg
-                    => PickOne(new[] { ItemIds.CustomItems.MearaLargeVoidEgg, ItemIds.AnimalProducts.VoidEgg }),
-                ItemIds.RandomProduces.RandomSizeGoldenEgg
-                    => PickOne(new[] { ItemIds.CustomItems.MearaLargeGoldEgg, ItemIds.AnimalProducts.GoldenEgg }),
-                ItemIds.RandomProduces.RandomGems
-                    => PickOne(new[] { ItemIds.Gemstones.Amethyst, ItemIds.Gemstones.Aquamarine, ItemIds.Gemstones.Emerald, ItemIds.Gemstones.Jade, ItemIds.Gemstones.Ruby, ItemIds.Gemstones.Topaz }),
-                ItemIds.RandomProduces.RandomMinerals
-                    => PickOne(new[]
-                    {
-                        ItemIds.Minerals.Aerinite, ItemIds.Minerals.Alamite, ItemIds.Minerals.Baryte, ItemIds.Minerals.Basalt, ItemIds.Minerals.Bixite, ItemIds.Minerals.Calcite,
-                        ItemIds.Minerals.Celestine, ItemIds.Minerals.Dolomite, ItemIds.Minerals.EarthCrystal, ItemIds.Minerals.Esperite, ItemIds.Minerals.FireOpal, ItemIds.Minerals.FireQuartz,
-                        ItemIds.Minerals.FrozenTear, ItemIds.Minerals.Geminite, ItemIds.Minerals.GhostCrystal, ItemIds.Minerals.Granite, ItemIds.Minerals.Helvite, ItemIds.Minerals.Hematite,
-                        ItemIds.Minerals.Jagoite, ItemIds.Minerals.Jamborite, ItemIds.Minerals.Kyanite, ItemIds.Minerals.LemonStone, ItemIds.Minerals.Limestone, ItemIds.Minerals.Lunarite,
-                        ItemIds.Minerals.Malachite,
-                    }),
-                _ => produceName,
-            };
-        }
-
-        return ItemIds.VariableValues.TryGetValue(produceName, out var translated) ? translated : produceName;
-    }
-
     public void UpdateFemaleEggs(RoosterData rooster, IDictionary<string, FarmAnimalData> animalData)
     {
         var eggTypeMap = new Dictionary<string, EggTypeEntries>

@@ -1,4 +1,4 @@
-# RoosterAddon Refactor Checklist (Phase 0+)
+# RoosterAddon Refactor Checklist
 
 This file is a living checklist to keep refactors honest.
 
@@ -16,8 +16,23 @@ This file is a living checklist to keep refactors honest.
 - [x] Remove unintended `female.Length` chance factor.
 - [x] Optimize BetterTruffles tagging (HashSet + single pass).
 
-## Next phases (planned)
-- [x] Phase 2: Thin `ModEntry` + coordinator/router (event bodies in coordinator, SaveData store scaffold).
-- [ ] Phase 3: Typed config + migration.
-- [ ] Phase 4: Content pipeline editors (FarmAnimals/Objects/Textures).
-- [ ] Phase 5+: Daily plan + data catalogs + tests.
+## Phase 2: Typed config only (no legacy compatibility)
+- [x] Typed config lives under `Framework/Config/*`.
+- [x] Remove legacy config artifacts (`Framework/ModConfig.cs`, `Framework/Config/LegacyConfigAdapter.cs`).
+- [x] Schema handling is self-healing (backup + upgrade) with no "no migrator" warnings.
+
+## Phase 3: Catalog-driven produce + random groups
+- [x] `ProduceCatalog.RandomGroups` added and persisted in `data/catalogs/produce.json`.
+- [x] Produce/egg IDs resolved via `IProduceResolver` (`RandomGroupProduceResolver`).
+- [x] Remove hardcoded produce randomization (`RoosterControl.ProduceTranslation`).
+- [x] Eggs are built from the rooster catalog and resolved into concrete IDs.
+
+## Remaining phases (see ROOSTERADDON_REFACTOR_PLAN.md)
+- [ ] Phase 4: FarmAnimals/Objects edits fully isolated into services (no coordinator leakage).
+- [ ] Phase 5: Daily plan pipeline + decision layer cleanup.
+- [ ] Phase 6: Legacy purge + service hardening.
+- [ ] Phase 7: Tests (xUnit) + deterministic harness.
+- [ ] Phase 8: JSON catalogs (all knobs).
+- [ ] Phase 8.1: Catalog tooling + validation/reload/export.
+- [ ] Phase 9: Descriptor-driven GMCM via BOAF public API.
+- [ ] Phase 10: CI build gate + release hardening.

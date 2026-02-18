@@ -36,7 +36,10 @@ public sealed class ProduceCatalog
 {
     public int SchemaVersion { get; set; } = 1;
 
-    /// <summary>Keyed by rooster type name (e.g. "White").</summary>
+    /// <summary>Random group key -> list of choice keys.</summary>
+    public Dictionary<string, List<string>> RandomGroups { get; set; } = new();
+
+/// <summary>Keyed by rooster type name (e.g. "White").</summary>
     public Dictionary<string, ProduceCatalogEntry> Roosters { get; set; } = new();
 }
 
