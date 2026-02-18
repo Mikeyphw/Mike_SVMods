@@ -1,8 +1,6 @@
 using StardewValley.GameData.Machines;
 
-using static LetMeHatchThisEgg.ModEntry;
-
-namespace LetMeHatchThisEgg.Models
+using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Models
 {
     public class SavedMachineRuleInfo
     {

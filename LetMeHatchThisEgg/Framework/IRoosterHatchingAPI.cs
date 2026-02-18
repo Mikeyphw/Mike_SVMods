@@ -1,6 +1,4 @@
-using static LetMeHatchThisEgg.ModEntry;
-
-namespace LetMeHatchThisEgg.Framework
+using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Framework
 {
     public interface IRoosterHatchingAPI
     {

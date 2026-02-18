@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Mikew.BirdsOfAFeather.Helpers;
+using BirdsOfAFeather.Helpers;
 using ContentPatcher;
 using LetMeHatchThisEgg.Breeding;
 using LetMeHatchThisEgg.Cloning;
@@ -10,6 +10,7 @@ using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.Helpers;
 using LetMeHatchThisEgg.Models;
 using Microsoft.Xna.Framework.Graphics;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;

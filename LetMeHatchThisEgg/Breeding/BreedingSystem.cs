@@ -1,7 +1,8 @@
-using Mikew.BirdsOfAFeather.Helpers;
+using BirdsOfAFeather.Helpers;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.Models;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
@@ -9,9 +10,7 @@ using StardewValley.GameData.FarmAnimals;
 using StardewValley.TokenizableStrings;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-using static LetMeHatchThisEgg.ModEntry;
-
-namespace LetMeHatchThisEgg.Breeding
+using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
 {
     public class BreedingSystem
     {

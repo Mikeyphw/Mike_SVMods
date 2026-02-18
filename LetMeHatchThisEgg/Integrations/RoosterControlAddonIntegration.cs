@@ -4,9 +4,7 @@ using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 
-using static LetMeHatchThisEgg.ModEntry;
-
-namespace LetMeHatchThisEgg.Integrations
+using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integrations
 {
     public class RoosterControlAddonIntegration
     {
@@ -19,7 +17,7 @@ namespace LetMeHatchThisEgg.Integrations
             var goldChicken = GetFemaleBreedingDataGroup();
             var transRooster = GetFemaleBreedingDataGroup();
 
-            if (ModIdEvaluator.Evaluate("Meara.Roosters", ModEntry.HelperInstance.ModRegistry))
+            if (ModIdEvaluator.Evaluate("Meara.Roosters"))
             {
                 AddMales(
                     whiteChicken,
@@ -93,7 +91,7 @@ namespace LetMeHatchThisEgg.Integrations
                 );
             }
 
-            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster", ModEntry.HelperInstance.ModRegistry))
+            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster"))
             {
                 AddMales(
                     whiteChicken,
@@ -181,7 +179,7 @@ namespace LetMeHatchThisEgg.Integrations
                 },
             };
 
-            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster", ModEntry.HelperInstance.ModRegistry))
+            if (ModIdEvaluator.Evaluate("Blaklyte.CP.Rooster"))
             {
                 data["Trans Rooster"] =  transRooster ;
             }

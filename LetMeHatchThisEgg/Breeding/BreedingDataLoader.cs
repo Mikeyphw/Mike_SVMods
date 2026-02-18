@@ -13,9 +13,7 @@ using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 using Object = StardewValley.Object;
 
-using static LetMeHatchThisEgg.ModEntry;
-
-namespace LetMeHatchThisEgg.Breeding
+using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
 {
     public class BreedingDataLoader
     {
@@ -363,7 +361,7 @@ namespace LetMeHatchThisEgg.Breeding
 
         public static bool ShouldUseMearasFertilizedEggs(string roosterKey, string femaleKey)
         {
-            var hasMearaRoostersMod = ModIdEvaluator.Evaluate("Meara.Roosters", ModEntry.HelperInstance.ModRegistry);
+            var hasMearaRoostersMod = ModIdEvaluator.Evaluate("Meara.Roosters");
 
             var malesForMearaMod = new string[]
             {

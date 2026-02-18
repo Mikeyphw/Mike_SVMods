@@ -2,9 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-using static LetMeHatchThisEgg.ModEntry;
-
-namespace LetMeHatchThisEgg.Config
+using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Config
 {
     public sealed class EditExclusion
     {

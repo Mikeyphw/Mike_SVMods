@@ -1,4 +1,4 @@
-using Mikew.BirdsOfAFeather.Helpers;
+using BirdsOfAFeather.Helpers;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.GameAssetManagement;
@@ -7,6 +7,7 @@ using LetMeHatchThisEgg.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.BirdsOfAFeather.Framework;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.TokenizableStrings;

@@ -6,9 +6,7 @@ using StardewModdingAPI;
 using StardewValley.GameData.Objects;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-using static LetMeHatchThisEgg.ModEntry;
-
-namespace LetMeHatchThisEgg.Helpers
+using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Helpers
 {
     public class CloningHelper
     {
