@@ -6,11 +6,11 @@ using LetMeHatchThisEgg.Infrastructure.Config;
 using LetMeHatchThisEgg.Infrastructure.Content.Loaders;
 using LetMeHatchThisEgg.Infrastructure.Logging;
 using Mikew.BirdsOfAFeather.Framework;
-using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
 namespace LetMeHatchThisEgg.Infrastructure.Content;
 
+/// <summary>Routes SMAPI asset requests through a loader-first, editor-second pipeline.</summary>
 public sealed class SmapiContentCoordinator : IDisposable
 {
     private readonly CoreContext _core;
@@ -43,6 +43,7 @@ public sealed class SmapiContentCoordinator : IDisposable
         _editors = editors?.ToList() ?? throw new ArgumentNullException(nameof(editors));
     }
 
+    /// <summary>Optionally registers this coordinator directly with SMAPI events.</summary>
     public void Register()
     {
         if (_registered)
@@ -57,23 +58,16 @@ public sealed class SmapiContentCoordinator : IDisposable
         );
     }
 
-    public void InvalidateAll()
-    {
-        foreach (var name in _editors.Select(e => e.AssetName).Distinct())
-            _core.Helper.GameContent.InvalidateCache(name);
-    }
-
-    private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+    /// <summary>Handles an asset request. Intended to be called from a mod-owned AssetRequested handler.</summary>
+    public void HandleAssetRequested(AssetRequestedEventArgs e)
     {
         var ctx = new ContentContext(_core, _configProvider.Config, _log);
         var assetNameLower = e.NameWithoutLocale.BaseName.ToLowerInvariant();
 
         foreach (var loader in _loaders.OrderBy(l => l.Priority))
         {
-            if (!loader.CanLoad(assetNameLower, e))
-                continue;
-
-            loader.Load(assetNameLower, e);
+            if (loader.CanLoad(assetNameLower, e))
+                loader.Load(assetNameLower, e);
         }
 
         foreach (var editor in _editors.OrderBy(ed => ed.Priority))
@@ -84,6 +78,15 @@ public sealed class SmapiContentCoordinator : IDisposable
             e.Edit(asset => editor.Edit(asset, ctx), editor.Priority);
         }
     }
+
+    public void InvalidateAll()
+    {
+        foreach (var name in _editors.Select(e => e.AssetName).Distinct())
+            _core.Helper.GameContent.InvalidateCache(name);
+    }
+
+    private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+        => HandleAssetRequested(e);
 
     public void Dispose()
     {

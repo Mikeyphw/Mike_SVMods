@@ -7,7 +7,7 @@ using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.GameAssetManagement;
 using LetMeHatchThisEgg.Infrastructure.Config;
 using LetMeHatchThisEgg.Infrastructure.Logging;
-using LetMeHatchThisEgg.Infrastructure.Content.Loaders;
+using LetMeHatchThisEgg.Infrastructure.Content;
 using LetMeHatchThisEgg.UI;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
@@ -32,7 +32,7 @@ public sealed class LmhCoordinator
     private IWildEggsApi? _wildEggs;
 
     private GameAssetManager? _assetManager;
-    private IReadOnlyList<IAssetLoader> _assetLoaders = Array.Empty<IAssetLoader>();
+    private SmapiContentCoordinator? _contentCoordinator;
     private GMCMenu? _gmcmMenu;
 
     private readonly List<string> _assetsRequested = new();
@@ -167,23 +167,24 @@ public sealed class LmhCoordinator
         }
     }
 
-    private void InitializeAssetEditor()
-    {
-        if (_contentPatcher is null || _wildEggs is null)
-        {
-            return;
-        }
-
-        _assetManager = new GameAssetManager(_contentPatcher, _wildEggs);
-        _assetManager.TextureManager.SetUpModAssets();
-_assetLoaders = new IAssetLoader[]
+private void InitializeAssetEditor()
 {
-    new MaleClonesTextureLoader(_assetManager),
-    new ClonedEggsAssetLoader(ModEntry.AssetHandler, _assetManager),
-    new BoafGamePathsLoader(ModEntry.AssetHandler),
-};
-
+    if (_contentPatcher is null || _wildEggs is null)
+    {
+        return;
     }
+
+    _assetManager = new GameAssetManager(_contentPatcher, _wildEggs);
+    _assetManager.TextureManager.SetUpModAssets();
+
+    _contentCoordinator = LetMeHatchContentPipeline.Create(
+        _core,
+        _config,
+        _log,
+        ModEntry.AssetHandler,
+        _assetManager
+    );
+}
 
     private void InitializeGmcm()
     {
@@ -245,14 +246,14 @@ _assetLoaders = new IAssetLoader[]
         }
     }
 
-    private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+        private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
     {
-        if (_assetManager is null)
+        if (_assetManager is null || _contentCoordinator is null)
         {
             return;
         }
 
-        var assetName = e.NameWithoutLocale.BaseName.ToLower();
+        var assetName = e.NameWithoutLocale.BaseName.ToLowerInvariant();
 
         if (!_assetsRequested.Contains(assetName))
         {
@@ -260,117 +261,6 @@ _assetLoaders = new IAssetLoader[]
             _core.Helper.Data.WriteJsonFile("assetsRequested.json", _assetsRequested);
         }
 
-        HandleAssetSpecificLogic(assetName, e);
-    }
-
-    private void HandleAssetSpecificLogic(string assetName, AssetRequestedEventArgs e)
-{
-    if (_assetManager is null)
-    {
-        return;
-    }
-
-    foreach (var loader in _assetLoaders)
-    {
-        if (loader.CanLoad(assetName, e))
-        {
-            loader.Load(assetName, e);
-        }
-    }
-
-    if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.FarmAnimals))
-    {
-        HandleFarmAnimalsAsset(e);
-    }
-
-    if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.Objects))
-    {
-        HandleObjectsAsset(e);
-    }
-
-    if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.Machines))
-    {
-        HandleMachinesAsset(e);
-    }
-}
-    private void HandleFarmAnimalsAsset(AssetRequestedEventArgs e)
-    {
-        if (_assetManager!.ClonedAnimalsInfoList.Any())
-        {
-            _assetManager.CreateClonePlaceholders(e, AssetEditPriority.Early);
-            _assetManager.CreateAndAddAnimalClones(e, AssetEditPriority.Late);
-        }
-
-        HandleAdditionalFarmAnimalsLogic(e);
-    }
-
-    private void HandleAdditionalFarmAnimalsLogic(AssetRequestedEventArgs e)
-    {
-        var config = _config.Config;
-
-        if (ModIdEvaluator.Evaluate("cantabilechaos.BFAVChickens", _core.Helper.ModRegistry) && config.CloneVanillaEggs)
-        {
-            // EditAssetWithFancyChickensEggs(e, AssetEditPriority.Late);
-        }
-
-        if (_assetManager!.ItemsToAdd.Count > 0)
-        {
-            _assetManager.ReplaceOriginalItemForClone(
-                e,
-                AssetEditPriority.Late + NEW_EGGS_ADD_PRIORITY
-            );
-        }
-
-        if (config.EditEggListByName)
-        {
-            _assetManager.EditEggListByName(e, AssetEditPriority.Late + EDIT_EGG_LIST_PRIORITY);
-        }
-
-        if (config.EditBirthText)
-        {
-            _assetManager.EditBirthTexts(e, AssetEditPriority.Late + EDIT_BIRTH_TEXT_PRIORITY);
-        }
-
-        if (config.BreedingSystemEnabled && _assetManager.HasAddedMaleClones)
-        {
-            _assetManager.RunBreedingSystem(
-                e,
-                AssetEditPriority.Late + BREEDING_SYSTEM_PRIORITY
-            );
-        }
-    }
-
-    private void HandleObjectsAsset(AssetRequestedEventArgs e)
-    {
-        if (_assetManager!.ItemsToAdd.Count < 1)
-        {
-            return;
-        }
-
-        _assetManager.EditAssetWithNewClonedEggs(e, AssetEditPriority.Default);
-        _assetManager.EditAssetWithNewFertilizedEggs(
-            e,
-            AssetEditPriority.Late + NEW_EGGS_ADD_PRIORITY
-        );
-    }
-
-    private void HandleMachinesAsset(AssetRequestedEventArgs e)
-    {
-        var config = _config.Config;
-
-        if (
-            (config.OnlyFertilizedEggs && _assetManager!.HasAddedFertilizedEggs)
-            || !config.OnlyFertilizedEggs
-                && _assetManager!.HasAddedClonedItems
-                && config.CloneMachineRules
-        )
-        {
-            _assetManager.CloneMachineData(e, AssetEditPriority.Late + BASE_PRIORITY);
-        }
-    }
-        else
-        {
-            _assetManager!.HandleClonedEggsAsset(e);
-        }
+        _contentCoordinator.HandleAssetRequested(e);
     }
 }
