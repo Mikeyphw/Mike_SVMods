@@ -31,6 +31,39 @@ internal sealed record GmcmFloatOptionDescriptor(
     float? Interval = null,
     bool Tooltip = false) : GmcmOptionDescriptor(OptionId, Tooltip);
 
+
+internal sealed record GmcmBoolFuncOptionDescriptor(
+    string OptionId,
+    Func<bool> GetValue,
+    Action<bool> SetValue,
+    bool Tooltip = false) : GmcmOptionDescriptor(OptionId, Tooltip);
+
+internal sealed record GmcmIntFuncOptionDescriptor(
+    string OptionId,
+    Func<int> GetValue,
+    Action<int> SetValue,
+    int? Min = null,
+    int? Max = null,
+    int? Interval = null,
+    bool Tooltip = false) : GmcmOptionDescriptor(OptionId, Tooltip);
+
+internal sealed record GmcmFloatFuncOptionDescriptor(
+    string OptionId,
+    Func<float> GetValue,
+    Action<float> SetValue,
+    float? Min = null,
+    float? Max = null,
+    float? Interval = null,
+    bool Tooltip = false) : GmcmOptionDescriptor(OptionId, Tooltip);
+
+internal sealed record GmcmTextFuncOptionDescriptor(
+    string OptionId,
+    Func<string> GetValue,
+    Action<string> SetValue,
+    string[]? AllowedValues = null,
+    bool FormatAllowedValue = false,
+    bool Tooltip = false) : GmcmOptionDescriptor(OptionId, Tooltip);
+
 internal interface IGmcmEnumOptionDescriptor : IGmcmEntryDescriptor
 {
     string OptionId { get; }

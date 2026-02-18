@@ -52,7 +52,47 @@ internal static class GmcmLayoutCompiler
                         );
                         break;
 
-                    case IGmcmEnumOptionDescriptor e:
+                    
+                    case GmcmBoolFuncOptionDescriptor b:
+                        page.Bool(b.OptionId, b.GetValue, b.SetValue, tooltip: b.Tooltip);
+                        break;
+
+                    case GmcmIntFuncOptionDescriptor i:
+                        page.Int(
+                            i.OptionId,
+                            i.GetValue,
+                            i.SetValue,
+                            tooltip: i.Tooltip,
+                            min: i.Min,
+                            max: i.Max,
+                            interval: i.Interval
+                        );
+                        break;
+
+                    case GmcmFloatFuncOptionDescriptor f:
+                        page.Float(
+                            f.OptionId,
+                            f.GetValue,
+                            f.SetValue,
+                            tooltip: f.Tooltip,
+                            min: f.Min,
+                            max: f.Max,
+                            interval: f.Interval
+                        );
+                        break;
+
+                    case GmcmTextFuncOptionDescriptor t:
+                        page.Text(
+                            t.OptionId,
+                            t.GetValue,
+                            t.SetValue,
+                            tooltip: t.Tooltip,
+                            allowedValues: t.AllowedValues,
+                            formatAllowedValue: t.FormatAllowedValue
+                        );
+                        break;
+
+case IGmcmEnumOptionDescriptor e:
                         AddEnum(page, e);
                         break;
 

@@ -41,11 +41,10 @@ internal sealed partial class RoosterCoordinator
         var api = Helper.ModRegistry.GetApi<IBirdsOfAFeatherApi>("Mikew.birdsofafeather");
         if (api is null || api.ApiVersion < BoafApiMinVersion)
         {
-            Monitor.Log(
-                "BirdsOfAFeather API is missing or too old; GMCM menu will not be registered.",
-                LogLevel.Warn
+            throw new InvalidOperationException(
+                "BirdsOfAFeather is required but the public API is missing or too old. "
+                + "Please install/update BirdsOfAFeather."
             );
-            return;
         }
 
         _gmcmIntegration = api.RegisterGmcmMenu(
@@ -101,9 +100,27 @@ internal sealed partial class RoosterCoordinator
             );
         });
 
-        layout.Page(RoosterGmcmPageIds.RoostersWhite, page => BuildRoosterPage(page, RoosterAddon.Enums.RoosterType.White));
-        layout.Page(RoosterGmcmPageIds.RoostersBrown, page => BuildRoosterPage(page, RoosterAddon.Enums.RoosterType.Brown));
-        layout.Page(RoosterGmcmPageIds.RoostersBlue, page => BuildRoosterPage(page, RoosterAddon.Enums.RoosterType.Blue));
+        layout.Page(RoosterGmcmPageIds.RoostersWhite, page =>
+        {
+            GmcmLayoutCompiler.Apply(
+                page,
+                RoosterGmcmDescriptorRegistry.RoostersWhite(() => GetRoosterSettings(RoosterAddon.Enums.RoosterType.White))
+            );
+        });
+        layout.Page(RoosterGmcmPageIds.RoostersBrown, page =>
+        {
+            GmcmLayoutCompiler.Apply(
+                page,
+                RoosterGmcmDescriptorRegistry.RoostersBrown(() => GetRoosterSettings(RoosterAddon.Enums.RoosterType.Brown))
+            );
+        });
+        layout.Page(RoosterGmcmPageIds.RoostersBlue, page =>
+        {
+            GmcmLayoutCompiler.Apply(
+                page,
+                RoosterGmcmDescriptorRegistry.RoostersBlue(() => GetRoosterSettings(RoosterAddon.Enums.RoosterType.Blue))
+            );
+        });
         layout.Page(RoosterGmcmPageIds.RoostersVoid, page => BuildRoosterPage(page, RoosterAddon.Enums.RoosterType.Void));
         layout.Page(RoosterGmcmPageIds.RoostersGold, page => BuildRoosterPage(page, RoosterAddon.Enums.RoosterType.Gold));
     }
