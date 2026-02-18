@@ -44,7 +44,7 @@ public sealed class IGMCMOptionsHelper
         => _i18n.TryGet(keyOrText, out var t) ? t : keyOrText;
 
     private Func<string> GetName(string optionName)
-        => () => _i18n.GetString(Key("config", optionName, "name"));
+        => () => Translate(Key("config", optionName, "name"), optionName);
 
     private Func<string> GetPageElement(string optionName, string type = "page")
         => () => _i18n.GetString(Key("config", type, optionName, "name"));
