@@ -27,16 +27,17 @@ public static class ConfigManager
             var cfg = helper.ReadConfig<RoosterAddonConfig>();
             cfg = Normalize(cfg);
 
+            var originalVersion = cfg.SchemaVersion;
+
             if (cfg.SchemaVersion <= 0)
+            {
                 cfg.SchemaVersion = ConfigSchema.CurrentVersion;
+                helper.WriteConfig(cfg);
+                return cfg;
+            }
 
             if (cfg.SchemaVersion != ConfigSchema.CurrentVersion)
-            {
-                monitor.Log(
-                    $"RoosterAddon: config schema version {cfg.SchemaVersion} differs from current {ConfigSchema.CurrentVersion}. No migrator is registered.",
-                    LogLevel.Warn
-                );
-            }
+                return HandleSchemaMismatch(helper, monitor, path, cfg, originalVersion);
 
             return cfg;
         }
@@ -56,7 +57,7 @@ public static class ConfigManager
             }
 
             monitor.Log(
-                $"RoosterAddon: failed to read typed config.json, writing defaults. Backup: {backupPath}
+                $"RoosterAddon: failed to read config.json, writing defaults. Backup: {backupPath}
 {ex}",
                 LogLevel.Error
             );
@@ -69,6 +70,49 @@ public static class ConfigManager
 
     public static void Save(IModHelper helper, RoosterAddonConfig cfg)
         => helper.WriteConfig(Normalize(cfg));
+
+    private static RoosterAddonConfig HandleSchemaMismatch(
+        IModHelper helper,
+        IMonitor monitor,
+        string configPath,
+        RoosterAddonConfig cfg,
+        int originalVersion
+    )
+    {
+        var backupPath = Path.Combine(
+            helper.DirectoryPath,
+            $"config.schema.{originalVersion}.{DateTimeOffset.Now:yyyyMMddHHmmss}.json"
+        );
+
+        try
+        {
+            File.Copy(configPath, backupPath, overwrite: true);
+        }
+        catch
+        {
+            // best-effort backup
+        }
+
+        if (cfg.SchemaVersion < ConfigSchema.CurrentVersion)
+        {
+            monitor.Log(
+                $"RoosterAddon: upgrading config schema {cfg.SchemaVersion} -> {ConfigSchema.CurrentVersion}. Backup: {backupPath}",
+                LogLevel.Info
+            );
+
+            cfg.SchemaVersion = ConfigSchema.CurrentVersion;
+            cfg = Normalize(cfg);
+            helper.WriteConfig(cfg);
+            return cfg;
+        }
+
+        monitor.Log(
+            $"RoosterAddon: config schema version {cfg.SchemaVersion} is newer than supported {ConfigSchema.CurrentVersion}. Backup: {backupPath}",
+            LogLevel.Warn
+        );
+
+        return cfg;
+    }
 
     private static RoosterAddonConfig Normalize(RoosterAddonConfig cfg)
     {

@@ -129,49 +129,50 @@ RoosterAddon/
 
 ---
 
-## Phase 2: Typed Config Model + Versioned Migration
+## Phase 2: Typed Config Model (No Legacy)
 
 ### Objectives
 
 - Replace nested string dictionaries with typed DTOs.
-- Introduce config schema versioning and migration.
+- Keep config schema versioning + self-healing load behavior.
+- Remove legacy config compatibility code (full refactor).
 
 ### Tasks
 
-1. Add typed config classes in `Infrastructure/Config`:
-   - `ModConfigV2`
+1. Maintain typed config classes in `Framework/Config`:
+   - `RoosterAddonConfig`
    - `GeneralSettings`
    - `RoosterSettings`
-   - `ProduceSlotSettings`
-   - `ProbabilitySettings`
-2. Add enums for previously stringly-typed values:
+   - `ProduceEntry`
+2. Maintain enums for previously stringly-typed values:
    - update rate
    - harvest type
    - hatching mode
    - rooster assignment values
-3. Build `ConfigRepository`:
-   - `Load()`, `Save()`
-   - `Validate()`
-   - default fill for missing fields
-4. Add migration layer:
-   - `ModConfigV1LegacyAdapter` reads old schema
-   - maps old nested dictionary values into typed V2
-5. Add config validation report logs (invalid values clamped or defaulted).
-6. Keep backward compatibility for existing users.
+3. Maintain `ConfigManager`:
+   - `LoadOrCreate()`, `Save()`
+   - normalize defaults for missing fields
+   - backup invalid config and write defaults
+   - handle schema mismatch without legacy migration
+4. Delete legacy config artifacts:
+   - `Framework/ModConfig.cs`
+   - `Framework/Config/LegacyConfigAdapter.cs`
 
 ### Deliverables
 
-- versioned config DTOs
-- migration mapper V1 -> V2
-- typed access replacing raw dictionary lookups
+- typed config DTOs used by runtime + GMCM
+- robust load/save with backups + normalization
+- no legacy config classes/adapters shipped
 
 ### Exit Criteria
 
-- Existing config files load without manual edits.
-- GMCM persists values correctly in V2.
-- Runtime no longer depends on string dictionary traversals.
+- Project contains no `ModConfig` legacy schema and no legacy adapter.
+- `config.json` loads without warnings about missing migrators.
+- GMCM persists values correctly via typed config.
 
 ---
+
+
 
 ## Phase 3: Data-Driven Catalogs (Roosters, Eggs, Produces)
 
