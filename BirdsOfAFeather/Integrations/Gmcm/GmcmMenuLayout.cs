@@ -22,7 +22,12 @@ public sealed class GmcmMenuLayout<TConfig>
         _fieldIdPrefix = fieldIdPrefix;
     }
 
-    public GmcmMenuLayout<TConfig> Root(Action<GmcmPageBuilder<TConfig>> build)
+    
+    public TConfig GetConfig() => _getConfig();
+
+    public Func<TConfig> GetConfigFunc() => _getConfig;
+
+public GmcmMenuLayout<TConfig> Root(Action<GmcmPageBuilder<TConfig>> build)
     {
         _root.Add(build);
         return this;
