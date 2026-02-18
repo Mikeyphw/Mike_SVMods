@@ -1,6 +1,8 @@
 # Phase 2.0 — Content routing inventory (pre-refactor snapshot)
 
 This document freezes the **current** SMAPI `Content.AssetRequested` behavior (before Phase 2 refactor).
+
+> Note: As of **Phase 2.3**, the *load* branches were extracted into `Infrastructure/Content/Loaders/*` (behavior intended to be identical).
 It is intended as a reference to verify that the coordinator/editor refactor preserves behavior.
 
 ## Event entrypoint

@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using ContentPatcher;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.GameAssetManagement;
 using LetMeHatchThisEgg.Infrastructure.Config;
 using LetMeHatchThisEgg.Infrastructure.Logging;
+using LetMeHatchThisEgg.Infrastructure.Content.Loaders;
 using LetMeHatchThisEgg.UI;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
@@ -17,7 +17,6 @@ using StardewValley;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 using static LetMeHatchThisEgg.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
-using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
 
 namespace LetMeHatchThisEgg.Application.Coordination;
 
@@ -33,6 +32,7 @@ public sealed class LmhCoordinator
     private IWildEggsApi? _wildEggs;
 
     private GameAssetManager? _assetManager;
+    private IReadOnlyList<IAssetLoader> _assetLoaders = Array.Empty<IAssetLoader>();
     private GMCMenu? _gmcmMenu;
 
     private readonly List<string> _assetsRequested = new();
@@ -176,6 +176,13 @@ public sealed class LmhCoordinator
 
         _assetManager = new GameAssetManager(_contentPatcher, _wildEggs);
         _assetManager.TextureManager.SetUpModAssets();
+_assetLoaders = new IAssetLoader[]
+{
+    new MaleClonesTextureLoader(_assetManager),
+    new ClonedEggsAssetLoader(ModEntry.AssetHandler, _assetManager),
+    new BoafGamePathsLoader(ModEntry.AssetHandler),
+};
+
     }
 
     private void InitializeGmcm()
@@ -257,49 +264,35 @@ public sealed class LmhCoordinator
     }
 
     private void HandleAssetSpecificLogic(string assetName, AssetRequestedEventArgs e)
+{
+    if (_assetManager is null)
     {
-        if (_assetManager is null)
-        {
-            return;
-        }
+        return;
+    }
 
-        if (Regex.IsMatch(assetName, @"^Animals/MaleClones", RegexOptions.IgnoreCase))
+    foreach (var loader in _assetLoaders)
+    {
+        if (loader.CanLoad(assetName, e))
         {
-            LoadTextureFromContentPack(assetName, e);
-        }
-
-        if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.FarmAnimals))
-        {
-            HandleFarmAnimalsAsset(e);
-        }
-
-        if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.Objects))
-        {
-            HandleObjectsAsset(e);
-        }
-
-        if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.Machines))
-        {
-            HandleMachinesAsset(e);
-        }
-
-        if (ModEntry.AssetHandler.GamePaths.Contains(assetName))
-        {
-            HandleGamePathsAsset(assetName, e);
+            loader.Load(assetName, e);
         }
     }
 
-    private void LoadTextureFromContentPack(string assetName, AssetRequestedEventArgs e)
+    if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.FarmAnimals))
     {
-        _assetManager!.TextureManager.LoadTextureFromContentPack(
-            assetName,
-            _assetManager!.ClonedAnimalsInfoList,
-            _assetManager!.LoadedContentPacks,
-            e,
-            AssetLoadPriority.Exclusive
-        );
+        HandleFarmAnimalsAsset(e);
     }
 
+    if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.Objects))
+    {
+        HandleObjectsAsset(e);
+    }
+
+    if (e.NameWithoutLocale.IsEquivalentTo(AssetNames.Machines))
+    {
+        HandleMachinesAsset(e);
+    }
+}
     private void HandleFarmAnimalsAsset(AssetRequestedEventArgs e)
     {
         if (_assetManager!.ClonedAnimalsInfoList.Any())
@@ -375,13 +368,6 @@ public sealed class LmhCoordinator
             _assetManager.CloneMachineData(e, AssetEditPriority.Late + BASE_PRIORITY);
         }
     }
-
-    private void HandleGamePathsAsset(string assetName, AssetRequestedEventArgs e)
-    {
-        if (assetName != ModEntry.AssetHandler.GetAssetPath(Assets.Object.ClonedItems, AssetPathType.GamePath))
-        {
-            ModEntry.AssetHandler.LoadModAssets(e);
-        }
         else
         {
             _assetManager!.HandleClonedEggsAsset(e);

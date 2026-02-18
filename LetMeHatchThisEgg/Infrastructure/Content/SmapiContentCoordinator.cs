@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Infrastructure.Config;
+using LetMeHatchThisEgg.Infrastructure.Content.Loaders;
 using LetMeHatchThisEgg.Infrastructure.Logging;
 using Mikew.BirdsOfAFeather.Framework;
 using StardewModdingAPI;
@@ -15,6 +16,7 @@ public sealed class SmapiContentCoordinator : IDisposable
     private readonly CoreContext _core;
     private readonly SmapiConfigProvider<ModConfig> _configProvider;
     private readonly ILog _log;
+    private readonly List<IAssetLoader> _loaders;
     private readonly List<IAssetEditor> _editors;
     private bool _registered;
 
@@ -23,10 +25,21 @@ public sealed class SmapiContentCoordinator : IDisposable
         SmapiConfigProvider<ModConfig> configProvider,
         ILog log,
         IEnumerable<IAssetEditor> editors)
+        : this(core, configProvider, log, loaders: Array.Empty<IAssetLoader>(), editors: editors)
+    {
+    }
+
+    public SmapiContentCoordinator(
+        CoreContext core,
+        SmapiConfigProvider<ModConfig> configProvider,
+        ILog log,
+        IEnumerable<IAssetLoader> loaders,
+        IEnumerable<IAssetEditor> editors)
     {
         _core = core ?? throw new ArgumentNullException(nameof(core));
         _configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
         _log = log ?? throw new ArgumentNullException(nameof(log));
+        _loaders = loaders?.ToList() ?? throw new ArgumentNullException(nameof(loaders));
         _editors = editors?.ToList() ?? throw new ArgumentNullException(nameof(editors));
     }
 
@@ -38,7 +51,10 @@ public sealed class SmapiContentCoordinator : IDisposable
         _core.Helper.Events.Content.AssetRequested += OnAssetRequested;
         _registered = true;
 
-        _log.Log($"Registered content coordinator with {_editors.Count} editors.", LogLevel.Debug);
+        _log.Log(
+            $"Registered content coordinator with {_loaders.Count} loaders and {_editors.Count} editors.",
+            LogLevel.Debug
+        );
     }
 
     public void InvalidateAll()
@@ -50,8 +66,17 @@ public sealed class SmapiContentCoordinator : IDisposable
     private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
     {
         var ctx = new ContentContext(_core, _configProvider.Config, _log);
+        var assetNameLower = e.NameWithoutLocale.BaseName.ToLowerInvariant();
 
-        foreach (var editor in _editors.OrderBy(e => e.Priority))
+        foreach (var loader in _loaders.OrderBy(l => l.Priority))
+        {
+            if (!loader.CanLoad(assetNameLower, e))
+                continue;
+
+            loader.Load(assetNameLower, e);
+        }
+
+        foreach (var editor in _editors.OrderBy(ed => ed.Priority))
         {
             if (!e.NameWithoutLocale.IsEquivalentTo(editor.AssetName))
                 continue;
@@ -66,6 +91,7 @@ public sealed class SmapiContentCoordinator : IDisposable
             _core.Helper.Events.Content.AssetRequested -= OnAssetRequested;
 
         _registered = false;
+        _loaders.Clear();
         _editors.Clear();
         GC.SuppressFinalize(this);
     }
