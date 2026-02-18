@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using RoosterAddon.Application.Catalogs;
 using RoosterAddon.Framework.Config;
 using StardewModdingAPI;
 
@@ -9,102 +10,38 @@ internal sealed partial class RoosterCoordinator
 {
     private void CatalogCommand(string command, string[] args)
     {
-        var verb = args.FirstOrDefault()?.Trim() ?? "help";
+        var sub = args.Length > 0 ? args[0].Trim().ToLowerInvariant() : "help";
 
-        if (verb.Equals("help", StringComparison.OrdinalIgnoreCase) || verb.Equals("-h", StringComparison.OrdinalIgnoreCase))
+        switch (sub)
         {
-            Monitor.Log(
-                "ra_catalog usage:\n" +
-                "  ra_catalog reload\n" +
-                "    - reload JSON catalogs from data/catalogs and re-apply per config General.CatalogApplyMode.\n" +
-                "  ra_catalog export\n" +
-                "    - export effective catalogs from current config to data/catalogs/*.json (overwrites).\n" +
-                "  ra_catalog mode\n" +
-                "    - show current CatalogApplyMode.\n" +
-                "  ra_catalog mode <SeedOnly|RepairInvalid|MergeMissing|Authoritative>\n" +
-                "    - set CatalogApplyMode and immediately apply it to the current config.",
-                LogLevel.Info
-            );
-            return;
-        }
+            case "help":
+            case "?":
+                Monitor.Log("ra_catalog help", LogLevel.Info);
+                Monitor.Log("  ra_catalog reload        - reload catalogs from data/catalogs and apply per CatalogApplyMode", LogLevel.Info);
+                Monitor.Log("  ra_catalog export        - export effective catalogs from current config into data/catalogs", LogLevel.Info);
+                Monitor.Log("  ra_catalog mode          - show current CatalogApplyMode", LogLevel.Info);
+                Monitor.Log("  ra_catalog mode <value>  - set CatalogApplyMode (SeedOnly, RepairInvalid, MergeMissing, Authoritative)", LogLevel.Info);
+                break;
 
-        if (verb.Equals("reload", StringComparison.OrdinalIgnoreCase))
-        {
-            ReloadCatalogs();
-            return;
-        }
+            case "reload":
+                ReloadCatalogs("console reload");
+                break;
 
-        if (verb.Equals("export", StringComparison.OrdinalIgnoreCase))
-        {
-            ExportCatalogs();
-            return;
-        }
+            case "export":
+                ExportCatalogs("console export");
+                break;
 
-        if (verb.Equals("mode", StringComparison.OrdinalIgnoreCase))
-        {
-            SetOrShowCatalogMode(args.Skip(1).ToArray());
-            return;
-        }
+            case "mode":
+                HandleCatalogMode(args.Skip(1).ToArray());
+                break;
 
-        Monitor.Log($"Unknown ra_catalog verb '{verb}'. Use: ra_catalog help", LogLevel.Info);
-    }
-
-    private void ReloadCatalogs()
-    {
-        try
-        {
-            _catalogs = _catalogManager.LoadOrCreateAll(Helper, Monitor);
-
-            var changedConfig = _catalogManager.ApplyToConfig(
-                config: Config,
-                catalogs: _catalogs,
-                isNewConfig: false,
-                monitor: Monitor
-            );
-
-            if (changedConfig)
-                Helper.WriteConfig(Config);
-
-            RoosterHelper.UpdateRoosterCatalog(_catalogs.Roosters);
-
-            InvalidateDailyPlanCache("Catalog reload");
-
-            if (Context.IsWorldReady)
-            {
-                RequestInvalidate(FarmAnimalsAssetName);
-                RequestInvalidate(ObjectsAssetName);
-
-                try
-                {
-                    RunStartupValidationV2();
-                }
-                catch (Exception ex)
-                {
-                    Monitor.Log($"Catalog reload validation failed (fatal on startup): {ex.Message}", LogLevel.Error);
-                }
-            }
-
-            Monitor.Log("Catalogs reloaded.", LogLevel.Info);
-        }
-        catch (Exception ex)
-        {
-            Monitor.Log($"ra_catalog reload failed: {ex}", LogLevel.Error);
+            default:
+                Monitor.Log($"Unknown ra_catalog subcommand '{sub}'. Use: ra_catalog help", LogLevel.Warn);
+                break;
         }
     }
 
-    private void ExportCatalogs()
-    {
-        try
-        {
-            _catalogManager.ExportEffective(Helper, Monitor, Config, _catalogs);
-        }
-        catch (Exception ex)
-        {
-            Monitor.Log($"ra_catalog export failed: {ex}", LogLevel.Error);
-        }
-    }
-
-    private void SetOrShowCatalogMode(string[] args)
+    private void HandleCatalogMode(string[] args)
     {
         if (args.Length == 0)
         {
@@ -112,71 +49,48 @@ internal sealed partial class RoosterCoordinator
             return;
         }
 
-        var raw = (args[0] ?? string.Empty).Trim();
-
-        if (!TryParseCatalogApplyMode(raw, out var mode))
+        if (!Enum.TryParse<CatalogApplyMode>(args[0], ignoreCase: true, out var mode))
         {
-            Monitor.Log($"Invalid CatalogApplyMode '{raw}'. Use: SeedOnly, RepairInvalid, MergeMissing, Authoritative.", LogLevel.Info);
+            Monitor.Log($"Invalid CatalogApplyMode '{args[0]}'. Valid: {string.Join(", ", Enum.GetNames(typeof(CatalogApplyMode)))}", LogLevel.Error);
             return;
         }
 
         Config.General.CatalogApplyMode = mode;
-        Helper.WriteConfig(Config);
-
-        var changedConfig = _catalogManager.ApplyToConfig(Config, _catalogs, isNewConfig: false, Monitor);
-        if (changedConfig)
-            Helper.WriteConfig(Config);
-
-        if (Context.IsWorldReady)
-        {
-            InvalidateDailyPlanCache("Catalog mode changed");
-            RequestInvalidate(FarmAnimalsAssetName);
-            RequestInvalidate(ObjectsAssetName);
-        }
-
+        ConfigManager.Save(Helper, Config);
         Monitor.Log($"CatalogApplyMode set to {mode}.", LogLevel.Info);
     }
 
-    private static bool TryParseCatalogApplyMode(string raw, out CatalogApplyMode mode)
+    private void ReloadCatalogs(string reason)
     {
-        mode = CatalogApplyMode.RepairInvalid;
+        _catalogs = _catalogManager.LoadOrCreateAll(Helper, Monitor);
 
-        if (string.IsNullOrWhiteSpace(raw))
-            return false;
+        var changedConfig = _catalogManager.ApplyToConfig(Config, _catalogs, isNewConfig: false, Monitor);
+        if (changedConfig)
+            ConfigManager.Save(Helper, Config);
 
-        raw = raw.Trim();
+        RoosterHelper = new RoosterAddon.Helpers.RoosterControl(Config, Helper, Monitor, _catalogs.Roosters);
+        InvalidateDailyPlanCache($"catalog reload: {reason}");
+        _needsRoosterSetup = true;
 
-        if (Enum.TryParse(raw, ignoreCase: true, out CatalogApplyMode parsed))
-        {
-            mode = parsed;
-            return true;
-        }
+        RequestInvalidate(FarmAnimalsAssetName);
+        RequestInvalidate(ObjectsAssetName);
 
-        // friendly aliases
-        if (raw.Equals("merge", StringComparison.OrdinalIgnoreCase) || raw.Equals("mergemissing", StringComparison.OrdinalIgnoreCase))
-        {
-            mode = CatalogApplyMode.MergeMissing;
-            return true;
-        }
+        Monitor.Log($"Catalogs reloaded ({reason}).", LogLevel.Info);
+    }
 
-        if (raw.Equals("authoritative", StringComparison.OrdinalIgnoreCase) || raw.Equals("overwrite", StringComparison.OrdinalIgnoreCase))
-        {
-            mode = CatalogApplyMode.Authoritative;
-            return true;
-        }
+    private void ExportCatalogs(string reason)
+    {
+        var effective = _catalogManager.CreateFromConfig(Config, _catalogs);
+        _catalogManager.WriteAll(Helper, Monitor, effective);
 
-        if (raw.Equals("seed", StringComparison.OrdinalIgnoreCase))
-        {
-            mode = CatalogApplyMode.SeedOnly;
-            return true;
-        }
+        _catalogs = effective;
+        RoosterHelper = new RoosterAddon.Helpers.RoosterControl(Config, Helper, Monitor, _catalogs.Roosters);
+        InvalidateDailyPlanCache($"catalog export: {reason}");
+        _needsRoosterSetup = true;
 
-        if (raw.Equals("repair", StringComparison.OrdinalIgnoreCase))
-        {
-            mode = CatalogApplyMode.RepairInvalid;
-            return true;
-        }
+        RequestInvalidate(FarmAnimalsAssetName);
+        RequestInvalidate(ObjectsAssetName);
 
-        return false;
+        Monitor.Log($"Catalogs exported ({reason}).", LogLevel.Info);
     }
 }
