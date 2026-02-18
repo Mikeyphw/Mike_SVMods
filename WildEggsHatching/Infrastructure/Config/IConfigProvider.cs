@@ -12,6 +12,8 @@ public interface IConfigProvider
 
     void Save();
 
+    void ResetToDefaults();
+
     /// <summary>Mutate config, then persist and broadcast change.</summary>
     void Update(Action<ModConfig> mutator, string reason);
 }

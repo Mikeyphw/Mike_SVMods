@@ -26,6 +26,7 @@ public sealed class WeggCommandDispatcher
             "spawn" => HandleSpawn(args),
             "notes" => HandleNotes(args),
             "schema" => HandleSchema(args),
+            "verify" => HandleVerify(args),
             _ => new CommandResult(false, $"Unknown subcommand '{args[0]}'.\n\n{HelpText()}"),
         };
     }
@@ -159,7 +160,15 @@ public sealed class WeggCommandDispatcher
         return ToCommandResult(_facade.RepairAnimalNotes(requeueMail, reconcile, force));
     }
 
-    private static bool IsHelp(string arg)
+    
+    private CommandResult HandleVerify(string[] args)
+    {
+        var full = Array.Exists(args, x => string.Equals(x, "--full", StringComparison.OrdinalIgnoreCase));
+        var asJson = Array.Exists(args, x => string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase));
+        return ToCommandResult(_facade.Verify(full, asJson));
+    }
+
+private static bool IsHelp(string arg)
         => arg is "-h" or "--help" or "help" or "?";
 
     private static CommandResult ToCommandResult(FacadeResult res)
@@ -179,7 +188,8 @@ public sealed class WeggCommandDispatcher
             "  wegg notes dump [--json] [--farmer <id>] [--animal <token>]",
             "  wegg notes validate",
             "  wegg notes repair [--force] [--no-mail] [--no-reconcile]",
-            "  wegg schema wipe --yes",
+            "  wegg schema wipe --yes
+  wegg verify [--full] [--json]",
             "  wegg_notes dump [--json] [--farmer <id>] [--animal <token>]",
             "  wegg_notes validate",
             "  wegg_notes repair [--force] [--no-mail] [--no-reconcile]",
@@ -188,6 +198,7 @@ public sealed class WeggCommandDispatcher
             "Notes:",
             "  - Host-only mutations; clients will be rejected.",
             "  - QualifiedItemId example: (O)390",
-            "  - step set defaults to no side effects; use --effects to replay step mail effects."
+            "  - step set defaults to no side effects; use --effects to replay step mail effects.
+  - verify --full runs world-dependent validations (requires loaded save)."
         );
 }

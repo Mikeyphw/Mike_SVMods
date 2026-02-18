@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using StardewModdingAPI;
 using Microsoft.Xna.Framework;
 using Mikew.BirdsOfAFeather.Framework.Random;
 using StardewValley;
@@ -18,6 +21,7 @@ namespace WildEggsHatching.Application.Facade;
 
 public sealed class ModFacade : IModFacade
 {
+    private readonly IModHelper _helper;
     private readonly ISaveDataStore _store;
     private readonly IConfigProvider _config;
     private readonly ILog _log;
@@ -40,6 +44,7 @@ public sealed class ModFacade : IModFacade
     private readonly ITileSearchHistogram _histogram;
 
     public ModFacade(
+        IModHelper helper,
         ISaveDataStore store,
         IConfigProvider config,
         ILog log,
@@ -57,6 +62,7 @@ public sealed class ModFacade : IModFacade
         IGameObjectPlacer placer,
         ITileSearchHistogram? histogram = null)
     {
+        _helper = helper;
         _store = store;
         _config = config;
         _log = log;
@@ -307,6 +313,39 @@ public FacadeResult ValidateAnimalNotes()
         {
             _log.Log($"Schema wipe failed: {ex}", StardewModdingAPI.LogLevel.Error);
             return new FacadeResult(false, "Schema wipe failed; see log.");
+        }
+    }
+
+
+
+    public FacadeResult Verify(bool full, bool asJson)
+    {
+        try
+        {
+            var report = WildEggsHatching.Infrastructure.Diagnostics.WeggVerifier.Run(
+                helper: _helper,
+                store: _store,
+                config: _config,
+                log: _log,
+                full: full);
+
+            if (asJson)
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(report, new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                });
+                return new FacadeResult(report.Success, json);
+            }
+
+            var msg = report.Summary + Environment.NewLine +
+                      string.Join(Environment.NewLine, report.Checks.Select(c => $"{c.Status.ToUpperInvariant()}: {c.Id} - {c.Message}"));
+            return new FacadeResult(report.Success, msg);
+        }
+        catch (Exception ex)
+        {
+            _log.Log($"verify failed: {ex}", StardewModdingAPI.LogLevel.Error);
+            return new FacadeResult(false, $"verify failed: {ex.Message}");
         }
     }
 

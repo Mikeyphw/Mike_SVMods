@@ -251,6 +251,7 @@ public sealed class ModEntry : Mod
 
 
         _facade = new ModFacade(
+            helper: helper,
             store: _saveData!,
             config: configProvider,
             log: log,
@@ -484,9 +485,58 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
         const int minApi = 1;
         if (_boafApi.ApiVersion < minApi)
             throw new InvalidOperationException($"BirdsOfAFeather API too old. Need >= {minApi}, found {_boafApi.ApiVersion}.");
+
+        WeggDiagnosticsState.BoafApiVersion = _boafApi.ApiVersion;
+
+
+        try
+        {
+            var gmcm = _boafApi.RegisterGmcmMenu(
+                helper: Helper,
+                manifest: ModManifest,
+                translation: _core!.I18n,
+                getConfig: () => _config!.Config,
+                reset: () => _config!.ResetToDefaults(),
+                save: () => _config!.Save(),
+                define: layout =>
+                {
+                    layout.Root(root =>
+                    {
+                        root.Bool(c => c.ProgressionMode, optionId: "progressionMode", tooltip: true);
+                        root.Bool(c => c.DesertTombModuleEnabled, optionId: "desertTomb.enabled", tooltip: true);
+                        root.Enum(c => c.TombChance, optionId: "desertTomb.tombChance", tooltip: true);
+                        root.Bool(c => c.DesertTombPharaohTrackerEnabled, optionId: "desertTomb.pharaohTracker", tooltip: true);
+                        root.Bool(c => c.DesertTombDebugLogging, optionId: "desertTomb.debugLogging", tooltip: true);
+
+                        root.Bool(c => c.AnimalNotesDebugMode, optionId: "animalNotes.debugMode", tooltip: true);
+                        root.Int(c => c.AnimalNotesWarnAfterDays, optionId: "animalNotes.warnAfterDays", tooltip: true, min: 1, max: 30, interval: 1);
+                        root.Int(c => c.AnimalNotesPlacementRadius, optionId: "animalNotes.placementRadius", tooltip: true, min: 1, max: 50, interval: 1);
+                        root.Bool(c => c.AnimalNotesQuestMailHostOnly, optionId: "animalNotes.questMailHostOnly", tooltip: true);
+                        root.Bool(c => c.AnimalNotesAllowClientDiscoveries, optionId: "animalNotes.allowClientDiscoveries", tooltip: true);
+
+                        root.Bool(c => c.HatchDinoEggs, optionId: "prices.hatchDinoEggs", tooltip: true);
+                        root.Bool(c => c.DinoEggsExclusiveHatch, optionId: "prices.dinoEggsExclusiveHatch", tooltip: true);
+                        root.Text(c => c.DinoPrice, optionId: "prices.dinoPrice", tooltip: true);
+                        root.Text(c => c.VoidChickenPrice, optionId: "prices.voidChickenPrice", tooltip: true);
+                        root.Text(c => c.OstrichPrice, optionId: "prices.ostrichPrice", tooltip: true);
+                        root.Bool(c => c.NeedsFern, optionId: "incubator.needsFern", tooltip: true);
+                        root.Bool(c => c.AlternatePotionSprite, optionId: "incubator.alternatePotionSprite", tooltip: true);
+                    });
+                });
+
+            _gmcmRegistered = gmcm is not null;
+            WeggDiagnosticsState.GmcmRegistered = _gmcmRegistered;
+        }
+        catch (Exception ex)
+        {
+            _gmcmRegistered = false;
+            WeggDiagnosticsState.GmcmRegistered = false;
+            Monitor.Log($"GMCM registration failed: {ex}", LogLevel.Warn);
+        }
+
     }
 
-$1object? sender, SaveLoadedEventArgs e)
+    private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         _progression?.OnSaveLoaded();
         _animalNotes?.OnSaveLoaded();

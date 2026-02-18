@@ -32,6 +32,16 @@ public sealed class SmapiConfigProvider : IConfigProvider
         ConfigChanged?.Invoke(this, new ConfigChangedEventArgs(_config, _config, "save"));
     }
 
+
+
+    public void ResetToDefaults()
+    {
+        var old = _config;
+        _config = new ModConfig();
+        _helper.WriteConfig(_config);
+        ConfigChanged?.Invoke(this, new ConfigChangedEventArgs(old, _config, "reset"));
+    }
+
     public void Update(Action<ModConfig> mutator, string reason)
     {
         var old = _config;
