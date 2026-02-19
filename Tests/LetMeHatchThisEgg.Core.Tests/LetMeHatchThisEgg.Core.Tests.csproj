@@ -27,6 +27,8 @@
       <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\GameData\IFinalizableFarmAnimalDataRepository.cs" Link="Infrastructure\GameData\IFinalizableFarmAnimalDataRepository.cs" />
     <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\GameData\IFarmAnimalAssetAdapter.cs" Link="Infrastructure\GameData\IFarmAnimalAssetAdapter.cs" />
     <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\GameData\SmapiFarmAnimalAssetAdapter.cs" Link="Infrastructure\GameData\SmapiFarmAnimalAssetAdapter.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\GameData\FarmAnimalDataRepositoryOrderingMode.cs" Link="Infrastructure\GameData\FarmAnimalDataRepositoryOrderingMode.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\GameData\OrderedFarmAnimalDataRepository.cs" Link="Infrastructure\GameData\OrderedFarmAnimalDataRepository.cs" />
 </ItemGroup>
 
 
