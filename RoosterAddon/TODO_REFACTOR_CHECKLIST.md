@@ -28,7 +28,13 @@ This file is a living checklist to keep refactors honest.
 - [x] Eggs are built from the rooster catalog and resolved into concrete IDs.
 
 ## Remaining phases (see ROOSTERADDON_REFACTOR_PLAN.md)
-- [ ] Phase 4: FarmAnimals/Objects edits fully isolated into services (no coordinator leakage).
+- [x] Phase 4: Asset edit boundaries + services
+  - [x] `Data/FarmAnimals` editor only mutates asset data (no reloads, no invalidation, no state dumps).
+  - [x] Daily hatching/female assignment/update flow runs outside `AssetRequested` (day start pipeline).
+  - [x] Location-change refresh (when enabled) runs outside `AssetRequested` (next-tick pipeline).
+  - [x] Continue isolating any remaining coordinator leakage inside asset editors/services.
+  - [x] Remove IRoosterAssetEdits interface (editors use narrow constructor deps only).
+  - [x] Move BetterTruffles tagging logic into a dedicated service.
 - [ ] Phase 5: Daily plan pipeline + decision layer cleanup.
 - [ ] Phase 6: Legacy purge + service hardening.
 - [ ] Phase 7: Tests (xUnit) + deterministic harness.

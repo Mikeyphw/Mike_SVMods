@@ -191,8 +191,14 @@ AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
 
     public void OnWarped(object? sender, WarpedEventArgs e)
     {
-        if (Config.General.UpdateRate == UpdateRateMode.OnLocationChange)
-            _ = Helper.GameContent.InvalidateCache(FarmAnimalsAssetName);
+        if (Config.General.UpdateRate != UpdateRateMode.OnLocationChange)
+            return;
+
+        InvalidateRuleCaches("update rate: location change");
+        _ = Helper.GameContent.InvalidateCache(FarmAnimalsAssetName);
+
+        // Avoid side effects in AssetRequested; refresh and reload after the cache invalidation.
+        QueueNextTickAction(RefreshFarmAnimalsOnLocationChange);
     }
 
     public void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Mikew.BirdsOfAFeather.Helpers;
 using RoosterAddon.Application.Hatching;
+using RoosterAddon.Helpers;
 using RoosterAddon.Enums;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -68,7 +69,12 @@ internal sealed partial class RoosterCoordinator
         }
 
         if (Config.General.UpdateRate == UpdateRateMode.OnDayStart)
+        {
+            InvalidateRuleCaches("update rate: day start");
             _ = Helper.GameContent.InvalidateCache(FarmAnimalsAssetName);
+        }
+
+        RunFarmAnimalsDailySystems();
     }
 
     private void EnsureRoostersSetup()
@@ -139,6 +145,46 @@ internal sealed partial class RoosterCoordinator
         );
     }
 
-    private bool GetHatchApiCloneEggsOption()
+    
+
+    private void RunFarmAnimalsDailySystems()
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        var data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        if (data is null || data.Count == 0)
+            return;
+
+        RoosterHelper.UpdateRoosterQuantity_All();
+        GetRoostersFemales(data, RoosterHelper.Roosters);
+        UpdateRoosterHatchingApi();
+
+        foreach (var rooster in RoosterHelper.Roosters.Values)
+            RunHatchingSystem(rooster, data);
+
+        if (RoosterHelper.FemaleEggs.Count > 0)
+            RequestInvalidate(ObjectsAssetName);
+
+        ReloadCoopRoosters();
+        DebugDumpFarmAnimalsIfEnabled(new Dictionary<string, FarmAnimalData>(data));
+    }
+
+    private void RefreshFarmAnimalsOnLocationChange()
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        _ = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        ReloadCoopRoosters();
+    }
+
+    private static void ReloadCoopRoosters()
+    {
+        foreach (var roosterFarmAnimal in RoosterControl.GetRoostersFromCoops())
+            roosterFarmAnimal.reload(roosterFarmAnimal.home);
+    }
+
+private bool GetHatchApiCloneEggsOption()
         => HatchApi is not null && HatchApi.GetClonedAnimalsInfo().Count > 0;
 }

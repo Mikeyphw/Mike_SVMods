@@ -1,4 +1,5 @@
 using RoosterAddon.Application.Assets;
+using RoosterAddon.Application.Objects;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 
@@ -10,6 +11,8 @@ internal sealed partial class RoosterCoordinator
     private ObjectsAssetEditor? _objectsEditor;
     private FertilizedEggsAssetEditor? _fertilizedEggsEditor;
 
+    private BetterTrufflesContextTagService? _betterTrufflesTags;
+
     public void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
     {
         if (!HasDayStarted)
@@ -17,17 +20,23 @@ internal sealed partial class RoosterCoordinator
 
         if (IsFarmAnimalsAsset(e))
         {
-            _farmAnimalsEditor ??= new FarmAnimalsAssetEditor((IRoosterAssetEdits)this);
+            _farmAnimalsEditor ??= new FarmAnimalsAssetEditor(RoosterHelper, SetRoosterData);
             _farmAnimalsEditor.Edit(e);
             return;
         }
 
         if (IsObjectsAsset(e))
         {
-            _fertilizedEggsEditor ??= new FertilizedEggsAssetEditor((IRoosterAssetEdits)this);
+            _fertilizedEggsEditor ??= new FertilizedEggsAssetEditor(
+                roosterHelper: RoosterHelper,
+                getFertilizedNameSuffix: () => Helper.Translation.Get("egg.fertilized.name"),
+                getFertilizedDescription: () => Helper.Translation.Get("egg.fertilized.description"),
+                cloneEggsEnabled: GetHatchApiCloneEggsOption
+            );
             _fertilizedEggsEditor.Edit(e);
 
-            _objectsEditor ??= new ObjectsAssetEditor((IRoosterAssetEdits)this);
+            _betterTrufflesTags ??= new BetterTrufflesContextTagService();
+            _objectsEditor ??= new ObjectsAssetEditor(RoosterHelper, _betterTrufflesTags);
             _objectsEditor.Edit(e);
             return;
         }
