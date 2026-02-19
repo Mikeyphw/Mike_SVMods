@@ -1,6 +1,5 @@
-using LetMeHatchThisEgg.GameAssetManagement;
+using LetMeHatchThisEgg.Application.UseCases;
 using Mikew.BirdsOfAFeather.Helpers;
-using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
 
@@ -9,13 +8,13 @@ namespace LetMeHatchThisEgg.Infrastructure.Content.Loaders;
 /// <summary>Loads LMH's cloned eggs texture asset and applies its post-load edit.</summary>
 public sealed class ClonedEggsAssetLoader : AssetLoaderBase
 {
-    private readonly GameAssetManager _assets;
+    private readonly IAssetLoads _loads;
     private readonly string _clonedItemsGamePath;
 
-    public ClonedEggsAssetLoader(ModAssetHandler assetHandler, GameAssetManager assets)
+    public ClonedEggsAssetLoader(ModAssetHandler assetHandler, IAssetLoads loads)
         : base(AssetLoadPriority.Exclusive)
     {
-        _assets = assets;
+        _loads = loads;
         _clonedItemsGamePath = assetHandler.GetAssetPath(Assets.Object.ClonedItems, AssetPathType.GamePath);
     }
 
@@ -27,7 +26,5 @@ public sealed class ClonedEggsAssetLoader : AssetLoaderBase
         => assetNameLower == _clonedItemsGamePath;
 
     public override void Load(string assetNameLower, AssetRequestedEventArgs e)
-    {
-        _assets.HandleClonedEggsAsset(e);
-    }
+        => _loads.OnClonedEggsAssetRequested(e);
 }

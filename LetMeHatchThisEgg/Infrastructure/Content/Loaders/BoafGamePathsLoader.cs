@@ -1,32 +1,30 @@
+using LetMeHatchThisEgg.Application.UseCases;
 using Mikew.BirdsOfAFeather.Helpers;
-using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
 
 namespace LetMeHatchThisEgg.Infrastructure.Content.Loaders;
 
-/// <summary>Loads BoAF-managed game-path assets (excluding LMH's cloned-eggs special case).</summary>
+/// <summary>Loads the BOAF GamePaths asset used to seed fast HasGamePath checks.</summary>
 public sealed class BoafGamePathsLoader : AssetLoaderBase
 {
-    private readonly ModAssetHandler _assetHandler;
-    private readonly string _clonedItemsGamePath;
+    private readonly IAssetLoads _loads;
+    private readonly string _boafGamePaths;
 
-    public BoafGamePathsLoader(ModAssetHandler assetHandler)
+    public BoafGamePathsLoader(ModAssetHandler assetHandler, IAssetLoads loads)
         : base(AssetLoadPriority.Exclusive)
     {
-        _assetHandler = assetHandler;
-        _clonedItemsGamePath = assetHandler.GetAssetPath(Assets.Object.ClonedItems, AssetPathType.GamePath);
+        _loads = loads;
+        _boafGamePaths = assetHandler.GetAssetPath(Assets.Boaf.GamePaths, AssetPathType.GamePath);
     }
 
-    public override string DebugHandles => "BoAF GamePaths (excluding cloned items)";
+    public override string DebugHandles => "BoAF game path: Assets.Boaf.GamePaths";
 
-    public override string DebugGates => "_assetHandler.GamePaths contains assetNameLower and assetNameLower != cloned items game path.";
+    public override string DebugGates => "assetNameLower equals boaf game paths.";
 
     public override bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
-        => _assetHandler.GamePaths.Contains(assetNameLower) && assetNameLower != _clonedItemsGamePath;
+        => assetNameLower == _boafGamePaths;
 
     public override void Load(string assetNameLower, AssetRequestedEventArgs e)
-    {
-        _assetHandler.LoadModAssets(e);
-    }
+        => _loads.OnBoafGamePathsRequested(e);
 }

@@ -1,8 +1,9 @@
 using LetMeHatchThisEgg.Application.Coordination;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Infrastructure.Commands;
-using LetMeHatchThisEgg.Infrastructure.Config;
-using LetMeHatchThisEgg.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Config;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Content;
 using LetMeHatchThisEgg.Infrastructure.Smapi;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
@@ -26,6 +27,8 @@ namespace LetMeHatchThisEgg
         public static I18TranslationHelper TranslationHelper { get; private set; } = null!;
         public static ModAssetHandler AssetHandler { get; private set; } = null!;
 
+        public static AssetInvalidationBatcher InvalidationBatcher { get; private set; } = null!;
+
         private CoreContext? _core;
         private SmapiConfigProvider<ModConfig>? _configProvider;
         private BoafLog? _log;
@@ -44,7 +47,8 @@ namespace LetMeHatchThisEgg
 
             _core = new CoreContext(helper, Monitor, ModManifest, TranslationHelper);
             _log = new BoafLog(LoggerHelper);
-            _coordinator = new LmhCoordinator(_core, _configProvider, _log, letMeHatchApi);
+            InvalidationBatcher = new AssetInvalidationBatcher(helper, _log);
+            _coordinator = new LmhCoordinator(_core, _configProvider, _log, letMeHatchApi, InvalidationBatcher);
 
             BindEvents(helper, _coordinator);
             LmhConsoleCommands.Register(helper, _coordinator);

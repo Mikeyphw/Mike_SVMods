@@ -2,7 +2,7 @@ using System;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 
-namespace LetMeHatchThisEgg.Infrastructure.Logging;
+namespace Mikew.BirdsOfAFeather.Helpers.Logging;
 
 public sealed class BoafLog : ILog
 {

@@ -4,6 +4,7 @@ using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.Models;
 using Mikew.BirdsOfAFeather.Helpers;
 using Mikew.BirdsOfAFeather.Framework.Random;
+using LetMeHatchThisEgg.Application.UseCases;
 using LetMeHatchThisEgg.Core.Breeding;
 using StardewModdingAPI;
 using StardewValley;
@@ -31,7 +32,7 @@ namespace LetMeHatchThisEgg.Breeding
         private readonly HashSet<string> WildEggsIDs;
 
         private readonly IRandomProvider _rng;
-        private readonly EggSelectionService _eggSelector;
+        private readonly EggSelectionUseCase _eggSelector;
 
         public BreedingSystem(
             HashSet<string> wildEggsIDs,
@@ -48,7 +49,7 @@ namespace LetMeHatchThisEgg.Breeding
             _gameAnimalData = farmAnimalsData;
 
             _rng = rng ?? new GameRandomProvider();
-            _eggSelector = new EggSelectionService(_rng);
+            _eggSelector = new EggSelectionUseCase(_rng);
 
             var generalConfig = breedingConfigsByPack[chosenFemaleData.ContentPackID][femaleKey];
 

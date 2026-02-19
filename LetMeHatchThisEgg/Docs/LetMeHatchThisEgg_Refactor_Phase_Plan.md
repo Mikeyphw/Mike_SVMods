@@ -13,7 +13,7 @@
 
 ---
 
-## Phase 2 — Content pipeline refactor (replace GameAssetManager routing)
+## Phase 2 — Content pipeline refactor (replace GameAssetManager routing) ✅
 
 **Inspiration:** mirror WildEggsHatching’s `Infrastructure/Content/*` pattern:
 - `IAssetEditor` (+ optional `AssetEditorBase`)

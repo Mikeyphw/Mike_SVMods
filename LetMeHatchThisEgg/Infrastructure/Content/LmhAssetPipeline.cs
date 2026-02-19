@@ -1,0 +1,40 @@
+using System;
+using System.Collections.Generic;
+using Mikew.BirdsOfAFeather.Helpers.Content;
+using StardewModdingAPI.Events;
+
+namespace LetMeHatchThisEgg.Infrastructure.Content;
+
+/// <summary>
+/// LMH's asset pipeline wrapper which owns BOAF coordination plus centralized cache invalidation.
+/// </summary>
+public sealed class LmhAssetPipeline : IDisposable
+{
+    private readonly AssetRequestCoordinator<ContentContext> _coordinator;
+    private readonly AssetInvalidationBatcher _invalidation;
+    private readonly IReadOnlyCollection<string> _invalidationTargets;
+
+    public LmhAssetPipeline(
+        AssetRequestCoordinator<ContentContext> coordinator,
+        AssetInvalidationBatcher invalidation,
+        IReadOnlyCollection<string> invalidationTargets)
+    {
+        _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
+        _invalidation = invalidation ?? throw new ArgumentNullException(nameof(invalidation));
+        _invalidationTargets = invalidationTargets ?? throw new ArgumentNullException(nameof(invalidationTargets));
+    }
+
+    public void HandleAssetRequested(AssetRequestedEventArgs e) => _coordinator.HandleAssetRequested(e);
+
+    public IEnumerable<string> GetDebugReportLines() => _coordinator.GetDebugReportLines();
+
+    public void RequestInvalidateAll()
+    {
+        _coordinator.InvalidateAll();
+
+        foreach (var target in _invalidationTargets)
+            _invalidation.Request(target);
+    }
+
+    public void Dispose() => _coordinator.Dispose();
+}

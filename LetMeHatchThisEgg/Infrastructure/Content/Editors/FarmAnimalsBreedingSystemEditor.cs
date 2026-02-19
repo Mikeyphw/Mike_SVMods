@@ -1,5 +1,3 @@
-using LetMeHatchThisEgg.Breeding;
-using LetMeHatchThisEgg.GameAssetManagement;
 using StardewModdingAPI.Events;
 using StardewValley.GameData.FarmAnimals;
 using static LetMeHatchThisEgg.EnumsAndStrings.Strings;
@@ -7,31 +5,21 @@ using static LetMeHatchThisEgg.EnumsAndStrings.Strings;
 namespace LetMeHatchThisEgg.Infrastructure.Content.Editors;
 
 /// <summary>Runs the breeding system logic to enable hatching/male clone behavior.</summary>
-public sealed class FarmAnimalsBreedingSystemEditor : AssetEditorBase
+public sealed class FarmAnimalsBreedingSystemEditor : LmhAssetEditorBase
 {
-    private readonly GameAssetManager _assets;
-
-    public FarmAnimalsBreedingSystemEditor(GameAssetManager assets)
-    {
-        _assets = assets;
-    }
-
-    public override string AssetName => GameAssets.FarmAnimals;
+    public override string AssetName => Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.AssetNames.FarmAnimals;
 
     public override AssetEditPriority Priority => AssetEditPriority.Late + BREEDING_SYSTEM_PRIORITY;
 
-        public override string DebugGates => "Config.BreedingSystemEnabled == true and HasAddedMaleClones == true.";
+    public override string DebugGates => "Config.BreedingSystemEnabled == true.";
 
-public override void Edit(IAssetData asset, ContentContext context)
+    public override void Edit(IAssetData asset, ContentContext context)
     {
-        if (!context.Config.BreedingSystemEnabled || !_assets.HasAddedMaleClones)
-            return;
-
         var data = asset.AsDictionary<string, FarmAnimalData>().Data;
-        BreedingDataLoader.RunHatchingSystem(
-            data,
-            context.Config,
-            _assets.BreedingConfigsByPack
+        context.App.FarmAnimalsEdits.TryRunBreedingSystem(
+            data: (System.Collections.Generic.Dictionary<string, FarmAnimalData>)data,
+            config: context.Config,
+            enabled: context.Config.BreedingSystemEnabled
         );
     }
 }

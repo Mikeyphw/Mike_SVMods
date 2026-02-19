@@ -29,9 +29,7 @@ namespace LetMeHatchThisEgg.Helpers
 
         public static bool IsClonedEgg(string clonedEggID)
         {
-            string pattern = @"^.*#(.*)#(\d*)_Cloned.*Egg$";
-            Match match = Regex.Match(clonedEggID, pattern);
-            return match.Success;
+            return LetMeHatchThisEgg.Core.Cloning.CloneIdService.IsClonedEgg(clonedEggID);
         }
 
         private static bool IsClonedEgg(ObjectData originalEggData)
@@ -63,20 +61,11 @@ namespace LetMeHatchThisEgg.Helpers
             bool fertilized = false
         )
         {
-            string pattern =
-                cloneItemType == null
-                    ? @"^[^#]+#(.*)#(.*)_Cloned(.*)$"
-                    : cloneItemType switch
-                    {
-                        CloneItemType.Egg
-                            => fertilized
-                                ? @"^[^#]+#(.*)#(.*)_ClonedFertilizedEgg$"
-                                : @"^[^#]+#(.*)#(.*)_Cloned.*Egg$",
-                        CloneItemType.Milk => @"^[^#]+#(.*)#(.*)_Cloned.*Milk$",
-                        CloneItemType.Misc => @"^[^#]+#(.*)#(.*)_Cloned.*Misc$",
-                        _ => string.Empty
-                    };
-            return Regex.IsMatch(clonedItemID, pattern);
+            return LetMeHatchThisEgg.Core.Cloning.CloneIdService.IsClonedItem(
+                clonedItemID,
+                cloneItemType,
+                fertilized
+            );
         }
 
         public string GetClonedItemID(
@@ -87,14 +76,20 @@ namespace LetMeHatchThisEgg.Helpers
             bool isFertilized = false
         )
         {
-            var suffix = cloneItemType switch
+            var uniqueId = ModEntry.ModManifestInstance?.UniqueID;
+            if (string.IsNullOrWhiteSpace(uniqueId))
             {
-                CloneItemType.Egg => isFertilized ? "ClonedFertilizedEgg" : $"Cloned{itemType}Egg",
-                CloneItemType.Milk => $"Cloned{itemType}Milk",
-                CloneItemType.Misc => $"Cloned{itemType}Misc",
-                _ => string.Empty
-            };
-           return $"{ModEntry.ModManifestInstance?.UniqueID}_#{animalKey}#{originalItemID}_{suffix}";
+                throw new InvalidOperationException("Mod unique ID is unavailable.");
+            }
+
+            return LetMeHatchThisEgg.Core.Cloning.CloneIdService.GetClonedItemId(
+                uniqueId,
+                animalKey,
+                originalItemID,
+                cloneItemType,
+                itemType,
+                isFertilized
+            );
         }
         public static string GetOriginalItemID(
             string input,

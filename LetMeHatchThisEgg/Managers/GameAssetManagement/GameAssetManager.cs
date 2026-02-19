@@ -188,7 +188,6 @@ namespace LetMeHatchThisEgg.GameAssetManagement
 
                 e.Edit(TextureManager.ProcessClonedItemsTextures, AssetEditPriority.Late);
 
-                //Helper.GameContent.InvalidateCache(assetName);
             }
         }
         #endregion

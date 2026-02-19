@@ -127,7 +127,6 @@ namespace LetMeHatchThisEgg.AssetManagement
 //                 else
 //                 {
 //                     var produceEggCategory = animalProduces.Select(x => x.ItemId);
-//                     //ModEntry.HelperInstance?.GameContent.InvalidateCache("Data/Objects");
 
 //                     foreach ((var key, var objectID) in Game1.objectData)
 //                     {
@@ -281,7 +280,6 @@ namespace LetMeHatchThisEgg.GameAssetManagement
                 else
                 {
                     var produceEggCategory = animalProduces.Select(x => x.ItemId);
-                    //ModEntry.HelperInstance?.GameContent.InvalidateCache("Data/Objects");
 
                     foreach ((var key, var objectID) in Game1.objectData)
                     {

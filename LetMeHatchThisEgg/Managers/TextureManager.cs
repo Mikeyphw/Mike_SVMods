@@ -446,8 +446,6 @@ namespace LetMeHatchThisEgg.AssetManagement
 
 //         private void FinalizeProcessing(List<(string message, LogLevel level)> log)
 //         {
-//             Helper.GameContent.InvalidateCache(
-//                 AssetHandler.GetAssetPath(Assets.Object.ClonedItems, AssetPathType.GamePath)
 //             );
 //             Helper.Data.WriteJsonFile("gray/log.json", string.Join(Environment.NewLine, log));
 //             Helper.Data.WriteJsonFile("grayKeys.json", GrayTextures.Keys);
@@ -997,8 +995,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
 
         private void FinalizeProcessing(List<(string message, LogLevel level)> log)
         {
-            ModEntry.HelperInstance.GameContent.InvalidateCache(
-                AssetHandler.GetAssetPath(Assets.Object.ClonedItems, AssetPathType.GamePath)
+            ModEntry.InvalidationBatcher.Request(
             );
             ModEntry.HelperInstance.Data.WriteJsonFile(
                 "gray/log.json",

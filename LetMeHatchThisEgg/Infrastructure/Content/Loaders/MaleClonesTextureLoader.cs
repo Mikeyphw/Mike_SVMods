@@ -1,38 +1,30 @@
-using System.Text.RegularExpressions;
-using LetMeHatchThisEgg.GameAssetManagement;
-using StardewModdingAPI;
+using LetMeHatchThisEgg.Application.UseCases;
+using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI.Events;
+using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
 
 namespace LetMeHatchThisEgg.Infrastructure.Content.Loaders;
 
-/// <summary>Loads male clone animal textures from content packs.</summary>
+/// <summary>Loads LMH's male clones texture asset.</summary>
 public sealed class MaleClonesTextureLoader : AssetLoaderBase
 {
-    private static readonly Regex Pattern = new(@"^Animals/MaleClones", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private readonly IAssetLoads _loads;
+    private readonly string _maleClonesGamePath;
 
-    private readonly GameAssetManager _assets;
-
-    public MaleClonesTextureLoader(GameAssetManager assets)
+    public MaleClonesTextureLoader(ModAssetHandler assetHandler, IAssetLoads loads)
         : base(AssetLoadPriority.Exclusive)
     {
-        _assets = assets;
+        _loads = loads;
+        _maleClonesGamePath = assetHandler.GetAssetPath(Assets.Animals.MaleClones, AssetPathType.GamePath);
     }
 
-    public override string DebugHandles => "Animals/MaleClones*";
+    public override string DebugHandles => "BoAF game path: Assets.Animals.MaleClones";
 
-    public override string DebugGates => "assetNameLower matches ^Animals/MaleClones (case-insensitive).";
+    public override string DebugGates => "assetNameLower equals male clones game path.";
 
     public override bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
-        => Pattern.IsMatch(assetNameLower);
+        => assetNameLower == _maleClonesGamePath;
 
     public override void Load(string assetNameLower, AssetRequestedEventArgs e)
-    {
-        _assets.TextureManager.LoadTextureFromContentPack(
-            assetNameLower,
-            _assets.ClonedAnimalsInfoList,
-            _assets.LoadedContentPacks,
-            e,
-            Priority
-        );
-    }
+        => _loads.OnMaleClonesTextureRequested(e);
 }

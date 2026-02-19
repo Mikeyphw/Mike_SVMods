@@ -1,15 +1,21 @@
 using System;
+using LetMeHatchThisEgg.Application;
+using LetMeHatchThisEgg.Application.Gateways;
+using LetMeHatchThisEgg.Infrastructure.Gateways;
+using LetMeHatchThisEgg.Infrastructure.ApplicationAdapters;
 using System.Collections.Generic;
 using System.Linq;
 using ContentPatcher;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.GameAssetManagement;
-using LetMeHatchThisEgg.Infrastructure.Config;
-using LetMeHatchThisEgg.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Config;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using LetMeHatchThisEgg.Infrastructure.Content;
+using Mikew.BirdsOfAFeather.Helpers.Content;
 using LetMeHatchThisEgg.UI;
 using Mikew.BirdsOfAFeather.Framework;
+using Mikew.BirdsOfAFeather.Framework.Random;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -25,6 +31,7 @@ public sealed class LmhCoordinator
     private readonly CoreContext _core;
     private readonly SmapiConfigProvider<ModConfig> _config;
     private readonly ILog _log;
+    private readonly AssetInvalidationBatcher _invalidation;
     private readonly LetMeHatchApi _api;
 
     private IRoosterHatchingAPI? _roosterHatching;
@@ -32,7 +39,8 @@ public sealed class LmhCoordinator
     private IWildEggsApi? _wildEggs;
 
     private GameAssetManager? _assetManager;
-    private SmapiContentCoordinator? _contentCoordinator;
+    private LmhApplicationServices? _app;
+    private LmhAssetPipeline? _assetPipeline;
     private GMCMenu? _gmcmMenu;
 
     private readonly List<string> _assetsRequested = new();
@@ -40,7 +48,7 @@ public sealed class LmhCoordinator
 
     private bool _earlyInitRequested;
 
-    public LmhCoordinator(CoreContext core, SmapiConfigProvider<ModConfig> config, ILog log, LetMeHatchApi api)
+    public LmhCoordinator(CoreContext core, SmapiConfigProvider<ModConfig> config, ILog log, LetMeHatchApi api, AssetInvalidationBatcher invalidation)
     {
         _core = core ?? throw new ArgumentNullException(nameof(core));
         _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -66,7 +74,7 @@ public sealed class LmhCoordinator
 
     public void OnWarped(object? sender, WarpedEventArgs e)
     {
-        _core.Helper.GameContent.InvalidateCache(AssetNames.Machines);
+        _invalidation.Request(AssetNames.Machines);
     }
 
     public void OnDayStarted(object? sender, DayStartedEventArgs e)
@@ -83,9 +91,9 @@ public sealed class LmhCoordinator
 
         _core.Helper.Data.WriteJsonFile("data/gray.json", _assetManager.TextureManager.GrayTextures.Keys);
 
-        _core.Helper.GameContent.InvalidateCache(AssetNames.FarmAnimals);
-        _core.Helper.GameContent.InvalidateCache(AssetNames.Objects);
-        _core.Helper.GameContent.InvalidateCache(AssetNames.SpringObjects);
+        _invalidation.Request(AssetNames.FarmAnimals);
+        _invalidation.Request(AssetNames.Objects);
+        _invalidation.Request(AssetNames.SpringObjects);
     }
 
     public void OnDayEnding(object? sender, DayEndingEventArgs e)
@@ -150,28 +158,25 @@ public sealed class LmhCoordinator
 
     public void PrintContentHandlers()
     {
-        if (_contentCoordinator is null)
+        if (_assetPipeline is null)
         {
             _log.Log("Content pipeline is not initialized yet.", LogLevel.Warn);
             return;
         }
 
-        foreach (var line in _contentCoordinator.GetDebugReportLines())
+        foreach (var line in _assetPipeline.GetDebugReportLines())
             _log.Log(line, LogLevel.Info);
     }
 
     public void InvalidateAllContent()
     {
-        if (_contentCoordinator is null)
+        if (_assetPipeline is null)
         {
             _log.Log("Content pipeline is not initialized yet.", LogLevel.Warn);
             return;
         }
 
-        _contentCoordinator.InvalidateAll();
-
-        foreach (var gamePath in ModEntry.AssetHandler.GamePaths)
-            _core.Helper.GameContent.InvalidateCache(gamePath);
+        _assetPipeline.RequestInvalidateAll();
 
         _log.Log("Invalidated caches for all registered content handlers.", LogLevel.Info);
     }
@@ -206,12 +211,29 @@ private void InitializeAssetEditor()
     _assetManager = new GameAssetManager(_contentPatcher, _wildEggs);
     _assetManager.TextureManager.SetUpModAssets();
 
-    _contentCoordinator = LetMeHatchContentPipeline.Create(
+    _app = new LmhApplicationServices(
+        new GameRandomProvider(),
+        new LmhGateways(
+            new SmapiGameDataGateway(_core.Helper.GameContent),
+            new SmapiWorldGateway(),
+            new SmapiClock(),
+            new SmapiAssetGateway(_invalidation)
+        ),
+        new FarmAnimalsAssetEditsAdapter(_assetManager),
+        new ObjectsAssetEditsAdapter(_assetManager),
+        new MachinesAssetEditsAdapter(_assetManager),
+        new AssetLoadsAdapter(_assetManager)
+    );
+
+
+    _assetPipeline = LetMeHatchContentPipeline.Create(
         _core,
         _config,
         _log,
         ModEntry.AssetHandler,
-        _assetManager
+        _assetManager,
+        _app
+        , _invalidation
     );
 }
 
@@ -237,8 +259,8 @@ private void InitializeAssetEditor()
             return;
         }
 
-        _core.Helper.GameContent.InvalidateCache(AssetNames.FarmAnimals);
-        _core.Helper.GameContent.InvalidateCache(AssetNames.Objects);
+        _invalidation.Request(AssetNames.FarmAnimals);
+        _invalidation.Request(AssetNames.Objects);
 
         _assetManager.AnimalItemRelationsManager.HandleAnimalEggRelations();
         GameAssetManager.SaveData(_assetManager.SavedItemsData);
@@ -277,7 +299,7 @@ private void InitializeAssetEditor()
 
         private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
     {
-        if (_assetManager is null || _contentCoordinator is null)
+        if (_assetManager is null || _assetPipeline is null)
         {
             return;
         }
@@ -290,6 +312,6 @@ private void InitializeAssetEditor()
             _core.Helper.Data.WriteJsonFile("assetsRequested.json", _assetsRequested);
         }
 
-        _contentCoordinator.HandleAssetRequested(e);
+        _assetPipeline.HandleAssetRequested(e);
     }
 }
