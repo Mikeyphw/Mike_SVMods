@@ -26,5 +26,23 @@ Usage: lmh_reloadcp.",
 Usage: lmh_checki18n.",
             (_, _) => coordinator.CheckI18n()
         );
+
+
+        helper.ConsoleCommands.Add(
+            "lmh_content_handlers",
+            "Prints the registered content loaders/editors and their priorities.
+
+Usage: lmh_content_handlers.",
+            (_, _) => coordinator.PrintContentHandlers()
+        );
+
+        helper.ConsoleCommands.Add(
+            "lmh_invalidate_all",
+            "Invalidates all game content caches touched by registered content handlers.
+
+Usage: lmh_invalidate_all.",
+            (_, _) => coordinator.InvalidateAllContent()
+        );
+
     }
 }

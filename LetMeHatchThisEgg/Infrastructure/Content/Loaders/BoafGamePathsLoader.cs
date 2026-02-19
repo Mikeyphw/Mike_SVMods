@@ -18,6 +18,10 @@ public sealed class BoafGamePathsLoader : AssetLoaderBase
         _clonedItemsGamePath = assetHandler.GetAssetPath(Assets.Object.ClonedItems, AssetPathType.GamePath);
     }
 
+    public override string DebugHandles => "BoAF GamePaths (excluding cloned items)";
+
+    public override string DebugGates => "_assetHandler.GamePaths contains assetNameLower and assetNameLower != cloned items game path.";
+
     public override bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
         => _assetHandler.GamePaths.Contains(assetNameLower) && assetNameLower != _clonedItemsGamePath;
 

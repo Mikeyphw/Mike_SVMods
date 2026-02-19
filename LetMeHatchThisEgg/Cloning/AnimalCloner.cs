@@ -1,7 +1,7 @@
-using System.Text.RegularExpressions;
 using ContentPatcher;
 using LetMeHatchThisEgg.Models;
 using LetMeHatchThisEgg.Core.Cloning;
+using LetMeHatchThisEgg.Core.Placeholders;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewValley;
@@ -11,7 +11,9 @@ using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 using Object = StardewValley.Object;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Cloning
 {
     public class AnimalCloner
     {
@@ -260,59 +262,63 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
             );
 }
 
-        private void SetIfValueIsPlaceholder<T>(
+                private static void SetIfValueIsPlaceholder<T>(
             ref T currentValue,
             T originalValue,
             T predeterminedValue
         )
         {
-            if (EqualityComparer<T>.Default.Equals(currentValue, predeterminedValue))
-            {
-                currentValue = originalValue;
-            }
+            currentValue = PlaceholderReplacementPolicy.ReplaceIfPlaceholder(
+                current: currentValue,
+                original: originalValue,
+                placeholder: predeterminedValue
+            );
         }
 
-        private void SetIfValueIsPlaceholder(
+                private void SetIfValueIsPlaceholder(
             ref string currentValue,
             string originalValue,
             string predeterminedValue
         )
         {
+            if (PlaceholderReplacementPolicy.IsPlaceholder(currentValue, predeterminedValue))
+            {
+                currentValue = originalValue;
+                return;
+            }
+
+            if (!PlaceholderStringPolicy.ShouldResolveTokens(currentValue, predeterminedValue))
+            {
+                return;
+            }
+
             var tokenString = ContentPatcherAPI.ParseTokenString(
                 manifest: ModEntry.ModManifestInstance,
                 rawValue: currentValue,
                 formatVersion: new SemanticVersion("2.3.0")
             );
             tokenString.UpdateContext();
-            var currentValueTokenString = tokenString.Value ?? currentValue;
-            if (currentValue == predeterminedValue)
-            {
-                currentValue = originalValue;
-            }
-            else
-            {
-                currentValue = currentValueTokenString;
-            }
+            currentValue = tokenString.Value ?? currentValue;
         }
 
-        private void SetIfValueIsPlaceholder(
+                private void SetIfValueIsPlaceholder(
             IContentPack contentPack,
             ref string currentValue,
             string originalValue,
             string predeterminedValue
         )
         {
-            string pattern = @"{{i18n:(.*?)}}";
-            if (currentValue == predeterminedValue)
+            var decision = PlaceholderStringPolicy.Decide(currentValue, predeterminedValue);
+
+            if (decision.UseOriginal)
             {
-                LoggerHelper.VerboseLog($"Setting {currentValue} to  {originalValue}");
                 currentValue = originalValue;
+                return;
             }
-            else if (Regex.Match(currentValue, pattern).Success)
+
+            if (decision.I18nKey != null)
             {
-                Match match = Regex.Match(currentValue, pattern);
-                string key = match.Groups[1].Value.Replace(" ", "");
-                currentValue = contentPack.Translation.Get(key);
+                currentValue = contentPack.Translation.Get(decision.I18nKey);
             }
         }
 
@@ -364,7 +370,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
             );
         }
 
-                private string GetTextureString(
+        private string GetTextureString(
             string? currentValue,
             string originalValue,
             string? placeholderValue,

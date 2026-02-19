@@ -19,7 +19,9 @@ public sealed class FarmAnimalsBirthTextEditor : AssetEditorBase
 
     public override AssetEditPriority Priority => AssetEditPriority.Late + EDIT_BIRTH_TEXT_PRIORITY;
 
-    public override void Edit(IAssetData asset, ContentContext context)
+        public override string DebugGates => "Config.EditBirthText == true.";
+
+public override void Edit(IAssetData asset, ContentContext context)
     {
         if (!context.Config.EditBirthText)
             return;

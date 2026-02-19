@@ -85,7 +85,30 @@ public sealed class SmapiContentCoordinator : IDisposable
             _core.Helper.GameContent.InvalidateCache(name);
     }
 
-    private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+    
+    /// <summary>Returns a human-friendly report of the registered loaders and editors (for console diagnostics).</summary>
+    public IEnumerable<string> GetDebugReportLines()
+    {
+        yield return $"Content pipeline: registered={_registered}; loaders={_loaders.Count}; editors={_editors.Count}";
+        yield return "Loaders (run before editors):";
+
+        foreach (var loader in _loaders.OrderBy(l => l.Priority).ThenBy(l => l.GetType().Name))
+        {
+            var typeName = loader.GetType().Name;
+            var handles = loader is IContentHandlerDebugInfo d ? d.DebugHandles : "n/a";
+            var gates = loader is IContentHandlerDebugInfo g ? g.DebugGates : "n/a";
+            yield return $"- [{loader.Priority}] {typeName} — handles: {handles}; gates: {gates}";
+        }
+
+        yield return "Editors:";
+        foreach (var editor in _editors.OrderBy(e => e.Priority).ThenBy(e => e.AssetName).ThenBy(e => e.GetType().Name))
+        {
+            var typeName = editor.GetType().Name;
+            var gates = editor is IContentHandlerDebugInfo g ? g.DebugGates : "n/a";
+            yield return $"- [{editor.Priority}] {typeName} (asset: {editor.AssetName}) — gates: {gates}";
+        }
+    }
+private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
         => HandleAssetRequested(e);
 
     public void Dispose()

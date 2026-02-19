@@ -18,6 +18,10 @@ public sealed class MaleClonesTextureLoader : AssetLoaderBase
         _assets = assets;
     }
 
+    public override string DebugHandles => "Animals/MaleClones*";
+
+    public override string DebugGates => "assetNameLower matches ^Animals/MaleClones (case-insensitive).";
+
     public override bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
         => Pattern.IsMatch(assetNameLower);
 

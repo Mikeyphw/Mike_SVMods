@@ -147,6 +147,35 @@ public sealed class LmhCoordinator
         ModEntry.TranslationHelper.Checki18nKeys(_core.Monitor);
     }
 
+
+    public void PrintContentHandlers()
+    {
+        if (_contentCoordinator is null)
+        {
+            _log.Log("Content pipeline is not initialized yet.", LogLevel.Warn);
+            return;
+        }
+
+        foreach (var line in _contentCoordinator.GetDebugReportLines())
+            _log.Log(line, LogLevel.Info);
+    }
+
+    public void InvalidateAllContent()
+    {
+        if (_contentCoordinator is null)
+        {
+            _log.Log("Content pipeline is not initialized yet.", LogLevel.Warn);
+            return;
+        }
+
+        _contentCoordinator.InvalidateAll();
+
+        foreach (var gamePath in ModEntry.AssetHandler.GamePaths)
+            _core.Helper.GameContent.InvalidateCache(gamePath);
+
+        _log.Log("Invalidated caches for all registered content handlers.", LogLevel.Info);
+    }
+
     private void InitializeApis()
     {
         _roosterHatching = _core.Helper.ModRegistry.GetApi<IRoosterHatchingAPI>("Mikew.roostersaddon.smapi");

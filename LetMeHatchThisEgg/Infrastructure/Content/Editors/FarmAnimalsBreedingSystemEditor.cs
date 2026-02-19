@@ -20,7 +20,9 @@ public sealed class FarmAnimalsBreedingSystemEditor : AssetEditorBase
 
     public override AssetEditPriority Priority => AssetEditPriority.Late + BREEDING_SYSTEM_PRIORITY;
 
-    public override void Edit(IAssetData asset, ContentContext context)
+        public override string DebugGates => "Config.BreedingSystemEnabled == true and HasAddedMaleClones == true.";
+
+public override void Edit(IAssetData asset, ContentContext context)
     {
         if (!context.Config.BreedingSystemEnabled || !_assets.HasAddedMaleClones)
             return;

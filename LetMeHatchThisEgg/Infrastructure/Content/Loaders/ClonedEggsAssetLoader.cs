@@ -19,6 +19,10 @@ public sealed class ClonedEggsAssetLoader : AssetLoaderBase
         _clonedItemsGamePath = assetHandler.GetAssetPath(Assets.Object.ClonedItems, AssetPathType.GamePath);
     }
 
+    public override string DebugHandles => "BoAF game path: Assets.Object.ClonedItems";
+
+    public override string DebugGates => "assetNameLower equals cloned items game path.";
+
     public override bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
         => assetNameLower == _clonedItemsGamePath;
 

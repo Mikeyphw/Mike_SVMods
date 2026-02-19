@@ -19,7 +19,9 @@ public sealed class ObjectsFertilizedEggsEditor : AssetEditorBase
 
     public override AssetEditPriority Priority => AssetEditPriority.Late + NEW_EGGS_ADD_PRIORITY;
 
-    public override void Edit(IAssetData asset, ContentContext context)
+        public override string DebugGates => "ItemsToAdd.Count > 0.";
+
+public override void Edit(IAssetData asset, ContentContext context)
     {
         if (_assets.ItemsToAdd.Count < 1)
             return;

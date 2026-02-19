@@ -17,7 +17,9 @@ public sealed class FarmAnimalsClonesEditor : AssetEditorBase
 
     public override AssetEditPriority Priority => AssetEditPriority.Late;
 
-    public override void Edit(IAssetData asset, ContentContext context)
+        public override string DebugGates => "ClonedAnimalsInfoList.Count > 0.";
+
+public override void Edit(IAssetData asset, ContentContext context)
     {
         if (_assets.ClonedAnimalsInfoList.Count == 0)
             return;

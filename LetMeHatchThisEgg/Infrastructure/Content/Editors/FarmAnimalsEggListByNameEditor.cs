@@ -19,7 +19,9 @@ public sealed class FarmAnimalsEggListByNameEditor : AssetEditorBase
 
     public override AssetEditPriority Priority => AssetEditPriority.Late + EDIT_EGG_LIST_PRIORITY;
 
-    public override void Edit(IAssetData asset, ContentContext context)
+        public override string DebugGates => "Config.EditEggListByName == true.";
+
+public override void Edit(IAssetData asset, ContentContext context)
     {
         if (!context.Config.EditEggListByName)
             return;

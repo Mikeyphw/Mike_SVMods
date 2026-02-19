@@ -18,7 +18,9 @@ public sealed class ObjectsClonedEggsEditor : AssetEditorBase
 
     public override AssetEditPriority Priority => AssetEditPriority.Default;
 
-    public override void Edit(IAssetData asset, ContentContext context)
+        public override string DebugGates => "ItemsToAdd.Count > 0; greyscale when Config.OnlyFertilizedEggs == false.";
+
+public override void Edit(IAssetData asset, ContentContext context)
     {
         if (_assets.ItemsToAdd.Count < 1)
             return;

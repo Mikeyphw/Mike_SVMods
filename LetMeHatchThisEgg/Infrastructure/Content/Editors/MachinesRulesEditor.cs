@@ -19,7 +19,9 @@ public sealed class MachinesRulesEditor : AssetEditorBase
 
     public override AssetEditPriority Priority => AssetEditPriority.Late + BASE_PRIORITY;
 
-    public override void Edit(IAssetData asset, ContentContext context)
+        public override string DebugGates => "(OnlyFertilizedEggs && HasAddedFertilizedEggs) || (!OnlyFertilizedEggs && HasAddedClonedItems && CloneMachineRules).";
+
+public override void Edit(IAssetData asset, ContentContext context)
     {
         var cfg = context.Config;
 
