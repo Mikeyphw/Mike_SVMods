@@ -6,6 +6,7 @@ using WildEggsHatching.Application.Facade;
 using WildEggsHatching.Core.Enums;
 using StardewValley;
 using StardewValley.GameData.Objects;
+using StardewValley.GameData.FarmAnimals;
 
 namespace WildEggsHatching.Infrastructure.Api;
 

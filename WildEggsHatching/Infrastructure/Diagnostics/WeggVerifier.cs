@@ -19,6 +19,8 @@ using WildEggsHatching.Infrastructure.ModData.Models;
 using xTile;
 using Mikew.BirdsOfAFeather.Helpers.Config;
 using WildEggsHatching.Infrastructure.Diagnostics;
+using Mikew.BirdsOfAFeather;
+using WildEggsHatching.Core.Assets;
 
 namespace WildEggsHatching.Infrastructure.Diagnostics;
 
@@ -275,9 +277,9 @@ public sealed class WeggVerifier
                 wildAnimalKeys: snapshot.WildAnimals.Keys,
                 farmAnimalKeys: Game1.farmAnimalData.Keys);
 
-            var objects = SafeLoad<Dictionary<string, StardewValley.GameData.Objects.ObjectData>>(Infrastructure.Content.GameAssets.Objects) ?? new();
-            var quests = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.GameAssets.Quests) ?? new();
-            var mail = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.GameAssets.Mail) ?? new();
+            var objects = SafeLoad<Dictionary<string, StardewValley.GameData.Objects.ObjectData>>(Infrastructure.Content.Strings.AssetNames.Objects) ?? new();
+            var quests = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.Strings.AssetNames.Quests) ?? new();
+            var mail = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.Strings.AssetNames.Mail) ?? new();
 
             var result = AnimalNotesValidationRules.Analyze(
                 expectedTokens: expectedTokens,
@@ -305,9 +307,9 @@ public sealed class WeggVerifier
     private void AddRuntimeProbeChecks(WeggVerifyReport report)
     {
         // These prove BOAF hooks are wired: game content must be able to load a TMX and a couple PNGs.
-        TryProbe<Map>(report, "probe/map/tomb", "Maps/Mines/Level77377");
-        TryProbe<Texture2D>(report, "probe/tex/tombtilesheet", "Maps/Mines/Z_TombTilesheet");
-        TryProbe<Texture2D>(report, "probe/tex/tracker", "Maps/Mines/tracker");
+        TryProbe<Map>(report, "probe/map/tomb", WeggGameAssetNames.DesertTombMap);
+        TryProbe<Texture2D>(report, "probe/tex/tombtilesheet", WeggGameAssetNames.DesertTombTilesheet);
+        TryProbe<Texture2D>(report, "probe/tex/tracker", WeggGameAssetNames.DesertTombTrackerTexture);
         TryProbe<Texture2D>(report, "probe/tex/object-note", $"Mods/{Constants.ModId}/objects/note");
 
         // Content pack validation (requires world-ready).
@@ -318,13 +320,13 @@ public sealed class WeggVerifier
             try
             {
                 // Best-effort: verify at least one object is tagged as a WE egg.
-                var objects = SafeLoad<Dictionary<string, ObjectData>>(WildEggsHatching.Infrastructure.Content.GameAssets.Objects);
+                var objects = SafeLoad<Dictionary<string, ObjectData>>(WildEggsHatching.Infrastructure.Content.Strings.AssetNames.Objects);
                 var tagged = objects?.Values.Count(o => o.ContextTags?.Contains("wegg_item") == true) ?? 0;
                 report.Add("cp/objects", tagged > 0 ? WeggVerifyStatus.Pass : WeggVerifyStatus.Fail,
                     tagged > 0 ? $"Found {tagged} wegg_item objects." : "No wegg_item objects found in Data/Objects (content edits not applied).");
 
                 // Best-effort: verify incubator recipe exists (string match).
-                var recipes = SafeLoad<Dictionary<string, string>>(WildEggsHatching.Infrastructure.Content.GameAssets.CraftingRecipes);
+                var recipes = SafeLoad<Dictionary<string, string>>(WildEggsHatching.Infrastructure.Content.Strings.AssetNames.CraftingRecipes);
                 var hasRecipe = recipes?.Keys.Any(k => k.Contains("Wild Egg Incubator", StringComparison.OrdinalIgnoreCase)) == true;
                 report.Add("cp/recipes", hasRecipe ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn,
                     hasRecipe ? "Incubator recipe key present." : "Incubator recipe key not found (if expected, content edits may be missing).");

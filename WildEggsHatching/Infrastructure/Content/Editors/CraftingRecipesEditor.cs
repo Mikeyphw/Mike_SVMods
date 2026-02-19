@@ -3,12 +3,13 @@ using StardewModdingAPI.Events;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using Mikew.BirdsOfAFeather.Helpers.Content;
+using Mikew.BirdsOfAFeather;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 public sealed class CraftingRecipesEditor : AssetEditorBase<ContentContext>
 {
-    public override string AssetName => GameAssets.CraftingRecipes;
+    public override string AssetName => Strings.AssetNames.CraftingRecipes;
 
     private const string ElixirRecipeKey = "Elixir Of Revitalized Essence";
     private const string IncubatorRecipeKey = "Wild Egg Incubator";

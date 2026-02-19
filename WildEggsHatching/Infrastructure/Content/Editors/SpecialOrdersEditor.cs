@@ -4,12 +4,13 @@ using StardewValley.GameData.SpecialOrders;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using Mikew.BirdsOfAFeather.Helpers.Content;
+using Mikew.BirdsOfAFeather;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 public sealed class SpecialOrdersEditor : AssetEditorBase<ContentContext>
 {
-    public override string AssetName => GameAssets.SpecialOrders;
+    public override string AssetName => Strings.AssetNames.SpecialOrders;
 
     public override void Edit(IAssetData asset, ContentContext context)
     {

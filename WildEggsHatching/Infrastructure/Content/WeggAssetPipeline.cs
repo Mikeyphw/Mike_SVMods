@@ -65,6 +65,12 @@ public sealed class WeggAssetPipeline : IDisposable
             _invalidation.Request(asset);
     }
 
+
+    public void RequestInvalidate(string assetName)
+        => _invalidation.Request(assetName);
+
+
+
     public void Dispose()
     {
         _coordinator.Dispose();

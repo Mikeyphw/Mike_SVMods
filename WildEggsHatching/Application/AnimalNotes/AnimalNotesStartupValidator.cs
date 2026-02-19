@@ -8,6 +8,7 @@ using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Content;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
+using Mikew.BirdsOfAFeather;
 
 namespace WildEggsHatching.Application.AnimalNotes;
 
@@ -37,9 +38,9 @@ public sealed class AnimalNotesStartupValidator
             wildAnimalKeys: snapshot.WildAnimals.Keys,
             farmAnimalKeys: Game1.farmAnimalData.Keys);
 
-        var objects = SafeLoad<Dictionary<string, ObjectData>>(GameAssets.Objects) ?? new Dictionary<string, ObjectData>();
-        var quests = SafeLoad<Dictionary<string, string>>(GameAssets.Quests) ?? new Dictionary<string, string>();
-        var mail = SafeLoad<Dictionary<string, string>>(GameAssets.Mail) ?? new Dictionary<string, string>();
+        var objects = SafeLoad<Dictionary<string, ObjectData>>(Strings.AssetNames.Objects) ?? new Dictionary<string, ObjectData>();
+        var quests = SafeLoad<Dictionary<string, string>>(Strings.AssetNames.Quests) ?? new Dictionary<string, string>();
+        var mail = SafeLoad<Dictionary<string, string>>(Strings.AssetNames.Mail) ?? new Dictionary<string, string>();
 
         var result = AnimalNotesValidationRules.Analyze(
             expectedTokens: expectedTokens,

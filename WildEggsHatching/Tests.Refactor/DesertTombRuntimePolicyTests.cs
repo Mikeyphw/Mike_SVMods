@@ -2,13 +2,14 @@ using WildEggsHatching.Core.Enums;
 using WildEggsHatching.DesertTomb.Core.Runtime;
 using Xunit;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
+using WildEggsHatching.Core.Assets;
 
 namespace WildEggsHatching.Refactor.Tests;
 
 public sealed class DesertTombRuntimePolicyTests
 {
     [Theory]
-    [InlineData("Maps/Mines/Level77377", MineLevel.Level77377)]
+    [InlineData(WeggGameAssetNames.DesertTombMap, MineLevel.Level77377)]
     [InlineData("Maps\\Mines\\Level39", MineLevel.Level39)]
     [InlineData("Data/Mines/Level14", MineLevel.Level14)]
     [InlineData("data\\mines\\19", MineLevel.Level19)]
@@ -30,7 +31,7 @@ public sealed class DesertTombRuntimePolicyTests
 
     [Theory]
     [InlineData(121, null, true)]
-    [InlineData(5, "Maps/Mines/Level77377", true)]
+    [InlineData(5, WeggGameAssetNames.DesertTombMap, true)]
     [InlineData(5, "Maps/Mines/SomeOtherMap", false)]
     public void IsTombCandidate_DetectsMineLevelOrMapPath(int mineLevel, string? mapPath, bool expected)
     {

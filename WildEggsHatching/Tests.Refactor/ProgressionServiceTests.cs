@@ -3,6 +3,7 @@ using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using WildEggsHatching.Infrastructure.Config;
 using Xunit;
+using Mikew.BirdsOfAFeather.Helpers.SaveData;
 
 namespace WildEggsHatching.Refactor.Tests;
 
@@ -98,7 +99,7 @@ public sealed class ProgressionServiceTests
         var store = new InMemorySaveDataStore();
         store.WriteEnvelope(
             SaveKeys.Progression,
-            new WildEggsHatching.Infrastructure.SaveData.SaveDataEnvelope<ProgressionSaveData>(
+            new SaveDataEnvelope<ProgressionSaveData>(
                 1,
                 new ProgressionSaveData { Step = ProgressionStep.PartIV }
             )
@@ -151,7 +152,7 @@ public sealed class ProgressionServiceTests
         var store = new InMemorySaveDataStore();
         store.WriteEnvelope(
             SaveKeys.Progression,
-            new WildEggsHatching.Infrastructure.SaveData.SaveDataEnvelope<ProgressionSaveData>(
+            new SaveDataEnvelope<ProgressionSaveData>(
                 1,
                 new ProgressionSaveData
                 {

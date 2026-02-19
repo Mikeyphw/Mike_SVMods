@@ -7,6 +7,7 @@ using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using WildEggsHatching.Application.AnimalNotes;
 using Mikew.BirdsOfAFeather.Helpers.Content;
+using Mikew.BirdsOfAFeather;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
@@ -15,7 +16,7 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
     private static readonly object LockObj = new();
     private static IReadOnlyList<string>? _animalKeys;
 
-    public override string AssetName => GameAssets.Mail;
+    public override string AssetName => Strings.AssetNames.Mail;
 
     public override void Edit(IAssetData asset, ContentContext context)
     {

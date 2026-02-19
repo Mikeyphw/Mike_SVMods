@@ -7,12 +7,13 @@ using StardewValley.GameData.Objects;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using Mikew.BirdsOfAFeather.Helpers.Content;
+using Mikew.BirdsOfAFeather;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
 {
-    public override string AssetName => GameAssets.Objects;
+    public override string AssetName => Strings.AssetNames.Objects;
 
     private static readonly object LockObj = new();
     private static IReadOnlyList<string>? _eggItemIds;

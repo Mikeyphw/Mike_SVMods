@@ -7,6 +7,7 @@ using StardewValley.TerrainFeatures;
 using xTile.Layers;
 using WildEggsHatching;
 using WildEggsHatching.DesertTomb.Core.Configuration;
+using WildEggsHatching.Core.Assets;
 
 namespace WildEggsHatching.Application.DesertTomb.Generation;
 
@@ -31,7 +32,7 @@ public sealed class DesertTombLevelGenerator
 
         // Uses a custom tilesheet name so the TMX can reference it consistently.
         // The asset loader is responsible for mapping this key to a mod-file PNG.
-        mineShaft.mapImageSource.Value = "Maps/Mines/Z_TombTilesheet";
+        mineShaft.mapImageSource.Value = WeggGameAssetNames.DesertTombTilesheet;
 
         mineShaft.isDinoArea = false;
         mineShaft.loadedDarkArea = true;

@@ -1,14 +1,17 @@
 using System;
-using StardewModdingAPI.Events;
+using System.Linq;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
+using WildEggsHatching.Core.Enums;
+using WildEggsHatching.Application.Animals;
 using Mikew.BirdsOfAFeather.Helpers.Content;
+using Mikew.BirdsOfAFeather;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
 {
-    public override string AssetName => GameAssets.FarmAnimals;
+    public override string AssetName => Strings.AssetNames.FarmAnimals;
 
     private const string DinosaurId = "Dinosaur";
     private const string OstrichId = "Ostrich";
@@ -18,7 +21,13 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
     private const string ChickenEggId = "176";
     private const string VoidEggId = "305";
 
-    public override void Edit(IAssetData asset, ContentContext context)
+    
+
+    private readonly ChosenEggAssignments _chosen;
+
+    public FarmAnimalsEditor(ChosenEggAssignments chosen)
+        => _chosen = chosen;
+public override void Edit(IAssetData asset, ContentContext context)
     {
         var data = asset.AsDictionary<string, FarmAnimalData>().Data;
 
@@ -26,6 +35,9 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
         TryApplyConfiguredFullPrice(context, data, OstrichId, context.Config.OstrichPrice);
 
         TryApplyVoidChickenPrice(context, data);
+
+        if (context.Step >= ProgressionStep.PartVI)
+            ApplyChosenEggs(context, data);
     }
 
     private static void TryApplyConfiguredFullPrice(

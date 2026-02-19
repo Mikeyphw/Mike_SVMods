@@ -3,6 +3,7 @@ using StardewModdingAPI.Events;
 using WildEggsHatching.Infrastructure.Config;
 using WildEggsHatching.Infrastructure.Content;
 using Mikew.BirdsOfAFeather.Helpers.Content;
+using WildEggsHatching.Core.Assets;
 
 namespace WildEggsHatching.Infrastructure.DesertTomb.Assets;
 
@@ -53,7 +54,7 @@ public sealed class DesertTombAdditionalMineMapsEditor : IAssetEditor
 
         // Match the prior values.
         SetMember(obj, mapDataType, "forceLevel", -1);
-        SetMember(obj, mapDataType, "mapPath", "Maps/Mines/Level77377");
+        SetMember(obj, mapDataType, "mapPath", WeggGameAssetNames.DesertTombMap);
         SetMember(obj, mapDataType, "mapType", "M");
         SetMember(obj, mapDataType, "maxLevel", -1);
         SetMember(obj, mapDataType, "minLevel", 121);

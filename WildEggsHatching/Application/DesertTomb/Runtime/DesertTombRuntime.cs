@@ -17,6 +17,7 @@ using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 using Mikew.BirdsOfAFeather.Helpers.Config;
+using WildEggsHatching.Core.Assets;
 
 namespace WildEggsHatching.Application.DesertTomb.Runtime;
 
@@ -215,15 +216,15 @@ public sealed class DesertTombRuntime
         // If progression is enabled and player is not on the last phase: always use Level77377.
         // If player is on the last phase, or progression is disabled: randomly pick among available maps.
         if (progressionModeEnabled && step < ProgressionStep.PartVI)
-            return "Maps/Mines/Level77377";
+            return WeggGameAssetNames.DesertTombMap;
 
         string[] available =
         {
-            "Maps/Mines/Level77377",
-            "Maps/Mines/Level39",
-            "Maps/Mines/Level28",
-            "Maps/Mines/Level19",
-            "Maps/Mines/Level14",
+            WeggGameAssetNames.DesertTombMap,
+            WeggGameAssetNames.MineLevel39,
+            WeggGameAssetNames.MineLevel28,
+            WeggGameAssetNames.MineLevel19,
+            WeggGameAssetNames.MineLevel14,
         };
 
         var r = Utility.CreateDaySaveRandom(Game1.stats.DaysPlayed, mineShaft.mineLevel, 77377);

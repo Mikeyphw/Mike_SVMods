@@ -5,12 +5,13 @@ using StardewValley.GameData.BigCraftables;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using Mikew.BirdsOfAFeather.Helpers.Content;
+using Mikew.BirdsOfAFeather;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 public sealed class BigCraftablesEditor : AssetEditorBase<ContentContext>
 {
-    public override string AssetName => GameAssets.BigCraftables;
+    public override string AssetName => Strings.AssetNames.BigCraftables;
 
     public override void Edit(IAssetData asset, ContentContext context)
     {
