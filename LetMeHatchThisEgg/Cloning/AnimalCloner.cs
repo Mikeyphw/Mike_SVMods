@@ -199,37 +199,10 @@ namespace LetMeHatchThisEgg.Cloning
                 original: originalAnimalData,
                 placeholder: placeholderData
             );
-
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.House,
-                originalAnimalData.House,
-                placeholderData.House
-            );
-
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.RequiredBuilding,
-                originalAnimalData.RequiredBuilding,
-                placeholderData.RequiredBuilding
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.UnlockCondition,
-                originalAnimalData.UnlockCondition,
-                placeholderData.UnlockCondition
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.HarvestTool,
-                originalAnimalData.HarvestTool,
-                placeholderData.HarvestTool
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.Sound,
-                originalAnimalData.Sound,
-                placeholderData.Sound
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.BabySound,
-                originalAnimalData.BabySound,
-                placeholderData.BabySound
+            FarmAnimalCloneNonLocalizedFieldPolicy.Apply(
+                clone: currentCloneData,
+                original: originalAnimalData,
+                placeholder: placeholderData
             );
 
             _farmAnimalCloneTransformer.ApplyPostLocalization(
@@ -332,19 +305,6 @@ namespace LetMeHatchThisEgg.Cloning
             {
                 currentValue = contentPack.Translation.Get(decision.I18nKey);
             }
-        }
-
-        private static void SetIfValueIsPlaceholder<T>(
-            ref T currentValue,
-            T originalValue,
-            T predeterminedValue
-        )
-        {
-            currentValue = PlaceholderReplacementPolicy.ReplaceIfPlaceholder(
-                current: currentValue,
-                original: originalValue,
-                placeholder: predeterminedValue
-            );
         }
 
         private void SetTextureIfNeeded(
