@@ -54,5 +54,9 @@ public sealed class FarmAnimalCloneBatchApplier
 
             _cloneMappingService.ApplyAlternatePurchaseRules(cloneInfo, farmAnimals);
         }
+
+        if (farmAnimalsRepository is IFinalizableFarmAnimalDataRepository finalizable)
+            finalizable.FinalizeEdits();
     }
 }
+

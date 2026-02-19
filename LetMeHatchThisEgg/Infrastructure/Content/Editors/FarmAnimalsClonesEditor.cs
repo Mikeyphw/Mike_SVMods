@@ -1,5 +1,6 @@
 using LetMeHatchThisEgg.GameAssetManagement;
 using LetMeHatchThisEgg.Infrastructure.Cloning;
+using LetMeHatchThisEgg.Infrastructure.GameData;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
@@ -27,10 +28,19 @@ public sealed class FarmAnimalsClonesEditor : AssetEditorBase
             return;
 
         var farmAnimals = _assets.FarmAnimalAssetAdapter.Wrap(asset);
+        IFarmAnimalDataRepository farmAnimalsRepository = farmAnimals;
+
+        if (context.Config.StabilizeFarmAnimalsAssetOrder)
+        {
+            farmAnimalsRepository = new OrderedFarmAnimalDataRepository(
+                inner: farmAnimals,
+                orderingMode: FarmAnimalDataRepositoryOrderingMode.PreserveOriginalThenSortNewOrdinal
+            );
+        }
         var resolver = new LoadedContentPackResolver(_assets.LoadedContentPacks);
 
         _assets.FarmAnimalCloneBatchApplier.Apply(
-            farmAnimalsRepository: farmAnimals,
+            farmAnimalsRepository: farmAnimalsRepository,
             clonedAnimals: _assets.ClonedAnimalsInfoList,
             contentPacks: resolver
         );

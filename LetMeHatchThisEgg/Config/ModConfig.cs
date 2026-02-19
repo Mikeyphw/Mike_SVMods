@@ -22,6 +22,8 @@ public class ModConfig : CoreModConfig
     public bool BreedingSystemEnabled { get; set; }
 
     public bool DeterministicBreedingRng { get; set; }
+
+    public bool StabilizeFarmAnimalsAssetOrder { get; set; }
     public Dictionary<
         string,
         Dictionary<CloneItemType, Dictionary<ItemType, string>>
@@ -62,6 +64,7 @@ public class ModConfig : CoreModConfig
         ClonedVanillaEggsOptions = new();
         BreedingSystemEnabled = true;
         DeterministicBreedingRng = false;
+        StabilizeFarmAnimalsAssetOrder = false;
         EggChances = new Dictionary<ItemType, float>()
         {
             { ItemType.Normal, 0.2f },
