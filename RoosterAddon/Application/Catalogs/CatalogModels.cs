@@ -39,7 +39,7 @@ public sealed class ProduceCatalog
     /// <summary>Random group key -> list of choice keys.</summary>
     public Dictionary<string, List<string>> RandomGroups { get; set; } = new();
 
-/// <summary>Keyed by rooster type name (e.g. "White").</summary>
+    /// <summary>Keyed by rooster type name (e.g. "White").</summary>
     public Dictionary<string, ProduceCatalogEntry> Roosters { get; set; } = new();
 }
 
@@ -68,8 +68,34 @@ public sealed class HatchingCatalog
 
 public sealed class HatchingGeneralCatalog
 {
+    public string? UpdateRate { get; set; }
+
+    /// <summary>Percent (0-100).</summary>
+    public int? ChosenPercentageDailyLuckBonus { get; set; }
+
     public string? HarvestType { get; set; }
     public string? HatchingMode { get; set; }
+
+    public bool? BetterTrufflesCompat { get; set; }
+    public bool? EnableStuckInside { get; set; }
+    public bool? EnableEggProbability { get; set; }
+    public bool? EnableLargeEggProbability { get; set; }
+    public bool? EnableDebug { get; set; }
+
+    /// <summary>Percent (0-100).</summary>
+    public int? EggProbability { get; set; }
+
+    /// <summary>Percent (0-100).</summary>
+    public int? LargeEggProbability { get; set; }
+
+    /// <summary>Percent (0-100).</summary>
+    public int? FertilizedEggProbability { get; set; }
+
+    /// <summary>Percent (0-100).</summary>
+    public int? RoosterToChickenRatio { get; set; }
+
+    /// <summary>Percent (0-1000).</summary>
+    public float? BoostByRooster { get; set; }
 }
 
 public sealed class HatchingRoosterCatalog
@@ -77,10 +103,15 @@ public sealed class HatchingRoosterCatalog
     public string? BuildingRequired { get; set; }
     public bool? Buyable { get; set; }
     public int? Price { get; set; }
+
     public bool? EnableRoosterHatching { get; set; }
+    public bool? EditAllFemales { get; set; }
+
     public int? MatureDays { get; set; }
     public int? ProduceDays { get; set; }
+
     public string? ProduceOption { get; set; }
     public string? DeluxeProduceOption { get; set; }
+
     public bool? BypassBlueConditions { get; set; }
 }

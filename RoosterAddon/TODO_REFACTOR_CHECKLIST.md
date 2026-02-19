@@ -40,7 +40,12 @@ This file is a living checklist to keep refactors honest.
   - [x] Fail-fast validation for catalogs (sanitize + validate + fatal errors).
   - [x] Fix coordinator validation/planning compile breaks and remove dead legacy enums.
 - [ ] Phase 7: Tests (xUnit) + deterministic harness.
-- [ ] Phase 8: JSON catalogs (all knobs).
+- [x] Phase 8: JSON catalogs (all knobs).
+  - [x] `hatching.json` general section includes all global knobs (percentages, toggles, update rate).
+  - [x] `hatching.json` rooster entries include all per-rooster knobs (including `EditAllFemales`).
+  - [x] Catalog apply modes (Seed/Repair/Merge/Authoritative) apply/repair these values predictably.
+  - [x] Catalog defaults + migrator keep existing installs forward-compatible.
+
 - [x] Phase 8.1: Catalog tooling + validation/reload/export.
   - [x] `ra_catalog validate [--fix]` (per-file OK/MIGRATED/ERROR output).
   - [x] `ra_catalog reload` (apply catalogs to config + invalidate assets).

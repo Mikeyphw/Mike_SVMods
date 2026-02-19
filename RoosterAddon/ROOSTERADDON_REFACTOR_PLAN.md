@@ -125,7 +125,7 @@ This plan is the single source of truth for the refactor phases in this workspac
 
 ---
 
-### Phase 8 — JSON catalogs (all knobs)
+### Phase 8 — JSON catalogs (all knobs) ✅
 **Goal:** All per-rooster and general knobs are catalog-driven, with clear precedence.
 
 **Deliverables**

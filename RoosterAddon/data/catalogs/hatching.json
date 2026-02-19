@@ -1,8 +1,20 @@
 {
   "SchemaVersion": 1,
   "General": {
+    "UpdateRate": "OnDayStart",
+    "ChosenPercentageDailyLuckBonus": 10,
     "HarvestType": "DigUp",
-    "HatchingMode": "Original"
+    "HatchingMode": "Original",
+    "BetterTrufflesCompat": true,
+    "EnableStuckInside": true,
+    "EnableEggProbability": true,
+    "EnableLargeEggProbability": true,
+    "EnableDebug": true,
+    "EggProbability": 20,
+    "LargeEggProbability": 40,
+    "FertilizedEggProbability": 60,
+    "RoosterToChickenRatio": 50,
+    "BoostByRooster": 0.1
   },
   "Roosters": {
     "White": {
@@ -14,7 +26,8 @@
       "ProduceDays": 1,
       "ProduceOption": "CustomizeBelow",
       "DeluxeProduceOption": "CustomizeBelow",
-      "BypassBlueConditions": false
+      "BypassBlueConditions": false,
+      "EditAllFemales": true
     },
     "Brown": {
       "BuildingRequired": "BigCoop",
@@ -25,7 +38,8 @@
       "ProduceDays": 1,
       "ProduceOption": "CustomizeBelow",
       "DeluxeProduceOption": "CustomizeBelow",
-      "BypassBlueConditions": false
+      "BypassBlueConditions": false,
+      "EditAllFemales": true
     },
     "Blue": {
       "BuildingRequired": "BigCoop",
@@ -36,7 +50,8 @@
       "ProduceDays": 1,
       "ProduceOption": "CustomizeBelow",
       "DeluxeProduceOption": "CustomizeBelow",
-      "BypassBlueConditions": false
+      "BypassBlueConditions": false,
+      "EditAllFemales": true
     },
     "Void": {
       "BuildingRequired": "BigCoop",
@@ -47,7 +62,8 @@
       "ProduceDays": 1,
       "ProduceOption": "CustomizeBelow",
       "DeluxeProduceOption": "CustomizeBelow",
-      "BypassBlueConditions": false
+      "BypassBlueConditions": false,
+      "EditAllFemales": true
     },
     "Gold": {
       "BuildingRequired": "BigCoop",
@@ -58,7 +74,8 @@
       "ProduceDays": 1,
       "ProduceOption": "CustomizeBelow",
       "DeluxeProduceOption": "CustomizeBelow",
-      "BypassBlueConditions": false
+      "BypassBlueConditions": false,
+      "EditAllFemales": true
     }
   }
 }

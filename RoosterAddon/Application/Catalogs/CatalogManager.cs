@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
 using StardewModdingAPI;
 
@@ -29,6 +30,7 @@ internal sealed class CatalogManager
             Hatching = ReadOrCreate(helper, HatchingFile, defaults.Hatching),
         };
 
+        CatalogMigrator.MergeMissing(bundle, defaults);
         CatalogSanitizer.Sanitize(bundle);
 
         // Normalize on disk so users have stable formatting and clamped probability values.
@@ -63,11 +65,12 @@ internal sealed class CatalogManager
 
         var changed = false;
 
-        // New config: always seed from catalogs (so validation passes and GMCM has sane defaults).
         if (isNewConfig)
         {
-            changed |= ApplyProduceDefaults(config, catalogs.Produce);
+            changed |= EnsureRequiredRoosters(config, catalogs, monitor);
             changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
+            changed |= ApplyProduceDefaults(config, catalogs.Produce);
+
             if (changed)
                 monitor.Log("Catalogs applied to newly created config.", LogLevel.Info);
 
@@ -80,25 +83,115 @@ internal sealed class CatalogManager
                 break;
 
             case CatalogApplyMode.RepairInvalid:
+                changed |= EnsureRequiredRoosters(config, catalogs, monitor);
+                changed |= FixInvalidGeneralSettings(config, catalogs.Hatching.General, monitor);
+                changed |= FixInvalidRoosterSettings(config, catalogs.Hatching, monitor);
                 changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
                 break;
 
             case CatalogApplyMode.MergeMissing:
+                changed |= EnsureRequiredRoosters(config, catalogs, monitor);
                 changed |= MergeMissing(config, catalogs, monitor);
+                changed |= FixInvalidGeneralSettings(config, catalogs.Hatching.General, monitor);
+                changed |= FixInvalidRoosterSettings(config, catalogs.Hatching, monitor);
                 changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
                 break;
 
             case CatalogApplyMode.Authoritative:
-                changed |= ApplyProduceDefaults(config, catalogs.Produce);
+                changed |= EnsureRequiredRoosters(config, catalogs, monitor);
                 changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
+                changed |= ApplyProduceDefaults(config, catalogs.Produce);
                 break;
 
             default:
+                changed |= EnsureRequiredRoosters(config, catalogs, monitor);
+                changed |= FixInvalidGeneralSettings(config, catalogs.Hatching.General, monitor);
+                changed |= FixInvalidRoosterSettings(config, catalogs.Hatching, monitor);
                 changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
                 break;
         }
 
         return changed;
+    }
+
+    private static bool EnsureRequiredRoosters(RoosterAddonConfig config, CatalogBundle catalogs, IMonitor monitor)
+    {
+        var changed = false;
+
+        var required = catalogs?.Roosters?.Roosters ?? new Dictionary<string, RoosterCatalogEntry>();
+        foreach (var key in required.Keys)
+        {
+            if (!Enum.TryParse<RoosterType>(key ?? string.Empty, ignoreCase: true, out var roosterType))
+                continue;
+
+            if (config.Roosters.ContainsKey(roosterType))
+                continue;
+
+            config.Roosters[roosterType] = new RoosterSettings();
+            changed = true;
+        }
+
+        if (changed)
+            monitor.Log("Catalogs: added missing RoosterSettings entries for required rooster types.", LogLevel.Warn);
+
+        return changed;
+    }
+
+    private static bool FixInvalidGeneralSettings(RoosterAddonConfig config, HatchingGeneralCatalog general, IMonitor monitor)
+    {
+        if (config.General is null)
+            config.General = new GeneralSettings();
+
+        var changed = false;
+
+        changed |= ClampInt(ref config.General.ChosenPercentageDailyLuckBonus, 0, 100, nameof(config.General.ChosenPercentageDailyLuckBonus), monitor);
+        changed |= ClampInt(ref config.General.EggProbability, 0, 100, nameof(config.General.EggProbability), monitor);
+        changed |= ClampInt(ref config.General.LargeEggProbability, 0, 100, nameof(config.General.LargeEggProbability), monitor);
+        changed |= ClampInt(ref config.General.FertilizedEggProbability, 0, 100, nameof(config.General.FertilizedEggProbability), monitor);
+        changed |= ClampInt(ref config.General.RoosterToChickenRatio, 0, 100, nameof(config.General.RoosterToChickenRatio), monitor);
+
+        changed |= ClampFloat(ref config.General.BoostByRooster, 0f, 1000f, nameof(config.General.BoostByRooster), monitor);
+
+        return changed;
+    }
+
+    private static bool FixInvalidRoosterSettings(RoosterAddonConfig config, HatchingCatalog hatching, IMonitor monitor)
+    {
+        var changed = false;
+
+        foreach (var (rt, settings) in config.Roosters)
+        {
+            if (settings is null)
+                continue;
+
+            if (settings.Price < 0) { settings.Price = 0; changed = true; monitor.Log($"Config: repaired negative Price for {rt}.", LogLevel.Warn); }
+            if (settings.MatureDays < 0) { settings.MatureDays = 0; changed = true; monitor.Log($"Config: repaired negative MatureDays for {rt}.", LogLevel.Warn); }
+            if (settings.ProduceDays < 0) { settings.ProduceDays = 0; changed = true; monitor.Log($"Config: repaired negative ProduceDays for {rt}.", LogLevel.Warn); }
+        }
+
+        return changed;
+    }
+
+    private static bool ClampInt(ref int value, int min, int max, string name, IMonitor monitor)
+    {
+        var clamped = Math.Clamp(value, min, max);
+        if (clamped == value)
+            return false;
+
+        value = clamped;
+        monitor.Log($"Config: clamped {name} to {value}.", LogLevel.Warn);
+        return true;
+    }
+
+    private static bool ClampFloat(ref float value, float min, float max, string name, IMonitor monitor)
+    {
+        var clamped = Math.Clamp(value, min, max);
+        if (Math.Abs(clamped - value) < 0.0001f)
+            return false;
+
+        value = clamped;
+        monitor.Log($"Config: clamped {name} to {value}.", LogLevel.Warn);
+        return true;
     }
 
     private static bool ApplyProduceDefaults(RoosterAddonConfig config, ProduceCatalog produce)
@@ -107,18 +200,25 @@ internal sealed class CatalogManager
 
         foreach (var (rt, settings) in config.Roosters)
         {
-            if (!produce.Roosters.TryGetValue(rt.ToString(), out var entry))
+            if (settings is null)
                 continue;
 
-            settings.BlueEggChoice = entry.BlueEggChoice ?? settings.BlueEggChoice;
+            if (!produce.Roosters.TryGetValue(rt.ToString(), out var entry) || entry is null)
+                continue;
 
-            if (entry.Produce.Count > 0)
+            if (!string.IsNullOrWhiteSpace(entry.BlueEggChoice) && !string.Equals(settings.BlueEggChoice, entry.BlueEggChoice, StringComparison.Ordinal))
+            {
+                settings.BlueEggChoice = entry.BlueEggChoice!;
+                changed = true;
+            }
+
+            if (entry.Produce is { Count: > 0 })
             {
                 settings.ProduceEntries = entry.Produce.Select(ToConfigEntry).ToList();
                 changed = true;
             }
 
-            if (entry.Deluxe.Count > 0)
+            if (entry.Deluxe is { Count: > 0 })
             {
                 settings.DeluxeProduceEntries = entry.Deluxe.Select(ToConfigEntry).ToList();
                 changed = true;
@@ -132,21 +232,55 @@ internal sealed class CatalogManager
     {
         var changed = false;
 
-        if (Enum.TryParse<HarvestType>(hatching.General.HarvestType ?? string.Empty, ignoreCase: true, out var harvest))
-        {
-            config.General.HarvestType = harvest;
-            changed = true;
-        }
+        if (config.General is null)
+            config.General = new GeneralSettings();
 
-        if (Enum.TryParse<HatchingMode>(hatching.General.HatchingMode ?? string.Empty, ignoreCase: true, out var mode))
+        var g = hatching?.General;
+        if (g is not null)
         {
-            config.General.HatchingMode = mode;
-            changed = true;
+            if (Enum.TryParse<UpdateRateMode>(g.UpdateRate ?? string.Empty, ignoreCase: true, out var updateRate))
+            {
+                config.General.UpdateRate = updateRate;
+                changed = true;
+            }
+
+            if (g.ChosenPercentageDailyLuckBonus is { } luck)
+            {
+                config.General.ChosenPercentageDailyLuckBonus = Math.Clamp(luck, 0, 100);
+                changed = true;
+            }
+
+            if (Enum.TryParse<HarvestType>(g.HarvestType ?? string.Empty, ignoreCase: true, out var harvest))
+            {
+                config.General.HarvestType = harvest;
+                changed = true;
+            }
+
+            if (Enum.TryParse<HatchingMode>(g.HatchingMode ?? string.Empty, ignoreCase: true, out var hatchMode))
+            {
+                config.General.HatchingMode = hatchMode;
+                changed = true;
+            }
+
+            if (g.BetterTrufflesCompat.HasValue) { config.General.BetterTrufflesCompat = g.BetterTrufflesCompat.Value; changed = true; }
+            if (g.EnableStuckInside.HasValue) { config.General.EnableStuckInside = g.EnableStuckInside.Value; changed = true; }
+            if (g.EnableEggProbability.HasValue) { config.General.EnableEggProbability = g.EnableEggProbability.Value; changed = true; }
+            if (g.EnableLargeEggProbability.HasValue) { config.General.EnableLargeEggProbability = g.EnableLargeEggProbability.Value; changed = true; }
+            if (g.EnableDebug.HasValue) { config.General.EnableDebug = g.EnableDebug.Value; changed = true; }
+
+            if (g.EggProbability is { } eggP) { config.General.EggProbability = Math.Clamp(eggP, 0, 100); changed = true; }
+            if (g.LargeEggProbability is { } largeP) { config.General.LargeEggProbability = Math.Clamp(largeP, 0, 100); changed = true; }
+            if (g.FertilizedEggProbability is { } fertP) { config.General.FertilizedEggProbability = Math.Clamp(fertP, 0, 100); changed = true; }
+            if (g.RoosterToChickenRatio is { } ratio) { config.General.RoosterToChickenRatio = Math.Clamp(ratio, 0, 100); changed = true; }
+            if (g.BoostByRooster is { } boost) { config.General.BoostByRooster = Math.Clamp(boost, 0f, 1000f); changed = true; }
         }
 
         foreach (var (rt, settings) in config.Roosters)
         {
-            if (!hatching.Roosters.TryGetValue(rt.ToString(), out var h))
+            if (settings is null)
+                continue;
+
+            if (hatching?.Roosters is null || !hatching.Roosters.TryGetValue(rt.ToString(), out var h) || h is null)
                 continue;
 
             if (Enum.TryParse<RequiredBuilding>(h.BuildingRequired ?? string.Empty, ignoreCase: true, out var b))
@@ -156,10 +290,11 @@ internal sealed class CatalogManager
             }
 
             if (h.Buyable.HasValue) { settings.Buyable = h.Buyable.Value; changed = true; }
-            if (h.Price.HasValue) { settings.Price = h.Price.Value; changed = true; }
+            if (h.Price.HasValue) { settings.Price = Math.Max(0, h.Price.Value); changed = true; }
             if (h.EnableRoosterHatching.HasValue) { settings.EnableRoosterHatching = h.EnableRoosterHatching.Value; changed = true; }
-            if (h.MatureDays.HasValue) { settings.MatureDays = h.MatureDays.Value; changed = true; }
-            if (h.ProduceDays.HasValue) { settings.ProduceDays = h.ProduceDays.Value; changed = true; }
+            if (h.EditAllFemales.HasValue) { settings.EditAllFemales = h.EditAllFemales.Value; changed = true; }
+            if (h.MatureDays.HasValue) { settings.MatureDays = Math.Max(0, h.MatureDays.Value); changed = true; }
+            if (h.ProduceDays.HasValue) { settings.ProduceDays = Math.Max(0, h.ProduceDays.Value); changed = true; }
             if (h.BypassBlueConditions.HasValue) { settings.BypassBlueConditions = h.BypassBlueConditions.Value; changed = true; }
 
             if (Enum.TryParse<ProduceMode>(h.ProduceOption ?? string.Empty, ignoreCase: true, out var p))
@@ -202,7 +337,8 @@ internal sealed class CatalogManager
             }
 
             if (rt.ToString().Equals("Blue", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(entry.BlueEggChoice))
-                settings.BlueEggChoice ??= entry.BlueEggChoice;
+                if (string.IsNullOrWhiteSpace(settings.BlueEggChoice))
+                    settings.BlueEggChoice = entry.BlueEggChoice;
         }
 
         return changed;

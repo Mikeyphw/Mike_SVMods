@@ -25,35 +25,38 @@ internal static class CatalogSanitizer
 
     private static void SanitizeRoosters(RoosterCatalog catalog)
     {
-        catalog.Roosters ??= new Dictionary<string, RoosterCatalogEntry>(StringComparer.OrdinalIgnoreCase);
+        catalog.Roosters = ToCaseInsensitive(catalog.Roosters);
 
-        foreach (var entry in catalog.Roosters.Values)
+        foreach (var key in catalog.Roosters.Keys.ToList())
         {
+            catalog.Roosters.TryGetValue(key, out var entry);
+            entry ??= new RoosterCatalogEntry();
+
             entry.FarmAnimalKey ??= string.Empty;
             entry.DefaultFemaleKey ??= string.Empty;
             entry.AdditionalFemaleKeys ??= new List<string>();
-            entry.Eggs ??= new EggCatalog();
 
+            entry.Eggs ??= new EggCatalog();
             entry.Eggs.Normal ??= string.Empty;
             entry.Eggs.Large ??= string.Empty;
             entry.Eggs.Fertilized ??= string.Empty;
+
+            catalog.Roosters[key] = entry;
         }
     }
 
     private static void SanitizeProduce(ProduceCatalog catalog)
     {
-        catalog.RandomGroups ??= new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        catalog.Roosters ??= new Dictionary<string, ProduceCatalogEntry>(StringComparer.OrdinalIgnoreCase);
+        catalog.RandomGroups = ToCaseInsensitive(catalog.RandomGroups);
+        catalog.Roosters = ToCaseInsensitive(catalog.Roosters);
 
-        foreach (var groupKey in catalog.RandomGroups.Keys.ToList())
-        {
-            if (catalog.RandomGroups[groupKey] is null)
-                catalog.RandomGroups[groupKey] = new List<string>();
-        }
+        foreach (var key in catalog.RandomGroups.Keys.ToList())
+            catalog.RandomGroups[key] ??= new List<string>();
 
-        foreach (var entry in catalog.Roosters.Values)
+        foreach (var key in catalog.Roosters.Keys.ToList())
         {
-            entry.BlueEggChoice ??= entry.BlueEggChoice;
+            catalog.Roosters.TryGetValue(key, out var entry);
+            entry ??= new ProduceCatalogEntry();
 
             entry.Produce ??= new List<ProduceEntryDto>();
             entry.Deluxe ??= new List<ProduceEntryDto>();
@@ -63,11 +66,16 @@ internal static class CatalogSanitizer
 
             foreach (var dto in entry.Deluxe)
                 SanitizeProduceDto(dto);
+
+            catalog.Roosters[key] = entry;
         }
     }
 
     private static void SanitizeProduceDto(ProduceEntryDto dto)
     {
+        if (dto is null)
+            return;
+
         dto.Choice ??= string.Empty;
         dto.CustomItemName ??= string.Empty;
         dto.Probability = Math.Clamp(dto.Probability, 0, 100);
@@ -76,17 +84,67 @@ internal static class CatalogSanitizer
     private static void SanitizeHatching(HatchingCatalog catalog)
     {
         catalog.General ??= new HatchingGeneralCatalog();
-        catalog.Roosters ??= new Dictionary<string, HatchingRoosterCatalog>(StringComparer.OrdinalIgnoreCase);
+        catalog.Roosters = ToCaseInsensitive(catalog.Roosters);
 
+        catalog.General.UpdateRate ??= catalog.General.UpdateRate;
         catalog.General.HarvestType ??= catalog.General.HarvestType;
         catalog.General.HatchingMode ??= catalog.General.HatchingMode;
 
-        foreach (var entry in catalog.Roosters.Values)
+        if (catalog.General.ChosenPercentageDailyLuckBonus.HasValue)
+            catalog.General.ChosenPercentageDailyLuckBonus = Math.Clamp(catalog.General.ChosenPercentageDailyLuckBonus.Value, 0, 100);
+
+        if (catalog.General.EggProbability.HasValue)
+            catalog.General.EggProbability = Math.Clamp(catalog.General.EggProbability.Value, 0, 100);
+
+        if (catalog.General.LargeEggProbability.HasValue)
+            catalog.General.LargeEggProbability = Math.Clamp(catalog.General.LargeEggProbability.Value, 0, 100);
+
+        if (catalog.General.FertilizedEggProbability.HasValue)
+            catalog.General.FertilizedEggProbability = Math.Clamp(catalog.General.FertilizedEggProbability.Value, 0, 100);
+
+        if (catalog.General.RoosterToChickenRatio.HasValue)
+            catalog.General.RoosterToChickenRatio = Math.Clamp(catalog.General.RoosterToChickenRatio.Value, 0, 100);
+
+        if (catalog.General.BoostByRooster.HasValue)
+            catalog.General.BoostByRooster = Math.Clamp(catalog.General.BoostByRooster.Value, 0f, 1000f);
+
+        foreach (var key in catalog.Roosters.Keys.ToList())
         {
+            catalog.Roosters.TryGetValue(key, out var entry);
+            entry ??= new HatchingRoosterCatalog();
+
             entry.BuildingRequired ??= entry.BuildingRequired;
             entry.ProduceOption ??= entry.ProduceOption;
             entry.DeluxeProduceOption ??= entry.DeluxeProduceOption;
+
+            if (entry.Price.HasValue)
+                entry.Price = Math.Max(0, entry.Price.Value);
+
+            if (entry.MatureDays.HasValue)
+                entry.MatureDays = Math.Max(0, entry.MatureDays.Value);
+
+            if (entry.ProduceDays.HasValue)
+                entry.ProduceDays = Math.Max(0, entry.ProduceDays.Value);
+
+            catalog.Roosters[key] = entry;
         }
+    }
+
+    private static Dictionary<string, T> ToCaseInsensitive<T>(Dictionary<string, T>? source)
+    {
+        var result = new Dictionary<string, T>(StringComparer.OrdinalIgnoreCase);
+        if (source is null)
+            return result;
+
+        foreach (var (key, value) in source)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                continue;
+
+            result[key] = value!;
+        }
+
+        return result;
     }
 }
 
@@ -259,6 +317,20 @@ internal static class CatalogValidator
         }
         else
         {
+            RequireNotNull(catalog.General.UpdateRate, "General.UpdateRate", issues);
+            RequireNotNull(catalog.General.ChosenPercentageDailyLuckBonus, "General.ChosenPercentageDailyLuckBonus", issues);
+            RequireNotNull(catalog.General.EggProbability, "General.EggProbability", issues);
+            RequireNotNull(catalog.General.LargeEggProbability, "General.LargeEggProbability", issues);
+            RequireNotNull(catalog.General.FertilizedEggProbability, "General.FertilizedEggProbability", issues);
+            RequireNotNull(catalog.General.RoosterToChickenRatio, "General.RoosterToChickenRatio", issues);
+            RequireNotNull(catalog.General.BoostByRooster, "General.BoostByRooster", issues);
+
+            if (!string.IsNullOrWhiteSpace(catalog.General.UpdateRate)
+                && !Enum.TryParse<UpdateRateMode>(catalog.General.UpdateRate, ignoreCase: true, out _))
+            {
+                issues.Add(new CatalogIssue("hatching", "General.UpdateRate", $"Unknown UpdateRateMode '{catalog.General.UpdateRate}'."));
+            }
+
             if (!string.IsNullOrWhiteSpace(catalog.General.HarvestType)
                 && !Enum.TryParse<HarvestType>(catalog.General.HarvestType, ignoreCase: true, out _))
             {
@@ -270,6 +342,15 @@ internal static class CatalogValidator
             {
                 issues.Add(new CatalogIssue("hatching", "General.HatchingMode", $"Unknown HatchingMode '{catalog.General.HatchingMode}'."));
             }
+
+            ValidateRange(catalog.General.ChosenPercentageDailyLuckBonus, 0, 100, "General.ChosenPercentageDailyLuckBonus", issues);
+            ValidateRange(catalog.General.EggProbability, 0, 100, "General.EggProbability", issues);
+            ValidateRange(catalog.General.LargeEggProbability, 0, 100, "General.LargeEggProbability", issues);
+            ValidateRange(catalog.General.FertilizedEggProbability, 0, 100, "General.FertilizedEggProbability", issues);
+            ValidateRange(catalog.General.RoosterToChickenRatio, 0, 100, "General.RoosterToChickenRatio", issues);
+
+            if (catalog.General.BoostByRooster is { } boost && (boost < 0f || boost > 1000f))
+                issues.Add(new CatalogIssue("hatching", "General.BoostByRooster", "BoostByRooster must be 0..1000."));
         }
 
         if (catalog.Roosters is null)
@@ -285,6 +366,8 @@ internal static class CatalogValidator
                 issues.Add(new CatalogIssue("hatching", $"Roosters['{key}']", "Entry is null."));
                 continue;
             }
+
+            RequireNotNull(entry.EditAllFemales, $"Roosters['{key}'].EditAllFemales", issues);
 
             if (!string.IsNullOrWhiteSpace(entry.BuildingRequired)
                 && !Enum.TryParse<RequiredBuilding>(entry.BuildingRequired, ignoreCase: true, out _))
@@ -313,6 +396,21 @@ internal static class CatalogValidator
             if (entry.ProduceDays is { } produceDays && produceDays < 0)
                 issues.Add(new CatalogIssue("hatching", $"Roosters['{key}'].ProduceDays", "ProduceDays must be >= 0."));
         }
+    }
+
+    private static void RequireNotNull(object? value, string path, List<CatalogIssue> issues)
+    {
+        if (value is null)
+            issues.Add(new CatalogIssue("hatching", path, "Value is missing."));
+    }
+
+    private static void ValidateRange(int? value, int min, int max, string path, List<CatalogIssue> issues)
+    {
+        if (value is null)
+            return;
+
+        if (value.Value < min || value.Value > max)
+            issues.Add(new CatalogIssue("hatching", path, $"Value must be {min}..{max}."));
     }
 }
 

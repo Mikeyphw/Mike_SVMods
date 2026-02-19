@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using RoosterAddon.Constants;
-using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
 
 namespace RoosterAddon.Application.Catalogs;
@@ -9,122 +8,17 @@ namespace RoosterAddon.Application.Catalogs;
 public static class CatalogDefaults
 {
     public static CatalogBundle CreateDefaults()
-    {
-        var bundle = new CatalogBundle
+        => new()
         {
             Roosters = CreateRoosterCatalogDefaults(),
             Produce = CreateProduceCatalogDefaults(),
             Hatching = CreateHatchingCatalogDefaults(),
         };
 
-        return bundle;
-    }
-
     public static RoosterCatalog CreateRoosterCatalogDefaults()
-    {
-        return new RoosterCatalog
+        => new()
         {
             SchemaVersion = 1,
-
-            RandomGroups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
-            {
-                [ItemIds.RandomProduces.RandomColorEgg] = new List<string>
-                {
-                    ItemIds.AnimalProducts.BrownEgg,
-                    ItemIds.AnimalProducts.WhiteEgg
-                },
-                [ItemIds.RandomProduces.RandomColorLargeEgg] = new List<string>
-                {
-                    ItemIds.AnimalProducts.LargeBrownEgg,
-                    ItemIds.AnimalProducts.LargeWhiteEgg
-                },
-                [ItemIds.RandomProduces.RandomSizeWhiteEgg] = new List<string>
-                {
-                    ItemIds.AnimalProducts.LargeWhiteEgg,
-                    ItemIds.AnimalProducts.WhiteEgg
-                },
-                [ItemIds.RandomProduces.RandomSizeBrownEgg] = new List<string>
-                {
-                    ItemIds.AnimalProducts.BrownEgg,
-                    ItemIds.AnimalProducts.LargeBrownEgg
-                },
-                [ItemIds.RandomProduces.RandomColorSizeEgg] = new List<string>
-                {
-                    ItemIds.AnimalProducts.BrownEgg,
-                    ItemIds.AnimalProducts.WhiteEgg,
-                    ItemIds.AnimalProducts.LargeBrownEgg,
-                    ItemIds.AnimalProducts.LargeWhiteEgg
-                },
-                [ItemIds.RandomProduces.RandomSizeBlueEgg] = new List<string>
-                {
-                    ItemIds.CustomItems.MearaBlueEgg,
-                    ItemIds.CustomItems.MearaLargeBlueEgg
-                },
-                [ItemIds.RandomProduces.RandomSizeVoidEgg] = new List<string>
-                {
-                    ItemIds.CustomItems.MearaLargeVoidEgg,
-                    ItemIds.AnimalProducts.VoidEgg
-                },
-                [ItemIds.RandomProduces.RandomSizeGoldenEgg] = new List<string>
-                {
-                    ItemIds.CustomItems.MearaLargeGoldEgg,
-                    ItemIds.AnimalProducts.GoldenEgg
-                },
-                [ItemIds.RandomProduces.RandomGems] = new List<string>
-                {
-                    ItemIds.Gemstones.Amethyst,
-                    ItemIds.Gemstones.Aquamarine,
-                    ItemIds.Gemstones.Emerald,
-                    ItemIds.Gemstones.Jade,
-                    ItemIds.Gemstones.Ruby,
-                    ItemIds.Gemstones.Topaz
-                },
-                [ItemIds.RandomProduces.RandomMinerals] = new List<string>
-                {
-                    ItemIds.Minerals.Aerinite,
-                    ItemIds.Minerals.Alamite,
-                    ItemIds.Minerals.Baryte,
-                    ItemIds.Minerals.Basalt,
-                    ItemIds.Minerals.Bixite,
-                    ItemIds.Minerals.Calcite,
-                    ItemIds.Minerals.Celestine,
-                    ItemIds.Minerals.Dolomite,
-                    ItemIds.Minerals.EarthCrystal,
-                    ItemIds.Minerals.Esperite,
-                    ItemIds.Minerals.FairyStone,
-                    ItemIds.Minerals.FireOpal,
-                    ItemIds.Minerals.FireQuartz,
-                    ItemIds.Minerals.FrozenTear,
-                    ItemIds.Minerals.Geminite,
-                    ItemIds.Minerals.GhostCrystal,
-                    ItemIds.Minerals.Granite,
-                    ItemIds.Minerals.Helvite,
-                    ItemIds.Minerals.Hematite,
-                    ItemIds.Minerals.Jagoite,
-                    ItemIds.Minerals.Jamborite,
-                    ItemIds.Minerals.Kyanite,
-                    ItemIds.Minerals.LemonStone,
-                    ItemIds.Minerals.Limestone,
-                    ItemIds.Minerals.Lunarite,
-                    ItemIds.Minerals.Malachite,
-                    ItemIds.Minerals.Marble,
-                    ItemIds.Minerals.Mudstone,
-                    ItemIds.Minerals.Nekoite,
-                    ItemIds.Minerals.Neptunite,
-                    ItemIds.Minerals.Obsidian,
-                    ItemIds.Minerals.OceanStone,
-                    ItemIds.Minerals.Opal,
-                    ItemIds.Minerals.Orpiment,
-                    ItemIds.Minerals.PetrifiedSlime,
-                    ItemIds.Minerals.Pyrite,
-                    ItemIds.Minerals.Sandstone,
-                    ItemIds.Minerals.Slate,
-                    ItemIds.Minerals.Soapstone,
-                    ItemIds.Minerals.StarShards,
-                    ItemIds.Minerals.ThunderEgg,
-                    ItemIds.Minerals.TigersEye
-                }
-            },
             Roosters = new Dictionary<string, RoosterCatalogEntry>(StringComparer.OrdinalIgnoreCase)
             {
                 ["White"] = new RoosterCatalogEntry
@@ -184,7 +78,6 @@ public static class CatalogDefaults
                 }
             }
         };
-    }
 
     public static ProduceCatalog CreateProduceCatalogDefaults()
     {
@@ -204,6 +97,105 @@ public static class CatalogDefaults
         return new ProduceCatalog
         {
             SchemaVersion = 1,
+            RandomGroups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                [ItemIds.RandomProduces.RandomColorEgg] = new()
+                {
+                    ItemIds.AnimalProducts.BrownEgg,
+                    ItemIds.AnimalProducts.WhiteEgg
+                },
+                [ItemIds.RandomProduces.RandomColorLargeEgg] = new()
+                {
+                    ItemIds.AnimalProducts.LargeBrownEgg,
+                    ItemIds.AnimalProducts.LargeWhiteEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeWhiteEgg] = new()
+                {
+                    ItemIds.AnimalProducts.LargeWhiteEgg,
+                    ItemIds.AnimalProducts.WhiteEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeBrownEgg] = new()
+                {
+                    ItemIds.AnimalProducts.BrownEgg,
+                    ItemIds.AnimalProducts.LargeBrownEgg
+                },
+                [ItemIds.RandomProduces.RandomColorSizeEgg] = new()
+                {
+                    ItemIds.AnimalProducts.BrownEgg,
+                    ItemIds.AnimalProducts.WhiteEgg,
+                    ItemIds.AnimalProducts.LargeBrownEgg,
+                    ItemIds.AnimalProducts.LargeWhiteEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeBlueEgg] = new()
+                {
+                    ItemIds.CustomItems.MearaBlueEgg,
+                    ItemIds.CustomItems.MearaLargeBlueEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeVoidEgg] = new()
+                {
+                    ItemIds.CustomItems.MearaLargeVoidEgg,
+                    ItemIds.AnimalProducts.VoidEgg
+                },
+                [ItemIds.RandomProduces.RandomSizeGoldenEgg] = new()
+                {
+                    ItemIds.CustomItems.MearaLargeGoldEgg,
+                    ItemIds.AnimalProducts.GoldenEgg
+                },
+                [ItemIds.RandomProduces.RandomGems] = new()
+                {
+                    ItemIds.Gemstones.Amethyst,
+                    ItemIds.Gemstones.Aquamarine,
+                    ItemIds.Gemstones.Emerald,
+                    ItemIds.Gemstones.Jade,
+                    ItemIds.Gemstones.Ruby,
+                    ItemIds.Gemstones.Topaz
+                },
+                [ItemIds.RandomProduces.RandomMinerals] = new()
+                {
+                    ItemIds.Minerals.Aerinite,
+                    ItemIds.Minerals.Alamite,
+                    ItemIds.Minerals.Baryte,
+                    ItemIds.Minerals.Basalt,
+                    ItemIds.Minerals.Bixite,
+                    ItemIds.Minerals.Calcite,
+                    ItemIds.Minerals.Celestine,
+                    ItemIds.Minerals.Dolomite,
+                    ItemIds.Minerals.EarthCrystal,
+                    ItemIds.Minerals.Esperite,
+                    ItemIds.Minerals.FairyStone,
+                    ItemIds.Minerals.FireOpal,
+                    ItemIds.Minerals.FireQuartz,
+                    ItemIds.Minerals.FrozenTear,
+                    ItemIds.Minerals.Geminite,
+                    ItemIds.Minerals.GhostCrystal,
+                    ItemIds.Minerals.Granite,
+                    ItemIds.Minerals.Helvite,
+                    ItemIds.Minerals.Hematite,
+                    ItemIds.Minerals.Jagoite,
+                    ItemIds.Minerals.Jamborite,
+                    ItemIds.Minerals.Kyanite,
+                    ItemIds.Minerals.LemonStone,
+                    ItemIds.Minerals.Limestone,
+                    ItemIds.Minerals.Lunarite,
+                    ItemIds.Minerals.Malachite,
+                    ItemIds.Minerals.Marble,
+                    ItemIds.Minerals.Mudstone,
+                    ItemIds.Minerals.Nekoite,
+                    ItemIds.Minerals.Neptunite,
+                    ItemIds.Minerals.Obsidian,
+                    ItemIds.Minerals.OceanStone,
+                    ItemIds.Minerals.Opal,
+                    ItemIds.Minerals.Orpiment,
+                    ItemIds.Minerals.PetrifiedSlime,
+                    ItemIds.Minerals.Pyrite,
+                    ItemIds.Minerals.Sandstone,
+                    ItemIds.Minerals.Slate,
+                    ItemIds.Minerals.Soapstone,
+                    ItemIds.Minerals.StarShards,
+                    ItemIds.Minerals.ThunderEgg,
+                    ItemIds.Minerals.TigersEye
+                }
+            },
             Roosters = new Dictionary<string, ProduceCatalogEntry>(StringComparer.OrdinalIgnoreCase)
             {
                 ["White"] = Make(ItemIds.AnimalProducts.WhiteEgg, ItemIds.AnimalProducts.LargeWhiteEgg),
@@ -239,6 +231,7 @@ public static class CatalogDefaults
                 Buyable = settings.Buyable,
                 Price = settings.Price,
                 EnableRoosterHatching = settings.EnableRoosterHatching,
+                EditAllFemales = settings.EditAllFemales,
                 MatureDays = settings.MatureDays,
                 ProduceDays = settings.ProduceDays,
                 ProduceOption = settings.ProduceOption.ToString(),
@@ -252,8 +245,20 @@ public static class CatalogDefaults
             SchemaVersion = 1,
             General = new HatchingGeneralCatalog
             {
+                UpdateRate = cfg.General.UpdateRate.ToString(),
+                ChosenPercentageDailyLuckBonus = cfg.General.ChosenPercentageDailyLuckBonus,
                 HarvestType = cfg.General.HarvestType.ToString(),
-                HatchingMode = cfg.General.HatchingMode.ToString()
+                HatchingMode = cfg.General.HatchingMode.ToString(),
+                BetterTrufflesCompat = cfg.General.BetterTrufflesCompat,
+                EnableStuckInside = cfg.General.EnableStuckInside,
+                EnableEggProbability = cfg.General.EnableEggProbability,
+                EnableLargeEggProbability = cfg.General.EnableLargeEggProbability,
+                EnableDebug = cfg.General.EnableDebug,
+                EggProbability = cfg.General.EggProbability,
+                LargeEggProbability = cfg.General.LargeEggProbability,
+                FertilizedEggProbability = cfg.General.FertilizedEggProbability,
+                RoosterToChickenRatio = cfg.General.RoosterToChickenRatio,
+                BoostByRooster = cfg.General.BoostByRooster,
             },
             Roosters = roosters
         };
