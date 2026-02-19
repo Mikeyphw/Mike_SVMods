@@ -112,7 +112,7 @@ This plan is the single source of truth for the refactor phases in this workspac
 
 ---
 
-### Phase 7 — Tests (xUnit) + deterministic harness
+### Phase 7 — Tests (xUnit) + deterministic harness ✅
 **Goal:** Lock behavior with fast, deterministic tests.
 
 **Deliverables**

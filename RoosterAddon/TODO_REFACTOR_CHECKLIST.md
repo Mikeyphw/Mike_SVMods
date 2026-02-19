@@ -39,7 +39,7 @@ This file is a living checklist to keep refactors honest.
 - [x] Phase 6: Legacy purge + service hardening.
   - [x] Fail-fast validation for catalogs (sanitize + validate + fatal errors).
   - [x] Fix coordinator validation/planning compile breaks and remove dead legacy enums.
-- [ ] Phase 7: Tests (xUnit) + deterministic harness.
+- [x] Phase 7: Tests (xUnit) + deterministic harness.
 - [x] Phase 8: JSON catalogs (all knobs).
   - [x] `hatching.json` general section includes all global knobs (percentages, toggles, update rate).
   - [x] `hatching.json` rooster entries include all per-rooster knobs (including `EditAllFemales`).
