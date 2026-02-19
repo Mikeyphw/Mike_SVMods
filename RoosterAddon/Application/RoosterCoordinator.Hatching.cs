@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Mikew.BirdsOfAFeather.Helpers;
 using RoosterAddon.Application.Hatching;
+using RoosterAddon.Application.Planning;
 using RoosterAddon.Helpers;
 using RoosterAddon.Enums;
 using StardewModdingAPI.Events;
@@ -92,59 +93,53 @@ internal sealed partial class RoosterCoordinator
     }
 
     internal void GetRoostersFemales(
-        IDictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData> animalData,
-        Dictionary<RoosterType, RoosterData> roosters
-    )
-    {
-        var changed = FemaleAssignmentService.SyncFemaleAssignments(
-            config: Config,
-            roosterHelper: RoosterHelper,
-            animalData: animalData,
-            roosters: roosters,
-            animalExclusions: _animalExclusions,
-            hatchApi: HatchApi
-        );
+    IDictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData> animalData,
+    Dictionary<RoosterType, RoosterData> roosters
+)
+{
+    var plan = FemaleAssignmentService.ComputeFemaleAssignmentsPlan(
+        config: Config,
+        animalData: animalData,
+        roosters: roosters,
+        animalExclusions: _animalExclusions,
+        hatchApi: HatchApi
+    );
 
-        if (changed)
-            _femaleAssignmentsDirty = true;
-    }
+    FemaleAssignmentService.ApplyFemaleAssignmentsPlan(Config, RoosterHelper, plan);
 
+    if (plan.ConfigChanged)
+        _femaleAssignmentsDirty = true;
+}
     private void UpdateRoosterHatchingApi()
     {
         FemaleAssignmentService.UpdateChosenFemalesApi(Config);
     }
 
     private void RunHatchingSystem(
-        RoosterData rooster,
-        IDictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData> data
-    )
+    RoosterData rooster,
+    IDictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData> data,
+    DailyHatchingPlanEnvelope? plan
+)
+{
+    var ctx = new HatchingContext(Config, RoosterHelper, _animalExclusions, HatchApi);
+
+    if (plan is null)
     {
-        var ctx = new HatchingContext(Config, RoosterHelper, _animalExclusions, HatchApi);
-
-        var plan = EnsureDailyPlanForToday(
-            farmAnimalsData: data,
-            forceRecompute: false,
-            usedHostPlan: out _
-        );
-
-        if (plan is null)
-        {
-            _farmAnimalHatching.ApplyForRooster(ctx, rooster, data);
-            return;
-        }
-
-        var buildingKey = ResolveBuildingKey(rooster, data);
-        var otherAnimals = GetOtherAnimalsSharingEggsCached(data, rooster, plan);
-
-        _planApplier.Apply(
-            plan: plan,
-            buildingKey: buildingKey,
-            rooster: rooster,
-            data: data,
-            otherAnimalsSharingEggs: otherAnimals
-        );
+        _farmAnimalHatching.ApplyForRooster(ctx, rooster, data);
+        return;
     }
 
+    var buildingKey = ResolveBuildingKey(rooster, data);
+    var otherAnimals = GetOtherAnimalsSharingEggsCached(data, rooster, plan);
+
+    _planApplier.Apply(
+        plan: plan,
+        buildingKey: buildingKey,
+        rooster: rooster,
+        data: data,
+        otherAnimalsSharingEggs: otherAnimals
+    );
+}
     
 
     private void RunFarmAnimalsDailySystems()
@@ -160,8 +155,14 @@ internal sealed partial class RoosterCoordinator
         GetRoostersFemales(data, RoosterHelper.Roosters);
         UpdateRoosterHatchingApi();
 
+        var plan = EnsureDailyPlanForToday(
+            farmAnimalsData: data,
+            forceRecompute: false,
+            usedHostPlan: out _
+        );
+
         foreach (var rooster in RoosterHelper.Roosters.Values)
-            RunHatchingSystem(rooster, data);
+            RunHatchingSystem(rooster, data, plan);
 
         if (RoosterHelper.FemaleEggs.Count > 0)
             RequestInvalidate(ObjectsAssetName);

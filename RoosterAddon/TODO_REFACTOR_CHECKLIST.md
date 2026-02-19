@@ -28,15 +28,24 @@ This file is a living checklist to keep refactors honest.
 - [x] Eggs are built from the rooster catalog and resolved into concrete IDs.
 
 ## Remaining phases (see ROOSTERADDON_REFACTOR_PLAN.md)
-- [ ] Phase 4: Asset edit boundaries + services
+- [x] Phase 4: Asset edit boundaries + services
   - [x] `Data/FarmAnimals` editor only mutates asset data (no reloads, no invalidation, no state dumps).
   - [x] Daily hatching/female assignment/update flow runs outside `AssetRequested` (day start pipeline).
   - [x] Location-change refresh (when enabled) runs outside `AssetRequested` (next-tick pipeline).
-  - [ ] Continue isolating any remaining coordinator leakage inside asset editors/services.
-- [ ] Phase 5: Daily plan pipeline + decision layer cleanup.
-- [ ] Phase 6: Legacy purge + service hardening.
+  - [x] Continue isolating any remaining coordinator leakage inside asset editors/services.
+  - [x] Remove IRoosterAssetEdits interface (editors use narrow constructor deps only).
+  - [x] Move BetterTruffles tagging logic into a dedicated service.
+- [x] Phase 5: Daily plan pipeline (planner is pure; applier is deterministic).
+- [x] Phase 6: Legacy purge + service hardening.
+  - [x] Fail-fast validation for catalogs (sanitize + validate + fatal errors).
+  - [x] Fix coordinator validation/planning compile breaks and remove dead legacy enums.
 - [ ] Phase 7: Tests (xUnit) + deterministic harness.
 - [ ] Phase 8: JSON catalogs (all knobs).
-- [ ] Phase 8.1: Catalog tooling + validation/reload/export.
+- [x] Phase 8.1: Catalog tooling + validation/reload/export.
+  - [x] `ra_catalog validate [--fix]` (per-file OK/MIGRATED/ERROR output).
+  - [x] `ra_catalog reload` (apply catalogs to config + invalidate assets).
+  - [x] `ra_catalog export [snapshot]` (always writes backups when overwriting).
+  - [x] `ra_catalog diff` (dry-run unified diff to file).
+  - [x] `ra_catalog mode` (get/set CatalogApplyMode).
 - [ ] Phase 9: Descriptor-driven GMCM via BOAF public API.
 - [ ] Phase 10: CI build gate + release hardening.

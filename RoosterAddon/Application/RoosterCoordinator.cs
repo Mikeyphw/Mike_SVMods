@@ -122,6 +122,12 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
     DailyPlanCommand
 );
 
+Helper.ConsoleCommands.Add(
+    "ra_catalog",
+    "Catalog commands. Use: ra_catalog help",
+    CatalogCommand
+);
+
 AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
         AssetHandler.AddAssets(
             new List<AssetData>

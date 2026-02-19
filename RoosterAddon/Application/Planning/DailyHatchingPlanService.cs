@@ -5,7 +5,7 @@ using System.Text;
 using RoosterAddon.Application.FarmAnimals;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
-using RoosterAddon.Helpers;
+using Mikew.BirdsOfAFeather.Models;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 
@@ -20,14 +20,16 @@ internal sealed class DailyHatchingPlanService
 
     public string ComputeFingerprint(
         RoosterAddonConfig config,
-        RoosterControl roosterHelper,
+        IReadOnlyDictionary<RoosterType, RoosterData> roosters,
+        IReadOnlyDictionary<string, Dictionary<EggTypeEntries, string>> femaleEggs,
         object dailyLuck,
         long farmId,
         int day
     )
     {
         if (config is null) throw new ArgumentNullException(nameof(config));
-        if (roosterHelper is null) throw new ArgumentNullException(nameof(roosterHelper));
+        if (roosters is null) throw new ArgumentNullException(nameof(roosters));
+        if (femaleEggs is null) throw new ArgumentNullException(nameof(femaleEggs));
 
         var sb = new StringBuilder();
 
@@ -47,7 +49,7 @@ internal sealed class DailyHatchingPlanService
           .Append(g.ChosenPercentageDailyLuckBonus).Append('|');
 
         // Per-rooster: include rolled eggs/probs + female assignments.
-        foreach (var rooster in roosterHelper.Roosters.OrderBy(r => r.Key).Select(r => r.Value))
+        foreach (var rooster in roosters.OrderBy(r => r.Key).Select(r => r.Value))
         {
             sb.Append("R|").Append(rooster.RoosterType).Append('|')
               .Append(rooster.FarmAnimalName).Append('|')
@@ -73,7 +75,8 @@ internal sealed class DailyHatchingPlanService
     public DailyHatchingPlanEnvelope BuildPlan(
         IDictionary<string, FarmAnimalData> farmAnimalsData,
         RoosterAddonConfig config,
-        RoosterControl roosterHelper,
+        IReadOnlyDictionary<RoosterType, RoosterData> roosters,
+        IReadOnlyDictionary<string, Dictionary<EggTypeEntries, string>> femaleEggs,
         object dailyLuck,
         long farmId,
         int day,
@@ -82,9 +85,10 @@ internal sealed class DailyHatchingPlanService
     {
         if (farmAnimalsData is null) throw new ArgumentNullException(nameof(farmAnimalsData));
         if (config is null) throw new ArgumentNullException(nameof(config));
-        if (roosterHelper is null) throw new ArgumentNullException(nameof(roosterHelper));
+        if (roosters is null) throw new ArgumentNullException(nameof(roosters));
+        if (femaleEggs is null) throw new ArgumentNullException(nameof(femaleEggs));
 
-        var fingerprint = ComputeFingerprint(config, roosterHelper, dailyLuck, farmId, day);
+        var fingerprint = ComputeFingerprint(config, roosters, femaleEggs, dailyLuck, farmId, day);
 
         var plan = new DailyHatchingPlanEnvelope
         {
@@ -94,7 +98,7 @@ internal sealed class DailyHatchingPlanService
             Nonce = nonce,
         };
 
-        foreach (var rooster in roosterHelper.Roosters.Values)
+        foreach (var rooster in roosters.Values)
         {
             var buildingKey = ResolveBuildingKey(rooster, farmAnimalsData);
             if (!plan.Buildings.TryGetValue(buildingKey, out var building))
@@ -118,11 +122,11 @@ internal sealed class DailyHatchingPlanService
                 }
 
                 if (config.General.HatchingMode == HatchingMode.OnlyFertilizedEggs)
-                    femalePlan.FertilizedOnly = BuildFertilizedOnlyPlan(rooster, femaleKey, farmAnimalsData, config, roosterHelper, farmId, day, buildingKey, nonce);
+                    femalePlan.FertilizedOnly = BuildFertilizedOnlyPlan(rooster, femaleKey, farmAnimalsData, config, femaleEggs, farmId, day, buildingKey, nonce);
                 else
                 {
-                    femalePlan.NormalEgg = BuildEggChancePlan(rooster, femaleKey, EggTypeEntries.Normal, farmAnimalsData, config, roosterHelper, farmId, day, buildingKey, nonce);
-                    femalePlan.LargeEgg = BuildEggChancePlan(rooster, femaleKey, EggTypeEntries.Large, farmAnimalsData, config, roosterHelper, farmId, day, buildingKey, nonce);
+                    femalePlan.NormalEgg = BuildEggChancePlan(rooster, femaleKey, EggTypeEntries.Normal, farmAnimalsData, config, femaleEggs, farmId, day, buildingKey, nonce);
+                    femalePlan.LargeEgg = BuildEggChancePlan(rooster, femaleKey, EggTypeEntries.Large, farmAnimalsData, config, femaleEggs, farmId, day, buildingKey, nonce);
                 }
             }
         }
@@ -136,7 +140,7 @@ internal sealed class DailyHatchingPlanService
         EggTypeEntries eggType,
         IDictionary<string, FarmAnimalData> data,
         RoosterAddonConfig config,
-        RoosterControl roosterHelper,
+        IReadOnlyDictionary<string, Dictionary<EggTypeEntries, string>> femaleEggs,
         long farmId,
         int day,
         string buildingKey,
@@ -161,7 +165,7 @@ internal sealed class DailyHatchingPlanService
         if (!egg.TryGetValue(RoosterItemDataEntries.Name, out var eggId) || string.IsNullOrWhiteSpace(eggId))
             return new EggChancePlan { Enabled = true, ChancePercent = chance, RolledSuccess = false };
 
-        roosterHelper.FemaleEggs.TryGetValue(femaleKey, out var femaleEggs);
+        femaleEggs.TryGetValue(femaleKey, out var femaleEggs);
         femaleEggs?.TryGetValue(eggType, out var femaleEggIdToRemove);
 
         var rollKey = $"egg|{buildingKey}|{rooster.FarmAnimalName}|{femaleKey}|{eggType}|{nonce}";
@@ -182,7 +186,7 @@ internal sealed class DailyHatchingPlanService
         string femaleKey,
         IDictionary<string, FarmAnimalData> data,
         RoosterAddonConfig config,
-        RoosterControl roosterHelper,
+        IReadOnlyDictionary<string, Dictionary<EggTypeEntries, string>> femaleEggs,
         long farmId,
         int day,
         string buildingKey,
@@ -202,7 +206,7 @@ internal sealed class DailyHatchingPlanService
             return null;
         }
 
-        if (!roosterHelper.FemaleEggs.TryGetValue(femaleKey, out var femaleEggs)
+        if (!femaleEggs.TryGetValue(femaleKey, out var femaleEggs)
             || !femaleEggs.TryGetValue(EggTypeEntries.Fertilized, out var femaleFertilizedEggId)
             || string.IsNullOrWhiteSpace(femaleFertilizedEggId))
         {

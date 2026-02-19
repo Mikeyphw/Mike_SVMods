@@ -74,7 +74,7 @@ This plan is the single source of truth for the refactor phases in this workspac
 
 ---
 
-### Phase 4 — Asset edit boundaries + services
+### Phase 4 — Asset edit boundaries + services ✅
 **Goal:** Asset editors become thin; all decisions live in services.
 
 **Deliverables**
@@ -87,7 +87,7 @@ This plan is the single source of truth for the refactor phases in this workspac
 
 ---
 
-### Phase 5 — Daily plan pipeline
+### Phase 5 — Daily plan pipeline ✅
 **Goal:** Make day-start behavior deterministic and testable.
 
 **Deliverables**
@@ -99,7 +99,7 @@ This plan is the single source of truth for the refactor phases in this workspac
 
 ---
 
-### Phase 6 — Legacy purge + service hardening
+### Phase 6 — Legacy purge + service hardening ✅
 **Goal:** Remove dead/legacy types and harden service contracts.
 
 **Deliverables**
@@ -137,7 +137,7 @@ This plan is the single source of truth for the refactor phases in this workspac
 
 ---
 
-### Phase 8.1 — Catalog tooling + validation
+### Phase 8.1 — Catalog tooling + validation ✅
 **Goal:** Make catalogs safe to edit and easy to troubleshoot.
 
 **Deliverables**

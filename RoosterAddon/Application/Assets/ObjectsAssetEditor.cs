@@ -1,54 +1,33 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using RoosterAddon.Constants;
-using RoosterAddon.Enums;
+using RoosterAddon.Application.Objects;
+using RoosterAddon.Helpers;
 using StardewModdingAPI.Events;
 using StardewValley.GameData.Objects;
 
 namespace RoosterAddon.Application.Assets;
 
-/// <summary>
-/// Applies RoosterAddon edits to <c>Data/Objects</c>.
-/// </summary>
+/// <summary>Applies RoosterAddon edits to <c>Data/Objects</c>.</summary>
 internal sealed class ObjectsAssetEditor
 {
-    private readonly IRoosterAssetEdits _ctx;
+    private readonly RoosterControl _roosterHelper;
+    private readonly BetterTrufflesContextTagService _betterTrufflesTags;
 
-    public ObjectsAssetEditor(IRoosterAssetEdits context)
+    public ObjectsAssetEditor(RoosterControl roosterHelper, BetterTrufflesContextTagService betterTrufflesTags)
     {
-        _ctx = context;
+        _roosterHelper = roosterHelper ?? throw new ArgumentNullException(nameof(roosterHelper));
+        _betterTrufflesTags = betterTrufflesTags ?? throw new ArgumentNullException(nameof(betterTrufflesTags));
     }
 
     public void Edit(AssetRequestedEventArgs e)
     {
-        if (_ctx.RoosterHelper is null || _ctx.RoosterHelper.Roosters is null)
+        if (_roosterHelper.Roosters is null)
             return;
 
         e.Edit(
             asset =>
             {
                 var dataObject = asset.AsDictionary<string, ObjectData>().Data;
-
-                var betterTrufflesIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var produces in _ctx.RoosterHelper.Roosters.Values.Select(r => r.AllProduces))
-                {
-                    betterTrufflesIds.Add(
-                        produces[ProduceTypeEntries.Produce][ProduceEntries.First][RoosterItemDataEntries.Name]
-                    );
-                    betterTrufflesIds.Add(
-                        produces[ProduceTypeEntries.Deluxe][ProduceEntries.First][RoosterItemDataEntries.Name]
-                    );
-                }
-
-                foreach (var entry in dataObject)
-                {
-                    if (!betterTrufflesIds.Contains(entry.Key))
-                        continue;
-
-                    entry.Value.ContextTags ??= new();
-                    entry.Value.ContextTags.Add("temisthem_bettertruffles");
-                }
+                _betterTrufflesTags.Apply(dataObject, _roosterHelper.Roosters.Values);
             },
             AssetEditPriority.Late + 10000
         );

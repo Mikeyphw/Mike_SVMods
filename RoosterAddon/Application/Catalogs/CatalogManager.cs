@@ -20,14 +20,33 @@ internal sealed class CatalogManager
         if (monitor is null) throw new ArgumentNullException(nameof(monitor));
 
         var defaults = CatalogDefaults.CreateDefaults();
-
         EnsureFolderExists(Path.Combine(helper.DirectoryPath, "data", CatalogRoot));
 
-        var roosters = ReadOrCreate(helper, monitor, RoostersFile, defaults.Roosters);
-        var produce = ReadOrCreate(helper, monitor, ProduceFile, defaults.Produce);
-        var hatching = ReadOrCreate(helper, monitor, HatchingFile, defaults.Hatching);
+        var bundle = new CatalogBundle
+        {
+            Roosters = ReadOrCreate(helper, RoostersFile, defaults.Roosters),
+            Produce = ReadOrCreate(helper, ProduceFile, defaults.Produce),
+            Hatching = ReadOrCreate(helper, HatchingFile, defaults.Hatching),
+        };
 
-        return new CatalogBundle { Roosters = roosters, Produce = produce, Hatching = hatching };
+        CatalogSanitizer.Sanitize(bundle);
+
+        // Normalize on disk so users have stable formatting and clamped probability values.
+        helper.Data.WriteJsonFile(RoostersFile, bundle.Roosters);
+        helper.Data.WriteJsonFile(ProduceFile, bundle.Produce);
+        helper.Data.WriteJsonFile(HatchingFile, bundle.Hatching);
+
+        var issues = CatalogValidator.Validate(bundle);
+        if (issues.Count > 0)
+        {
+            monitor.Log("Catalog validation errors (fatal):", LogLevel.Error);
+            foreach (var issue in issues)
+                monitor.Log($"  - {issue}", LogLevel.Error);
+
+            throw new InvalidOperationException("RoosterAddon catalogs are invalid. See SMAPI log for details.");
+        }
+
+        return bundle;
     }
 
     public bool ApplyToConfig(
@@ -58,7 +77,6 @@ internal sealed class CatalogManager
         switch (mode)
         {
             case CatalogApplyMode.SeedOnly:
-                // No-op for existing configs.
                 break;
 
             case CatalogApplyMode.RepairInvalid:
@@ -184,10 +202,36 @@ internal sealed class CatalogManager
             }
 
             if (rt.ToString().Equals("Blue", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(entry.BlueEggChoice))
-            {
                 settings.BlueEggChoice ??= entry.BlueEggChoice;
+        }
+
+        return changed;
+    }
+
+    private static bool MergeMissing(RoosterAddonConfig config, CatalogBundle catalogs, IMonitor monitor)
+    {
+        var changed = false;
+
+        foreach (var (rt, settings) in config.Roosters)
+        {
+            if (!catalogs.Produce.Roosters.TryGetValue(rt.ToString(), out var produce))
+                continue;
+
+            if (settings.ProduceEntries is null || settings.ProduceEntries.Count == 0)
+            {
+                settings.ProduceEntries = produce.Produce.Select(ToConfigEntry).ToList();
+                changed = true;
+            }
+
+            if (settings.DeluxeProduceEntries is null || settings.DeluxeProduceEntries.Count == 0)
+            {
+                settings.DeluxeProduceEntries = produce.Deluxe.Select(ToConfigEntry).ToList();
+                changed = true;
             }
         }
+
+        if (changed)
+            monitor.Log("Catalogs merged missing entries into config.", LogLevel.Info);
 
         return changed;
     }
@@ -216,7 +260,7 @@ internal sealed class CatalogManager
             Probability = Math.Clamp(dto.Probability, 0, 100)
         };
 
-    private static T ReadOrCreate<T>(IModHelper helper, IMonitor monitor, string relativePath, T defaults)
+    private static T ReadOrCreate<T>(IModHelper helper, string relativePath, T defaults)
         where T : class, new()
     {
         var loaded = helper.Data.ReadJsonFile<T>(relativePath);
@@ -226,8 +270,6 @@ internal sealed class CatalogManager
             return defaults;
         }
 
-        // Always write back once to normalize formatting + ensure file exists.
-        helper.Data.WriteJsonFile(relativePath, loaded);
         return loaded;
     }
 

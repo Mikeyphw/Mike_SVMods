@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using RoosterAddon.Constants;
-using RoosterAddon.Framework.Config;
 using RoosterAddon.Enums;
+using RoosterAddon.Framework.Config;
 using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
 
@@ -23,7 +22,13 @@ internal sealed partial class RoosterCoordinator
         ValidatePercentRange(Config.General.LargeEggProbability, 0, 100, "General.LargeEggProbability", errors);
         ValidatePercentRange(Config.General.FertilizedEggProbability, 0, 100, "General.FertilizedEggProbability", errors);
         ValidatePercentRange(Config.General.RoosterToChickenRatio, 0, 100, "General.RoosterToChickenRatio", errors);
-        ValidatePercentRange(Config.General.ChosenPercentageDailyLuckBonus, 0, 100, "General.ChosenPercentageDailyLuckBonus", errors);
+        ValidatePercentRange(
+            Config.General.ChosenPercentageDailyLuckBonus,
+            0,
+            100,
+            "General.ChosenPercentageDailyLuckBonus",
+            errors
+        );
 
         if (Config.General.BoostByRooster < 0f || Config.General.BoostByRooster > 1000f)
             errors.Add("General.BoostByRooster must be between 0 and 1000.");
@@ -34,8 +39,21 @@ internal sealed partial class RoosterCoordinator
             if (settings.ProduceDays < 0) errors.Add($"Roosters[{rt}].ProduceDays must be >= 0.");
             if (settings.Price < 0) errors.Add($"Roosters[{rt}].Price must be >= 0.");
 
-            ValidateProduceEntries(rt, "ProduceEntries", settings.ProduceOption == ProduceMode.CustomizeBelow, settings.ProduceEntries, errors);
-            ValidateProduceEntries(rt, "DeluxeProduceEntries", settings.DeluxeProduceOption == DeluxeProduceMode.CustomizeBelow, settings.DeluxeProduceEntries, errors);
+            ValidateProduceEntries(
+                roosterType: rt,
+                fieldName: "ProduceEntries",
+                enabled: settings.ProduceOption == ProduceMode.CustomizeBelow,
+                entries: settings.ProduceEntries,
+                errors: errors
+            );
+
+            ValidateProduceEntries(
+                roosterType: rt,
+                fieldName: "DeluxeProduceEntries",
+                enabled: settings.DeluxeProduceOption == DeluxeProduceMode.CustomizeBelow,
+                entries: settings.DeluxeProduceEntries,
+                errors: errors
+            );
         }
 
         Dictionary<string, FarmAnimalData>? farmAnimals = null;
@@ -50,32 +68,7 @@ internal sealed partial class RoosterCoordinator
 
         if (farmAnimals is not null)
         {
-            var requiredRoosterTypes = new[] { RoosterType.White, RoosterType.Brown, RoosterType.Blue, RoosterType.Void, RoosterType.Gold };
-foreach (var rt in requiredRoosterTypes)
-{
-    var key =
-        _catalogs?.Roosters?.Roosters is not null
-        && _catalogs.Roosters.Roosters.TryGetValue(rt.ToString(), out var entry)
-        && !string.IsNullOrWhiteSpace(entry.FarmAnimalKey)
-            ? entry.FarmAnimalKey.Trim()
-            : rt switch
-            {
-                RoosterType.White => RoosterKeys.White,
-                RoosterType.Brown => RoosterKeys.Brown,
-                RoosterType.Blue => RoosterKeys.Blue,
-                RoosterType.Void => RoosterKeys.Void,
-                RoosterType.Gold => RoosterKeys.Gold,
-                _ => RoosterKeys.White
-            };
-
-    if (!farmAnimals.ContainsKey(key))
-        errors.Add($"Missing required FarmAnimals key: '{key}'.");
-}
-)
-            {
-                if (!farmAnimals.ContainsKey(key))
-                    errors.Add($"Missing required FarmAnimals key: '{key}'.");
-            }
+            ValidateRequiredFarmAnimalsKeys(farmAnimals, errors);
 
             foreach (var (femaleKey, assignment) in Config.FemalesOptions)
             {
@@ -83,7 +76,9 @@ foreach (var rt in requiredRoosterTypes)
                     continue;
 
                 if (!farmAnimals.ContainsKey(femaleKey))
-                    warnings.Add($"FemalesOptions key '{femaleKey}' not found in {FarmAnimalsAssetName} (assigned {assignment}).");
+                    warnings.Add(
+                        $"FemalesOptions key '{femaleKey}' not found in {FarmAnimalsAssetName} (assigned {assignment})."
+                    );
             }
         }
 
@@ -104,6 +99,39 @@ foreach (var rt in requiredRoosterTypes)
         throw new InvalidOperationException("RoosterAddon configuration/data is invalid. See SMAPI log for details.");
     }
 
+    private void ValidateRequiredFarmAnimalsKeys(Dictionary<string, FarmAnimalData> farmAnimals, List<string> errors)
+    {
+        var required = new[] { RoosterType.White, RoosterType.Brown, RoosterType.Blue, RoosterType.Void, RoosterType.Gold };
+
+        foreach (var rt in required)
+        {
+            var key = ResolveRequiredRoosterFarmAnimalKey(rt);
+
+            if (!farmAnimals.ContainsKey(key))
+                errors.Add($"Missing required FarmAnimals key: '{key}'.");
+        }
+    }
+
+    private string ResolveRequiredRoosterFarmAnimalKey(RoosterType roosterType)
+    {
+        if (_catalogs?.Roosters?.Roosters is not null
+            && _catalogs.Roosters.Roosters.TryGetValue(roosterType.ToString(), out var entry)
+            && !string.IsNullOrWhiteSpace(entry.FarmAnimalKey))
+        {
+            return entry.FarmAnimalKey.Trim();
+        }
+
+        return roosterType switch
+        {
+            RoosterType.White => RoosterKeys.White,
+            RoosterType.Brown => RoosterKeys.Brown,
+            RoosterType.Blue => RoosterKeys.Blue,
+            RoosterType.Void => RoosterKeys.Void,
+            RoosterType.Gold => RoosterKeys.Gold,
+            _ => RoosterKeys.White
+        };
+    }
+
     private static void ValidatePercentRange(int value, int min, int max, string name, List<string> errors)
     {
         if (value < min || value > max)
@@ -111,7 +139,7 @@ foreach (var rt in requiredRoosterTypes)
     }
 
     private static void ValidateProduceEntries(
-        Enums.RoosterType roosterType,
+        RoosterType roosterType,
         string fieldName,
         bool enabled,
         List<ProduceEntry> entries,

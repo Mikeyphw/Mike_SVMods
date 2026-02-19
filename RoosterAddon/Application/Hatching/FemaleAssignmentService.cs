@@ -16,69 +16,213 @@ namespace RoosterAddon.Application.Hatching;
 /// <summary>
 /// Keeps <see cref="RoosterAddonConfig.FemalesOptions"/> in sync with the game data + LetMeHatchThisEgg clone info.
 /// </summary>
+
+internal sealed class FemaleAssignmentsPlanResult
+{
+    public Dictionary<string, FemaleRoosterAssignment> FemalesOptions { get; }
+    public Dictionary<RoosterType, List<string>> FemalesByRooster { get; }
+    public Dictionary<string, Dictionary<EggTypeEntries, string>> FemaleEggs { get; }
+    public bool ConfigChanged { get; }
+
+    public FemaleAssignmentsPlanResult(
+        Dictionary<string, FemaleRoosterAssignment> femalesOptions,
+        Dictionary<RoosterType, List<string>> femalesByRooster,
+        Dictionary<string, Dictionary<EggTypeEntries, string>> femaleEggs,
+        bool configChanged
+    )
+    {
+        FemalesOptions = femalesOptions ?? throw new ArgumentNullException(nameof(femalesOptions));
+        FemalesByRooster = femalesByRooster ?? throw new ArgumentNullException(nameof(femalesByRooster));
+        FemaleEggs = femaleEggs ?? throw new ArgumentNullException(nameof(femaleEggs));
+        ConfigChanged = configChanged;
+    }
+}
+
 internal static class FemaleAssignmentService
 {
     public static bool SyncFemaleAssignments(
-        RoosterAddonConfig config,
-        RoosterControl roosterHelper,
-        IDictionary<string, FarmAnimalData> animalData,
-        Dictionary<RoosterType, RoosterData> roosters,
-        AnimalExclusion animalExclusions,
-        ILetMeHatchApi? hatchApi
-    )
+    RoosterAddonConfig config,
+    RoosterControl roosterHelper,
+    IDictionary<string, FarmAnimalData> animalData,
+    Dictionary<RoosterType, RoosterData> roosters,
+    AnimalExclusion animalExclusions,
+    ILetMeHatchApi? hatchApi
+)
+{
+    var plan = ComputeFemaleAssignmentsPlan(config, animalData, roosters, animalExclusions, hatchApi);
+    ApplyFemaleAssignmentsPlan(config, roosterHelper, plan);
+    return plan.ConfigChanged;
+}
+
+/// <summary>
+/// Computes female assignment changes and the derived female egg map without mutating <paramref name="config"/> or <paramref name="roosters"/>.
+/// </summary>
+public static FemaleAssignmentsPlanResult ComputeFemaleAssignmentsPlan(
+    RoosterAddonConfig config,
+    IDictionary<string, FarmAnimalData> animalData,
+    Dictionary<RoosterType, RoosterData> roosters,
+    AnimalExclusion animalExclusions,
+    ILetMeHatchApi? hatchApi
+)
+{
+    if (config is null) throw new ArgumentNullException(nameof(config));
+    if (animalData is null) throw new ArgumentNullException(nameof(animalData));
+    if (roosters is null) throw new ArgumentNullException(nameof(roosters));
+
+    var eggTypes = roosters
+        .Values.SelectMany(rd => rd.Eggs.Values)
+        .Where(ed => ed.ContainsKey(RoosterItemDataEntries.Name))
+        .Select(ed => ed[RoosterItemDataEntries.Name])
+        .ToList();
+
+    var defaultFemales = roosters.Values.ToDictionary(
+        x => x.Female,
+        x => ToFemaleAssignment(x.RoosterType),
+        StringComparer.OrdinalIgnoreCase
+    );
+
+    var foundFemales = new HashSet<string>(defaultFemales.Keys, StringComparer.OrdinalIgnoreCase);
+
+    if (hatchApi is not null && hatchApi.GetClonedAnimalsInfo().Count > 0)
     {
-        var eggTypes = roosters
-            .Values.SelectMany(rd => rd.Eggs.Values)
-            .Where(ed => ed.ContainsKey(RoosterItemDataEntries.Name))
-            .Select(ed => ed[RoosterItemDataEntries.Name])
-            .ToList();
-
-        var defaultFemales = roosters.Values.ToDictionary(
-            x => x.Female,
-            x => ToFemaleAssignment(x.RoosterType)
-        );
-
-        var foundFemales = defaultFemales.Keys.ToList();
-
-        if (hatchApi is not null && hatchApi.GetClonedAnimalsInfo().Count > 0)
-            foundFemales.AddRange(GetClonedFemales(animalData, eggTypes, animalExclusions, hatchApi).OrderBy(f => f));
-
-        config.FemalesOptions ??= new Dictionary<string, FemaleRoosterAssignment>(StringComparer.OrdinalIgnoreCase);
-
-        var changed = false;
-
-        foreach (var female in config.FemalesOptions.Keys.ToList())
-        {
-            if (!foundFemales.Contains(female, StringComparer.OrdinalIgnoreCase))
-            {
-                config.FemalesOptions.Remove(female);
-                changed = true;
-            }
-        }
-
-        foreach (var female in foundFemales)
-        {
-            if (!config.FemalesOptions.ContainsKey(female))
-            {
-                config.FemalesOptions[female] = defaultFemales.TryGetValue(female, out var def)
-                    ? def
-                    : FemaleRoosterAssignment.Off;
-                changed = true;
-            }
-        }
-
-        foreach (var roosterType in roosters.Keys)
-        {
-            roosterHelper.Roosters[roosterType].Females = config.FemalesOptions
-                .Where(kvp => AssignmentMatchesRooster(kvp.Value, roosterType))
-                .Select(kvp => kvp.Key)
-                .ToList();
-
-            roosterHelper.UpdateFemaleEggs(roosterHelper.Roosters[roosterType], animalData);
-        }
-
-        return changed;
+        foreach (var f in GetClonedFemales(animalData, eggTypes, animalExclusions, hatchApi))
+            foundFemales.Add(f);
     }
+
+    var existing = config.FemalesOptions is null
+        ? new Dictionary<string, FemaleRoosterAssignment>(StringComparer.OrdinalIgnoreCase)
+        : new Dictionary<string, FemaleRoosterAssignment>(config.FemalesOptions, StringComparer.OrdinalIgnoreCase);
+
+    var desired = new Dictionary<string, FemaleRoosterAssignment>(existing, StringComparer.OrdinalIgnoreCase);
+    var changed = false;
+
+    foreach (var female in desired.Keys.ToList())
+    {
+        if (!foundFemales.Contains(female))
+        {
+            desired.Remove(female);
+            changed = true;
+        }
+    }
+
+    foreach (var female in foundFemales.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+    {
+        if (desired.ContainsKey(female))
+            continue;
+
+        desired[female] = defaultFemales.TryGetValue(female, out var def)
+            ? def
+            : FemaleRoosterAssignment.Off;
+        changed = true;
+    }
+
+    var femalesByRooster = new Dictionary<RoosterType, List<string>>();
+    foreach (var roosterType in roosters.Keys)
+    {
+        femalesByRooster[roosterType] = desired
+            .Where(kvp => AssignmentMatchesRooster(kvp.Value, roosterType))
+            .Select(kvp => kvp.Key)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    var femaleEggs = new Dictionary<string, Dictionary<EggTypeEntries, string>>(StringComparer.OrdinalIgnoreCase);
+
+    var customFieldMap = new Dictionary<string, EggTypeEntries>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Normal"] = EggTypeEntries.Normal,
+        ["Large"] = EggTypeEntries.Large,
+    };
+
+    foreach (var rooster in roosters.Values)
+    {
+        // Ensure default female exists with the rooster's configured eggs.
+        if (!femaleEggs.TryGetValue(rooster.Female, out var defaultEggs))
+        {
+            defaultEggs = new Dictionary<EggTypeEntries, string>();
+            femaleEggs[rooster.Female] = defaultEggs;
+        }
+
+        if (rooster.Eggs.TryGetValue(EggTypeEntries.Normal, out var n)
+            && n.TryGetValue(RoosterItemDataEntries.Name, out var nId)
+            && !string.IsNullOrWhiteSpace(nId))
+        {
+            defaultEggs[EggTypeEntries.Normal] = nId;
+        }
+
+        if (rooster.Eggs.TryGetValue(EggTypeEntries.Large, out var l)
+            && l.TryGetValue(RoosterItemDataEntries.Name, out var lId)
+            && !string.IsNullOrWhiteSpace(lId))
+        {
+            defaultEggs[EggTypeEntries.Large] = lId;
+        }
+    }
+
+    foreach (var (roosterType, females) in femalesByRooster)
+    {
+        foreach (var female in females)
+        {
+            if (!animalData.TryGetValue(female, out var entry) || entry.CustomFields is null)
+                continue;
+
+            if (!femaleEggs.TryGetValue(female, out var eggs))
+            {
+                eggs = new Dictionary<EggTypeEntries, string>();
+                femaleEggs[female] = eggs;
+            }
+
+            foreach (var (k, v) in entry.CustomFields)
+            {
+                if (!customFieldMap.TryGetValue(k, out var eggType))
+                    continue;
+
+                if (!string.IsNullOrWhiteSpace(v))
+                    eggs[eggType] = v;
+            }
+        }
+    }
+
+    return new FemaleAssignmentsPlanResult(desired, femalesByRooster, femaleEggs, changed);
+}
+
+/// <summary>
+/// Applies a computed plan: updates config + rooster female lists, and refreshes the in-memory female egg map.
+/// </summary>
+public static void ApplyFemaleAssignmentsPlan(
+    RoosterAddonConfig config,
+    RoosterControl roosterHelper,
+    FemaleAssignmentsPlanResult plan
+)
+{
+    if (config is null) throw new ArgumentNullException(nameof(config));
+    if (roosterHelper is null) throw new ArgumentNullException(nameof(roosterHelper));
+    if (plan is null) throw new ArgumentNullException(nameof(plan));
+
+    config.FemalesOptions = new Dictionary<string, FemaleRoosterAssignment>(plan.FemalesOptions, StringComparer.OrdinalIgnoreCase);
+
+    foreach (var roosterType in plan.FemalesByRooster.Keys)
+    {
+        if (roosterHelper.Roosters.ContainsKey(roosterType))
+            roosterHelper.Roosters[roosterType].Females = plan.FemalesByRooster[roosterType];
+    }
+
+    // Preserve any existing fertilized mappings created elsewhere.
+    var existingFertilized = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var (femaleKey, eggs) in roosterHelper.FemaleEggs)
+    {
+        if (eggs.TryGetValue(EggTypeEntries.Fertilized, out var fert) && !string.IsNullOrWhiteSpace(fert))
+            existingFertilized[femaleKey] = fert;
+    }
+
+    roosterHelper.FemaleEggs.Clear();
+    foreach (var (femaleKey, eggs) in plan.FemaleEggs)
+    {
+        roosterHelper.FemaleEggs[femaleKey] = new Dictionary<EggTypeEntries, string>(eggs);
+
+        if (existingFertilized.TryGetValue(femaleKey, out var fert))
+            roosterHelper.FemaleEggs[femaleKey][EggTypeEntries.Fertilized] = fert;
+    }
+}
 
     public static void UpdateChosenFemalesApi(RoosterAddonConfig config)
     {
