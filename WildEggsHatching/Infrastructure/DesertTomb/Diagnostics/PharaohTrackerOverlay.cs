@@ -5,9 +5,9 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Locations;
-using WildEggsHatching.Infrastructure.Get();
+using WildEggsHatching.Infrastructure.Config;
 using WildEggsHatching.Infrastructure.DesertTomb.Monsters.Creatures;
-using Mikew.BirdsOfAFeather.Helpers.Get();
+using Mikew.BirdsOfAFeather.Helpers.Config;
 
 namespace WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 

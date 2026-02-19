@@ -6,10 +6,10 @@ using System.Text.RegularExpressions;
 using StardewModdingAPI;
 using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Application.Progression;
-using WildEggsHatching.Infrastructure.Get();
+using WildEggsHatching.Infrastructure.Config;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
-using Mikew.BirdsOfAFeather.Helpers.Get();
+using Mikew.BirdsOfAFeather.Helpers.Config;
 
 namespace WildEggsHatching.Infrastructure.Diagnostics;
 

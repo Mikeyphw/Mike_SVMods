@@ -8,15 +8,15 @@ using StardewValley.Monsters;
 using WildEggsHatching.Application.DesertTomb.Generation;
 using WildEggsHatching.Application.DesertTomb.Spawning;
 using WildEggsHatching.Core.Enums;
-using WildEggsHatching.DesertTomb.Core.Get()uration;
+using WildEggsHatching.DesertTomb.Core.Configuration;
 using WildEggsHatching.DesertTomb.Core.Model;
 using WildEggsHatching.DesertTomb.Core.Runtime;
 using WildEggsHatching.DesertTomb.Core.Spawning;
-using WildEggsHatching.Infrastructure.Get();
+using WildEggsHatching.Infrastructure.Config;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
-using Mikew.BirdsOfAFeather.Helpers.Get();
+using Mikew.BirdsOfAFeather.Helpers.Config;
 
 namespace WildEggsHatching.Application.DesertTomb.Runtime;
 

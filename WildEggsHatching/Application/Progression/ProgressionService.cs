@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
-using WildEggsHatching.Infrastructure.Get();
+using WildEggsHatching.Infrastructure.Config;
 using WildEggsHatching.Infrastructure.Game;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
-using Mikew.BirdsOfAFeather.Helpers.Get();
+using Mikew.BirdsOfAFeather.Helpers.Config;
 
 namespace WildEggsHatching.Application.Progression;
 

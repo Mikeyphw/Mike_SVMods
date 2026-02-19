@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Application.Spawning;
-using WildEggsHatching.Infrastructure.Get();
+using WildEggsHatching.Infrastructure.Config;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData.Models;
 using WildEggsHatching.Infrastructure.Mods;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
-using Mikew.BirdsOfAFeather.Helpers.Get();
+using Mikew.BirdsOfAFeather.Helpers.Config;
 
 namespace WildEggsHatching.Refactor.Tests;
 

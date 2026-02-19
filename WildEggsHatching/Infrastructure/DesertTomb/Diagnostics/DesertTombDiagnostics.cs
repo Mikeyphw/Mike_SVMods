@@ -7,9 +7,9 @@ using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Monsters;
 using WildEggsHatching.DesertTomb.Core.Spawning;
-using WildEggsHatching.Infrastructure.Get();
+using WildEggsHatching.Infrastructure.Config;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
-using Mikew.BirdsOfAFeather.Helpers.Get();
+using Mikew.BirdsOfAFeather.Helpers.Config;
 
 namespace WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 

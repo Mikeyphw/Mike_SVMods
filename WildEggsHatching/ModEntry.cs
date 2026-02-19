@@ -5,7 +5,7 @@ using Mikew.BirdsOfAFeather.Helpers;
 using WildEggsHatching.Application.DesertTomb.Generation;
 using WildEggsHatching.Application.DesertTomb.Runtime;
 using WildEggsHatching.Application.DesertTomb.Spawning;
-using WildEggsHatching.DesertTomb.Core.Get()uration;
+using WildEggsHatching.DesertTomb.Core.Configuration;
 using WildEggsHatching.Infrastructure.DesertTomb.Monsters;
 using WildEggsHatching.Infrastructure.DesertTomb.Loot;
 using WildEggsHatching.Infrastructure.DesertTomb.Loot.Definitions;
@@ -33,7 +33,7 @@ using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
 using WildEggsHatching.Infrastructure.Mods;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
-using Mikew.BirdsOfAFeather.Helpers.Get();
+using Mikew.BirdsOfAFeather.Helpers.Config;
 
 namespace WildEggsHatching;
 
@@ -73,7 +73,7 @@ public sealed class ModEntry : Mod
         _core = new CoreContext(helper, Monitor, ModManifest, i18n);
 
         _config = new SmapiConfigProvider<ModConfig>(Helper, Monitor);
-        _config.Get()Updated += (_, __) => _assetPipeline?.RequestInvalidateAll();
+        _config.ConfigUpdated += (_, __) => _assetPipeline?.RequestInvalidateAll();
 
         _log = new SmapiLog(Monitor);
 
@@ -306,7 +306,7 @@ public sealed class ModEntry : Mod
         }
     }
 
-private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Get().Get()ChangedEventArgs e)
+private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Config.ConfigChangedEventArgs e)
     {
         _log?.Log($"Config changed ({e.Reason}). Invalidating assets.", LogLevel.Info);
         _content?.InvalidateAll();

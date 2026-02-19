@@ -9,7 +9,7 @@ using StardewModdingAPI;
 using StardewValley;
 using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Application.Progression;
-using WildEggsHatching.Infrastructure.Get();
+using WildEggsHatching.Infrastructure.Config;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
@@ -17,7 +17,7 @@ using WildEggsHatching.Application.Animals;
 using WildEggsHatching.Infrastructure.ModData;
 using WildEggsHatching.Infrastructure.ModData.Models;
 using xTile;
-using Mikew.BirdsOfAFeather.Helpers.Get();
+using Mikew.BirdsOfAFeather.Helpers.Config;
 using WildEggsHatching.Infrastructure.Diagnostics;
 
 namespace WildEggsHatching.Infrastructure.Diagnostics;

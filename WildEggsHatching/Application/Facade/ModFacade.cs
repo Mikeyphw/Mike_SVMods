@@ -8,13 +8,13 @@ using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Application.Spawning;
 using WildEggsHatching.Application.Spawning.Diagnostics;
 using WildEggsHatching.Core.Enums;
-using WildEggsHatching.Infrastructure.Get();
+using WildEggsHatching.Infrastructure.Config;
 using WildEggsHatching.Infrastructure.Diagnostics;
 using WildEggsHatching.Infrastructure.Game;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
-using Mikew.BirdsOfAFeather.Helpers.Get();
+using Mikew.BirdsOfAFeather.Helpers.Config;
 
 namespace WildEggsHatching.Application.Facade;
 
