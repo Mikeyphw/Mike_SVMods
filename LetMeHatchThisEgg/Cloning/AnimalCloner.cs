@@ -192,36 +192,20 @@ namespace LetMeHatchThisEgg.Cloning
                 placeholderData,
                 maleKey
             );
-            SetIfValueIsPlaceholder(
-                contentPack,
-                ref currentCloneData.DisplayName,
-                originalAnimalData.DisplayName,
-                placeholderData.DisplayName
+
+            ApplyTextFieldPolicy(
+                contentPack: contentPack,
+                clone: currentCloneData,
+                original: originalAnimalData,
+                placeholder: placeholderData
             );
+
             SetIfValueIsPlaceholder(
                 ref currentCloneData.House,
                 originalAnimalData.House,
                 placeholderData.House
             );
 
-            SetIfValueIsPlaceholder(
-                contentPack,
-                ref currentCloneData.ShopDisplayName,
-                originalAnimalData.ShopDisplayName,
-                placeholderData.ShopDisplayName
-            );
-            SetIfValueIsPlaceholder(
-                contentPack,
-                ref currentCloneData.ShopDescription,
-                originalAnimalData.ShopDescription,
-                placeholderData.ShopDescription
-            );
-            SetIfValueIsPlaceholder(
-                contentPack,
-                ref currentCloneData.ShopMissingBuildingDescription,
-                originalAnimalData.ShopMissingBuildingDescription,
-                placeholderData.ShopMissingBuildingDescription
-            );
             SetIfValueIsPlaceholder(
                 ref currentCloneData.RequiredBuilding,
                 originalAnimalData.RequiredBuilding,
@@ -232,13 +216,6 @@ namespace LetMeHatchThisEgg.Cloning
                 originalAnimalData.UnlockCondition,
                 placeholderData.UnlockCondition
             );
-            SetIfValueIsPlaceholder(
-                contentPack,
-                ref currentCloneData.BirthText,
-                originalAnimalData.BirthText,
-                placeholderData.BirthText
-            );
-
             SetIfValueIsPlaceholder(
                 ref currentCloneData.HarvestTool,
                 originalAnimalData.HarvestTool,
@@ -260,56 +237,91 @@ namespace LetMeHatchThisEgg.Cloning
                 original: originalAnimalData,
                 isEggCategoryObjectId: IsEggCategoryObjectId
             );
-}
-
-                private static void SetIfValueIsPlaceholder<T>(
-            ref T currentValue,
-            T originalValue,
-            T predeterminedValue
-        )
-        {
-            currentValue = PlaceholderReplacementPolicy.ReplaceIfPlaceholder(
-                current: currentValue,
-                original: originalValue,
-                placeholder: predeterminedValue
-            );
         }
 
-                private void SetIfValueIsPlaceholder(
-            ref string currentValue,
-            string originalValue,
-            string predeterminedValue
+        private static void ApplyTextFieldPolicy(
+            IContentPack contentPack,
+            FarmAnimalData clone,
+            FarmAnimalData original,
+            FarmAnimalData placeholder
         )
         {
-            if (PlaceholderReplacementPolicy.IsPlaceholder(currentValue, predeterminedValue))
-            {
-                currentValue = originalValue;
-                return;
-            }
-
-            if (!PlaceholderStringPolicy.ShouldResolveTokens(currentValue, predeterminedValue))
-            {
-                return;
-            }
-
-            var tokenString = ContentPatcherAPI.ParseTokenString(
-                manifest: ModEntry.ModManifestInstance,
-                rawValue: currentValue,
-                formatVersion: new SemanticVersion("2.3.0")
+            var decisions = FarmAnimalCloneTextFieldPolicy.Evaluate(
+                current: new FarmAnimalTextFields(
+                    DisplayName: clone.DisplayName,
+                    ShopDisplayName: clone.ShopDisplayName,
+                    ShopDescription: clone.ShopDescription,
+                    ShopMissingBuildingDescription: clone.ShopMissingBuildingDescription,
+                    BirthText: clone.BirthText
+                ),
+                placeholder: new FarmAnimalTextFields(
+                    DisplayName: placeholder.DisplayName,
+                    ShopDisplayName: placeholder.ShopDisplayName,
+                    ShopDescription: placeholder.ShopDescription,
+                    ShopMissingBuildingDescription: placeholder.ShopMissingBuildingDescription,
+                    BirthText: placeholder.BirthText
+                )
             );
-            tokenString.UpdateContext();
-            currentValue = tokenString.Value ?? currentValue;
+
+            foreach (var decision in decisions)
+            {
+                switch (decision.Field)
+                {
+                    case FarmAnimalTextField.DisplayName:
+                        ApplyTextDecision(
+                            contentPack,
+                            ref clone.DisplayName,
+                            original.DisplayName,
+                            decision.Decision
+                        );
+                        break;
+
+                    case FarmAnimalTextField.ShopDisplayName:
+                        ApplyTextDecision(
+                            contentPack,
+                            ref clone.ShopDisplayName,
+                            original.ShopDisplayName,
+                            decision.Decision
+                        );
+                        break;
+
+                    case FarmAnimalTextField.ShopDescription:
+                        ApplyTextDecision(
+                            contentPack,
+                            ref clone.ShopDescription,
+                            original.ShopDescription,
+                            decision.Decision
+                        );
+                        break;
+
+                    case FarmAnimalTextField.ShopMissingBuildingDescription:
+                        ApplyTextDecision(
+                            contentPack,
+                            ref clone.ShopMissingBuildingDescription,
+                            original.ShopMissingBuildingDescription,
+                            decision.Decision
+                        );
+                        break;
+
+                    case FarmAnimalTextField.BirthText:
+                        ApplyTextDecision(
+                            contentPack,
+                            ref clone.BirthText,
+                            original.BirthText,
+                            decision.Decision
+                        );
+                        break;
+                }
+            }
         }
 
-                private void SetIfValueIsPlaceholder(
+        private static void ApplyTextDecision(
             IContentPack contentPack,
             ref string currentValue,
             string originalValue,
-            string predeterminedValue
+            PlaceholderStringDecision decision
         )
         {
-            var decision = PlaceholderStringPolicy.Decide(currentValue, predeterminedValue);
-
             if (decision.UseOriginal)
             {
                 currentValue = originalValue;
@@ -320,6 +332,19 @@ namespace LetMeHatchThisEgg.Cloning
             {
                 currentValue = contentPack.Translation.Get(decision.I18nKey);
             }
+        }
+
+        private static void SetIfValueIsPlaceholder<T>(
+            ref T currentValue,
+            T originalValue,
+            T predeterminedValue
+        )
+        {
+            currentValue = PlaceholderReplacementPolicy.ReplaceIfPlaceholder(
+                current: currentValue,
+                original: originalValue,
+                placeholder: predeterminedValue
+            );
         }
 
         private void SetTextureIfNeeded(

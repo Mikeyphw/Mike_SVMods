@@ -23,3 +23,5 @@ This doc is a lightweight “seam map” used to keep the refactor honest.
 - `Core/Cloning/CloneMappingService` (BoAF `GetOriginalPurchaseAnimal` + alternate purchase mapping rules)
 - `Core/Cloning/FarmAnimalCloneTransformer` (non-localized clone defaults + egg-produce filtering; Core-only via injected egg-category predicate)
 - `Core/Cloning/CloneTextureResolver` (texture decision rules; Infrastructure still owns asset loading)
+
+- `Core/Cloning/FarmAnimalCloneTextFieldPolicy` (pure placeholder decisions for FarmAnimal text fields; Infrastructure applies i18n/token evaluation)
