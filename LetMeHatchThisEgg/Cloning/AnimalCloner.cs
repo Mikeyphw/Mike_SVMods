@@ -22,6 +22,8 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
 
         private readonly CloneMappingService _cloneMappingService;
 
+        private readonly FarmAnimalCloneTransformer _farmAnimalCloneTransformer;
+
         public AnimalCloner(
             IContentPatcherAPI contentPatcherAPI,
             List<ClonedAnimalInfo> clonedAnimalInfos,
@@ -32,6 +34,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
             ClonedAnimalsInfoList = clonedAnimalInfos;
             LoadedContentPacks = loadedContentPacks;
             _cloneMappingService = new CloneMappingService();
+            _farmAnimalCloneTransformer = new FarmAnimalCloneTransformer();
         }
 
         // private void CreateAndAddAnimalClonesDebug(
@@ -178,8 +181,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
         )
         {
             var placeholderData = GetFarmAnimalDataPlaceholder();
-            currentCloneData.Gender = FarmAnimalGender.Male;
-            currentCloneData.HarvestType = FarmAnimalHarvestType.DropOvernight;
+            _farmAnimalCloneTransformer.ApplyPreLocalization(currentCloneData);
 
             SetTextureIfNeeded(
                 contentPack,
@@ -251,228 +253,12 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
                 placeholderData.BabySound
             );
 
-            currentCloneData.ShadowWhenBabySwims ??= originalAnimalData.ShadowWhenBabySwims;
-            currentCloneData.ShadowWhenBaby ??= originalAnimalData.ShadowWhenBaby;
-            currentCloneData.ShadowWhenAdultSwims ??= originalAnimalData.ShadowWhenAdultSwims;
-            currentCloneData.ShadowWhenAdult ??= originalAnimalData.ShadowWhenAdult;
-            currentCloneData.EggItemIds = null;
-
-            currentCloneData.Skins ??=
-                originalAnimalData.Skins != null ? new(originalAnimalData.Skins) : new();
-            currentCloneData.AlternatePurchaseTypes = null;
-            currentCloneData.StatToIncrementOnProduce ??=
-                originalAnimalData.StatToIncrementOnProduce != null
-                    ? new(originalAnimalData.StatToIncrementOnProduce)
-                    : new();
-
-            currentCloneData.CustomFields =
-                originalAnimalData.CustomFields != null
-                    ? new(originalAnimalData.CustomFields)
-                    : new();
-
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.PurchasePrice,
-                originalAnimalData.PurchasePrice,
-                placeholderData.PurchasePrice
+            _farmAnimalCloneTransformer.ApplyPostLocalization(
+                clone: currentCloneData,
+                original: originalAnimalData,
+                isEggCategoryObjectId: IsEggCategoryObjectId
             );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.SellPrice,
-                originalAnimalData.SellPrice,
-                placeholderData.SellPrice
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.IncubationTime,
-                originalAnimalData.IncubationTime,
-                placeholderData.IncubationTime
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.IncubatorParentSheetOffset,
-                originalAnimalData.IncubatorParentSheetOffset,
-                placeholderData.IncubatorParentSheetOffset
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.DaysToMature,
-                originalAnimalData.DaysToMature,
-                placeholderData.DaysToMature
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.DaysToProduce,
-                originalAnimalData.DaysToProduce,
-                placeholderData.DaysToProduce
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.FriendshipForFasterProduce,
-                originalAnimalData.FriendshipForFasterProduce,
-                placeholderData.FriendshipForFasterProduce
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.DeluxeProduceMinimumFriendship,
-                originalAnimalData.DeluxeProduceMinimumFriendship,
-                placeholderData.DeluxeProduceMinimumFriendship
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.DeluxeProduceCareDivisor,
-                originalAnimalData.DeluxeProduceCareDivisor,
-                placeholderData.DeluxeProduceCareDivisor
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.DeluxeProduceLuckMultiplier,
-                originalAnimalData.DeluxeProduceLuckMultiplier,
-                placeholderData.DeluxeProduceLuckMultiplier
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.ProfessionForHappinessBoost,
-                originalAnimalData.ProfessionForHappinessBoost,
-                placeholderData.ProfessionForHappinessBoost
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.ProfessionForQualityBoost,
-                originalAnimalData.ProfessionForQualityBoost,
-                placeholderData.ProfessionForQualityBoost
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.ProfessionForFasterProduce,
-                originalAnimalData.ProfessionForFasterProduce,
-                placeholderData.ProfessionForFasterProduce
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.SpriteWidth,
-                originalAnimalData.SpriteWidth,
-                placeholderData.SpriteWidth
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.SpriteHeight,
-                originalAnimalData.SpriteHeight,
-                placeholderData.SpriteHeight
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.SleepFrame,
-                originalAnimalData.SleepFrame,
-                placeholderData.SleepFrame
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.GrassEatAmount,
-                originalAnimalData.GrassEatAmount,
-                placeholderData.GrassEatAmount
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.HappinessDrain,
-                originalAnimalData.HappinessDrain,
-                placeholderData.HappinessDrain
-            );
-
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.ShopSourceRect,
-                originalAnimalData.ShopSourceRect,
-                placeholderData.ShopSourceRect
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.UpDownPetHitboxTileSize,
-                originalAnimalData.UpDownPetHitboxTileSize,
-                placeholderData.UpDownPetHitboxTileSize
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.LeftRightPetHitboxTileSize,
-                originalAnimalData.LeftRightPetHitboxTileSize,
-                placeholderData.LeftRightPetHitboxTileSize
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.BabyUpDownPetHitboxTileSize,
-                originalAnimalData.BabyUpDownPetHitboxTileSize,
-                placeholderData.BabyUpDownPetHitboxTileSize
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.BabyLeftRightPetHitboxTileSize,
-                originalAnimalData.BabyLeftRightPetHitboxTileSize,
-                placeholderData.BabyLeftRightPetHitboxTileSize
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.EmoteOffset,
-                originalAnimalData.EmoteOffset,
-                placeholderData.EmoteOffset
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.SwimOffset,
-                originalAnimalData.SwimOffset,
-                placeholderData.SwimOffset
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.ProduceOnMature,
-                originalAnimalData.ProduceOnMature,
-                placeholderData.ProduceOnMature
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.CanEatGoldenCrackers,
-                originalAnimalData.CanEatGoldenCrackers,
-                placeholderData.CanEatGoldenCrackers
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.UseFlippedRightForLeft,
-                originalAnimalData.UseFlippedRightForLeft,
-                placeholderData.UseFlippedRightForLeft
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.UseDoubleUniqueAnimationFrames,
-                originalAnimalData.UseDoubleUniqueAnimationFrames,
-                placeholderData.UseDoubleUniqueAnimationFrames
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.CanSwim,
-                originalAnimalData.CanSwim,
-                placeholderData.CanSwim
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.BabiesFollowAdults,
-                originalAnimalData.BabiesFollowAdults,
-                placeholderData.BabiesFollowAdults
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.ShowInSummitCredits,
-                originalAnimalData.ShowInSummitCredits,
-                placeholderData.ShowInSummitCredits
-            );
-            SetIfValueIsPlaceholder(
-                ref currentCloneData.CanGetPregnant,
-                originalAnimalData.CanGetPregnant,
-                placeholderData.CanGetPregnant
-            );
-            currentCloneData.EggItemIds ??= new();
-
-            var pattern = @".*egg.*";
-
-            if (currentCloneData.ProduceItemIds.Count == 0)
-            {
-                currentCloneData.ProduceItemIds =
-                    originalAnimalData.ProduceItemIds != null
-                        ? new List<FarmAnimalProduce>(originalAnimalData.ProduceItemIds)
-                        : new();
-
-                currentCloneData.ProduceItemIds.RemoveAll(e =>
-                    AnimalProducts.VanillaEggs.Contains(e.ItemId)
-                    || Regex.IsMatch(e.ItemId, pattern)
-                    || (
-                        Game1.objectData.ContainsKey(e.ItemId)
-                        && Game1.objectData[e.ItemId].Category == Object.EggCategory
-                    )
-                );
-            }
-            if (currentCloneData.DeluxeProduceItemIds.Count == 0)
-            {
-                currentCloneData.DeluxeProduceItemIds =
-                    originalAnimalData.DeluxeProduceItemIds != null
-                        ? new List<FarmAnimalProduce>(originalAnimalData.DeluxeProduceItemIds)
-                        : new();
-
-                currentCloneData.DeluxeProduceItemIds.RemoveAll(e =>
-                    AnimalProducts.VanillaEggs.Contains(e.ItemId)
-                    || Regex.IsMatch(e.ItemId, pattern)
-                    || (
-                        Game1.objectData.ContainsKey(e.ItemId)
-                        && Game1.objectData[e.ItemId].Category == Object.EggCategory
-                    )
-                );
-            }
-        }
+}
 
         private void SetIfValueIsPlaceholder<T>(
             ref T currentValue,
@@ -578,7 +364,7 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
             );
         }
 
-        private string GetTextureString(
+                private string GetTextureString(
             string? currentValue,
             string originalValue,
             string? placeholderValue,
@@ -588,22 +374,30 @@ using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Cloning
         )
         {
             var clonedInfo = ClonedAnimalsInfoList.Find(x => x.MaleKey == animalKey);
-            string texture;
-            if (currentValue == null)
+            if (clonedInfo == null)
             {
-                texture = originalValue;
+                return originalValue;
             }
-            else if (currentValue.Equals("cp", StringComparison.OrdinalIgnoreCase))
+
+            var result = CloneTextureResolver.Resolve(
+                currentValue: currentValue,
+                originalValue: originalValue,
+                contentPackId: contentPackID,
+                femaleKey: clonedInfo.FemaleKey,
+                textureType: textureName
+            );
+
+            if (result.IsContentPackAsset)
             {
-                texture =
-                    $"Animals/MaleClones/{contentPackID}/{clonedInfo?.FemaleKey}/{textureName}";
-                clonedInfo!.Textures[textureName] = texture;
+                clonedInfo.Textures[textureName] = result.Value;
             }
-            else
-            {
-                texture = (string)currentValue.Clone();
-            }
-            return texture;
+
+            return result.Value;
+        }
+
+        private static bool IsEggCategoryObjectId(string itemId)
+        {
+            return Game1.objectData.TryGetValue(itemId, out var obj) && obj.Category == Object.EggCategory;
         }
 
         internal static FarmAnimalData GetFarmAnimalDataPlaceholder()
