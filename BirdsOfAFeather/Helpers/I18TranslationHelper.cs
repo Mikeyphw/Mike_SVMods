@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using StardewModdingAPI;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 
 namespace Mikew.BirdsOfAFeather.Helpers
 {
@@ -375,9 +376,9 @@ namespace Mikew.BirdsOfAFeather.Helpers
         /// <summary>
         /// Checks and cleans up i18n keys - removes unused, adds missing.
         /// </summary>
-        /// <param name="monitor">The monitor for logging.</param>
+        /// <param name="log">The logger for output.</param>
         /// <param name="verbose">Whether to log all changes.</param>
-        public void Checki18nKeys(IMonitor monitor, bool verbose = false)
+        public void Checki18nKeys(ILog log, bool verbose = false)
         {
             var i18nJson = ReadJson();
             var lowerUsedKeys = _usedKeys.Keys.Select(k => k.ToLower()).ToHashSet();
@@ -391,7 +392,7 @@ namespace Mikew.BirdsOfAFeather.Helpers
                     i18nJson.Remove(key);
                     removedCount++;
                     if (verbose)
-                        monitor.Log($"Removed unused key \"{key}\" from {EnI18n}", LogLevel.Info);
+                        log.Log($"Removed unused key \"{key}\" from {EnI18n}", LogLevel.Info);
                 }
             }
 
@@ -406,14 +407,14 @@ namespace Mikew.BirdsOfAFeather.Helpers
                     i18nJson[key] = GetDefaultValue(key);
                     addedCount++;
                     if (verbose)
-                        monitor.Log($"Added missing key \"{key}\" to {EnI18n}", LogLevel.Info);
+                        log.Log($"Added missing key \"{key}\" to {EnI18n}", LogLevel.Info);
                 }
             }
 
             // Log summary
             if (removedCount > 0 || addedCount > 0)
             {
-                monitor.Log($"i18n cleanup: Removed {removedCount} unused, Added {addedCount} missing keys", 
+                log.Log($"i18n cleanup: Removed {removedCount} unused, Added {addedCount} missing keys", 
                     LogLevel.Info);
             }
 
