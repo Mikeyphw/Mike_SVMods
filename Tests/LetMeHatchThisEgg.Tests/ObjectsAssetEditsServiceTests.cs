@@ -22,7 +22,7 @@ public sealed class ObjectsAssetEditsServiceTests
             ["A"] = new ObjectData(),
         };
 
-        AssertEx.AssertNoMutation(data, () => service.TryAddClonedEggObjects(data, onlyFertilizedEggs: false));
+        AssertEx.AssertNoDeepMutation(data, () => service.TryAddClonedEggObjects(data, onlyFertilizedEggs: false));
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public sealed class ObjectsAssetEditsServiceTests
             ["Z"] = new ObjectData(),
         };
 
-        AssertEx.AssertNoMutation(data, () => service.TryAddFertilizedEggObjects(data));
+        AssertEx.AssertNoDeepMutation(data, () => service.TryAddFertilizedEggObjects(data));
     }
 
     [Fact]
