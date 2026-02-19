@@ -11,7 +11,9 @@
     <!-- Compile the Core source directly to avoid SMAPI/ContentPatcher dependencies in the test assembly. -->
     <Compile Include="..\..\LetMeHatchThisEgg\Core\Cloning\FarmAnimalCloneTransformer.cs" Link="Core\Cloning\FarmAnimalCloneTransformer.cs" />
     <Compile Include="..\..\LetMeHatchThisEgg\Core\Cloning\FarmAnimalCloneTextFieldPolicy.cs" Link="Core\Cloning\FarmAnimalCloneTextFieldPolicy.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Core\Cloning\FarmAnimalCloneNonLocalizedFieldPolicy.cs" Link="Core\Cloning\FarmAnimalCloneNonLocalizedFieldPolicy.cs" />
     <Compile Include="..\..\LetMeHatchThisEgg\Core\Placeholders\PlaceholderStringPolicy.cs" Link="Core\Placeholders\PlaceholderStringPolicy.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Core\Placeholders\PlaceholderReplacementPolicy.cs" Link="Core\Placeholders\PlaceholderReplacementPolicy.cs" />
   </ItemGroup>
 
 
