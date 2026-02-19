@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System;
-using System.IO;
-using System.Text.Json;
-using StardewModdingAPI.Events;
+using System.Linq;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using WildEggsHatching.Application.AnimalNotes;
@@ -104,20 +102,9 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
             if (_animalKeys is not null)
                 return _animalKeys;
 
-            var path = Path.Combine(context.Helper.DirectoryPath, "ModData", "WildAnimalsList.json");
-            if (!File.Exists(path))
-            {
-                context.Log($"MailEditor: WildAnimalsList.json not found at '{path}'.", StardewModdingAPI.LogLevel.Warn);
-                _animalKeys = Array.Empty<string>();
-                return _animalKeys;
-            }
-
-            using var stream = File.OpenRead(path);
-            using var doc = JsonDocument.Parse(stream);
-
-            var keys = new List<string>();
-            foreach (var prop in doc.RootElement.EnumerateObject())
-                keys.Add(prop.Name);
+            var keys = context.ModData.WildAnimals.Keys
+                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             _animalKeys = keys;
             return _animalKeys;

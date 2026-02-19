@@ -54,6 +54,7 @@ public sealed class ModEntry : Mod
     private WeggConsoleCommands? _weggCommands;
             private ISaveDataStore? _saveData;
     private IModDataLoader? _dataLoader;
+    private ModDataSnapshot? _modDataSnapshot;
     private ChosenEggAssignments? _chosenEggs;
 
 
@@ -90,6 +91,16 @@ public sealed class ModEntry : Mod
         _log = new SmapiLog(Monitor);
 
         _saveData = new SmapiSaveDataStore(Helper, Monitor);
+var jsonReader = new SmapiJsonFileReader(helper);
+        _dataLoader = new ModDataLoader(jsonReader, _log);
+
+        var mail = new GameMailService();
+        var unlocked = new AnimalUnlockedState(_saveData, mail);
+        _chosenEggs = new ChosenEggAssignments(_dataLoader, helper.ModRegistry, _log, isUnlocked: unlocked.IsUnlocked);
+
+        LoadModData(_log);
+
+        
 
         _modAssets = new ModAssetHandler(Constants.ModId, Monitor);
         RegisterModAssets(_modAssets);
@@ -103,7 +114,8 @@ public sealed class ModEntry : Mod
                 log: _log ?? new SmapiLog(Monitor),
                 i18n: Helper.Translation,
                 config: _config.Get(),
-                step: _progression?.GetCurrentStep() ?? ProgressionStep.PartI
+                step: _progression?.GetCurrentStep() ?? ProgressionStep.PartI,
+                modData: _modDataSnapshot ?? _dataLoader?.Load() ?? ModDataSnapshot.Empty
             )
         );
 
@@ -136,17 +148,9 @@ public sealed class ModEntry : Mod
         BoafPipelineSnapshot.Set(attached: true, editorAssets: editorAssets, modAssetPaths: modAssetPaths);
 
 
-        var jsonReader = new SmapiJsonFileReader(helper);
-        _dataLoader = new ModDataLoader(jsonReader, _log);
-
-        _chosenEggs = new ChosenEggAssignments(_dataLoader, helper.ModRegistry, _log);
-
-        LoadModData(_log);
-
         _game = new GameStateReader();
         _world = new WorldLocations();
 
-        var mail = new GameMailService();
         var quests = new GameQuestService();
         var recipes = new GameRecipeService();
         var facts = new GameUnlockFactsProvider(_game, mail, quests);
@@ -520,6 +524,7 @@ private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Con
             return;
 
         var snapshot = _dataLoader.Load();
+        _modDataSnapshot = snapshot;
 
         var modAvailability = new SmapiModAvailability(Helper.ModRegistry);
 var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.WildAnimals);

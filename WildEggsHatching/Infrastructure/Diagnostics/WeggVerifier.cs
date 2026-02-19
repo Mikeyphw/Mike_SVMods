@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.GameData.FarmAnimals;
 using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Infrastructure.Config;
@@ -21,7 +22,11 @@ using Mikew.BirdsOfAFeather.Helpers.Config;
 using WildEggsHatching.Infrastructure.Diagnostics;
 using Mikew.BirdsOfAFeather;
 using WildEggsHatching.Core.Assets;
+using WildEggsHatching.Core.ShopAnchors;
 
+using StardewValley.GameData.Objects;
+using WildEggsHatching.Core.Weighting;
+using System.Collections;
 namespace WildEggsHatching.Infrastructure.Diagnostics;
 
 public sealed record WeggVerifyOptions(
@@ -99,7 +104,7 @@ public sealed class WeggVerifier
 
         if (options.IsWorldReady)
         {
-            AddRuntimeProbeChecks(report);
+            AddRuntimeProbeChecks(report, options);
         }
         else
         {
@@ -304,7 +309,7 @@ public sealed class WeggVerifier
         }
     }
 
-    private void AddRuntimeProbeChecks(WeggVerifyReport report)
+    private void AddRuntimeProbeChecks(WeggVerifyReport report, WeggVerifyOptions options)
     {
         // These prove BOAF hooks are wired: game content must be able to load a TMX and a couple PNGs.
         TryProbe<Map>(report, "probe/map/tomb", WeggGameAssetNames.DesertTombMap);
@@ -320,13 +325,13 @@ public sealed class WeggVerifier
             try
             {
                 // Best-effort: verify at least one object is tagged as a WE egg.
-                var objects = SafeLoad<Dictionary<string, ObjectData>>(WildEggsHatching.Infrastructure.Content.Strings.AssetNames.Objects);
+                var objects = SafeLoad<Dictionary<string, ObjectData>>(Strings.AssetNames.Objects);
                 var tagged = objects?.Values.Count(o => o.ContextTags?.Contains("wegg_item") == true) ?? 0;
                 report.Add("cp/objects", tagged > 0 ? WeggVerifyStatus.Pass : WeggVerifyStatus.Fail,
                     tagged > 0 ? $"Found {tagged} wegg_item objects." : "No wegg_item objects found in Data/Objects (content edits not applied).");
 
                 // Best-effort: verify incubator recipe exists (string match).
-                var recipes = SafeLoad<Dictionary<string, string>>(WildEggsHatching.Infrastructure.Content.Strings.AssetNames.CraftingRecipes);
+                var recipes = SafeLoad<Dictionary<string, string>>(Strings.AssetNames.CraftingRecipes);
                 var hasRecipe = recipes?.Keys.Any(k => k.Contains("Wild Egg Incubator", StringComparison.OrdinalIgnoreCase)) == true;
                 report.Add("cp/recipes", hasRecipe ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn,
                     hasRecipe ? "Incubator recipe key present." : "Incubator recipe key not found (if expected, content edits may be missing).");
@@ -376,6 +381,81 @@ public sealed class WeggVerifier
             }
         }
 
+// Farm animal anchor diagnostics (AlternatePurchaseTypes -> anchored variants).
+try
+{
+    var farmAnimals = SafeLoad<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+    if (farmAnimals is null)
+    {
+        report.Add("farmanimals/anchors", WeggVerifyStatus.Warn, "Could not load Data/FarmAnimals to compute anchor mapping.");
+    }
+    else
+    {
+        var index = ShopAnchorIndex.Build(farmAnimals, warn: msg => _log.Log(msg, LogLevel.Warn));
+        var samples = index.Sample(6).Select(kvp => $"{kvp.Key}={kvp.Value}g").ToList();
+
+        report.Add(
+            "farmanimals/anchors",
+            index.Count > 0 ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn,
+            index.Count > 0
+                ? $"Anchored variants: {index.Count}. Samples: {string.Join(", ", samples)}"
+                : "No anchored variants found (AlternatePurchaseTypes may be absent or disabled)."
+        );
+    }
+}
+catch (Exception ex)
+{
+    report.Add("farmanimals/anchors", WeggVerifyStatus.Warn, $"Anchor mapping probe failed (best-effort): {ex.GetType().Name}");
+}
+// Farm animal economy-weight diagnostics (top/bottom N by weight; includes effective value + penalties).
+try
+{
+    var farmAnimals = SafeLoad<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+    var objects = SafeLoad<Dictionary<string, ObjectData>>(Strings.AssetNames.Objects);
+
+    if (farmAnimals is null || farmAnimals.Count == 0 || objects is null || objects.Count == 0)
+    {
+        report.Add("farmanimals/weights", WeggVerifyStatus.Warn, "Could not load Data/FarmAnimals or Data/Objects to compute economy weights.");
+    }
+    else
+    {
+        var snapshot = _dataLoader.Load();
+        var candidateIds = BuildVerifyCandidateIds(snapshot, farmAnimals);
+
+        if (candidateIds.Count == 0)
+        {
+            report.Add("farmanimals/weights", WeggVerifyStatus.Warn, "No candidate farm animals found from WildAnimalsList + installed mods.");
+        }
+        else
+        {
+            var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => _log.Log(msg, LogLevel.Trace));
+            var valueCalc = new EffectiveValueCalculator(farmAnimals, anchors, objects);
+            var values = valueCalc.ComputeForCandidates(candidateIds);
+
+            var isUnlocked = BuildUnlockedResolver();
+            var rows = BuildWeightRows(candidateIds, farmAnimals, anchors, values, isUnlocked);
+
+            var n = options.Full ? 10 : 6;
+            var common = rows.OrderByDescending(r => r.FinalWeight).ThenBy(r => r.Id, StringComparer.OrdinalIgnoreCase).Take(n).ToList();
+            var rare = rows.OrderBy(r => r.FinalWeight).ThenBy(r => r.Id, StringComparer.OrdinalIgnoreCase).Take(n).ToList();
+
+            var summary = $"Candidates={rows.Count} medianRaw={rows.MedianRaw:0.###E+0} clamp=[{rows.MinClamp:0.###E+0},{rows.MaxClamp:0.###E+0}] " +
+                          $"penalties: hiddenNoAnchor×{WeggWeightingDefaults.HiddenNoAnchorPenalty} unlocked×{WeggWeightingDefaults.UnlockedFactor}";
+
+            var msg = summary
+                      + "\nCommon (highest weight):\n" + string.Join("\n", common.Select((r, i) => $"  {i + 1,2}. {r.Render()}"))
+                      + "\nRare (lowest weight):\n" + string.Join("\n", rare.Select((r, i) => $"  {i + 1,2}. {r.Render()}"));
+
+            report.Add("farmanimals/weights", WeggVerifyStatus.Pass, msg);
+        }
+    }
+}
+catch (Exception ex)
+{
+    report.Add("farmanimals/weights", WeggVerifyStatus.Warn, $"Economy weight probe failed (best-effort): {ex.GetType().Name}");
+}
+
+
     }
 
     private void TryProbe<T>(WeggVerifyReport report, string id, string key) where T : class
@@ -397,7 +477,224 @@ public sealed class WeggVerifier
         catch { return null; }
     }
 
-    private static string RenderText(WeggVerifyReport report)
+    
+
+    private sealed record WeightRow(
+        string Id,
+        double EffectiveValue,
+        double RawWeight,
+        double ClampedWeight,
+        double FinalWeight,
+        bool HiddenNoAnchorPenaltyApplied,
+        bool UnlockedPenaltyApplied)
+    {
+        public string Render()
+        {
+            var flags = new List<string>();
+            if (HiddenNoAnchorPenaltyApplied)
+                flags.Add("hidden-no-anchor");
+            if (UnlockedPenaltyApplied)
+                flags.Add("unlocked");
+
+            var flagText = flags.Count == 0 ? "-" : string.Join("|", flags);
+
+            return $"{Id}: v={(int)Math.Round(EffectiveValue)}g w={FinalWeight:0.###E+0} raw={RawWeight:0.###E+0} clamp={ClampedWeight:0.###E+0} flags={flagText}";
+        }
+    }
+
+    private sealed class WeightRowSet : IReadOnlyList<WeightRow>
+    {
+        private readonly List<WeightRow> _rows;
+
+        public WeightRowSet(List<WeightRow> rows, double medianRaw, double minClamp, double maxClamp)
+        {
+            _rows = rows;
+            MedianRaw = medianRaw;
+            MinClamp = minClamp;
+            MaxClamp = maxClamp;
+        }
+
+        public double MedianRaw { get; }
+        public double MinClamp { get; }
+        public double MaxClamp { get; }
+
+        public int Count => _rows.Count;
+        public WeightRow this[int index] => _rows[index];
+
+        public IEnumerator<WeightRow> GetEnumerator() => _rows.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => _rows.GetEnumerator();
+    }
+
+    private List<string> BuildVerifyCandidateIds(
+        ModDataSnapshot snapshot,
+        IReadOnlyDictionary<string, FarmAnimalData> farmAnimals)
+    {
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var wild in snapshot.WildAnimals.Values)
+        {
+            if (wild.ExtraModAnimalKeys.Count == 0)
+                continue;
+
+            var available = wild.ExtraModAnimalKeys
+                .Where(kvp => IsVanillaModId(kvp.Key) || _helper.ModRegistry.IsLoaded(kvp.Key))
+                .ToList();
+
+            if (available.Count == 0)
+                continue;
+
+            // Mirror Phase 5A preference: if any non-vanilla blocks exist, ignore vanilla block(s).
+            var nonVanilla = available.Where(kvp => !IsVanillaModId(kvp.Key)).ToList();
+            var blocks = (nonVanilla.Count > 0 ? nonVanilla : available).Select(kvp => kvp.Value);
+
+            foreach (var b in blocks)
+            {
+                foreach (var id in b.FarmAnimalKeysSameWeight)
+                    AddIfPresent(id);
+
+                // Ignore JSON weights on purpose (Phase 5A/5B).
+                foreach (var w in b.FarmAnimalKeysWeighted)
+                    AddIfPresent(w.Id);
+            }
+        }
+
+        return ids.OrderBy(s => s, StringComparer.OrdinalIgnoreCase).ToList();
+
+        void AddIfPresent(string? id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return;
+
+            if (!farmAnimals.ContainsKey(id))
+                return;
+
+            ids.Add(id);
+        }
+    }
+
+    private Func<string, bool> BuildUnlockedResolver()
+    {
+        var mail = Game1.player?.mailReceived ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var registered = TryReadRegisteredAnimalTypes();
+
+        return farmAnimalKey =>
+        {
+            if (string.IsNullOrWhiteSpace(farmAnimalKey))
+                return false;
+
+            var mailId = AnimalNoteIds.NoteMailId(farmAnimalKey);
+            return mail.Contains(mailId) || registered.Contains(farmAnimalKey);
+        };
+    }
+
+    private HashSet<string> TryReadRegisteredAnimalTypes()
+    {
+        try
+        {
+            var env = _store.ReadEnvelope<AnimalNotesSaveData>(SaveKeys.AnimalNotes);
+            var data = env?.Data;
+            if (data?.RegisteredAnimalTypes is null)
+                return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            return new HashSet<string>(data.RegisteredAnimalTypes, StringComparer.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private static WeightRowSet BuildWeightRows(
+        IReadOnlyList<string> candidateIds,
+        IReadOnlyDictionary<string, FarmAnimalData> farmAnimals,
+        ShopAnchorIndex anchors,
+        IReadOnlyDictionary<string, double> effectiveValues,
+        Func<string, bool> isUnlocked)
+    {
+        var rawWeights = new List<double>(capacity: candidateIds.Count);
+        var rawById = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var id in candidateIds)
+        {
+            var v = effectiveValues.TryGetValue(id, out var dv) ? dv : 0;
+            var raw = BaseWeightFromValue(v);
+            rawById[id] = raw;
+            rawWeights.Add(raw);
+        }
+
+        var medianRaw = MedianMath.MedianOrDefault(rawWeights, defaultValue: 1.0);
+        var minClamp = medianRaw / Math.Max(1e-9, WeggWeightingDefaults.CapLow);
+        var maxClamp = medianRaw * Math.Max(1e-9, WeggWeightingDefaults.CapHigh);
+
+        var rows = new List<WeightRow>(capacity: candidateIds.Count);
+
+        foreach (var id in candidateIds)
+        {
+            var v = effectiveValues.TryGetValue(id, out var dv) ? dv : 0;
+            var raw = rawById[id];
+            var clamped = Clamp(raw, minClamp, maxClamp);
+
+            var hiddenNoAnchor = ShouldApplyHiddenNoAnchorPenalty(id, farmAnimals, anchors);
+            var unlocked = isUnlocked(id);
+
+            var final = clamped;
+            if (hiddenNoAnchor)
+                final *= WeggWeightingDefaults.HiddenNoAnchorPenalty;
+            if (unlocked)
+                final *= WeggWeightingDefaults.UnlockedFactor;
+
+            rows.Add(new WeightRow(
+                Id: id,
+                EffectiveValue: v,
+                RawWeight: raw,
+                ClampedWeight: clamped,
+                FinalWeight: Math.Max(0, final),
+                HiddenNoAnchorPenaltyApplied: hiddenNoAnchor,
+                UnlockedPenaltyApplied: unlocked));
+        }
+
+        return new WeightRowSet(rows, medianRaw, minClamp, maxClamp);
+    }
+
+    private static bool ShouldApplyHiddenNoAnchorPenalty(
+        string animalId,
+        IReadOnlyDictionary<string, FarmAnimalData> farmAnimals,
+        ShopAnchorIndex anchors)
+    {
+        if (!farmAnimals.TryGetValue(animalId, out var animal) || animal is null)
+            return false;
+
+        return animal.PurchasePrice < 0 && !anchors.HasAnchor(animalId);
+    }
+
+    private static double BaseWeightFromValue(double effectiveValue)
+    {
+        var v = Math.Max(0.0, effectiveValue);
+        var denom = Math.Pow(v + WeggWeightingDefaults.K, WeggWeightingDefaults.Alpha);
+        if (!double.IsFinite(denom) || denom <= 0)
+            return 0;
+
+        return 1.0 / denom;
+    }
+
+    private static double Clamp(double v, double min, double max)
+    {
+        if (min > max)
+            (min, max) = (max, min);
+
+        if (v < min)
+            return min;
+
+        if (v > max)
+            return max;
+
+        return v;
+    }
+
+    private static bool IsVanillaModId(string modId)
+        => string.Equals(modId, "Vanilla", StringComparison.OrdinalIgnoreCase);
+
+private static string RenderText(WeggVerifyReport report)
     {
         var header = $"wegg verify: PASS={report.PassCount} WARN={report.WarnCount} FAIL={report.FailCount}";
         var lines = new List<string> { header };

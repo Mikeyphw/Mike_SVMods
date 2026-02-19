@@ -4,6 +4,7 @@ using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Application.Animals;
+using WildEggsHatching.Core.ShopAnchors;
 using Mikew.BirdsOfAFeather.Helpers.Content;
 using Mikew.BirdsOfAFeather;
 
@@ -21,13 +22,12 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
     private const string ChickenEggId = "176";
     private const string VoidEggId = "305";
 
-    
-
     private readonly ChosenEggAssignments _chosen;
 
     public FarmAnimalsEditor(ChosenEggAssignments chosen)
         => _chosen = chosen;
-public override void Edit(IAssetData asset, ContentContext context)
+
+    public override void Edit(IAssetData asset, ContentContext context)
     {
         var data = asset.AsDictionary<string, FarmAnimalData>().Data;
 
@@ -36,8 +36,68 @@ public override void Edit(IAssetData asset, ContentContext context)
 
         TryApplyVoidChickenPrice(context, data);
 
+        // Diagnostics only; later phases will use this for parity + weighting.
+        var anchors = ShopAnchorIndex.Build(
+            data as System.Collections.Generic.IReadOnlyDictionary<string, FarmAnimalData>
+            ?? new System.Collections.Generic.Dictionary<string, FarmAnimalData>(data, System.StringComparer.OrdinalIgnoreCase),
+            warn: msg => context.Log(msg, StardewModdingAPI.LogLevel.Trace));
+        context.Log($"ShopAnchorIndex: anchored_variants={anchors.Count}.", StardewModdingAPI.LogLevel.Trace);
+
         if (context.Step >= ProgressionStep.PartVI)
-            ApplyChosenEggs(context, data);
+            ApplyChosenEggs(context, data, anchors);
+    }
+
+    
+
+    private void ApplyChosenEggs(
+        ContentContext context,
+        System.Collections.Generic.IDictionary<string, FarmAnimalData> data,
+        ShopAnchorIndex anchors)
+    {
+        try
+        {
+            var ro = data as System.Collections.Generic.IReadOnlyDictionary<string, FarmAnimalData>
+                ?? new System.Collections.Generic.Dictionary<string, FarmAnimalData>(data, System.StringComparer.OrdinalIgnoreCase);
+
+            _chosen.RecomputeIfNeeded(context.Step, ro, anchors);
+            ApplyEggIdsToAnimals(context, data);
+        }
+        catch (Exception ex)
+        {
+            context.Log($"FarmAnimalsEditor: failed applying chosen-egg assignments. {ex}", StardewModdingAPI.LogLevel.Warn);
+        }
+    }
+
+    private void ApplyEggIdsToAnimals(
+        ContentContext context,
+        System.Collections.Generic.IDictionary<string, FarmAnimalData> data)
+    {
+        var wildEggIds = new System.Collections.Generic.HashSet<string>(
+            context.ModData.SpawnAreas.Keys,
+            System.StringComparer.OrdinalIgnoreCase);
+
+        // Remove previous wild-egg assignments.
+        foreach (var a in data.Values)
+        {
+            if (a?.EggItemIds is null)
+                continue;
+
+            a.EggItemIds.RemoveAll(id => id is not null && wildEggIds.Contains(id));
+        }
+
+        // Apply current mapping (eggId -> animalId).
+        foreach (var (eggId, animalId) in _chosen.Current)
+        {
+            if (string.IsNullOrWhiteSpace(eggId) || string.IsNullOrWhiteSpace(animalId))
+                continue;
+
+            if (!data.TryGetValue(animalId, out var animal) || animal is null)
+                continue;
+
+            animal.EggItemIds ??= new System.Collections.Generic.List<string>();
+            if (!animal.EggItemIds.Contains(eggId, System.StringComparer.OrdinalIgnoreCase))
+                animal.EggItemIds.Add(eggId);
+        }
     }
 
     private static void TryApplyConfiguredFullPrice(

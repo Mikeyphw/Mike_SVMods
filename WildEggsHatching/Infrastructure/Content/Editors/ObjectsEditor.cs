@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
-using StardewModdingAPI.Events;
+using System.Linq;
 using StardewValley.GameData.Objects;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
@@ -199,20 +197,9 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             if (_animalKeys is not null)
                 return _animalKeys;
 
-            var path = Path.Combine(context.Helper.DirectoryPath, "ModData", "WildAnimalsList.json");
-            if (!File.Exists(path))
-            {
-                context.Log($"ObjectsEditor: WildAnimalsList.json not found at '{path}'.", StardewModdingAPI.LogLevel.Warn);
-                _animalKeys = Array.Empty<string>();
-                return _animalKeys;
-            }
-
-            using var stream = File.OpenRead(path);
-            using var doc = JsonDocument.Parse(stream);
-
-            var keys = new List<string>();
-            foreach (var prop in doc.RootElement.EnumerateObject())
-                keys.Add(prop.Name);
+            var keys = context.ModData.WildAnimals.Keys
+                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             _animalKeys = keys;
             return _animalKeys;
@@ -234,20 +221,9 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             if (_eggItemIds is not null)
                 return _eggItemIds;
 
-            var path = Path.Combine(context.Helper.DirectoryPath, "ModData", "SpawnAreas.json");
-            if (!File.Exists(path))
-            {
-                context.Log($"ObjectsEditor: SpawnAreas.json not found at '{path}'.", StardewModdingAPI.LogLevel.Warn);
-                _eggItemIds = Array.Empty<string>();
-                return _eggItemIds;
-            }
-
-            using var stream = File.OpenRead(path);
-            using var doc = JsonDocument.Parse(stream);
-
-            var ids = new List<string>();
-            foreach (var prop in doc.RootElement.EnumerateObject())
-                ids.Add(prop.Name);
+            var ids = context.ModData.SpawnAreas.Keys
+                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             _eggItemIds = ids;
             return _eggItemIds;
