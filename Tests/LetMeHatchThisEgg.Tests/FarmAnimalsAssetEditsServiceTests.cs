@@ -8,19 +8,21 @@ namespace LetMeHatchThisEgg.Tests;
 public sealed class FarmAnimalsAssetEditsServiceTests
 {
     [Fact]
-    public void TryApplyEdits_CallsDelegate_AndCanMutateDictionary()
+    public void TryApplyEdits_MutatesDictionary_WithExpectedInstance()
     {
-        var called = false;
+        var expected = new FarmAnimalData();
 
         var service = new FarmAnimalsAssetEditsService(data =>
         {
-            called = true;
-            data["Chicken"] = new FarmAnimalData();
+            Assert.Empty(data);
+            data["Chicken"] = expected;
         });
 
         var data = new Dictionary<string, FarmAnimalData>();
         Assert.True(service.TryApplyEdits(data));
-        Assert.True(called);
-        Assert.True(data.ContainsKey("Chicken"));
+
+        Assert.Single(data);
+        Assert.True(data.TryGetValue("Chicken", out var actual));
+        Assert.Same(expected, actual);
     }
 }

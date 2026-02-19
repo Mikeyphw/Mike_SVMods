@@ -8,7 +8,7 @@ namespace LetMeHatchThisEgg.Tests;
 public sealed class ObjectsAssetEditsServiceTests
 {
     [Fact]
-    public void TryAddClonedEggObjects_WhenNoItems_ReturnsFalse()
+    public void TryAddClonedEggObjects_WhenNoItems_ReturnsFalse_AndDoesNotMutate()
     {
         var service = new ObjectsAssetEditsService(
             itemsToAddCount: () => 0,
@@ -18,40 +18,69 @@ public sealed class ObjectsAssetEditsServiceTests
 
         var data = new Dictionary<string, ObjectData>();
         Assert.False(service.TryAddClonedEggObjects(data, onlyFertilizedEggs: false));
+        Assert.Empty(data);
     }
 
     [Fact]
-    public void TryAddClonedEggObjects_WhenItems_AddsAndOptionallyTextures()
+    public void TryAddClonedEggObjects_WhenItems_AddsExpectedItem_AndRunsTexturesUnlessOnlyFertilized()
     {
-        var calledEdit = false;
-        var calledTex = false;
+        var expected = new ObjectData();
+        var calledEdit = 0;
+        var calledTex = 0;
 
         var service = new ObjectsAssetEditsService(
             itemsToAddCount: () => 1,
-            editClonedEggs: d => { calledEdit = true; d["X"] = new ObjectData(); },
+            editClonedEggs: d => { calledEdit++; d["X"] = expected; },
             editFertilizedEggs: _ => { },
-            processTextures: _ => { calledTex = true; });
+            processTextures: _ => { calledTex++; });
 
         var data = new Dictionary<string, ObjectData>();
+
         Assert.True(service.TryAddClonedEggObjects(data, onlyFertilizedEggs: false));
-        Assert.True(calledEdit);
-        Assert.True(calledTex);
-        Assert.True(data.ContainsKey("X"));
+        Assert.Equal(1, calledEdit);
+        Assert.Equal(1, calledTex);
+        Assert.Single(data);
+        Assert.Same(expected, data["X"]);
+
+        data.Clear();
+        Assert.True(service.TryAddClonedEggObjects(data, onlyFertilizedEggs: true));
+        Assert.Equal(2, calledEdit);
+        Assert.Equal(1, calledTex);
     }
 
     [Fact]
-    public void TryAddClonedEggObjects_WhenOnlyFertilized_SkipsTextures()
+    public void TryAddFertilizedEggObjects_WhenNoItems_ReturnsFalse_AndDoesNotMutate()
     {
-        var calledTex = false;
-
         var service = new ObjectsAssetEditsService(
-            itemsToAddCount: () => 1,
-            editClonedEggs: _ => { },
-            editFertilizedEggs: _ => { },
-            processTextures: _ => { calledTex = true; });
+            itemsToAddCount: () => 0,
+            editClonedEggs: _ => throw new Xunit.Sdk.XunitException("should not run"),
+            editFertilizedEggs: _ => throw new Xunit.Sdk.XunitException("should not run"),
+            processTextures: _ => throw new Xunit.Sdk.XunitException("should not run"));
 
         var data = new Dictionary<string, ObjectData>();
-        Assert.True(service.TryAddClonedEggObjects(data, onlyFertilizedEggs: true));
-        Assert.False(calledTex);
+        Assert.False(service.TryAddFertilizedEggObjects(data));
+        Assert.Empty(data);
+    }
+
+    [Fact]
+    public void TryAddFertilizedEggObjects_WhenItems_AddsExpectedItem_AndRunsTextures()
+    {
+        var expected = new ObjectData();
+        var calledEdit = 0;
+        var calledTex = 0;
+
+        var service = new ObjectsAssetEditsService(
+            itemsToAddCount: () => 2,
+            editClonedEggs: _ => { },
+            editFertilizedEggs: d => { calledEdit++; d["F"] = expected; },
+            processTextures: _ => { calledTex++; });
+
+        var data = new Dictionary<string, ObjectData>();
+        Assert.True(service.TryAddFertilizedEggObjects(data));
+
+        Assert.Equal(1, calledEdit);
+        Assert.Equal(1, calledTex);
+        Assert.Single(data);
+        Assert.Same(expected, data["F"]);
     }
 }

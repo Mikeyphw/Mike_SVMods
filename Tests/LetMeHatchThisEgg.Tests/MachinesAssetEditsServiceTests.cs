@@ -8,19 +8,21 @@ namespace LetMeHatchThisEgg.Tests;
 public sealed class MachinesAssetEditsServiceTests
 {
     [Fact]
-    public void TryApplyEdits_CallsDelegate_AndCanMutateDictionary()
+    public void TryApplyEdits_MutatesDictionary_WithExpectedInstance()
     {
-        var called = false;
+        var expected = new MachineData();
 
         var service = new MachinesAssetEditsService(data =>
         {
-            called = true;
-            data["Mayonnaise Machine"] = new MachineData();
+            Assert.Empty(data);
+            data["Mayonnaise Machine"] = expected;
         });
 
         var data = new Dictionary<string, MachineData>();
         Assert.True(service.TryApplyEdits(data));
-        Assert.True(called);
-        Assert.True(data.ContainsKey("Mayonnaise Machine"));
+
+        Assert.Single(data);
+        Assert.True(data.TryGetValue("Mayonnaise Machine", out var actual));
+        Assert.Same(expected, actual);
     }
 }
