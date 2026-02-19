@@ -5,6 +5,7 @@ using BirdsOfAFeather.Helpers;
 using ContentPatcher;
 using LetMeHatchThisEgg.Breeding;
 using LetMeHatchThisEgg.Cloning;
+using LetMeHatchThisEgg.Core.Cloning;
 using LetMeHatchThisEgg.Infrastructure.Cloning;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
@@ -46,6 +47,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
         public EggListEditor EggListEditor { get; private set; }
         public BirthTextEditor BirthTextEditor { get; private set; }
         public AnimalCloner AnimalCloner { get; private set; }
+        public FarmAnimalCloneBatchApplier FarmAnimalCloneBatchApplier { get; private set; }
 
         public bool HasAddedClonedItems =>
             Game1.objectData.Keys.Any(k => CloningHelper.IsClonedItem(k));
@@ -122,9 +124,11 @@ namespace LetMeHatchThisEgg.GameAssetManagement
             );
             AnimalCloner = new AnimalCloner(
                 new ContentPackStringEvaluator(_contentPatcherAPI, MonitorInstance),
-                new CloneTextureBookkeeper(),
-                ClonedAnimalsInfoList,
-                LoadedContentPacks
+                new CloneTextureBookkeeper()
+            );
+            FarmAnimalCloneBatchApplier = new FarmAnimalCloneBatchApplier(
+                AnimalCloner,
+                new CloneMappingService()
             );
             EggListEditor = new EggListEditor(CloningHelper);
             BirthTextEditor = new BirthTextEditor(_wildEggsAPI);

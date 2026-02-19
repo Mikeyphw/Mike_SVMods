@@ -1,5 +1,4 @@
 using LetMeHatchThisEgg.Models;
-using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
 
 namespace LetMeHatchThisEgg.Infrastructure.Cloning;
@@ -14,7 +13,7 @@ public interface ICloneTextureBookkeeper
     /// onto <paramref name="cloneInfo"/> (for later loading/caching).
     /// </summary>
     void ApplyTextures(
-        IContentPack contentPack,
+        string contentPackId,
         ClonedAnimalInfo cloneInfo,
         FarmAnimalData cloneData,
         FarmAnimalData originalData,

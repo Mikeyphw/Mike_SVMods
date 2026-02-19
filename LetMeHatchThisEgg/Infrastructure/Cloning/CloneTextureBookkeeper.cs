@@ -1,7 +1,6 @@
 using System;
 using LetMeHatchThisEgg.Core.Cloning;
 using LetMeHatchThisEgg.Models;
-using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
@@ -13,16 +12,16 @@ namespace LetMeHatchThisEgg.Infrastructure.Cloning;
 public sealed class CloneTextureBookkeeper : ICloneTextureBookkeeper
 {
     public void ApplyTextures(
-        IContentPack contentPack,
+        string contentPackId,
         ClonedAnimalInfo cloneInfo,
         FarmAnimalData cloneData,
         FarmAnimalData originalData,
         FarmAnimalData placeholderData
     )
     {
-        if (contentPack is null)
+        if (string.IsNullOrWhiteSpace(contentPackId))
         {
-            throw new ArgumentNullException(nameof(contentPack));
+            throw new ArgumentException("Content pack id must be provided.", nameof(contentPackId));
         }
 
         if (cloneInfo is null)
@@ -44,8 +43,6 @@ public sealed class CloneTextureBookkeeper : ICloneTextureBookkeeper
         {
             throw new ArgumentNullException(nameof(placeholderData));
         }
-
-        var contentPackId = contentPack.Manifest.UniqueID;
 
         cloneData.BabyTexture = ResolveAndRecord(
             currentValue: cloneData.BabyTexture,

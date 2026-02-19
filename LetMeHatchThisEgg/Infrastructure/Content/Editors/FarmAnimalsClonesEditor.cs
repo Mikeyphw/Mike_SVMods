@@ -17,13 +17,17 @@ public sealed class FarmAnimalsClonesEditor : AssetEditorBase
 
     public override AssetEditPriority Priority => AssetEditPriority.Late;
 
-        public override string DebugGates => "ClonedAnimalsInfoList.Count > 0.";
+    public override string DebugGates => "ClonedAnimalsInfoList.Count > 0.";
 
-public override void Edit(IAssetData asset, ContentContext context)
+    public override void Edit(IAssetData asset, ContentContext context)
     {
         if (_assets.ClonedAnimalsInfoList.Count == 0)
             return;
 
-        _assets.AnimalCloner.EditAnimalData(asset);
+        _assets.FarmAnimalCloneBatchApplier.Apply(
+            asset: asset,
+            clonedAnimals: _assets.ClonedAnimalsInfoList,
+            loadedContentPacks: _assets.LoadedContentPacks
+        );
     }
 }
