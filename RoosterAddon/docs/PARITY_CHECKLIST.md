@@ -1,5 +1,9 @@
-# RoosterAddon Parity Checklist (manual)
+# PARITY_CHECKLIST — RoosterAddon
 
+> Location: `Mike_SVMods/RoosterAddon/docs/PARITY_CHECKLIST.md`  
+> Last updated: **2026-02-19T04:18:29Z**
+
+---
 Use this after each phase to confirm behavior hasn't drifted unexpectedly.
 
 ## Setup
