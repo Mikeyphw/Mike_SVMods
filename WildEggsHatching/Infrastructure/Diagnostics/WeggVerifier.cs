@@ -18,6 +18,7 @@ using WildEggsHatching.Infrastructure.ModData;
 using WildEggsHatching.Infrastructure.ModData.Models;
 using xTile;
 using Mikew.BirdsOfAFeather.Helpers.Get();
+using WildEggsHatching.Infrastructure.Diagnostics;
 
 namespace WildEggsHatching.Infrastructure.Diagnostics;
 
@@ -418,4 +419,26 @@ public sealed class WeggVerifier
 
         return JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
     }
+
+    private void AddBoafPipelineChecks(WeggVerifyReport report)
+    {
+        var editors = BoafPipelineSnapshot.EditorAssets;
+        report.Add(
+            "boaf/editors",
+            editors.Count > 0 ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn,
+            editors.Count > 0
+                ? $"BOAF editors registered ({editors.Count}): {string.Join(", ", editors)}."
+                : "No BOAF editor registrations reported."
+        );
+
+        var paths = BoafPipelineSnapshot.ModAssetPaths;
+        report.Add(
+            "boaf/modassets",
+            paths.Count > 0 ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn,
+            paths.Count > 0
+                ? $"BOAF mod asset paths (short list): {string.Join(", ", paths)}."
+                : "No BOAF mod asset paths reported."
+        );
+    }
+
 }

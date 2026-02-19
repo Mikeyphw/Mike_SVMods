@@ -99,6 +99,31 @@ public sealed class ModEntry : Mod
         RegisterEditors(_assetPipeline);
         _assetPipeline.Attach();
 
+        var modAssetPaths = new[]
+        {
+            "LooseSprites/Cursors",
+            $"Mods/{Constants.ModId}/objects/note",
+            $"Mods/{Constants.ModId}/animals/note",
+            $"Mods/{Constants.ModId}/hats/birdhat",
+            $"Mods/{Constants.ModId}/hats/cowboyhat",
+        };
+
+        var editorAssets = new[]
+        {
+            "Data/Objects",
+            "Data/FarmAnimals",
+            "Data/Mail",
+            "Data/Quests",
+            "Data/SpecialOrders",
+            "Data/BigCraftables",
+            "Data/CraftingRecipes",
+            "Data/Machines",
+            "Data/AdditionalMineMaps",
+        };
+
+        BoafPipelineSnapshot.Set(attached: true, editorAssets: editorAssets, modAssetPaths: modAssetPaths);
+
+
         var jsonReader = new SmapiJsonFileReader(helper);
         _dataLoader = new ModDataLoader(jsonReader, _log);
 
