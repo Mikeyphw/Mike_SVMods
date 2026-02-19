@@ -122,6 +122,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
             );
             AnimalCloner = new AnimalCloner(
                 new ContentPackStringEvaluator(_contentPatcherAPI, MonitorInstance),
+                new CloneTextureBookkeeper(),
                 ClonedAnimalsInfoList,
                 LoadedContentPacks
             );

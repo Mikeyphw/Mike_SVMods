@@ -22,16 +22,19 @@ namespace LetMeHatchThisEgg.Cloning
         private readonly List<IContentPack> LoadedContentPacks;
         private readonly IContentStringEvaluator _stringEvaluator;
         private readonly CloneMappingService _cloneMappingService;
+        private readonly ICloneTextureBookkeeper _cloneTextureBookkeeper;
 
         private readonly FarmAnimalCloneTransformer _farmAnimalCloneTransformer;
 
         public AnimalCloner(
             IContentStringEvaluator stringEvaluator,
+            ICloneTextureBookkeeper cloneTextureBookkeeper,
             List<ClonedAnimalInfo> clonedAnimalInfos,
             List<IContentPack> loadedContentPacks
         )
         {
             _stringEvaluator = stringEvaluator;
+            _cloneTextureBookkeeper = cloneTextureBookkeeper;
             ClonedAnimalsInfoList = clonedAnimalInfos;
             LoadedContentPacks = loadedContentPacks;
             _cloneMappingService = new CloneMappingService();
@@ -146,7 +149,7 @@ namespace LetMeHatchThisEgg.Cloning
                 var maleKey = clonedAnimalInfo.MaleKey;
                 var contentPack = GetContentPack(clonedAnimalInfo.ContentPackID);
                 var clonedAnimalData = data[maleKey];
-                EditClonedAnimal(contentPack, maleKey, data[femaleKey], clonedAnimalData);
+                EditClonedAnimal(contentPack, clonedAnimalInfo, data[femaleKey], clonedAnimalData);
                 _cloneMappingService.ApplyAlternatePurchaseRules(clonedAnimalInfo, data);
                 //InsertClonedAnimalData(asset, data, femaleKey, maleKey, clonedAnimalData);
             }
@@ -176,7 +179,7 @@ namespace LetMeHatchThisEgg.Cloning
 
         public void EditClonedAnimal(
             IContentPack contentPack,
-            string maleKey,
+            ClonedAnimalInfo cloneInfo,
             FarmAnimalData originalAnimalData,
             FarmAnimalData currentCloneData
         )
@@ -184,12 +187,12 @@ namespace LetMeHatchThisEgg.Cloning
             var placeholderData = GetFarmAnimalDataPlaceholder();
             _farmAnimalCloneTransformer.ApplyPreLocalization(currentCloneData);
 
-            SetTextureIfNeeded(
-                contentPack,
-                currentCloneData,
-                originalAnimalData,
-                placeholderData,
-                maleKey
+            _cloneTextureBookkeeper.ApplyTextures(
+                contentPack: contentPack,
+                cloneInfo: cloneInfo,
+                cloneData: currentCloneData,
+                originalData: originalAnimalData,
+                placeholderData: placeholderData
             );
 
             ApplyTextFieldPolicy(
@@ -312,85 +315,6 @@ namespace LetMeHatchThisEgg.Cloning
             {
                 currentValue = evaluator.TranslateAndEvaluateTokens(contentPack, decision.I18nKey);
             }
-        }
-
-        private void SetTextureIfNeeded(
-            IContentPack contentPack,
-            FarmAnimalData currentData,
-            FarmAnimalData originalData,
-            FarmAnimalData placeholderData,
-            string animalKey
-        )
-        {
-            var contentPackID = contentPack.Manifest.UniqueID;
-            var cloneInfo = ClonedAnimalsInfoList.Find(a => a.MaleKey == animalKey);
-            if (cloneInfo == null)
-            {
-                return;
-            }
-            currentData.BabyTexture = GetTextureString(
-                currentData.BabyTexture,
-                originalData.BabyTexture,
-                placeholderData.BabyTexture,
-                contentPackID,
-                animalKey,
-                TextureType.Baby
-            );
-            currentData.Texture = GetTextureString(
-                currentData.Texture,
-                originalData.Texture,
-                placeholderData.Texture,
-                contentPackID,
-                animalKey,
-                TextureType.Adult
-            );
-            currentData.HarvestedTexture = GetTextureString(
-                currentData.HarvestedTexture,
-                originalData.HarvestedTexture,
-                placeholderData.HarvestedTexture,
-                contentPackID,
-                animalKey,
-                TextureType.Harvested
-            );
-            currentData.ShopTexture = GetTextureString(
-                currentData.ShopTexture,
-                originalData.ShopTexture,
-                placeholderData.ShopTexture,
-                contentPackID,
-                animalKey,
-                TextureType.Shop
-            );
-        }
-
-        private string GetTextureString(
-            string? currentValue,
-            string originalValue,
-            string? placeholderValue,
-            string contentPackID,
-            string animalKey,
-            TextureType textureName
-        )
-        {
-            var clonedInfo = ClonedAnimalsInfoList.Find(x => x.MaleKey == animalKey);
-            if (clonedInfo == null)
-            {
-                return originalValue;
-            }
-
-            var result = CloneTextureResolver.Resolve(
-                currentValue: currentValue,
-                originalValue: originalValue,
-                contentPackId: contentPackID,
-                femaleKey: clonedInfo.FemaleKey,
-                textureType: textureName
-            );
-
-            if (result.IsContentPackAsset)
-            {
-                clonedInfo.Textures[textureName] = result.Value;
-            }
-
-            return result.Value;
         }
 
         private static bool IsEggCategoryObjectId(string itemId)
