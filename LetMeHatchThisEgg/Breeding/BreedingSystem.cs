@@ -12,7 +12,9 @@ using StardewValley.GameData.FarmAnimals;
 using StardewValley.TokenizableStrings;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Breeding
 {
     public class BreedingSystem
     {

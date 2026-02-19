@@ -4,7 +4,9 @@ using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integrations
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Integrations
 {
     public class RoosterControlAddonIntegration
     {

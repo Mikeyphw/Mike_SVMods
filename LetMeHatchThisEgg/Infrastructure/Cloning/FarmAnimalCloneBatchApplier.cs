@@ -1,57 +1,43 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using LetMeHatchThisEgg.Cloning;
 using LetMeHatchThisEgg.Core.Cloning;
+using LetMeHatchThisEgg.Infrastructure.GameData;
 using LetMeHatchThisEgg.Models;
-using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
 
 namespace LetMeHatchThisEgg.Infrastructure.Cloning;
 
-/// <summary>
-/// Applies clone edits across all configured cloned animals for the FarmAnimals asset.
-/// </summary>
+/// <summary>Applies clone edits across all configured cloned animals for the FarmAnimals asset.</summary>
 public sealed class FarmAnimalCloneBatchApplier
 {
-    private readonly AnimalCloner _animalCloner;
-    private readonly CloneMappingService _cloneMappingService;
+    private readonly IAnimalCloner _animalCloner;
+    private readonly ICloneMappingService _cloneMappingService;
 
-    public FarmAnimalCloneBatchApplier(
-        AnimalCloner animalCloner,
-        CloneMappingService cloneMappingService
-    )
+    public FarmAnimalCloneBatchApplier(IAnimalCloner animalCloner, ICloneMappingService cloneMappingService)
     {
         _animalCloner = animalCloner ?? throw new ArgumentNullException(nameof(animalCloner));
         _cloneMappingService = cloneMappingService ?? throw new ArgumentNullException(nameof(cloneMappingService));
     }
 
     public void Apply(
-        IAssetData asset,
+        IFarmAnimalDataRepository farmAnimalsRepository,
         IReadOnlyList<ClonedAnimalInfo> clonedAnimals,
-        IReadOnlyList<IContentPack> loadedContentPacks
+        IContentPackResolver contentPacks
     )
     {
-        if (asset is null)
-        {
-            throw new ArgumentNullException(nameof(asset));
-        }
-
+        if (farmAnimalsRepository is null)
+            throw new ArgumentNullException(nameof(farmAnimalsRepository));
         if (clonedAnimals is null)
-        {
             throw new ArgumentNullException(nameof(clonedAnimals));
-        }
+        if (contentPacks is null)
+            throw new ArgumentNullException(nameof(contentPacks));
 
-        if (loadedContentPacks is null)
-        {
-            throw new ArgumentNullException(nameof(loadedContentPacks));
-        }
-
-        var farmAnimals = asset.AsDictionary<string, FarmAnimalData>().Data;
+        IDictionary<string, FarmAnimalData> farmAnimals = farmAnimalsRepository.Data;
 
         foreach (var cloneInfo in clonedAnimals)
         {
-            var contentPack = loadedContentPacks.First(cp => cp.Manifest.UniqueID == cloneInfo.ContentPackID);
+            var contentPack = contentPacks.GetById(cloneInfo.ContentPackID);
 
             var femaleKey = cloneInfo.FemaleKey;
             var maleKey = cloneInfo.MaleKey;

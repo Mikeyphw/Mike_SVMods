@@ -1,4 +1,6 @@
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Models
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Models
 {
     public class OutputItemCloneInfo
     {

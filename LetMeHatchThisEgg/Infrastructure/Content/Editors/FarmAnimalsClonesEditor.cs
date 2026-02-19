@@ -1,4 +1,6 @@
 using LetMeHatchThisEgg.GameAssetManagement;
+using LetMeHatchThisEgg.Infrastructure.Cloning;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
 namespace LetMeHatchThisEgg.Infrastructure.Content.Editors;
@@ -24,10 +26,13 @@ public sealed class FarmAnimalsClonesEditor : AssetEditorBase
         if (_assets.ClonedAnimalsInfoList.Count == 0)
             return;
 
+        var farmAnimals = _assets.FarmAnimalAssetAdapter.Wrap(asset);
+        var resolver = new LoadedContentPackResolver(_assets.LoadedContentPacks);
+
         _assets.FarmAnimalCloneBatchApplier.Apply(
-            asset: asset,
+            farmAnimalsRepository: farmAnimals,
             clonedAnimals: _assets.ClonedAnimalsInfoList,
-            loadedContentPacks: _assets.LoadedContentPacks
+            contentPacks: resolver
         );
     }
 }

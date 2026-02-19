@@ -1,7 +1,9 @@
 using StardewValley.GameData.FarmAnimals;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Models
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Models
 {
     public class ClonedAnimalInfo
     {

@@ -8,7 +8,9 @@
 // using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 // using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 
-// using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.AssetManagement
+// using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.AssetManagement
 // {
 //     public class BirthTextEditor
 //     {
@@ -157,7 +159,9 @@ using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.GameAssetManagement
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.GameAssetManagement
 {
     public class BirthTextEditor
     {

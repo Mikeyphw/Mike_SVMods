@@ -15,7 +15,7 @@ using static LetMeHatchThisEgg.ModEntry;
 
 namespace LetMeHatchThisEgg.Cloning
 {
-    public class AnimalCloner
+    public class AnimalCloner : IAnimalCloner
     {
         // Dependencies
         private readonly IContentStringEvaluator _stringEvaluator;

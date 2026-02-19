@@ -7,7 +7,9 @@ using StardewModdingAPI;
 using StardewValley;
 using static LetMeHatchThisEgg.EnumsAndStrings.Strings;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Helpers
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Helpers
 {
     public class Colors
     {

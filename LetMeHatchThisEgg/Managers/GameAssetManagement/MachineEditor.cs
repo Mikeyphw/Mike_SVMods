@@ -4,7 +4,9 @@
 // using StardewValley.GameData.Machines;
 // using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-// using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.AssetManagement
+// using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.AssetManagement
 // {
 //     public class MachineEditor
 //     {
@@ -263,7 +265,9 @@ using StardewValley.Extensions;
 using StardewValley.GameData.Machines;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.GameAssetManagement
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.GameAssetManagement
 {
     public class MachineEditor
     {

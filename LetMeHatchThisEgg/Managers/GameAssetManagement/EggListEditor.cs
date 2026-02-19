@@ -8,7 +8,9 @@
 // using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 // using Object = StardewValley.Object;
 
-// using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.AssetManagement
+// using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.AssetManagement
 // {
 //     public class EggListEditor
 //     {
@@ -140,7 +142,9 @@ using StardewValley.GameData.Objects;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 using Object = StardewValley.Object;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.GameAssetManagement
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.GameAssetManagement
 {
     public class EggListEditor 
     {

@@ -2,7 +2,9 @@ using LetMeHatchThisEgg.Models;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Integrations
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Integrations
 {
     public class VanillaGameIntegration
     {

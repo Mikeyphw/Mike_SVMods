@@ -7,6 +7,7 @@ using LetMeHatchThisEgg.Breeding;
 using LetMeHatchThisEgg.Cloning;
 using LetMeHatchThisEgg.Core.Cloning;
 using LetMeHatchThisEgg.Infrastructure.Cloning;
+using LetMeHatchThisEgg.Infrastructure.GameData;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.Helpers;
@@ -48,6 +49,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
         public BirthTextEditor BirthTextEditor { get; private set; }
         public AnimalCloner AnimalCloner { get; private set; }
         public FarmAnimalCloneBatchApplier FarmAnimalCloneBatchApplier { get; private set; }
+        public IFarmAnimalAssetAdapter FarmAnimalAssetAdapter { get; private set; }
 
         public bool HasAddedClonedItems =>
             Game1.objectData.Keys.Any(k => CloningHelper.IsClonedItem(k));
@@ -130,6 +132,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
                 AnimalCloner,
                 new CloneMappingService()
             );
+            FarmAnimalAssetAdapter = new SmapiFarmAnimalAssetAdapter();
             EggListEditor = new EggListEditor(CloningHelper);
             BirthTextEditor = new BirthTextEditor(_wildEggsAPI);
             MachineEditor = new MachineEditor(ClonedItemsTextureInfo, OutpuItemsToClone);

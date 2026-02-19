@@ -15,7 +15,9 @@ using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings;
 using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 using Object = StardewValley.Object;
 
-using static LetMeHatchThisEgg.ModEntry; namespace LetMeHatchThisEgg.Breeding
+using static LetMeHatchThisEgg.ModEntry;
+
+namespace LetMeHatchThisEgg.Breeding
 {
     public class BreedingDataLoader
     {
