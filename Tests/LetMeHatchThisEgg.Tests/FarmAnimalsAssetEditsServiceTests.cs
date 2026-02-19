@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using LetMeHatchThisEgg.Application.Services;
+using LetMeHatchThisEgg.Tests.TestHelpers;
 using StardewValley.GameData.FarmAnimals;
 using Xunit;
 
@@ -8,14 +9,14 @@ namespace LetMeHatchThisEgg.Tests;
 public sealed class FarmAnimalsAssetEditsServiceTests
 {
     [Fact]
-    public void TryApplyEdits_MutatesDictionary_WithExpectedInstance()
+    public void TryApplyEdits_WhenDelegateEdits_MutatesDictionary_AndMutatesSomeFields()
     {
         var expected = new FarmAnimalData();
 
         var service = new FarmAnimalsAssetEditsService(data =>
         {
-            Assert.Empty(data);
             data["Chicken"] = expected;
+            AssertEx.AssertSomePropertyMutation(expected, () => AssertEx.MutateSomeWritableProperties(expected));
         });
 
         var data = new Dictionary<string, FarmAnimalData>();

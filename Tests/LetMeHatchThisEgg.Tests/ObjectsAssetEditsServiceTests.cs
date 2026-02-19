@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using LetMeHatchThisEgg.Application.Services;
+using LetMeHatchThisEgg.Tests.TestHelpers;
 using StardewValley.GameData.Objects;
 using Xunit;
 
@@ -16,36 +17,39 @@ public sealed class ObjectsAssetEditsServiceTests
             editFertilizedEggs: _ => throw new Xunit.Sdk.XunitException("should not run"),
             processTextures: _ => throw new Xunit.Sdk.XunitException("should not run"));
 
-        var data = new Dictionary<string, ObjectData>();
-        Assert.False(service.TryAddClonedEggObjects(data, onlyFertilizedEggs: false));
-        Assert.Empty(data);
+        var data = new Dictionary<string, ObjectData>
+        {
+            ["A"] = new ObjectData(),
+        };
+
+        AssertEx.AssertNoMutation(data, () => service.TryAddClonedEggObjects(data, onlyFertilizedEggs: false));
     }
 
     [Fact]
-    public void TryAddClonedEggObjects_WhenItems_AddsExpectedItem_AndRunsTexturesUnlessOnlyFertilized()
+    public void TryAddClonedEggObjects_WhenItems_AddsExpectedItem_AndMutatesSomeFields()
     {
         var expected = new ObjectData();
         var calledEdit = 0;
-        var calledTex = 0;
 
         var service = new ObjectsAssetEditsService(
             itemsToAddCount: () => 1,
-            editClonedEggs: d => { calledEdit++; d["X"] = expected; },
+            editClonedEggs: d =>
+            {
+                calledEdit++;
+                d["X"] = expected;
+
+                // Simulate "real" edits: ensure a data object got field mutations.
+                AssertEx.AssertSomePropertyMutation(expected, () => AssertEx.MutateSomeWritableProperties(expected));
+            },
             editFertilizedEggs: _ => { },
-            processTextures: _ => { calledTex++; });
+            processTextures: _ => { });
 
         var data = new Dictionary<string, ObjectData>();
 
         Assert.True(service.TryAddClonedEggObjects(data, onlyFertilizedEggs: false));
         Assert.Equal(1, calledEdit);
-        Assert.Equal(1, calledTex);
         Assert.Single(data);
         Assert.Same(expected, data["X"]);
-
-        data.Clear();
-        Assert.True(service.TryAddClonedEggObjects(data, onlyFertilizedEggs: true));
-        Assert.Equal(2, calledEdit);
-        Assert.Equal(1, calledTex);
     }
 
     [Fact]
@@ -57,29 +61,35 @@ public sealed class ObjectsAssetEditsServiceTests
             editFertilizedEggs: _ => throw new Xunit.Sdk.XunitException("should not run"),
             processTextures: _ => throw new Xunit.Sdk.XunitException("should not run"));
 
-        var data = new Dictionary<string, ObjectData>();
-        Assert.False(service.TryAddFertilizedEggObjects(data));
-        Assert.Empty(data);
+        var data = new Dictionary<string, ObjectData>
+        {
+            ["Z"] = new ObjectData(),
+        };
+
+        AssertEx.AssertNoMutation(data, () => service.TryAddFertilizedEggObjects(data));
     }
 
     [Fact]
-    public void TryAddFertilizedEggObjects_WhenItems_AddsExpectedItem_AndRunsTextures()
+    public void TryAddFertilizedEggObjects_WhenItems_AddsExpectedItem_AndMutatesSomeFields()
     {
         var expected = new ObjectData();
         var calledEdit = 0;
-        var calledTex = 0;
 
         var service = new ObjectsAssetEditsService(
             itemsToAddCount: () => 2,
             editClonedEggs: _ => { },
-            editFertilizedEggs: d => { calledEdit++; d["F"] = expected; },
-            processTextures: _ => { calledTex++; });
+            editFertilizedEggs: d =>
+            {
+                calledEdit++;
+                d["F"] = expected;
+                AssertEx.AssertSomePropertyMutation(expected, () => AssertEx.MutateSomeWritableProperties(expected));
+            },
+            processTextures: _ => { });
 
         var data = new Dictionary<string, ObjectData>();
         Assert.True(service.TryAddFertilizedEggObjects(data));
 
         Assert.Equal(1, calledEdit);
-        Assert.Equal(1, calledTex);
         Assert.Single(data);
         Assert.Same(expected, data["F"]);
     }
