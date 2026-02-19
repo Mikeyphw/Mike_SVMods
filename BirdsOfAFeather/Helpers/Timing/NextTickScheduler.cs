@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
@@ -11,15 +12,20 @@ namespace Mikew.BirdsOfAFeather.Helpers.Timing
     public sealed class NextTickScheduler : IDisposable
     {
         private readonly IModHelper _helper;
-        private readonly IMonitor _monitor;
+        private readonly ILog _log;
         private readonly Queue<Action> _queue = new();
         private bool _subscribed;
 
-        public NextTickScheduler(IModHelper helper, IMonitor monitor)
+        public NextTickScheduler(IModHelper helper, ILog log)
         {
             _helper = helper ?? throw new ArgumentNullException(nameof(helper));
-            _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
             Subscribe();
+        }
+
+        public NextTickScheduler(IModHelper helper, IMonitor monitor)
+            : this(helper, new SmapiLog(monitor))
+        {
         }
 
         public void Enqueue(Action action)
@@ -68,7 +74,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.Timing
                 }
                 catch (Exception ex)
                 {
-                    _monitor.Log($"NextTick action failed.\n{ex}", LogLevel.Error);
+                    _log.Log($"NextTick action failed.\n{ex}", LogLevel.Error);
                 }
             }
         }

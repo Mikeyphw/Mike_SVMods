@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.BirdsOfAFeather.Models;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using xTile;
@@ -9,7 +10,7 @@ namespace Mikew.BirdsOfAFeather.Helpers
 {
     public partial class ModAssetHandler
     {
-        private readonly IMonitor _monitor;
+        private readonly ILog _log;
         private readonly string _modID;
 
         private Dictionary<
@@ -26,10 +27,15 @@ namespace Mikew.BirdsOfAFeather.Helpers
 
         public bool HasGamePath(string assetBaseName) => _gamePathSet.Contains(assetBaseName);
 
-        public ModAssetHandler(string modID, IMonitor monitor)
+        public ModAssetHandler(string modID, ILog log)
         {
             _modID = modID;
-            _monitor = monitor;
+            _log = log ?? throw new ArgumentNullException(nameof(log));
+        }
+
+        public ModAssetHandler(string modID, IMonitor monitor)
+            : this(modID, new SmapiLog(monitor))
+        {
         }
 
         public enum AssetPathType
@@ -68,7 +74,7 @@ namespace Mikew.BirdsOfAFeather.Helpers
             else
             {
                 // Log a message indicating why the path was not found
-                _monitor.Log(
+                _log.Log(
                     $"Path not found for asset '{assetName}' with path type '{pathType}'.",
                     LogLevel.Warn
                 );

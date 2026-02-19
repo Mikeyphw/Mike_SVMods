@@ -1,4 +1,5 @@
 using System;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using StardewModdingAPI;
 
 namespace Mikew.BirdsOfAFeather.Helpers.SaveData
@@ -9,12 +10,17 @@ namespace Mikew.BirdsOfAFeather.Helpers.SaveData
     public sealed class SmapiSaveDataStore : ISaveDataStore
     {
         private readonly IModHelper _helper;
-        private readonly IMonitor _monitor;
+        private readonly ILog _log;
 
-        public SmapiSaveDataStore(IModHelper helper, IMonitor monitor)
+        public SmapiSaveDataStore(IModHelper helper, ILog log)
         {
             _helper = helper ?? throw new ArgumentNullException(nameof(helper));
-            _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
+        }
+
+        public SmapiSaveDataStore(IModHelper helper, IMonitor monitor)
+            : this(helper, new SmapiLog(monitor))
+        {
         }
 
         public T? Read<T>(string key) where T : class
@@ -25,7 +31,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.SaveData
             }
             catch (Exception ex)
             {
-                _monitor.Log($"Failed to read save data '{key}'.\n{ex}", LogLevel.Error);
+                _log.Log($"Failed to read save data '{key}'.\n{ex}", LogLevel.Error);
                 return null;
             }
         }
@@ -52,7 +58,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.SaveData
             }
             catch (Exception ex)
             {
-                _monitor.Log($"Failed to write save data '{key}'.\n{ex}", LogLevel.Error);
+                _log.Log($"Failed to write save data '{key}'.\n{ex}", LogLevel.Error);
             }
         }
 
@@ -64,7 +70,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.SaveData
             }
             catch (Exception ex)
             {
-                _monitor.Log($"Failed to delete save data '{key}'.\n{ex}", LogLevel.Error);
+                _log.Log($"Failed to delete save data '{key}'.\n{ex}", LogLevel.Error);
             }
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using StardewModdingAPI;
 
 namespace Mikew.BirdsOfAFeather.Helpers.Config
@@ -10,16 +11,21 @@ namespace Mikew.BirdsOfAFeather.Helpers.Config
         where TConfig : class, new()
     {
         private readonly IModHelper _helper;
-        private readonly IMonitor _monitor;
+        private readonly ILog _log;
         private TConfig _config;
 
         public event EventHandler<TConfig>? ConfigUpdated;
 
-        public SmapiConfigProvider(IModHelper helper, IMonitor monitor)
+        public SmapiConfigProvider(IModHelper helper, ILog log)
         {
             _helper = helper ?? throw new ArgumentNullException(nameof(helper));
-            _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
             _config = Read();
+        }
+
+        public SmapiConfigProvider(IModHelper helper, IMonitor monitor)
+            : this(helper, new SmapiLog(monitor))
+        {
         }
 
         public TConfig Get() => _config;
@@ -56,7 +62,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.Config
             }
             catch (Exception ex)
             {
-                _monitor.Log($"Failed to read config. Using defaults.\n{ex}", LogLevel.Error);
+                _log.Log($"Failed to read config. Using defaults.\n{ex}", LogLevel.Error);
                 return new TConfig();
             }
         }

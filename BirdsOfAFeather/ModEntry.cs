@@ -30,7 +30,8 @@ internal sealed class ModEntry : Mod
         MonitorInstance = Monitor;
         ModManifestInstance = ModManifest;
 
-        _configProvider = new SmapiConfigProvider<CoreModConfig>(helper, Monitor);
+        var bootstrapLog = new SmapiLog(Monitor);
+        _configProvider = new SmapiConfigProvider<CoreModConfig>(helper, bootstrapLog);
         ModCfg = _configProvider.Get();
 
         _log = new SmapiLog(Monitor, verboseEnabled: () => ModCfg.VerboseLogging, testingEnabled: () => ModCfg.TestingLogging);

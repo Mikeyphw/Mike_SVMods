@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
@@ -12,17 +13,22 @@ namespace Mikew.BirdsOfAFeather.Helpers.Content
     public sealed class AssetRequestCoordinator<TContext> : IDisposable
     {
         private readonly IModHelper _helper;
-        private readonly IMonitor _monitor;
+        private readonly ILog _log;
         private readonly Func<TContext> _contextFactory;
         private readonly List<IAssetRequestHandler<TContext>> _registrations = new();
         private bool _subscribed;
         private bool _sorted;
 
-        public AssetRequestCoordinator(IModHelper helper, IMonitor monitor, Func<TContext> contextFactory)
+        public AssetRequestCoordinator(IModHelper helper, ILog log, Func<TContext> contextFactory)
         {
             _helper = helper ?? throw new ArgumentNullException(nameof(helper));
-            _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
             _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+        }
+
+        public AssetRequestCoordinator(IModHelper helper, IMonitor monitor, Func<TContext> contextFactory)
+            : this(helper, new SmapiLog(monitor), contextFactory)
+        {
         }
 
         public void Attach()
@@ -79,7 +85,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.Content
                 }
                 catch (Exception ex)
                 {
-                    _monitor.Log($"Asset match failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
+                    _log.Log($"Asset match failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
                     continue;
                 }
 
@@ -95,7 +101,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.Content
                     }
                     catch (Exception ex)
                     {
-                        _monitor.Log($"Asset context factory failed.\n{ex}", LogLevel.Error);
+                        _log.Log($"Asset context factory failed.\n{ex}", LogLevel.Error);
                         return;
                     }
                 }
@@ -107,7 +113,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.Content
                 }
                 catch (Exception ex)
                 {
-                    _monitor.Log($"Asset gating failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
+                    _log.Log($"Asset gating failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
                     continue;
                 }
 
@@ -117,7 +123,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.Content
                 }
                 catch (Exception ex)
                 {
-                    _monitor.Log($"Asset handler failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
+                    _log.Log($"Asset handler failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
                 }
 
                 if (reg.StopAfterHandle)
