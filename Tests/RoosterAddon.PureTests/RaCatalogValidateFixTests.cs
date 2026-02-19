@@ -7,7 +7,7 @@ using RoosterAddon.Application.Catalogs;
 using RoosterAddon.Application.Catalogs.Console;
 using Xunit;
 
-namespace RoosterAddon.Tests;
+namespace RoosterAddon.PureTests;
 
 public sealed class RaCatalogValidateFixTests
 {

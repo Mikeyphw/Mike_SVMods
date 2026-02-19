@@ -5,7 +5,7 @@ using RoosterAddon.Application.Produces;
 using RoosterAddon.Constants;
 using Xunit;
 
-namespace RoosterAddon.Tests;
+namespace RoosterAddon.PureTests;
 
 public sealed class RandomGroupProduceResolverTests
 {

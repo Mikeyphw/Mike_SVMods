@@ -1,28 +1,19 @@
 using System.Collections.Generic;
-using System.Linq;
-using NSubstitute;
 using RoosterAddon.Application.Catalogs;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
-using StardewModdingAPI;
 using Xunit;
 
-namespace RoosterAddon.Tests;
+namespace RoosterAddon.PureTests;
 
 public sealed class CatalogApplyModeTests
 {
-    private static (CatalogManager Manager, CatalogBundle Catalogs, IMonitor Monitor) Create()
-    {
-        var manager = new CatalogManager();
-        var catalogs = CatalogDefaults.CreateDefaults();
-        var monitor = Substitute.For<IMonitor>();
-        return (manager, catalogs, monitor);
-    }
+    private static CatalogBundle CreateCatalogs() => CatalogDefaults.CreateDefaults();
 
     [Fact]
     public void ApplyToConfig_SeedOnly_DoesNotModifyExistingConfig()
     {
-        var (manager, catalogs, monitor) = Create();
+        var catalogs = CreateCatalogs();
         var config = RoosterAddonConfig.CreateDefault();
 
         config.General.EggProbability = -1;
@@ -31,7 +22,7 @@ public sealed class CatalogApplyModeTests
         config.Roosters[RoosterType.White].Price = -10;
         config.Roosters[RoosterType.White].ProduceEntries = new List<ProduceEntry>();
 
-        var changed = manager.ApplyToConfig(config, catalogs, isNewConfig: false, CatalogApplyMode.SeedOnly, monitor);
+        var changed = CatalogApplicator.ApplyToConfig(config, catalogs, isNewConfig: false, CatalogApplyMode.SeedOnly);
 
         Assert.False(changed);
         Assert.Equal(-1, config.General.EggProbability);
@@ -43,7 +34,7 @@ public sealed class CatalogApplyModeTests
     [Fact]
     public void ApplyToConfig_RepairInvalid_ClampsAndRepairsOnlyInvalid()
     {
-        var (manager, catalogs, monitor) = Create();
+        var catalogs = CreateCatalogs();
         var config = RoosterAddonConfig.CreateDefault();
 
         config.General.EggProbability = -1;
@@ -59,7 +50,7 @@ public sealed class CatalogApplyModeTests
 
         config.Roosters[RoosterType.Blue].BlueEggChoice = string.Empty;
 
-        var changed = manager.ApplyToConfig(config, catalogs, isNewConfig: false, CatalogApplyMode.RepairInvalid, monitor);
+        var changed = CatalogApplicator.ApplyToConfig(config, catalogs, isNewConfig: false, CatalogApplyMode.RepairInvalid);
 
         Assert.True(changed);
 
@@ -79,7 +70,7 @@ public sealed class CatalogApplyModeTests
     [Fact]
     public void ApplyToConfig_MergeMissing_FillsMissingWithoutOverwriting()
     {
-        var (manager, catalogs, monitor) = Create();
+        var catalogs = CreateCatalogs();
         var config = RoosterAddonConfig.CreateDefault();
 
         config.Roosters.Remove(RoosterType.Blue);
@@ -89,7 +80,7 @@ public sealed class CatalogApplyModeTests
         var userEntry = new ProduceEntry { Choice = "999", Probability = 100 };
         config.Roosters[RoosterType.Brown].ProduceEntries = new List<ProduceEntry> { userEntry };
 
-        var changed = manager.ApplyToConfig(config, catalogs, isNewConfig: false, CatalogApplyMode.MergeMissing, monitor);
+        var changed = CatalogApplicator.ApplyToConfig(config, catalogs, isNewConfig: false, CatalogApplyMode.MergeMissing);
 
         Assert.True(changed);
         Assert.True(config.Roosters.ContainsKey(RoosterType.Blue));
@@ -103,7 +94,7 @@ public sealed class CatalogApplyModeTests
     [Fact]
     public void ApplyToConfig_Authoritative_OverwritesConfigFromCatalogs()
     {
-        var (manager, catalogs, monitor) = Create();
+        var catalogs = CreateCatalogs();
         var config = RoosterAddonConfig.CreateDefault();
 
         config.General.EggProbability = 12;
@@ -112,7 +103,7 @@ public sealed class CatalogApplyModeTests
             new() { Choice = "999", Probability = 100 }
         };
 
-        var changed = manager.ApplyToConfig(config, catalogs, isNewConfig: false, CatalogApplyMode.Authoritative, monitor);
+        var changed = CatalogApplicator.ApplyToConfig(config, catalogs, isNewConfig: false, CatalogApplyMode.Authoritative);
 
         Assert.True(changed);
 

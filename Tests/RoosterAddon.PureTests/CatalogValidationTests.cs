@@ -4,7 +4,7 @@ using RoosterAddon.Application.Catalogs;
 using RoosterAddon.Constants;
 using Xunit;
 
-namespace RoosterAddon.Tests;
+namespace RoosterAddon.PureTests;
 
 public sealed class CatalogValidationTests
 {
