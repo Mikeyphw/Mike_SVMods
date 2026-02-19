@@ -7,10 +7,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <ItemGroup>
+    <ItemGroup>
     <!-- Compile the Core source directly to avoid SMAPI/ContentPatcher dependencies in the test assembly. -->
     <Compile Include="..\..\LetMeHatchThisEgg\Core\Cloning\FarmAnimalCloneTransformer.cs" Link="Core\Cloning\FarmAnimalCloneTransformer.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Core\Cloning\FarmAnimalCloneTextFieldPolicy.cs" Link="Core\Cloning\FarmAnimalCloneTextFieldPolicy.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Core\Placeholders\PlaceholderStringPolicy.cs" Link="Core\Placeholders\PlaceholderStringPolicy.cs" />
   </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\..\BirdsOfAFeather\BirdsOfAFeather.csproj" Private="false" />
