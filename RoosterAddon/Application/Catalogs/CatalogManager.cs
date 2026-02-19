@@ -59,60 +59,29 @@ internal sealed class CatalogManager
         IMonitor monitor
     )
     {
-        if (config is null) throw new ArgumentNullException(nameof(config));
-        if (catalogs is null) throw new ArgumentNullException(nameof(catalogs));
-        if (monitor is null) throw new ArgumentNullException(nameof(monitor));
 
-        var changed = false;
+if (config is null) throw new ArgumentNullException(nameof(config));
+if (catalogs is null) throw new ArgumentNullException(nameof(catalogs));
+if (monitor is null) throw new ArgumentNullException(nameof(monitor));
 
-        if (isNewConfig)
+return CatalogApplicator.ApplyToConfig(
+    config,
+    catalogs,
+    isNewConfig,
+    mode,
+    (level, message) =>
+    {
+        var smapiLevel = level switch
         {
-            changed |= EnsureRequiredRoosters(config, catalogs, monitor);
-            changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
-            changed |= ApplyProduceDefaults(config, catalogs.Produce);
+            CatalogApplicator.CatalogLogLevel.Warn => LogLevel.Warn,
+            CatalogApplicator.CatalogLogLevel.Error => LogLevel.Error,
+            _ => LogLevel.Info
+        };
 
-            if (changed)
-                monitor.Log("Catalogs applied to newly created config.", LogLevel.Info);
-
-            return changed;
-        }
-
-        switch (mode)
-        {
-            case CatalogApplyMode.SeedOnly:
-                break;
-
-            case CatalogApplyMode.RepairInvalid:
-                changed |= EnsureRequiredRoosters(config, catalogs, monitor);
-                changed |= FixInvalidGeneralSettings(config, catalogs.Hatching.General, monitor);
-                changed |= FixInvalidRoosterSettings(config, catalogs.Hatching, monitor);
-                changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
-                break;
-
-            case CatalogApplyMode.MergeMissing:
-                changed |= EnsureRequiredRoosters(config, catalogs, monitor);
-                changed |= MergeMissing(config, catalogs, monitor);
-                changed |= FixInvalidGeneralSettings(config, catalogs.Hatching.General, monitor);
-                changed |= FixInvalidRoosterSettings(config, catalogs.Hatching, monitor);
-                changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
-                break;
-
-            case CatalogApplyMode.Authoritative:
-                changed |= EnsureRequiredRoosters(config, catalogs, monitor);
-                changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
-                changed |= ApplyProduceDefaults(config, catalogs.Produce);
-                break;
-
-            default:
-                changed |= EnsureRequiredRoosters(config, catalogs, monitor);
-                changed |= FixInvalidGeneralSettings(config, catalogs.Hatching.General, monitor);
-                changed |= FixInvalidRoosterSettings(config, catalogs.Hatching, monitor);
-                changed |= FixInvalidProduceTables(config, catalogs.Produce, monitor);
-                break;
-        }
-
-        return changed;
+        monitor.Log(message, smapiLevel);
     }
+);
+}
 
     private static bool EnsureRequiredRoosters(RoosterAddonConfig config, CatalogBundle catalogs, IMonitor monitor)
     {
@@ -338,7 +307,11 @@ internal sealed class CatalogManager
 
             if (rt.ToString().Equals("Blue", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(entry.BlueEggChoice))
                 if (string.IsNullOrWhiteSpace(settings.BlueEggChoice))
+                {
                     settings.BlueEggChoice = entry.BlueEggChoice;
+                    changed = true;
+                    monitor.Log($"Catalogs: repaired empty BlueEggChoice for {rt}.", LogLevel.Warn);
+                }
         }
 
         return changed;

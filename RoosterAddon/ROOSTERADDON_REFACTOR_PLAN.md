@@ -162,7 +162,7 @@ This plan is the single source of truth for the refactor phases in this workspac
 
 ---
 
-### Phase 10 — CI build gate + release hardening
+### Phase 10 — CI build gate + release hardening ✅
 **Goal:** Prevent regressions and make patches compile-verified.
 
 **Deliverables**

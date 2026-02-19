@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RoosterAddon.Application.Catalogs;
+using RoosterAddon.Application.Catalogs.Console;
 using RoosterAddon.Framework.Config;
 using StardewModdingAPI;
 
@@ -23,22 +24,6 @@ internal sealed partial class RoosterCoordinator
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         Converters = { new JsonStringEnumConverter() }
     };
-
-    private enum CatalogFileStatus
-    {
-        Ok,
-        Migrated,
-        Error
-    }
-
-    private sealed record CatalogFileReport(
-        string Name,
-        string RelativePath,
-        CatalogFileStatus Status,
-        bool WouldChange,
-        IReadOnlyList<string> Issues
-    );
-
     private void CatalogCommand(string command, string[] args)
     {
         var verb = args.FirstOrDefault()?.Trim() ?? "help";
@@ -123,33 +108,21 @@ internal sealed partial class RoosterCoordinator
 
     private void HandleCatalogValidate(bool fix)
     {
-        var defaults = CatalogDefaults.CreateDefaults();
+        var svc = new CatalogCommandService(Helper.DirectoryPath);
+        var result = svc.ValidateAndMaybeFix(fix);
 
-        var (bundle, loadReports) = LoadBundleForCommands(defaults, repairInvalidFiles: fix);
-        CatalogSanitizer.Sanitize(bundle);
-
-        var issues = CatalogValidator.Validate(bundle).ToList();
-        var reports = BuildPerFileReports(bundle, defaults, loadReports, issues);
-
-        LogCatalogReports("Catalog validation results", reports);
+        LogCatalogReports("Catalog validation results", result.Reports);
 
         if (!fix)
             return;
 
-        var timestamp = DateTimeOffset.Now.ToString("yyyyMMddHHmmss");
-        var backupRoot = Path.Combine(Helper.DirectoryPath, "data", "catalogs", "backups", timestamp);
+        if (!string.IsNullOrWhiteSpace(result.BackupRelativeDir))
+            Monitor.Log($"Wrote normalized catalogs. Backups: {result.BackupRelativeDir}/", LogLevel.Info);
 
-        WriteWithBackup(RoostersCatalogPath, bundle.Roosters, backupRoot);
-        WriteWithBackup(ProduceCatalogPath, bundle.Produce, backupRoot);
-        WriteWithBackup(HatchingCatalogPath, bundle.Hatching, backupRoot);
-
-        Monitor.Log($"Wrote normalized catalogs. Backups: data/catalogs/backups/{timestamp}/", LogLevel.Info);
-
-        var postIssues = CatalogValidator.Validate(bundle);
-        if (postIssues.Count > 0)
+        if (result.PostFixIssues.Count > 0)
         {
             Monitor.Log("Catalogs still have validation errors after --fix:", LogLevel.Error);
-            foreach (var issue in postIssues)
+            foreach (var issue in result.PostFixIssues)
                 Monitor.Log($"  - {issue}", LogLevel.Error);
         }
     }
