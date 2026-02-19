@@ -6,10 +6,11 @@ using StardewModdingAPI.Events;
 using StardewValley.GameData.Objects;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
+using Mikew.BirdsOfAFeather.Helpers.Content;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
-public sealed class ObjectsEditor : AssetEditorBase
+public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
 {
     public override string AssetName => GameAssets.Objects;
 

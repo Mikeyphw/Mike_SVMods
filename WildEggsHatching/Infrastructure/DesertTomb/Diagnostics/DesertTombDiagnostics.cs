@@ -7,8 +7,9 @@ using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Monsters;
 using WildEggsHatching.DesertTomb.Core.Spawning;
-using WildEggsHatching.Infrastructure.Config;
-using WildEggsHatching.Infrastructure.Logging;
+using WildEggsHatching.Infrastructure.Get();
+using Mikew.BirdsOfAFeather.Helpers.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Get();
 
 namespace WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 
@@ -19,11 +20,11 @@ namespace WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 /// </summary>
 public sealed class DesertTombDiagnostics
 {
-    private readonly IConfigProvider _config;
+    private readonly SmapiConfigProvider<ModConfig> _config;
     private readonly ILog _log;
     private readonly PharaohTrackerOverlay _overlay;
 
-    public DesertTombDiagnostics(IModHelper helper, IConfigProvider config, ILog log)
+    public DesertTombDiagnostics(IModHelper helper, SmapiConfigProvider<ModConfig> config, ILog log)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _log = log ?? throw new ArgumentNullException(nameof(log));
@@ -34,7 +35,7 @@ public sealed class DesertTombDiagnostics
 
     public void OnActivated(int layoutLevel, string mapPath, MineShaft mineShaft, TombSpawnPlan plan, int spawned)
     {
-        if (!_config.Config.DesertTombDebugLogging)
+        if (!_config.Get().DesertTombDebugLogging)
             return;
 
         var sb = new StringBuilder();
@@ -58,7 +59,7 @@ public sealed class DesertTombDiagnostics
 
     public void LogMonsters(GameLocation location)
     {
-        if (!_config.Config.DesertTombDebugLogging)
+        if (!_config.Get().DesertTombDebugLogging)
             return;
 
         var monsters = location.characters

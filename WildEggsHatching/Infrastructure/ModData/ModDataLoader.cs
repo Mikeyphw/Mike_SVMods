@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData.Models;
 
 namespace WildEggsHatching.Infrastructure.ModData;

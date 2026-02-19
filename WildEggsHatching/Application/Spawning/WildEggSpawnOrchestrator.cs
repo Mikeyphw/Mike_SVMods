@@ -1,5 +1,5 @@
 using WildEggsHatching.Infrastructure.Game;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
 
 namespace WildEggsHatching.Application.Spawning;

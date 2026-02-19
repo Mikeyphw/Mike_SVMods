@@ -13,9 +13,9 @@ using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using WildEggsHatching.Infrastructure.Game;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
-using WildEggsHatching.Infrastructure.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.SaveData;
 
 namespace WildEggsHatching.Application.AnimalNotes;
 

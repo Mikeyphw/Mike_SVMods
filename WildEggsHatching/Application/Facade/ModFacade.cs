@@ -8,19 +8,20 @@ using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Application.Spawning;
 using WildEggsHatching.Application.Spawning.Diagnostics;
 using WildEggsHatching.Core.Enums;
-using WildEggsHatching.Infrastructure.Config;
+using WildEggsHatching.Infrastructure.Get();
 using WildEggsHatching.Infrastructure.Diagnostics;
 using WildEggsHatching.Infrastructure.Game;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
-using WildEggsHatching.Infrastructure.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.Get();
 
 namespace WildEggsHatching.Application.Facade;
 
 public sealed class ModFacade : IModFacade
 {
     private readonly ISaveDataStore _store;
-    private readonly IConfigProvider _config;
+    private readonly SmapiConfigProvider<ModConfig> _config;
     private readonly ILog _log;
 
     private readonly Func<bool> _isWorldReady;
@@ -44,7 +45,7 @@ public sealed class ModFacade : IModFacade
 
     public ModFacade(
         ISaveDataStore store,
-        IConfigProvider config,
+        SmapiConfigProvider<ModConfig> config,
         ILog log,
         Func<bool> isWorldReady,
         Func<bool> isMainPlayer,
@@ -86,7 +87,7 @@ public sealed class ModFacade : IModFacade
     public ProgressionStep GetProgressionStep()
         => _progression?.GetCurrentStep() ?? ProgressionStep.PartI;
 
-    public ModConfig GetConfigSnapshot() => Clone(_config.Config);
+    public ModConfig GetConfigSnapshot() => Clone(_config.Get());
 
     public IReadOnlyDictionary<string, int> GetQuestCompletionDays()
         => _progression?.GetQuestCompletionDays() ?? new Dictionary<string, int>();

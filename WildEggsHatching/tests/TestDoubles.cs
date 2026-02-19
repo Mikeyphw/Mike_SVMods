@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Application.Spawning;
-using WildEggsHatching.Infrastructure.Config;
-using WildEggsHatching.Infrastructure.Logging;
+using WildEggsHatching.Infrastructure.Get();
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData.Models;
 using WildEggsHatching.Infrastructure.Mods;
-using WildEggsHatching.Infrastructure.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.Get();
 
 namespace WildEggsHatching.Refactor.Tests;
 
@@ -70,7 +71,7 @@ internal sealed class InMemorySaveDataStore : ISaveDataStore
     public bool ContainsKey(string key) => _data.ContainsKey(key);
 }
 
-internal sealed class FakeConfigProvider : IConfigProvider
+internal sealed class FakeConfigProvider : SmapiConfigProvider<ModConfig>
 {
     public FakeConfigProvider(ModConfig config) => Config = config;
 

@@ -8,14 +8,15 @@ using StardewValley.Monsters;
 using WildEggsHatching.Application.DesertTomb.Generation;
 using WildEggsHatching.Application.DesertTomb.Spawning;
 using WildEggsHatching.Core.Enums;
-using WildEggsHatching.DesertTomb.Core.Configuration;
+using WildEggsHatching.DesertTomb.Core.Get()uration;
 using WildEggsHatching.DesertTomb.Core.Model;
 using WildEggsHatching.DesertTomb.Core.Runtime;
 using WildEggsHatching.DesertTomb.Core.Spawning;
-using WildEggsHatching.Infrastructure.Config;
-using WildEggsHatching.Infrastructure.Logging;
+using WildEggsHatching.Infrastructure.Get();
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
+using Mikew.BirdsOfAFeather.Helpers.Get();
 
 namespace WildEggsHatching.Application.DesertTomb.Runtime;
 
@@ -31,7 +32,7 @@ public sealed class DesertTombRuntime
 
     public const string LadderSuppressedKey = Constants.ModId + "/deserttomb/ladderSuppressed";
 
-    private readonly IConfigProvider _config;
+    private readonly SmapiConfigProvider<ModConfig> _config;
     private readonly Func<ProgressionStep> _getStep;
     private readonly ILog _log;
     private readonly Func<bool> _isMainPlayer;
@@ -45,7 +46,7 @@ public sealed class DesertTombRuntime
     private MineShaft? _pending;
 
     public DesertTombRuntime(
-        IConfigProvider config,
+        SmapiConfigProvider<ModConfig> config,
         Func<ProgressionStep> getStep,
         ILog log,
         Func<bool> isMainPlayer,
@@ -95,7 +96,7 @@ public sealed class DesertTombRuntime
         if (mineShaft.mineLevel == 77377)
             return false;
 
-        var cfg = _config.Config;
+        var cfg = _config.Get();
 
         if (!cfg.DesertTombModuleEnabled)
             return false;
@@ -125,7 +126,7 @@ public sealed class DesertTombRuntime
         if (mineShaft is null)
             return;
 
-        var cfg = _config.Config;
+        var cfg = _config.Get();
 
         if (!cfg.DesertTombModuleEnabled)
             return;
@@ -162,7 +163,7 @@ public sealed class DesertTombRuntime
         if (mineShaft is null)
             return;
 
-        var cfg = _config.Config;
+        var cfg = _config.Get();
 
         if (!cfg.DesertTombModuleEnabled)
             return;
@@ -272,7 +273,7 @@ public sealed class DesertTombRuntime
 
     private void ActivateCore(MineShaft mineShaft)
     {
-        var cfg = _config.Config;
+        var cfg = _config.Get();
         var step = _getStep();
         var mapPath = mineShaft.mapPath.Value;
 

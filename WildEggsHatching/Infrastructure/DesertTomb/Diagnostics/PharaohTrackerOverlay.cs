@@ -5,8 +5,9 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Locations;
-using WildEggsHatching.Infrastructure.Config;
+using WildEggsHatching.Infrastructure.Get();
 using WildEggsHatching.Infrastructure.DesertTomb.Monsters.Creatures;
+using Mikew.BirdsOfAFeather.Helpers.Get();
 
 namespace WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 
@@ -16,11 +17,11 @@ namespace WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 public sealed class PharaohTrackerOverlay
 {
     private readonly IModHelper _helper;
-    private readonly IConfigProvider _config;
+    private readonly SmapiConfigProvider<ModConfig> _config;
 
     private readonly Lazy<Texture2D> _trackerTexture;
 
-    public PharaohTrackerOverlay(IModHelper helper, IConfigProvider config)
+    public PharaohTrackerOverlay(IModHelper helper, SmapiConfigProvider<ModConfig> config)
     {
         _helper = helper ?? throw new ArgumentNullException(nameof(helper));
         _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -33,7 +34,7 @@ public sealed class PharaohTrackerOverlay
         if (spriteBatch is null)
             throw new ArgumentNullException(nameof(spriteBatch));
 
-        if (!_config.Config.DesertTombPharaohTrackerEnabled)
+        if (!_config.Get().DesertTombPharaohTrackerEnabled)
             return;
 
         if (Game1.currentLocation is not MineShaft mineShaft)

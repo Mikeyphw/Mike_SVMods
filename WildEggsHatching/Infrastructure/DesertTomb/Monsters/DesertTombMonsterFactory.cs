@@ -8,7 +8,7 @@ using WildEggsHatching.Infrastructure.DesertTomb.Monsters.Creatures;
 using WildEggsHatching.Infrastructure.DesertTomb.Monsters.Definitions;
 using WildEggsHatching.Infrastructure.DesertTomb.Loot;
 using WildEggsHatching.Infrastructure.DesertTomb.Loot.Definitions;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace WildEggsHatching.Infrastructure.DesertTomb.Monsters;

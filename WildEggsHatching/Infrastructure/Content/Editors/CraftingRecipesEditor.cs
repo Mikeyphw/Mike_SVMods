@@ -2,10 +2,11 @@ using System.Collections.Generic;
 using StardewModdingAPI.Events;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
+using Mikew.BirdsOfAFeather.Helpers.Content;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
-public sealed class CraftingRecipesEditor : AssetEditorBase
+public sealed class CraftingRecipesEditor : AssetEditorBase<ContentContext>
 {
     public override string AssetName => GameAssets.CraftingRecipes;
 

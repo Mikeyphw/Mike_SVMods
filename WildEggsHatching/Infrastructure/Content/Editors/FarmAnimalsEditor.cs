@@ -2,10 +2,11 @@ using System;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
+using Mikew.BirdsOfAFeather.Helpers.Content;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
-public sealed class FarmAnimalsEditor : AssetEditorBase
+public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
 {
     public override string AssetName => GameAssets.FarmAnimals;
 

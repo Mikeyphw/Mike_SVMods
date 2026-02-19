@@ -7,10 +7,11 @@ using StardewValley.GameData;
 using StardewValley.GameData.Machines;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
+using Mikew.BirdsOfAFeather.Helpers.Content;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
-public sealed class MachinesEditor : AssetEditorBase
+public sealed class MachinesEditor : AssetEditorBase<ContentContext>
 {
     public override string AssetName => GameAssets.Machines;
 

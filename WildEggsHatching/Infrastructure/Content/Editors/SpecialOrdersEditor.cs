@@ -3,10 +3,11 @@ using StardewModdingAPI.Events;
 using StardewValley.GameData.SpecialOrders;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
+using Mikew.BirdsOfAFeather.Helpers.Content;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
-public sealed class SpecialOrdersEditor : AssetEditorBase
+public sealed class SpecialOrdersEditor : AssetEditorBase<ContentContext>
 {
     public override string AssetName => GameAssets.SpecialOrders;
 

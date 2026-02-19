@@ -6,9 +6,10 @@ using System.Text.RegularExpressions;
 using StardewModdingAPI;
 using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Application.Progression;
-using WildEggsHatching.Infrastructure.Config;
-using WildEggsHatching.Infrastructure.Logging;
-using WildEggsHatching.Infrastructure.SaveData;
+using WildEggsHatching.Infrastructure.Get();
+using Mikew.BirdsOfAFeather.Helpers.Logging;
+using Mikew.BirdsOfAFeather.Helpers.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.Get();
 
 namespace WildEggsHatching.Infrastructure.Diagnostics;
 
@@ -17,7 +18,7 @@ public static class Phase8HealthReporter
 {
     private static readonly Regex ImageSourceRegex = new("<image\s+source=\"(?<src>[^\"]+)\"", RegexOptions.Compiled);
 
-    public static void LogPhase8HealthReport(IModHelper helper, ISaveDataStore store, IConfigProvider config, ILog log)
+    public static void LogPhase8HealthReport(IModHelper helper, ISaveDataStore store, SmapiConfigProvider<ModConfig> config, ILog log)
     {
         try
         {
@@ -31,7 +32,7 @@ public static class Phase8HealthReporter
             issues.AddRange(CheckTmxImages(helper));
             issues.AddRange(CheckSchema(store));
 
-            var configIssues = CheckConfig(config.Config).ToList();
+            var configIssues = CheckConfig(config.Get()).ToList();
             issues.AddRange(configIssues);
 
             var summary =

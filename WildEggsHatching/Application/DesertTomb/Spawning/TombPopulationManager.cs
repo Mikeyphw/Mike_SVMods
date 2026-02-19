@@ -8,7 +8,7 @@ using StardewValley.Monsters;
 using WildEggsHatching.DesertTomb.Core.Configuration;
 using WildEggsHatching.DesertTomb.Core.Model;
 using WildEggsHatching.DesertTomb.Core.Spawning;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace WildEggsHatching.Application.DesertTomb.Spawning;

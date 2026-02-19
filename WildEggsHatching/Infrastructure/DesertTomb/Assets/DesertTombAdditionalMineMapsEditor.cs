@@ -2,6 +2,7 @@ using System;
 using StardewModdingAPI.Events;
 using WildEggsHatching.Infrastructure.Config;
 using WildEggsHatching.Infrastructure.Content;
+using Mikew.BirdsOfAFeather.Helpers.Content;
 
 namespace WildEggsHatching.Infrastructure.DesertTomb.Assets;
 

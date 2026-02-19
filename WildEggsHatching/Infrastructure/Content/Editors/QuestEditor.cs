@@ -6,10 +6,11 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
+using Mikew.BirdsOfAFeather.Helpers.Content;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
-public sealed class QuestEditor : AssetEditorBase
+public sealed class QuestEditor : AssetEditorBase<ContentContext>
 {
     private static readonly object LockObj = new();
     private static IReadOnlyList<string>? _animalKeys;

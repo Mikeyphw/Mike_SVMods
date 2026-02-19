@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
-using WildEggsHatching.Infrastructure.Config;
+using WildEggsHatching.Infrastructure.Get();
 using WildEggsHatching.Infrastructure.Game;
-using WildEggsHatching.Infrastructure.Logging;
-using WildEggsHatching.Infrastructure.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
+using Mikew.BirdsOfAFeather.Helpers.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.Get();
 
 namespace WildEggsHatching.Application.Progression;
 
@@ -14,7 +15,7 @@ public sealed class ProgressionService
     private const int SaveDataVersion = SaveKeys.Version;
 
     private readonly ISaveDataStore _store;
-    private readonly IConfigProvider _config;
+    private readonly SmapiConfigProvider<ModConfig> _config;
     private readonly IUnlockFactsProvider _facts;
     private readonly IGameQuestService _quests;
     private readonly IGameMailService _mail;
@@ -29,7 +30,7 @@ public sealed class ProgressionService
 
     public ProgressionService(
         ISaveDataStore store,
-        IConfigProvider config,
+        SmapiConfigProvider<ModConfig> config,
         IUnlockFactsProvider facts,
         IGameQuestService quests,
         IGameMailService mail,
@@ -50,7 +51,7 @@ public sealed class ProgressionService
 
     public ProgressionStep GetCurrentStep()
     {
-        var config = _config.Config;
+        var config = _config.Get();
 
         if (!_initialized)
             return config.ProgressionMode ? ProgressionStep.PartI : ProgressionRules.MaxStep;
@@ -111,7 +112,7 @@ public sealed class ProgressionService
     {
         EnsureInitialized();
 
-        var config = _config.Config;
+        var config = _config.Get();
         var facts = _facts.GetFacts(_data);
 
         if (!facts.IsMainPlayer)
@@ -171,7 +172,7 @@ public void OnSaveLoaded()
     {
         EnsureInitialized();
 
-        if (!_config.Config.ProgressionMode)
+        if (!_config.Get().ProgressionMode)
         {
             _recipes.EnsureCraftingRecipeLearned("Elixir Of Revitalized Essence");
             _recipes.EnsureCraftingRecipeLearned("Wild Egg Incubator");
@@ -185,7 +186,7 @@ public void OnSaveLoaded()
     {
         EnsureInitialized();
 
-        if (!_config.Config.ProgressionMode)
+        if (!_config.Get().ProgressionMode)
             return;
 
         SyncQuestCompletionDays();
@@ -199,7 +200,7 @@ public void OnSaveLoaded()
 
         EnsureInitialized();
 
-        if (!_config.Config.ProgressionMode)
+        if (!_config.Get().ProgressionMode)
             return;
 
         // "QuestCompleted" trigger via polling, since SMAPI doesn't expose a quest-completion event.
@@ -235,14 +236,14 @@ public void OnSaveLoaded()
             _data = envelope.Data ?? new ProgressionSaveData();
         }
 
-        NormalizeStateForConfig(_config.Config);
+        NormalizeStateForConfig(_config.Get());
 
         _initialized = true;
     }
 
     private void Save()
     {
-        var config = _config.Config;
+        var config = _config.Get();
         var facts = _facts.GetFacts(_data);
 
         if (!facts.IsMainPlayer)
@@ -255,7 +256,7 @@ public void OnSaveLoaded()
 
     private bool SyncQuestCompletionDays()
     {
-        var config = _config.Config;
+        var config = _config.Get();
         var facts = _facts.GetFacts(_data);
 
         if (!facts.IsMainPlayer)
@@ -304,7 +305,7 @@ public void OnSaveLoaded()
 
     private void Evaluate(ProgressionTrigger trigger)
     {
-        var config = _config.Config;
+        var config = _config.Get();
         var facts = _facts.GetFacts(_data);
 
         if (!facts.IsMainPlayer)
@@ -351,7 +352,7 @@ public void OnSaveLoaded()
         var from = _data.Step;
         _data.Step = step;
 
-        ProgressionRules.ApplyStepUnlockSideEffects(step, _mail, _config.Config);
+        ProgressionRules.ApplyStepUnlockSideEffects(step, _mail, _config.Get());
 
         _invalidateAssets();
         StepChanged?.Invoke(step);

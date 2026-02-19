@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Models;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData.Models;
 using WildEggsHatching.Infrastructure.Mods;
 

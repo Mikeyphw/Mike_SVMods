@@ -9,14 +9,15 @@ using StardewModdingAPI;
 using StardewValley;
 using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Application.Progression;
-using WildEggsHatching.Infrastructure.Config;
-using WildEggsHatching.Infrastructure.Logging;
+using WildEggsHatching.Infrastructure.Get();
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
-using WildEggsHatching.Infrastructure.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.SaveData;
 using WildEggsHatching.Application.Animals;
 using WildEggsHatching.Infrastructure.ModData;
 using WildEggsHatching.Infrastructure.ModData.Models;
 using xTile;
+using Mikew.BirdsOfAFeather.Helpers.Get();
 
 namespace WildEggsHatching.Infrastructure.Diagnostics;
 
@@ -58,11 +59,11 @@ public sealed class WeggVerifier
 
     private readonly IModHelper _helper;
     private readonly ISaveDataStore _store;
-    private readonly IConfigProvider _config;
+    private readonly SmapiConfigProvider<ModConfig> _config;
     private readonly IModDataLoader _dataLoader;
     private readonly ILog _log;
 
-    public WeggVerifier(IModHelper helper, ISaveDataStore store, IConfigProvider config, IModDataLoader dataLoader, ILog log)
+    public WeggVerifier(IModHelper helper, ISaveDataStore store, SmapiConfigProvider<ModConfig> config, IModDataLoader dataLoader, ILog log)
     {
         _helper = helper ?? throw new ArgumentNullException(nameof(helper));
         _store = store ?? throw new ArgumentNullException(nameof(store));
@@ -240,7 +241,7 @@ public sealed class WeggVerifier
 
     private void AddConfigChecks(WeggVerifyReport report)
     {
-        var c = _config.Config;
+        var c = _config.Get();
         if (c.AnimalNotesWarnAfterDays < 1)
             report.Add("config/animalnotes-warn", WeggVerifyStatus.Warn, $"AnimalNotesWarnAfterDays={c.AnimalNotesWarnAfterDays} (should be >= 1).");
         else

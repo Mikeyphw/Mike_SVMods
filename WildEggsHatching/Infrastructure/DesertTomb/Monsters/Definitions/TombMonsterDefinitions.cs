@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using StardewModdingAPI;
 using WildEggsHatching.DesertTomb.Core.Model.Monsters;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 

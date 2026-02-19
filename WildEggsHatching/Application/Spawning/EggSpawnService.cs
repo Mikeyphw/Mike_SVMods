@@ -5,7 +5,7 @@ using StardewModdingAPI;
 using StardewValley;
 using WildEggsHatching.Application.Spawning.Diagnostics;
 using WildEggsHatching.Infrastructure.Game;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData.Models;
 
 namespace WildEggsHatching.Application.Spawning;

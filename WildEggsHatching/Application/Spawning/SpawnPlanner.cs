@@ -4,7 +4,7 @@ using System.Linq;
 using Mikew.BirdsOfAFeather.Framework.Random;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Game;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
 using WildEggsHatching.Infrastructure.ModData.Models;
 using WildEggsHatching.Infrastructure.Mods;

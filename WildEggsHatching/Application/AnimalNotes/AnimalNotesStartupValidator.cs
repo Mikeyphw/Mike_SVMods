@@ -6,7 +6,7 @@ using StardewValley;
 using StardewValley.GameData.Objects;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Content;
-using WildEggsHatching.Infrastructure.Logging;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
 
 namespace WildEggsHatching.Application.AnimalNotes;

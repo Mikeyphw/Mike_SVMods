@@ -2,7 +2,7 @@ using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using WildEggsHatching.Infrastructure.Config;
-using WildEggsHatching.Infrastructure.SaveData;
+using Mikew.BirdsOfAFeather.Helpers.SaveData;
 using Xunit;
 
 namespace WildEggsHatching.Refactor.Tests;
