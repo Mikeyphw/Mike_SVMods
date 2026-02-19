@@ -14,6 +14,10 @@
     <Compile Include="..\..\LetMeHatchThisEgg\Core\Cloning\FarmAnimalCloneNonLocalizedFieldPolicy.cs" Link="Core\Cloning\FarmAnimalCloneNonLocalizedFieldPolicy.cs" />
     <Compile Include="..\..\LetMeHatchThisEgg\Core\Placeholders\PlaceholderStringPolicy.cs" Link="Core\Placeholders\PlaceholderStringPolicy.cs" />
     <Compile Include="..\..\LetMeHatchThisEgg\Core\Placeholders\PlaceholderReplacementPolicy.cs" Link="Core\Placeholders\PlaceholderReplacementPolicy.cs" />
+      <Compile Include="..\..\LetMeHatchThisEgg\Core\Cloning\CloneTextureResolver.cs" Link="Core\Cloning\CloneTextureResolver.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\Cloning\ICloneTextureBookkeeper.cs" Link="Infrastructure\Cloning\ICloneTextureBookkeeper.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\Cloning\CloneTextureBookkeeper.cs" Link="Infrastructure\Cloning\CloneTextureBookkeeper.cs" />
+
   </ItemGroup>
 
 
