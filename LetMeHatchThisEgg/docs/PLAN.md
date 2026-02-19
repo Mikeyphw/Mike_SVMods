@@ -55,10 +55,13 @@ Inspired by WildEggsHatching: **Core** = pure domain, **Application** = orchestr
 
 ## Phase 6 — Tests
 1. ✅ Add testable Core services + unit tests under `Tests/` (separate zip rules).
-2. Validate editor/service behavior with fixtures.
+2. ✅ Add unit tests for Application use-cases (façades) to lock call-site behavior.
+3. ✅ Add contract-style tests for Infrastructure adapters (gating paths; no SMAPI runtime required).
+4. ✅ Add CI-friendly runner script (`dotnet test`) + hook PreBuildValidation (Tests/run-tests.* + Tests.sln). (2026-02-19)
+5. ✅ Add positive-path edit-service tests by moving branching logic into Application services (ops-injected) and testing those services. (2026-02-19)
+6. ✅ Add positive-path tests for FarmAnimals and Machines edit services. (2026-02-19)
 
-**Completion note (20260219-12):** Added xUnit tests for CloneIdService and EggSelectionService.
-
+**Completion note (20260219-13):** Added xUnit tests for Application use-cases and adapter gating behavior.
 
 ## Phase 7 — Packaging + release
 1. Verify no local duplicates remain.

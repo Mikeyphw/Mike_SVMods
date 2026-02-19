@@ -14,8 +14,21 @@ public sealed class CloneIdUseCase
     public bool IsClonedItem(string itemId, CloneItemType? type = null, bool fertilized = false)
         => CloneIdService.IsClonedItem(itemId, type, fertilized);
 
-    public string GetClonedItemId(string modUniqueId, CloneItemType type, string baseItemId, bool fertilized = false)
-        => CloneIdService.GetClonedItemId(modUniqueId, type, baseItemId, fertilized);
+    public string GetClonedItemId(
+        string modUniqueId,
+        string animalKey,
+        string originalItemId,
+        CloneItemType type,
+        ItemType itemType = ItemType.Normal,
+        bool fertilized = false
+    ) => CloneIdService.GetClonedItemId(
+        modUniqueId: modUniqueId,
+        animalKey: animalKey,
+        originalItemId: originalItemId,
+        cloneItemType: type,
+        itemType: itemType,
+        isFertilized: fertilized
+    );
 
     public bool TryParseCloneId(string itemId, out CloneIdParts parts)
         => CloneIdService.TryParseCloneId(itemId, out parts);

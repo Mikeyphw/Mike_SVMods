@@ -1,31 +1,24 @@
 using System;
 using System.Collections.Generic;
+using LetMeHatchThisEgg.Application.Services;
 using LetMeHatchThisEgg.Application.UseCases;
 using LetMeHatchThisEgg.GameAssetManagement;
 using StardewValley.GameData.Machines;
 
 namespace LetMeHatchThisEgg.Infrastructure.ApplicationAdapters;
 
-/// <summary>Infrastructure adapter that performs Data/Machines edits using existing LMH managers.</summary>
+/// <summary>Infrastructure adapter that wires Machine edit operations into the application service.</summary>
 public sealed class MachinesAssetEditsAdapter : IMachinesAssetEdits
 {
-    private readonly GameAssetManager _assets;
+    private readonly MachinesAssetEditsService _service;
 
     public MachinesAssetEditsAdapter(GameAssetManager assets)
     {
-        _assets = assets ?? throw new ArgumentNullException(nameof(assets));
+        if (assets is null)
+            throw new ArgumentNullException(nameof(assets));
+
+        _service = new MachinesAssetEditsService(data => assets.MachineManager.EditMachineData(data));
     }
 
-    public bool TryCloneMachineRules(Dictionary<string, MachineData> data, bool onlyFertilizedEggs, bool cloneMachineRules)
-    {
-        var shouldClone =
-            (onlyFertilizedEggs && _assets.HasAddedFertilizedEggs)
-            || (!onlyFertilizedEggs && _assets.HasAddedClonedItems && cloneMachineRules);
-
-        if (!shouldClone)
-            return false;
-
-        _assets.MachineEditor.CloneMachineData(data);
-        return true;
-    }
+    public bool TryApplyEdits(Dictionary<string, MachineData> data) => _service.TryApplyEdits(data);
 }

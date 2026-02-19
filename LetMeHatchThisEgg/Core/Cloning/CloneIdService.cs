@@ -70,4 +70,16 @@ public static class CloneIdService
         suffix = match.Groups["suffix"].Value;
         return true;
     }
+
+    public static bool TryParseCloneId(string clonedItemId, out CloneIdParts parts)
+    {
+        parts = default;
+
+        if (!TryParseCloneId(clonedItemId, out var animalKey, out var originalItemId, out var suffix))
+            return false;
+
+        parts = new CloneIdParts(animalKey, originalItemId, suffix);
+        return true;
+    }
+
 }

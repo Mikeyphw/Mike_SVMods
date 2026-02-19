@@ -33,7 +33,11 @@
 
 ## Phase 6 — Tests
 - [x] Add testable Core services + unit tests under `Tests/` (separate Tests zip rules).
-- [ ] Validate editor/service behavior with fixtures.
+- [x] Add unit tests for Application use-cases (façades).
+- [x] Add contract-style tests for Infrastructure adapters (gating paths; no SMAPI runtime required).
+- [x] Add CI-friendly runner script (`dotnet test`) + hook PreBuildValidation.
+- [x] Add positive-path edit-service tests (ops-injected Application services) so adapters stay thin and testable.
+- [x] Add positive-path tests for FarmAnimals + Machines edit services.
 
 ## Phase 7 — Packaging + release
 - [ ] Verify no local duplicates remain.
