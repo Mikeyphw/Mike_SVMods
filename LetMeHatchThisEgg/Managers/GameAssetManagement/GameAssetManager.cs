@@ -5,6 +5,7 @@ using BirdsOfAFeather.Helpers;
 using ContentPatcher;
 using LetMeHatchThisEgg.Breeding;
 using LetMeHatchThisEgg.Cloning;
+using LetMeHatchThisEgg.Infrastructure.Cloning;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.Helpers;
@@ -120,7 +121,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
                 FertilizedEggsToAdd
             );
             AnimalCloner = new AnimalCloner(
-                _contentPatcherAPI,
+                new ContentPackStringEvaluator(_contentPatcherAPI, MonitorInstance),
                 ClonedAnimalsInfoList,
                 LoadedContentPacks
             );

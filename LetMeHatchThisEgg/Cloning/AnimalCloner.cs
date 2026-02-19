@@ -1,7 +1,7 @@
-using ContentPatcher;
 using LetMeHatchThisEgg.Models;
 using LetMeHatchThisEgg.Core.Cloning;
 using LetMeHatchThisEgg.Core.Placeholders;
+using LetMeHatchThisEgg.Infrastructure.Cloning;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI;
 using StardewValley;
@@ -20,19 +20,18 @@ namespace LetMeHatchThisEgg.Cloning
         //Dependencies
         private readonly List<ClonedAnimalInfo> ClonedAnimalsInfoList;
         private readonly List<IContentPack> LoadedContentPacks;
-        private readonly IContentPatcherAPI ContentPatcherAPI;
-
+        private readonly IContentStringEvaluator _stringEvaluator;
         private readonly CloneMappingService _cloneMappingService;
 
         private readonly FarmAnimalCloneTransformer _farmAnimalCloneTransformer;
 
         public AnimalCloner(
-            IContentPatcherAPI contentPatcherAPI,
+            IContentStringEvaluator stringEvaluator,
             List<ClonedAnimalInfo> clonedAnimalInfos,
             List<IContentPack> loadedContentPacks
         )
         {
-            ContentPatcherAPI = contentPatcherAPI;
+            _stringEvaluator = stringEvaluator;
             ClonedAnimalsInfoList = clonedAnimalInfos;
             LoadedContentPacks = loadedContentPacks;
             _cloneMappingService = new CloneMappingService();
@@ -194,6 +193,7 @@ namespace LetMeHatchThisEgg.Cloning
             );
 
             ApplyTextFieldPolicy(
+                evaluator: _stringEvaluator,
                 contentPack: contentPack,
                 clone: currentCloneData,
                 original: originalAnimalData,
@@ -213,6 +213,7 @@ namespace LetMeHatchThisEgg.Cloning
         }
 
         private static void ApplyTextFieldPolicy(
+            IContentStringEvaluator evaluator,
             IContentPack contentPack,
             FarmAnimalData clone,
             FarmAnimalData original,
@@ -242,6 +243,7 @@ namespace LetMeHatchThisEgg.Cloning
                 {
                     case FarmAnimalTextField.DisplayName:
                         ApplyTextDecision(
+                            evaluator,
                             contentPack,
                             ref clone.DisplayName,
                             original.DisplayName,
@@ -251,6 +253,7 @@ namespace LetMeHatchThisEgg.Cloning
 
                     case FarmAnimalTextField.ShopDisplayName:
                         ApplyTextDecision(
+                            evaluator,
                             contentPack,
                             ref clone.ShopDisplayName,
                             original.ShopDisplayName,
@@ -260,6 +263,7 @@ namespace LetMeHatchThisEgg.Cloning
 
                     case FarmAnimalTextField.ShopDescription:
                         ApplyTextDecision(
+                            evaluator,
                             contentPack,
                             ref clone.ShopDescription,
                             original.ShopDescription,
@@ -269,6 +273,7 @@ namespace LetMeHatchThisEgg.Cloning
 
                     case FarmAnimalTextField.ShopMissingBuildingDescription:
                         ApplyTextDecision(
+                            evaluator,
                             contentPack,
                             ref clone.ShopMissingBuildingDescription,
                             original.ShopMissingBuildingDescription,
@@ -278,6 +283,7 @@ namespace LetMeHatchThisEgg.Cloning
 
                     case FarmAnimalTextField.BirthText:
                         ApplyTextDecision(
+                            evaluator,
                             contentPack,
                             ref clone.BirthText,
                             original.BirthText,
@@ -289,6 +295,7 @@ namespace LetMeHatchThisEgg.Cloning
         }
 
         private static void ApplyTextDecision(
+            IContentStringEvaluator evaluator,
             IContentPack contentPack,
             ref string currentValue,
             string originalValue,
@@ -303,7 +310,7 @@ namespace LetMeHatchThisEgg.Cloning
 
             if (decision.I18nKey != null)
             {
-                currentValue = contentPack.Translation.Get(decision.I18nKey);
+                currentValue = evaluator.TranslateAndEvaluateTokens(contentPack, decision.I18nKey);
             }
         }
 

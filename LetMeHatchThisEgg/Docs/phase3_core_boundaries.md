@@ -25,3 +25,6 @@ This doc is a lightweight “seam map” used to keep the refactor honest.
 - `Core/Cloning/CloneTextureResolver` (texture decision rules; Infrastructure still owns asset loading)
 
 - `Core/Cloning/FarmAnimalCloneTextFieldPolicy` (pure placeholder decisions for FarmAnimal text fields; Infrastructure applies i18n/token evaluation)
+
+- `Core/Cloning/FarmAnimalCloneNonLocalizedFieldPolicy` (pure placeholder replacement for non-localized FarmAnimalData fields)
+- `Infrastructure/Cloning/ContentPackStringEvaluator` (i18n + optional Content Patcher token evaluation via reflection)
