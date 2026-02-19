@@ -24,7 +24,10 @@
     <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\Cloning\FarmAnimalCloneBatchApplier.cs" Link="Infrastructure\Cloning\FarmAnimalCloneBatchApplier.cs" />
 
 
-  </ItemGroup>
+      <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\GameData\IFinalizableFarmAnimalDataRepository.cs" Link="Infrastructure\GameData\IFinalizableFarmAnimalDataRepository.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\GameData\IFarmAnimalAssetAdapter.cs" Link="Infrastructure\GameData\IFarmAnimalAssetAdapter.cs" />
+    <Compile Include="..\..\LetMeHatchThisEgg\Infrastructure\GameData\SmapiFarmAnimalAssetAdapter.cs" Link="Infrastructure\GameData\SmapiFarmAnimalAssetAdapter.cs" />
+</ItemGroup>
 
 
   <ItemGroup>
