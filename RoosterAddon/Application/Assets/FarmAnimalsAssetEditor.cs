@@ -1,37 +1,33 @@
 using System;
-using System.Collections.Generic;
-using RoosterAddon.Helpers;
 using StardewModdingAPI.Events;
 using StardewValley.GameData.FarmAnimals;
 
 namespace RoosterAddon.Application.Assets;
 
-/// <summary>Applies RoosterAddon edits to <c>Data/FarmAnimals</c>.</summary>
+/// <summary>
+/// Applies RoosterAddon edits to <c>Data/FarmAnimals</c>.
+/// </summary>
 internal sealed class FarmAnimalsAssetEditor
 {
-    private readonly RoosterControl _roosterHelper;
-    private readonly Action<RoosterData, IDictionary<string, FarmAnimalData>> _applyEdits;
+    private readonly IRoosterAssetEdits _ctx;
 
-    public FarmAnimalsAssetEditor(
-        RoosterControl roosterHelper,
-        Action<RoosterData, IDictionary<string, FarmAnimalData>> applyEdits
-    )
+    public FarmAnimalsAssetEditor(IRoosterAssetEdits context)
     {
-        _roosterHelper = roosterHelper ?? throw new ArgumentNullException(nameof(roosterHelper));
-        _applyEdits = applyEdits ?? throw new ArgumentNullException(nameof(applyEdits));
+        _ctx = context ?? throw new ArgumentNullException(nameof(context));
     }
 
     public void Edit(AssetRequestedEventArgs e)
     {
-        if (_roosterHelper.Roosters is null)
+        if (_ctx.RoosterHelper is null || _ctx.RoosterHelper.Roosters is null)
             return;
 
         e.Edit(
             asset =>
             {
                 var data = asset.AsDictionary<string, FarmAnimalData>().Data;
-                foreach (var rooster in _roosterHelper.Roosters.Values)
-                    _applyEdits(rooster, data);
+
+                foreach (var rooster in _ctx.RoosterHelper.Roosters.Values)
+                    _ctx.SetRoosterData(rooster, data);
             },
             AssetEditPriority.Late + 2000
         );
