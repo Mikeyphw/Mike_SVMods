@@ -6,9 +6,9 @@
 - [ ] Keep all debug/diagnostics options on GMCM page id `debug` only.
 - [ ] Keep option IDs stable forever (translation keys and field IDs depend on this).
 ## Phase 3 — Baseline GMCM menu via BOAF host + DSL
-- [ ] Remove/retire legacy GMCM UI plumbing in favor of BOAF host + DSL.
-- [ ] Wire `GmcmConfigHost` in `GameLaunched`; if GMCM missing, return.
-- [ ] Build pages: `root`, `cloning`, `colors`, `breeding`, `advanced`, `debug`.
+- [x] Remove/retire legacy GMCM UI plumbing in favor of BOAF host + DSL.
+- [x] Wire `GmcmConfigHost` in `GameLaunched`; if GMCM missing, return.
+- [x] Build pages: `root`, `cloning`, `colors`, `breeding`, `advanced`, `debug`.
 - [ ] Bind scalar options with stable `optionId`s; put all logging/show-debug toggles on `debug`.
 - [ ] Add i18n keys under `config.*`; use `onSaved` only if cache refresh is needed.
 ## Phase 7A — Dynamic per-pack/per-animal toggles (low risk)

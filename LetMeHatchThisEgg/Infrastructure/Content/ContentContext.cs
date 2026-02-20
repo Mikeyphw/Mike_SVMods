@@ -30,7 +30,7 @@ public sealed class ContentContext
 
     public CoreContext Core { get; }
     public SmapiConfigProvider<ModConfig> ConfigProvider { get; }
-    public ModConfig Config => ConfigProvider.Config;
+    public ModConfig Config => ConfigProvider.Get();
     public ILog Log { get; }
     public ModAssetHandler AssetHandler { get; }
     public GameAssetManager Assets { get; }

@@ -1,12 +1,12 @@
 using LetMeHatchThisEgg.Application.Coordination;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Infrastructure.Commands;
-using Mikew.BirdsOfAFeather.Helpers.Config;
-using Mikew.BirdsOfAFeather.Helpers.Logging;
-using Mikew.BirdsOfAFeather.Helpers.Content;
 using LetMeHatchThisEgg.Infrastructure.Smapi;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
+using Mikew.BirdsOfAFeather.Helpers.Config;
+using Mikew.BirdsOfAFeather.Helpers.Content;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
 using StardewModdingAPI;
 
 namespace LetMeHatchThisEgg
@@ -41,9 +41,9 @@ namespace LetMeHatchThisEgg
             DependencyGuards.AssertBirdsOfAFeatherPresent(helper.ModRegistry);
             DependencyGuards.AssertNoLocalBirdsOfAFeatherCopies(helper.DirectoryPath, Monitor);
 
-            _configProvider = new SmapiConfigProvider<ModConfig>(helper);
+            _configProvider = new SmapiConfigProvider<ModConfig>(helper, Monitor);
 
-            InitializeStaticFields(Monitor, helper, ModManifest, _configProvider.Config);
+            InitializeStaticFields(Monitor, helper, ModManifest, _configProvider.Get());
 
             _core = new CoreContext(helper, Monitor, ModManifest, TranslationHelper);
             _log = new BoafLog(LoggerHelper);
@@ -58,8 +58,7 @@ namespace LetMeHatchThisEgg
             IMonitor monitor,
             IModHelper helper,
             IManifest manifest,
-            ModConfig config
-        )
+            ModConfig config)
         {
             MonitorInstance = monitor;
             HelperInstance = helper;

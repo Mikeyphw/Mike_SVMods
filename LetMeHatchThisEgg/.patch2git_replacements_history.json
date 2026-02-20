@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-20T13:36:14-03:00",
+  "updated_at": "2026-02-20T15:54:37-03:00",
   "replacements": [
     {
       "id": "20260220T000621-0300-01",
@@ -11,6 +11,16 @@
       "id": "20260220T132719-0300-01",
       "title": "GMCM V2 phased plans + Debug page gating",
       "created_at": "2026-02-20T13:27:19-03:00"
+    },
+    {
+      "id": "20260220T135530-0300-01",
+      "title": "Phase 3: baseline GMCM menu (BOAF host) + debug gating",
+      "created_at": "2026-02-20T13:55:30-03:00"
+    },
+    {
+      "id": "20260220T142318-0300-01",
+      "title": "Cleanup: drop legacy config.pagelink.* i18n keys",
+      "created_at": "2026-02-20T14:23:18-03:00"
     }
   ]
 }

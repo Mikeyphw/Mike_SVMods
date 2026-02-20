@@ -20,6 +20,7 @@ using Object = StardewValley.Object;
 using Mikew.BirdsOfAFeather.Helpers;
 
 using static LetMeHatchThisEgg.ModEntry;
+using LetMeHatchThisEgg.Utilities;
 
 namespace LetMeHatchThisEgg.Cloning
 {
@@ -272,8 +273,8 @@ namespace LetMeHatchThisEgg.Cloning
             string originalItemID
         )
         {
-            var originalItemDisplayName = GMCMenu.GetObjectDisplayName(originalItemID);
-            var animalDisplayName = GMCMenu.GetAnimalDisplayName(animalKey);
+            var originalItemDisplayName = GameDisplayNames.GetObjectDisplayName(originalItemID);
+            var animalDisplayName = GameDisplayNames.GetAnimalDisplayName(animalKey);
             clonedEggData.DisplayName = $"{originalItemDisplayName}: {animalDisplayName}";
         }
 

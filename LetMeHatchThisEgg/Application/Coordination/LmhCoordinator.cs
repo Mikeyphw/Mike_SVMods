@@ -13,7 +13,7 @@ using Mikew.BirdsOfAFeather.Helpers.Config;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using LetMeHatchThisEgg.Infrastructure.Content;
 using Mikew.BirdsOfAFeather.Helpers.Content;
-using LetMeHatchThisEgg.UI;
+using LetMeHatchThisEgg.Integrations.Gmcm;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Framework.Random;
 using Mikew.BirdsOfAFeather.Helpers;
@@ -41,7 +41,6 @@ public sealed class LmhCoordinator
     private GameAssetManager? _assetManager;
     private LmhApplicationServices? _app;
     private LmhAssetPipeline? _assetPipeline;
-    private GMCMenu? _gmcmMenu;
 
     private readonly List<string> _assetsRequested = new();
     private readonly HashSet<string> _addedTokens = new();
@@ -70,6 +69,16 @@ public sealed class LmhCoordinator
         }
 
         InitializeApis();
+
+        LmhGmcmMenu.TryRegister(
+            core: _core,
+            configProvider: _config,
+            onSaved: () =>
+            {
+                InvalidateAllContent();
+                InvalidateGameContentCache();
+            }
+        );
     }
 
     public void OnWarped(object? sender, WarpedEventArgs e)
@@ -84,7 +93,7 @@ public sealed class LmhCoordinator
             return;
         }
 
-        if (_config.Config.CloneVanillaEggs && _assetManager.ItemsToAdd.Count <= 0)
+        if (_config.Get().CloneVanillaEggs && _assetManager.ItemsToAdd.Count <= 0)
         {
             _assetManager.ItemManager.CloneItemsFromGame();
         }
@@ -127,15 +136,12 @@ public sealed class LmhCoordinator
         InitializeAssetEditor();
         _api.SetGameAssetManager(_assetManager!);
 
-        InitializeGmcm();
 
         InvalidateGameContentCache();
         HandleBreedingData();
 
         _core.Helper.Events.Content.AssetRequested -= OnAssetRequested;
         _core.Helper.Events.Content.AssetRequested += OnAssetRequested;
-
-        _gmcmMenu?.GMCMSetup();
         _api.SetFinishedEarlyStuff(true);
     }
 
@@ -236,21 +242,6 @@ private void InitializeAssetEditor()
         , _invalidation
     );
 }
-
-    private void InitializeGmcm()
-    {
-        if (_assetManager is null)
-        {
-            return;
-        }
-
-        var configMenuApi = _core.Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>(
-            "spacechase0.GenericModConfigMenu"
-        );
-        var configExt = _core.Helper.ModRegistry.GetApi<IGMCMOptionsAPI>("jltaylor-us.GMCMOptions");
-
-        _gmcmMenu = new GMCMenu(configExt, configMenuApi, _assetManager);
-    }
 
     private void InvalidateGameContentCache()
     {
