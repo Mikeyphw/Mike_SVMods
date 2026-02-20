@@ -8,6 +8,7 @@ using LetMeHatchThisEgg.Helpers;
 using LetMeHatchThisEgg.Models;
 using LetMeHatchThisEgg.UI;
 using StardewModdingAPI;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Extensions;
 using StardewValley.GameData.FarmAnimals;
@@ -474,12 +475,20 @@ namespace LetMeHatchThisEgg.Cloning
                     x => true
                 );
             }
-            var color = colorControl.GetColor(
-                originalEggID,
-                animalString,
-                config.LinkAnimalColorToEgg,
-                config.EggColors[originalEggID]
-            ); /*
+            string color;
+            if (config.EggColors_ColorObject.TryGetValue(originalEggID, out var forced) && forced != Color.Transparent)
+            {
+                color = ColorToHex(forced);
+            }
+            else
+            {
+                color = colorControl.GetColor(
+                    originalEggID,
+                    animalString,
+                    config.LinkAnimalColorToEgg,
+                    config.EggColors[originalEggID]
+                );
+            } /*
 			if(animalKey == "Olive Egger")
 			{
 				SavedColors.EggColors[animalKey] = colorControl.GetRandomHexCodeFromPalettes(Monitor,
@@ -507,6 +516,10 @@ namespace LetMeHatchThisEgg.Cloning
 
             //SAVE
         }
+
+        private static string ColorToHex(Color color)
+            => $"#{color.R:X2}{color.G:X2}{color.B:X2}".ToUpperInvariant();
+
 
         public void AddClonedItems(IDictionary<string, ObjectData> objectData)
         {

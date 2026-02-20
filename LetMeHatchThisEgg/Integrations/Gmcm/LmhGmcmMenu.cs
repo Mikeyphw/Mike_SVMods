@@ -1,12 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Xna.Framework;
 using LetMeHatchThisEgg.Config;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers.Config;
 using Mikew.BirdsOfAFeather.Integrations.Gmcm;
 using StardewValley.GameData.FarmAnimals;
+using StardewValley.GameData.Objects;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
+using StardewModdingAPI;
+using StardewValley;
+using LetMeHatchThisEgg.Framework;
+using StardewModdingAPI.Events;
 
 namespace LetMeHatchThisEgg.Integrations.Gmcm;
 
@@ -35,7 +41,7 @@ public static class LmhGmcmMenu
         if (host is null)
             return;
 
-        host.RebuildLayout(layout =>
+        Action<GmcmMenuLayout<ModConfig>> define = layout =>
         {
             layout.Root(root =>
             {
@@ -52,7 +58,30 @@ public static class LmhGmcmMenu
                 root.Link("breeding");
                 root.Link("advanced");
                 root.Link("debug");
-            });
+        };
+
+        host.RebuildLayout(define);
+
+        
+        core.Helper.Events.GameLoop.SaveLoaded += (_, _) =>
+        {
+            // Rebuild again once the coordinator finishes early init and the asset manager is available.
+            var tries = 0;
+            EventHandler<UpdateTickedEventArgs>? onTick = null;
+            onTick = (_, __) =>
+            {
+                tries++;
+                if (ModEntry.CurrentAssetManager is null && tries < 120)
+                    return;
+
+                core.Helper.Events.GameLoop.UpdateTicked -= onTick;
+                host.RebuildLayout(define, force: true);
+            };
+
+            core.Helper.Events.GameLoop.UpdateTicked += onTick;
+        };
+
+
 
             layout.Page("edits", page =>
             {
@@ -108,8 +137,25 @@ public static class LmhGmcmMenu
                         getValue: () => configProvider.Get().LinkAnimalColorToEgg,
                         setValue: v => configProvider.Get().LinkAnimalColorToEgg = v,
                         tooltip: true);
+
+                    page.Separator(simple: true);
+
+                    page.ParagraphDynamic(
+                        text: () => core.Translation.GetString("config.colors.paragraph"),
+                        id: "colors_intro"
+                    );
+
+                    page.Separator(simple: true);
+
+                    page.Link("eggPalette");
+                    page.Link("eggColorOverrides");
                 }
             );
+
+            layout.Page("eggPalette", page => BuildEggPalettePage(page, core, configProvider));
+
+            layout.Page("eggColorOverrides", page => BuildEggColorOverridesPage(page, core, configProvider));
+
 
             layout.Page(
                 "breeding",
@@ -157,10 +203,39 @@ public static class LmhGmcmMenu
                 build: page =>
                 {
                     page.Bool(cfg => cfg.StabilizeFarmAnimalsAssetOrder, optionId: "StabilizeFarmAnimalsAssetOrder", tooltip: true);
+
+                    page.Separator(simple: true);
+
+                    page.Link("itemMappings");
                 }
             );
 
+            
             layout.Page(
+                "itemMappings",
+                title: () => core.Translation.GetString("config.page.itemMappings.name"),
+                build: page => BuildItemMappingsIndexPage(page, core)
+            );
+
+            layout.Page(
+                "itemMappingsEgg",
+                title: () => core.Translation.GetString("config.page.itemMappingsEgg.name"),
+                build: page => BuildItemMappingsCloneTypePage(page, core, configProvider, CloneItemType.Egg)
+            );
+
+            layout.Page(
+                "itemMappingsMilk",
+                title: () => core.Translation.GetString("config.page.itemMappingsMilk.name"),
+                build: page => BuildItemMappingsCloneTypePage(page, core, configProvider, CloneItemType.Milk)
+            );
+
+            layout.Page(
+                "itemMappingsMisc",
+                title: () => core.Translation.GetString("config.page.itemMappingsMisc.name"),
+                build: page => BuildItemMappingsCloneTypePage(page, core, configProvider, CloneItemType.Misc)
+            );
+
+layout.Page(
                 "debug",
                 title: () => core.Translation.GetString("config.page.debug.name"),
                 build: page =>
@@ -215,6 +290,241 @@ public static class LmhGmcmMenu
             );
         }
     }
+
+
+    private static void BuildEggPalettePage(
+        GmcmPageBuilder<ModConfig> page,
+        CoreContext core,
+        SmapiConfigProvider<ModConfig> configProvider)
+    {
+        page.ParagraphGmcmOptionsStatus();
+        page.Separator(simple: true);
+
+        page.ParagraphDynamic(
+            text: () => core.Translation.GetString("config.eggPalette.paragraph"),
+            id: "eggPalette_intro"
+        );
+
+        var cfg = configProvider.Get();
+        var eggs = GetEggOptions(core, cfg);
+        var colorGroups = GetPaletteColorGroups();
+
+        if (eggs.Count <= 0)
+        {
+            page.Separator(simple: true);
+            page.Paragraph(core.Translation.GetString("config.eggPalette.noEggs"));
+            return;
+        }
+
+        foreach (var egg in eggs)
+        {
+            page.Separator(simple: true);
+            page.SectionLabel(() => egg.Label);
+
+            if (egg.Id == "305")
+                page.ParagraphDynamic(() => core.Translation.GetString("config.eggPalette.voidEggNote"), id: $"voidEgg_{egg.Id}");
+
+            foreach (var colorKey in colorGroups)
+            {
+                var elementId = GmcmDynamicIds.ElementId(elementPrefix: $"egg_{egg.Id}", key: colorKey);
+
+                page.BoolLabel(
+                    elementId: elementId,
+                    name: () => core.Translation.GetString($"config.color.{colorKey}.name"),
+                    tooltip: () => core.Translation.GetString(
+                        "config.eggPalette.allowColor.description",
+                        core.Translation.GetString($"config.color.{colorKey}.name"),
+                        egg.Label
+                    ),
+                    getValue: () => GetEggPaletteEnabled(configProvider.Get(), egg.Id, colorGroups, colorKey),
+                    setValue: v => SetEggPaletteEnabled(configProvider.Get(), egg.Id, colorGroups, colorKey, v)
+                );
+            }
+        }
+    }
+
+    private static void BuildEggColorOverridesPage(
+        GmcmPageBuilder<ModConfig> page,
+        CoreContext core,
+        SmapiConfigProvider<ModConfig> configProvider)
+    {
+        page.ParagraphGmcmOptionsStatus();
+        page.Separator(simple: true);
+
+        page.ParagraphDynamic(
+            text: () => core.Translation.GetString("config.eggOverride.paragraph"),
+            id: "eggOverride_intro"
+        );
+
+        var cfg = configProvider.Get();
+        var eggs = GetEggOptions(core, cfg);
+
+        if (eggs.Count <= 0)
+        {
+            page.Separator(simple: true);
+            page.Paragraph(core.Translation.GetString("config.eggPalette.noEggs"));
+            return;
+        }
+
+        foreach (var egg in eggs)
+        {
+            page.Separator(simple: true);
+            page.SectionLabel(() => egg.Label);
+
+            page.BoolLabel(
+                elementId: GmcmDynamicIds.ElementId("eggOverrideEnabled", egg.Id),
+                name: () => core.Translation.GetString("config.eggOverride.enabled.name"),
+                tooltip: () => core.Translation.GetString("config.eggOverride.enabled.description", egg.Label),
+                getValue: () => IsEggColorOverrideEnabled(configProvider.Get(), egg.Id),
+                setValue: v => SetEggColorOverrideEnabled(configProvider.Get(), egg.Id, v)
+            );
+
+            page.ColorSwatchLabel(
+                elementId: GmcmDynamicIds.ElementId("eggOverrideColor", egg.Id),
+                name: () => core.Translation.GetString("config.eggOverride.color.name"),
+                tooltip: () => core.Translation.GetString("config.eggOverride.color.description", egg.Label),
+                getValue: () => GetEggColorOverride(configProvider.Get(), egg.Id),
+                setValue: v => SetEggColorOverride(configProvider.Get(), egg.Id, v),
+                showAlpha: false
+            );
+        }
+    }
+
+    private static IReadOnlyList<string> GetPaletteColorGroups()
+    {
+        // "gold" is intentionally excluded because LMH never randomizes "gold" from palettes.
+        var saved = new LetMeHatchThisEgg.Helpers.SavedColors();
+        return saved._colorDictionary.Keys
+            .Where(k => !string.Equals(k, "gold", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static bool GetEggPaletteEnabled(ModConfig cfg, string eggId, IReadOnlyList<string> colorGroups, string colorKey)
+    {
+        var map = EnsureEggPalette(cfg, eggId, colorGroups);
+        return map.TryGetValue(colorKey, out var enabled) && enabled;
+    }
+
+    private static void SetEggPaletteEnabled(ModConfig cfg, string eggId, IReadOnlyList<string> colorGroups, string colorKey, bool enabled)
+    {
+        var map = EnsureEggPalette(cfg, eggId, colorGroups);
+        map[colorKey] = enabled;
+
+        // keep config clean: "all true" means default behavior, so remove the override map.
+        if (colorGroups.All(k => map.TryGetValue(k, out var v) && v))
+            cfg.EggColors.Remove(eggId);
+    }
+
+    private static Dictionary<string, bool> EnsureEggPalette(ModConfig cfg, string eggId, IReadOnlyList<string> colorGroups)
+    {
+        if (!cfg.EggColors.TryGetValue(eggId, out var map) || map is null)
+        {
+            map = colorGroups.ToDictionary(k => k, _ => true, StringComparer.OrdinalIgnoreCase);
+            cfg.EggColors[eggId] = map;
+            return map;
+        }
+
+        foreach (var key in colorGroups)
+        {
+            if (!map.ContainsKey(key))
+                map[key] = true;
+        }
+
+        return map;
+    }
+
+    private static bool IsEggColorOverrideEnabled(ModConfig cfg, string eggId)
+        => cfg.EggColors_ColorObject.TryGetValue(eggId, out var c) && c != Color.Transparent;
+
+    private static void SetEggColorOverrideEnabled(ModConfig cfg, string eggId, bool enabled)
+    {
+        if (!enabled)
+        {
+            cfg.EggColors_ColorObject.Remove(eggId);
+            return;
+        }
+
+        if (!cfg.EggColors_ColorObject.ContainsKey(eggId))
+            cfg.EggColors_ColorObject[eggId] = Color.White;
+    }
+
+    private static Color GetEggColorOverride(ModConfig cfg, string eggId)
+        => cfg.EggColors_ColorObject.TryGetValue(eggId, out var c) ? c : Color.White;
+
+    private static void SetEggColorOverride(ModConfig cfg, string eggId, Color value)
+    {
+        if (value == Color.Transparent)
+        {
+            cfg.EggColors_ColorObject.Remove(eggId);
+            return;
+        }
+
+        cfg.EggColors_ColorObject[eggId] = value;
+    }
+
+    private static IReadOnlyList<EggOption> GetEggOptions(CoreContext core, ModConfig cfg)
+    {
+        var eggs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        void Add(string id, string label)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return;
+
+            eggs.TryAdd(id, string.IsNullOrWhiteSpace(label) ? id : label);
+        }
+
+        try
+        {
+            var animals = core.Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(
+                Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.AssetNames.FarmAnimals
+            );
+
+            var objects = core.Helper.GameContent.Load<Dictionary<string, ObjectData>>(
+                Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.AssetNames.Objects
+            );
+
+            foreach (var animal in animals.Values)
+            {
+                if (animal?.ProduceItemIds is not null)
+                    foreach (var id in animal.ProduceItemIds)
+                        AddEggIfApplicable(id);
+
+                if (animal?.DeluxeProduceItemIds is not null)
+                    foreach (var id in animal.DeluxeProduceItemIds)
+                        AddEggIfApplicable(id);
+            }
+
+            void AddEggIfApplicable(string id)
+            {
+                if (!objects.TryGetValue(id, out var obj))
+                    return;
+
+                var name = obj?.DisplayName ?? obj?.Name ?? id;
+                if (name.Contains("Egg", StringComparison.OrdinalIgnoreCase))
+                    Add(id, name);
+            }
+        }
+        catch
+        {
+            // no-op: fall back to config-derived eggs.
+        }
+
+        foreach (var id in cfg.EggColors.Keys)
+            Add(id, id);
+        foreach (var id in cfg.EggColors_ColorObject.Keys)
+            Add(id, id);
+
+        return eggs
+            .Select(kvp => new EggOption(kvp.Key, kvp.Value))
+            .OrderBy(e => e.Label, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(e => e.Id, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private sealed record EggOption(string Id, string Label);
+
 
     private static IReadOnlyList<AnimalOption> GetAnimalOptions(CoreContext core, ModConfig cfg)
     {

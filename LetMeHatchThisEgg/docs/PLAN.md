@@ -25,10 +25,10 @@
 
 ## Phase 7B — Egg color controls (medium risk)
 1. Keep scalar toggles on `colors` page (`ChangeEggColors`, `LinkAnimalColorToEgg`).
-2. Add dynamic sections per animal for configurable color pickers.
-3. Keep UI bounded; avoid rendering huge lists.
-4. Use stable element IDs derived from keys.
-5. Rebuild on `SaveLoaded`.
+2. Add page `eggPalette` to control which color families are allowed when LMH randomizes colors per **egg item** (dictionary `EggColors[eggId][colorFamily]`).
+3. Add page `eggColorOverrides` to optionally force a fixed color per **egg item** (dictionary `EggColors_ColorObject[eggId]`), using GMCM Options color picker when available (falls back to native GMCM).
+4. Keep UI bounded: enumerate egg items from `Data/FarmAnimals` + `Data/Objects` and fall back to config keys if those assets aren’t available.
+5. Use stable element IDs derived from eggId + color key via `GmcmDynamicIds`.
 
 ## Phase 7C — ItemToClone editor (highest risk; bounded UI)
 1. Add page `itemMappings` limited to curated/known animal relation order.

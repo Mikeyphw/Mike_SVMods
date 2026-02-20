@@ -215,6 +215,7 @@ private void InitializeAssetEditor()
     }
 
     _assetManager = new GameAssetManager(_contentPatcher, _wildEggs);
+    ModEntry.CurrentAssetManager = _assetManager;
     _assetManager.TextureManager.SetUpModAssets();
 
     _app = new LmhApplicationServices(

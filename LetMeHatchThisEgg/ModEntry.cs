@@ -2,6 +2,7 @@ using LetMeHatchThisEgg.Application.Coordination;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Infrastructure.Commands;
 using LetMeHatchThisEgg.Infrastructure.Smapi;
+using LetMeHatchThisEgg.GameAssetManagement;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers;
 using Mikew.BirdsOfAFeather.Helpers.Config;
@@ -28,6 +29,8 @@ namespace LetMeHatchThisEgg
         public static ModAssetHandler AssetHandler { get; private set; } = null!;
 
         public static AssetInvalidationBatcher InvalidationBatcher { get; private set; } = null!;
+
+        internal static GameAssetManager? CurrentAssetManager { get; set; }
 
         private CoreContext? _core;
         private SmapiConfigProvider<ModConfig>? _configProvider;
