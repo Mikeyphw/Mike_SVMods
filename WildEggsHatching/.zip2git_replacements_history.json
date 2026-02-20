@@ -1,0 +1,11 @@
+{
+  "schema_version": "1",
+  "updated_at": "2026-02-19T21:24:49-03:00",
+  "replacements": [
+    {
+      "id": "20260219-17",
+      "title": "Replacement: implement Phase 5B (wegg verify weight diagnostics with value + penalties)",
+      "created_at": "2026-02-19T22:01:16Z"
+    }
+  ]
+}
