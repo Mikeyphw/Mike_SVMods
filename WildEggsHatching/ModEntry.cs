@@ -666,8 +666,14 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
 
             layout.Page("debug", page =>
             {
+                page.ParagraphGmcmOptionsStatus();
+                page.Separator("debug_status", simple: true);
+
                 page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
                 page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
+
+                page.Separator("debug_animalNotes", simple: true);
+
                 page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
             });
         }, force: force);
@@ -818,8 +824,14 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
 
             layout.Page("debug", page =>
             {
+                page.ParagraphGmcmOptionsStatus();
+                page.Separator("debug_status", simple: true);
+
                 page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
                 page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
+
+                page.Separator("debug_animalNotes", simple: true);
+
                 page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
             });
         });
