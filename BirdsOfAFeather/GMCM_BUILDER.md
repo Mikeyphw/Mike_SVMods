@@ -15,6 +15,9 @@ This folder provides a small layer on top of **Generic Mod Config Menu (GMCM)** 
   - discovers GMCM + GMCMOptions safely
   - registers/unregisters/rebuilds
   - auto-rebuilds on **locale change** (because `I18TranslationHelper` caches strings)
+- `GmcmConfigHost<TConfig>`
+  - binds a config source (e.g. `SmapiConfigProvider<TConfig>`) to the layout DSL
+  - recommended entrypoint for mods
 - `GmcmIntegrationExtensions.RebuildLayout`
   - entrypoint that turns a declarative layout into actual GMCM calls
 - `GmcmMenuLayout<TConfig>`
@@ -32,7 +35,45 @@ This folder provides a small layer on top of **Generic Mod Config Menu (GMCM)** 
 
 ## Quick start
 
-### 1) Create the integration during `GameLaunched`
+### Recommended: use `GmcmConfigHost<TConfig>` (config-bound, minimal boilerplate)
+
+```csharp
+private SmapiConfigProvider<CoreModConfig>? _config;
+private GmcmConfigHost<CoreModConfig>? _gmcmHost;
+
+private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+{
+    _config ??= new SmapiConfigProvider<CoreModConfig>(Helper, Monitor);
+
+    _gmcmHost = GmcmConfigHost<CoreModConfig>.TryCreate(
+        helper: Helper,
+        manifest: ModManifest,
+        configProvider: _config,
+        translation: Context.Translation
+    );
+
+    if (_gmcmHost is null)
+        return;
+
+    _gmcmHost.RebuildLayout(layout =>
+    {
+        layout.Root(root =>
+        {
+            root.PageLink("debug");
+        });
+
+        layout.Page("debug", debug =>
+        {
+            debug.Bool(cfg => cfg.VerboseLogging, optionId: "VerboseLogging", tooltip: true);
+            debug.Bool(cfg => cfg.TestingLogging, optionId: "TestingLogging", tooltip: true);
+        });
+    });
+}
+```
+
+> Convention: keep diagnostics/logging toggles behind a dedicated page id `debug`.
+
+### Advanced: use `GmcmIntegration` directly
 
 ```csharp
 private GmcmIntegration? _gmcm;
@@ -56,8 +97,13 @@ private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
         {
             layout.Root(root =>
             {
-                root.Bool(cfg => cfg.VerboseLogging, optionId: "ExtraDebugInfo", tooltip: true);
-                root.Bool(cfg => cfg.TestingLogging, optionId: "Testing", tooltip: true);
+                root.PageLink("debug");
+            });
+
+            layout.Page("debug", debug =>
+            {
+                debug.Bool(cfg => cfg.VerboseLogging, optionId: "VerboseLogging", tooltip: true);
+                debug.Bool(cfg => cfg.TestingLogging, optionId: "TestingLogging", tooltip: true);
             });
         }
     );
@@ -84,8 +130,11 @@ When you register an option with id `"ExtraDebugInfo"`:
 When you define `layout.Page("advanced", ...)`:
 
 - page title: `config.page.advanced.name`
-- page link label: `config.pagelink.advanced.name`
-- page link tooltip: `config.pagelink.advanced.description`
+- page link label: **defaults to the same key** (`config.page.advanced.name`)
+  - back-compat fallback: `config.pagelink.advanced.name`
+- page link tooltip:
+  - preferred: `config.pagelink.advanced.description`
+  - fallback (optional): `config.page.advanced.description`
 
 ### Sections + paragraphs
 
@@ -346,3 +395,12 @@ the auto-generated field IDs from this builder are already designed for it.
 - page content: `Section`, `Paragraph`, `Link`, `Separator`, `Image`, `DynamicParagraph`
 - options (bound): `Bool`, `Int`, `Float`, `Text`, `Enum`, `Color`
 - options (unbound): `Bool`, `Int`, `Float`, `Text`, `Color`, `ImageOption`
+
+
+## Dynamic/dictionary editors
+
+Use the `*Label` overloads on `GmcmPageBuilder<TConfig>` when you need to render options for dynamic keys (e.g. dictionaries) without adding i18n keys for every entry.
+
+Example patterns:
+- `b.EnumLabel(...)` for per-key enum selection.
+- Use `GmcmDynamicIds.ElementId(prefix, key)` to build stable element IDs.

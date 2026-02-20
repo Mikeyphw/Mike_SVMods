@@ -198,6 +198,97 @@ public sealed class GmcmPageBuilder<TConfig>
     private string AutoFieldId(string elementId)
         => GmcmFieldIds.Build(_fieldIdPrefix, _pageId, elementId);
 
+
+    // -----------------------------
+    // Unbound options with custom label/tooltip (dynamic/dictionary editors)
+    // -----------------------------
+
+    public void BoolLabel(
+        string elementId,
+        Func<string> name,
+        Func<string>? tooltip,
+        Func<bool> getValue,
+        Action<bool> setValue,
+        string? fieldId = null)
+        => _menu.AddBoolOption(getValue, setValue, name, tooltip, fieldId ?? AutoFieldId(elementId));
+
+    public void IntLabel(
+        string elementId,
+        Func<string> name,
+        Func<string>? tooltip,
+        Func<int> getValue,
+        Action<int> setValue,
+        int? min = null,
+        int? max = null,
+        int? interval = null,
+        Func<int, string>? formatValue = null,
+        string? fieldId = null)
+        => _menu.AddIntNumberOption(getValue, setValue, name, tooltip, min, max, interval, formatValue, fieldId ?? AutoFieldId(elementId));
+
+    public void FloatLabel(
+        string elementId,
+        Func<string> name,
+        Func<string>? tooltip,
+        Func<float> getValue,
+        Action<float> setValue,
+        float? min = null,
+        float? max = null,
+        float? interval = null,
+        Func<float, string>? formatValue = null,
+        string? fieldId = null)
+        => _menu.AddFloatNumberOption(getValue, setValue, name, tooltip, min, max, interval, formatValue, fieldId ?? AutoFieldId(elementId));
+
+    public void TextLabel(
+        string elementId,
+        Func<string> name,
+        Func<string>? tooltip,
+        Func<string> getValue,
+        Action<string> setValue,
+        string[]? allowedValues = null,
+        bool formatAllowedValue = false,
+        string? fieldId = null)
+        => _menu.AddTextOption(getValue, setValue, name, tooltip, allowedValues, formatAllowedValue, fieldId ?? AutoFieldId(elementId));
+
+    public void EnumLabel<TEnum>(
+        string elementId,
+        Func<string> name,
+        Func<TEnum> getValue,
+        Action<TEnum> setValue,
+        Func<string>? tooltip = null,
+        string? fieldId = null)
+        where TEnum : struct, Enum
+        => EnumLabel(
+            elementId: elementId,
+            name: name,
+            getValue: getValue,
+            setValue: setValue,
+            formatAllowedValue: null,
+            tooltip: tooltip,
+            fieldId: fieldId
+        );
+
+    public void EnumLabel<TEnum>(
+        string elementId,
+        Func<string> name,
+        Func<TEnum> getValue,
+        Action<TEnum> setValue,
+        Func<string, string>? formatAllowedValue,
+        Func<string>? tooltip = null,
+        string? fieldId = null)
+        where TEnum : struct, Enum
+    {
+        var allowedValues = Enum.GetNames(typeof(TEnum));
+
+        _menu.AddTextOption(
+            getValue: () => getValue().ToString(),
+            setValue: v => setValue((TEnum)Enum.Parse(typeof(TEnum), v, ignoreCase: true)),
+            name: name,
+            allowedValues: allowedValues,
+            formatValue: formatAllowedValue,
+            tooltip: tooltip,
+            fieldId: fieldId ?? AutoFieldId(elementId)
+        );
+    }
     private void Bind<T>(
         Expression<Func<TConfig, T>> member,
         string? optionId,

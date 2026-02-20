@@ -4,6 +4,11 @@
 - Subdir: `BirdsOfAFeather`
 - Convention: all diagnostics/logging toggles belong on a dedicated GMCM page id `debug` (mods), never mixed into normal pages.
 
+## Status
+- Phase 0: complete
+- Phase 1: complete
+- Phase 5: in progress (dynamic labels + ids + enum value formatting complete; rebuild helpers/docs/tests pending)
+
 ## Phase 0 — Planning docs baseline
 1. Create/refresh `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md`.
 2. Ensure phases have 3–7 steps and are actionable.
@@ -15,6 +20,7 @@
 3. Ensure stable field IDs are defaulted via existing `GmcmFieldIds`.
 4. Ensure `SmapiConfigProvider<TConfig>` supports `ResetToDefault()` (replace with new defaults + save).
 5. Document usage pattern: wire in `GameLaunched`, no-op if GMCM missing.
+6. Align page link labels to `config.page.<id>.name` by default (fallback to `config.pagelink.<id>.name`).
 
 ## Phase 5 — Dynamic/dictionary editors support
 1. Add DSL overloads accepting custom label funcs (name/tooltip) for dynamic elements.

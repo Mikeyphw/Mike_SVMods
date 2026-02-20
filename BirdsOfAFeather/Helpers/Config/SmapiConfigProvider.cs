@@ -30,6 +30,18 @@ namespace Mikew.BirdsOfAFeather.Helpers.Config
 
         public TConfig Get() => _config;
 
+        public TConfig Value => _config;
+
+        public void ResetToDefault(bool save = true)
+        {
+            _config = new TConfig();
+
+            if (save)
+                Save();
+
+            ConfigUpdated?.Invoke(this, _config);
+        }
+
         public TConfig Reload()
         {
             _config = Read();

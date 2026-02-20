@@ -46,8 +46,34 @@ public sealed class IGMCMOptionsHelper
     private Func<string> GetName(string optionName)
         => () => Translate(Key("config", optionName, "name"), optionName);
 
-    private Func<string> GetPageElement(string optionName, string type = "page")
-        => () => _i18n.GetString(Key("config", type, optionName, "name"));
+    private Func<string> GetPageTitle(string pageId)
+        => () =>
+        {
+            var pageKey = Key("config", "page", pageId, "name");
+            if (_i18n.TryGet(pageKey, out var pageTitle) && !string.IsNullOrWhiteSpace(pageTitle))
+                return pageTitle;
+
+            // Back-compat: older menus used config.pagelink.<id>.name for link labels.
+            var linkKey = Key("config", "pagelink", pageId, "name");
+            if (_i18n.TryGet(linkKey, out var linkTitle) && !string.IsNullOrWhiteSpace(linkTitle))
+                return linkTitle;
+
+            return pageId;
+        };
+
+    private Func<string>? GetPageLinkTooltip(string pageId)
+    {
+        var linkDescKey = Key("config", "pagelink", pageId, "description");
+        if (_i18n.TryGet(linkDescKey, out var linkDesc) && !string.IsNullOrWhiteSpace(linkDesc))
+            return () => _i18n.GetString(linkDescKey);
+
+        var pageDescKey = Key("config", "page", pageId, "description");
+        if (_i18n.TryGet(pageDescKey, out var pageDesc) && !string.IsNullOrWhiteSpace(pageDesc))
+            return () => _i18n.GetString(pageDescKey);
+
+        return null;
+    }
+
 
     private Func<string> GetText(string optionName, string? type = null)
         => () => _i18n.GetString(Key("config", type, optionName, "text"));
@@ -283,14 +309,14 @@ public sealed class IGMCMOptionsHelper
 
     public void AddPage(string pageTitle, bool printID = false)
     {
-        _gmcm?.AddPage(_manifest, pageTitle, GetPageElement(pageTitle));
+        _gmcm?.AddPage(_manifest, pageTitle, GetPageTitle(pageTitle));
         if (printID)
             _gmcm?.AddParagraph(_manifest, () => $"Page ID: {pageTitle}");
     }
 
     public void AddPage(string pageId, Func<string>? pageTitle = null, bool printID = false)
     {
-        _gmcm?.AddPage(_manifest, pageId, pageTitle);
+        _gmcm?.AddPage(_manifest, pageId, pageTitle ?? GetPageTitle(pageId));
         if (printID)
             _gmcm?.AddParagraph(_manifest, () => $"Page ID: {pageId}");
     }
@@ -300,8 +326,8 @@ public sealed class IGMCMOptionsHelper
         _gmcm?.AddPageLink(
             _manifest,
             pageName,
-            GetPageElement(pageName, "pagelink"),
-            tooltip ? GetDescription(pageName, "pagelink") : null
+            GetPageTitle(pageName),
+            tooltip ? GetPageLinkTooltip(pageName) : null
         );
     }
 
