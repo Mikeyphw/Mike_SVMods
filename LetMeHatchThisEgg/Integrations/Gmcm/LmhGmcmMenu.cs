@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using LetMeHatchThisEgg.Config;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather.Helpers.Config;
 using Mikew.BirdsOfAFeather.Integrations.Gmcm;
+using StardewValley.GameData.FarmAnimals;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
 namespace LetMeHatchThisEgg.Integrations.Gmcm;
@@ -43,12 +46,34 @@ public static class LmhGmcmMenu
 
                 root.Separator(simple: true);
 
+                root.Link("edits");
                 root.Link("cloning");
                 root.Link("colors");
                 root.Link("breeding");
                 root.Link("advanced");
                 root.Link("debug");
             });
+
+            layout.Page("edits", page =>
+            {
+                page.Section(core.Translation.GetString("config.page.edits.name"), tooltip: false);
+                page.Paragraph(core.Translation.GetString("config.edits.paragraph"));
+
+                page.Separator(simple: true);
+
+                page.Link("editsEggList");
+                page.Link("editsBirthText");
+                page.Link("editsCloneEggs");
+            });
+
+            layout.Page("editsEggList", page =>
+                BuildPerAnimalOverridesPage(page, core, configProvider, EditType.EggList));
+
+            layout.Page("editsBirthText", page =>
+                BuildPerAnimalOverridesPage(page, core, configProvider, EditType.BirthText));
+
+            layout.Page("editsCloneEggs", page =>
+                BuildPerAnimalOverridesPage(page, core, configProvider, EditType.CloneEggs));
 
             layout.Page(
                 "cloning",
@@ -140,6 +165,9 @@ public static class LmhGmcmMenu
                 title: () => core.Translation.GetString("config.page.debug.name"),
                 build: page =>
                 {
+                    page.ParagraphGmcmOptionsStatus();
+                    page.Separator(simple: true);
+
                     page.Bool(cfg => cfg.ShowEdits, optionId: "ShowEdits", tooltip: true);
                     page.Bool(cfg => cfg.ShowAnimalKeys, optionId: "ShowAnimalKeys", tooltip: true);
 
@@ -151,6 +179,105 @@ public static class LmhGmcmMenu
             );
         });
     }
+
+    private static void BuildPerAnimalOverridesPage(
+        GmcmPageBuilder<ModConfig> page,
+        CoreContext core,
+        SmapiConfigProvider<ModConfig> configProvider,
+        EditType editType)
+    {
+        var cfg = configProvider.Get();
+        var animals = GetAnimalOptions(core, cfg);
+
+        page.Paragraph(core.Translation.GetString("config.edits.perAnimal.paragraph"));
+
+        if (animals.Count <= 0)
+        {
+            page.Separator(simple: true);
+            page.Paragraph(core.Translation.GetString("config.edits.noAnimals"));
+            return;
+        }
+
+        page.Separator(simple: true);
+
+        foreach (var a in animals)
+        {
+            var animalKey = a.Key;
+            var label = a.Label;
+
+            var elementId = GmcmDynamicIds.ElementId(elementPrefix: editType.ToString(), key: animalKey);
+            page.BoolLabel(
+                elementId: elementId,
+                name: () => label,
+                tooltip: () => core.Translation.GetString("config.edits.animal.tooltip", animalKey),
+                getValue: () => IsEnabled(GetOverrides(cfg, editType), animalKey),
+                setValue: v => SetEnabled(GetOverrides(cfg, editType), animalKey, v)
+            );
+        }
+    }
+
+    private static IReadOnlyList<AnimalOption> GetAnimalOptions(CoreContext core, ModConfig cfg)
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        void Add(string key, string label)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return;
+
+            if (!map.ContainsKey(key))
+                map[key] = string.IsNullOrWhiteSpace(label) ? key : label;
+        }
+
+        try
+        {
+            var data = core.Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(
+                Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.AssetNames.FarmAnimals
+            );
+
+            foreach (var (key, animal) in data)
+                Add(key, animal?.DisplayName ?? key);
+        }
+        catch
+        {
+            // no-op: GMCM still works even if the asset isn't available yet.
+        }
+
+        foreach (var key in cfg.EditedEggListsOptions.Keys)
+            Add(key, key);
+        foreach (var key in cfg.EditedBirthTextOptions.Keys)
+            Add(key, key);
+        foreach (var key in cfg.ClonedVanillaEggsOptions.Keys)
+            Add(key, key);
+
+        return map
+            .Select(kvp => new AnimalOption(kvp.Key, kvp.Value))
+            .OrderBy(a => a.Label, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(a => a.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static Dictionary<string, bool> GetOverrides(ModConfig cfg, EditType editType)
+        => editType switch
+        {
+            EditType.EggList => cfg.EditedEggListsOptions,
+            EditType.BirthText => cfg.EditedBirthTextOptions,
+            EditType.CloneEggs => cfg.ClonedVanillaEggsOptions,
+            _ => throw new ArgumentOutOfRangeException(nameof(editType), editType, null)
+        };
+
+    private static bool IsEnabled(Dictionary<string, bool> overrides, string key)
+        => !overrides.TryGetValue(key, out var value) || value;
+
+    private static void SetEnabled(Dictionary<string, bool> overrides, string key, bool enabled)
+    {
+        if (enabled)
+            overrides.Remove(key);
+        else
+            overrides[key] = false;
+    }
+
+    private sealed record AnimalOption(string Key, string Label);
 
     private static float GetEggChance(ModConfig cfg, ItemType type)
         => cfg.EggChances.TryGetValue(type, out var v) ? v : 0f;

@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-20T15:54:37-03:00",
+  "updated_at": "2026-02-20T16:35:16-03:00",
   "replacements": [
     {
       "id": "20260220T000621-0300-01",
@@ -21,6 +21,16 @@
       "id": "20260220T142318-0300-01",
       "title": "Cleanup: drop legacy config.pagelink.* i18n keys",
       "created_at": "2026-02-20T14:23:18-03:00"
+    },
+    {
+      "id": "20260220T155313-0300-01",
+      "title": "LetMeHatchThisEgg Phase 7A - dynamic per-animal edit toggles",
+      "created_at": "2026-02-20T15:53:13-03:00"
+    },
+    {
+      "id": "20260220T162110-0300-01",
+      "title": "GMCM Options UX helpers: separators, status paragraphs, color swatch",
+      "created_at": "2026-02-20T16:21:10-03:00"
     }
   ]
 }
