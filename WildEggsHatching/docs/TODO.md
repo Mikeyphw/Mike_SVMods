@@ -10,14 +10,12 @@
 - [ ] (reserved)
 
 ## Later
-- [ ] Phase 6.4: LetMeHatchThisEgg-clone shop handling (deferred; keep on plan).
 
 ---
 
 ## By phase (optional)
 ### Phase 6
-- [x] 6.1–6.3
-- [ ] 6.4 (LetMeHatchThisEgg-clone handling deferred)
+- [x] 6.1–6.4
 
 ### Phase 7
 - [x] 7.1–7.3

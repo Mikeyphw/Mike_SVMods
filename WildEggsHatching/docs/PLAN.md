@@ -77,7 +77,7 @@
   - if master listing is locked, copy master shop fields onto the unlocked entry
   - merge master + variant conditions where needed
   - append/set `PLAYER_HAS_MAIL Host <noteMailId> Received` to gate visibility
-- **6.4** Preserve special cases (Blue Chicken handled; LetMeHatchThisEgg-clone handling deferred; safer plan: clone variants inherit the female unlock condition and are never gated directly).
+- **6.4** ✅ LetMeHatchThisEgg-clone handling (safer): male clones inherit female mail unlock for direct + alternates; mixed alternate pools split to avoid gating unrelated animals.
 
 ## Phase 7 — Tests and verification
 - **7.1** ✅ Tests: anchor mapping; effective value priority; produce math (DaysToMature/DaysToProduce); clamp bounds; unlocked penalty; locked variant removal.

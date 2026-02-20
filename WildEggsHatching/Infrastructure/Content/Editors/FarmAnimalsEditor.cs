@@ -8,6 +8,7 @@ using WildEggsHatching.Core.ShopAnchors;
 using WildEggsHatching.Core.ShopProgression;
 using Mikew.BirdsOfAFeather.Helpers.Content;
 using Mikew.BirdsOfAFeather;
+using Mikew.BirdsOfAFeather.Framework;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
@@ -60,6 +61,9 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
                 farmAnimals: data,
                 anchors: anchors,
                 original: shopSnapshot);
+
+            TryApplyLetMeHatchCloneInheritUnlock(context, data);
+
         }
 
 
@@ -67,7 +71,25 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
             ApplyChosenEggs(context, data, anchors);
     }
 
-    
+    private static void TryApplyLetMeHatchCloneInheritUnlock(ContentContext context, System.Collections.Generic.IDictionary<string, FarmAnimalData> data)
+    {
+        try
+        {
+            var api = context.Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.lmh");
+            if (api is null)
+                return;
+
+            var pairs = api.GetClonedAnimalsInfo();
+            if (pairs is null || pairs.Count == 0)
+                return;
+
+            LetMeHatchCloneShopEdits.ApplyInheritUnlock(data, pairs);
+        }
+        catch (Exception ex)
+        {
+            context.Log($"LetMeHatch clone gating: best-effort apply failed: {ex.GetType().Name} {ex.Message}", StardewModdingAPI.LogLevel.Trace);
+        }
+    }
 
     private void ApplyChosenEggs(
         ContentContext context,

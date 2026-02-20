@@ -38,7 +38,7 @@
 - [x] 6.1 Restore/ensure AnimalProgressionMode defaulting (locked by default)
 - [x] 6.2 Implement locked edits (PurchasePrice=-1, remove from alternates)
 - [x] 6.3 Implement unlocked edits (copy master fields, merge conditions, mail GSQ)
-- [ ] 6.4 Preserve special cases (Blue Chicken handled; LetMeHatchThisEgg-clone handling deferred)
+- [x] 6.4 Preserve special cases (Blue Chicken handled; LetMeHatchThisEgg clones inherit female unlock on direct + alternates)
 
 ## Phase 7 — Tests and verification
 - [x] 7.1 Add tests for mapping/value/weights/clamps/unlock behavior
