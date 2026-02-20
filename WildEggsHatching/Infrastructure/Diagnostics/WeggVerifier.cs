@@ -21,8 +21,10 @@ using xTile;
 using Mikew.BirdsOfAFeather.Helpers.Config;
 using WildEggsHatching.Infrastructure.Diagnostics;
 using Mikew.BirdsOfAFeather;
+using Mikew.BirdsOfAFeather.Framework;
 using WildEggsHatching.Core.Assets;
 using WildEggsHatching.Core.ShopAnchors;
+using WildEggsHatching.Core.ShopProgression;
 
 using StardewValley.GameData.Objects;
 using WildEggsHatching.Core.Weighting;
@@ -499,6 +501,169 @@ catch (Exception ex)
 {
     report.Add("farmanimals/weights", WeggVerifyStatus.Warn, $"Economy weight probe failed (best-effort): {ex.GetType().Name}");
 }
+
+
+// LetMeHatchThisEgg clone diagnostics: report detected clone pairs and where male variants appear in AlternatePurchaseTypes.
+try
+{
+    var api = _helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.lmh");
+    if (api is null)
+    {
+        report.Add("farmanimals/lmh-clones", WeggVerifyStatus.Warn, "LetMeHatchThisEgg API not found (Mikew.lmh); clone probe skipped.");
+    }
+    else
+    {
+        var pairs = api.GetClonedAnimalsInfo();
+        if (pairs is null || pairs.Count == 0)
+        {
+            report.Add("farmanimals/lmh-clones", WeggVerifyStatus.Pass, "LetMeHatchThisEgg reports no cloned animal pairs.");
+        }
+        else
+        {
+            var farmAnimals = SafeLoad<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+            if (farmAnimals is null || farmAnimals.Count == 0)
+            {
+                report.Add("farmanimals/lmh-clones", WeggVerifyStatus.Warn, "Could not load Data/FarmAnimals to scan clone placements.");
+            }
+            else
+            {
+                static string Short(string? s, int max)
+                {
+                    var t = (s ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+                    return t.Length <= max ? t : t[..max] + "…";
+                }
+
+                var leakMixed = new List<string>();
+                var leakMissingCondition = new List<string>();
+                var leakDirectUnlock = new List<string>();
+                var leakForeignRefs = new List<string>();
+
+                var totalAltRefs = 0;
+                var totalForeignAltRefs = 0;
+                var lines = new List<string>();
+
+                foreach (var (femaleKey, maleKey, addAsAlternate) in pairs)
+                {
+                    if (string.IsNullOrWhiteSpace(femaleKey) || string.IsNullOrWhiteSpace(maleKey))
+                        continue;
+
+                    var mailId = AnimalNoteIds.NoteMailId(femaleKey);
+                    var expected = ConditionJoiner.MailReceivedByHost(mailId);
+
+                    var allowedMasters = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { femaleKey };
+                    var maleAltRefs = new List<(string ParentId, int Index, string EntryId, string Condition, IReadOnlyList<string> AnimalIds)>();
+
+                    // Direct listing safety: ensure male inherits the female unlock condition.
+                    if (farmAnimals.TryGetValue(maleKey, out var maleData) && maleData is not null)
+                    {
+                        var unlock = maleData.UnlockCondition ?? string.Empty;
+                        if (!unlock.Contains(mailId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            leakDirectUnlock.Add($"{femaleKey}->{maleKey}: UnlockCondition missing '{mailId}' (got '{Short(unlock, 80)}').");
+                        }
+                    }
+
+                    var found = new List<string>();
+
+                    foreach (var (parentId, parentData) in farmAnimals)
+                    {
+                        if (parentData is null)
+                            continue;
+
+                        var entries = AlternatePurchaseTypesAccessor.Read(parentData);
+                        for (var i = 0; i < entries.Count; i++)
+                        {
+                            var e = entries[i];
+                            var hasFemale = e.AnimalIds.Any(id => femaleKey.Equals(id, StringComparison.OrdinalIgnoreCase));
+                            if (hasFemale)
+                                allowedMasters.Add(parentId);
+
+                            var hasMale = e.AnimalIds.Any(id => maleKey.Equals(id, StringComparison.OrdinalIgnoreCase));
+                            if (!hasMale)
+                                continue;
+
+                            totalAltRefs++;
+                            var idsCount = e.AnimalIds.Count;
+                            var cond = e.Condition ?? string.Empty;
+
+                            maleAltRefs.Add((parentId, i, e.Id ?? string.Empty, cond, e.AnimalIds));
+
+                            found.Add($"{parentId}[{i}] ids={idsCount} id={e.Id ?? ""} cond='{Short(cond, 70)}'");
+
+                            if (idsCount > 1)
+                            {
+                                leakMixed.Add($"{femaleKey}->{maleKey}: appears in mixed AnimalIDs under {parentId}[{i}] ({string.Join(", ", e.AnimalIds)}).");
+                            }
+
+                            if (!cond.Contains(mailId, StringComparison.OrdinalIgnoreCase))
+                            {
+                                leakMissingCondition.Add($"{femaleKey}->{maleKey}: alternate {parentId}[{i}] condition missing '{mailId}' (got '{Short(cond, 80)}').");
+                            }
+                        }
+                    }
+
+                    
+                    var foreign = maleAltRefs.Where(r => !allowedMasters.Contains(r.ParentId)).ToList();
+                    if (foreign.Count > 0)
+                    {
+                        totalForeignAltRefs += foreign.Count;
+
+                        var maxForeign = options.Full ? 12 : 6;
+                        var foreignLoc = string.Join("; ", foreign.Take(maxForeign).Select(r => $"{r.ParentId}[{r.Index}] id={r.EntryId} cond='{Short(r.Condition, 70)}'"));
+                        leakForeignRefs.Add($"{femaleKey}->{maleKey}: referenced outside female masters ({foreign.Count}): {foreignLoc}");
+                    }
+
+var maxLoc = options.Full ? 12 : 6;
+                    var loc = found.Count == 0 ? "no AlternatePurchaseTypes references" : string.Join("; ", found.Take(maxLoc));
+                    lines.Add($"- {femaleKey} -> {maleKey} (AddAsAlternate={addAsAlternate}): {loc}");
+                }
+
+                var status = (leakMixed.Count == 0 && leakMissingCondition.Count == 0 && leakDirectUnlock.Count == 0 && leakForeignRefs.Count == 0)
+                    ? WeggVerifyStatus.Pass
+                    : WeggVerifyStatus.Warn;
+
+                var nPairs = pairs.Count;
+                var maxPairs = options.Full ? 30 : 12;
+                var msg =
+                    $"ClonePairs={nPairs} altRefs={totalAltRefs} foreignAltRefs={totalForeignAltRefs}. " +
+                    (status == WeggVerifyStatus.Pass ? "No obvious clone shop leaks detected." : "Potential clone shop leaks detected; see details below.") +
+                    "\nPairs:\n" + string.Join("\n", lines.Take(maxPairs));
+
+                if (leakDirectUnlock.Count > 0)
+                {
+                    var max = options.Full ? 20 : 8;
+                    msg += "\n\nDirect listing issues:\n" + string.Join("\n", leakDirectUnlock.Take(max).Select(x => "  - " + x));
+                }
+
+                if (leakMixed.Count > 0)
+                {
+                    var max = options.Full ? 20 : 8;
+                    msg += "\n\nMixed-pool issues (male should be isolated):\n" + string.Join("\n", leakMixed.Take(max).Select(x => "  - " + x));
+                }
+
+                if (leakMissingCondition.Count > 0)
+                {
+                    var max = options.Full ? 20 : 8;
+                    msg += "\n\nAlternate condition issues (missing female mail gate):\n" + string.Join("\n", leakMissingCondition.Take(max).Select(x => "  - " + x));
+                }
+
+                if (leakForeignRefs.Count > 0)
+                {
+                    var max = options.Full ? 20 : 8;
+                    msg += "\n\nForeign alternate references (male appears outside female masters):\n" + string.Join("\n", leakForeignRefs.Take(max).Select(x => "  - " + x));
+                }
+
+                report.Add("farmanimals/lmh-clones", status, msg);
+            }
+        }
+    }
+}
+catch (Exception ex)
+{
+    report.Add("farmanimals/lmh-clones", WeggVerifyStatus.Warn, $"Clone probe failed (best-effort): {ex.GetType().Name}");
+}
+
+
 
 
     }

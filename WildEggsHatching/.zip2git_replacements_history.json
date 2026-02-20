@@ -23,5 +23,15 @@
     "id": "20260220T005342-0300-01",
     "title": "Phase 6.4: LetMeHatchThisEgg clones inherit female unlock (direct + alternates)",
     "created_at": "2026-02-20T00:53:42-03:00"
+  },
+  {
+    "id": "20260220T103540-0300-01",
+    "title": "Verifier: report LetMeHatch clone pairs and AlternatePurchaseTypes placements",
+    "created_at": "2026-02-20T10:35:40-03:00"
+  },
+  {
+    "id": "20260220T110245-0300-01",
+    "title": "Verifier: clone global leak scan for AlternatePurchaseTypes",
+    "created_at": "2026-02-20T11:02:45-03:00"
   }
 ]
