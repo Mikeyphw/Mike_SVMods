@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-20T15:56:03-03:00",
+  "updated_at": "2026-02-20T16:35:18-03:00",
   "replacements": [
     {
       "id": "20260220T132719-0300-01",
@@ -26,6 +26,11 @@
       "id": "20260220T151933-0300-01",
       "title": "RoosterAddon Phase 8B: produce tables + localized female assignment values",
       "created_at": "2026-02-20T15:19:33-03:00"
+    },
+    {
+      "id": "20260220T162110-0300-01",
+      "title": "GMCM Options UX helpers: separators, status paragraphs, color swatch",
+      "created_at": "2026-02-20T16:21:10-03:00"
     }
   ]
 }

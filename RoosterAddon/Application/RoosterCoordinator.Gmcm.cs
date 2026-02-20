@@ -144,6 +144,9 @@ internal sealed partial class RoosterCoordinator
 
         layout.Page("debug", b =>
         {
+            b.ParagraphGmcmOptionsStatus();
+            b.Separator(simple: true);
+
             b.Section("debug.flags");
             b.Bool(cfg => cfg.General.EnableDebug, optionId: "debug.enableDebug", tooltip: true);
 
