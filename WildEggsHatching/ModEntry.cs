@@ -1,4 +1,9 @@
 using System;
+using System.Linq;
+using StardewValley;
+using StardewValley.GameData.FarmAnimals;
+using Mikew.BirdsOfAFeather.EnumsAndStrings;
+using WildEggsHatching.Core.ShopAnchors;
 using HarmonyLib;
 using Mikew.BirdsOfAFeather.Framework;
 using Mikew.BirdsOfAFeather;
@@ -42,6 +47,8 @@ using Mikew.BirdsOfAFeather.Models;
 using System.Collections.Generic;
 using WildEggsHatching.Core.Assets;
 using WildEggsHatching.Core.ShopProgression;
+using Mikew.BirdsOfAFeather.Integrations.Gmcm;
+using WildEggsHatching.Infrastructure.Config;
 
 namespace WildEggsHatching;
 
@@ -49,6 +56,7 @@ public sealed class ModEntry : Mod
 {
     private CoreContext? _core;
     private SmapiConfigProvider<ModConfig>? _config;
+    private GmcmConfigHost<ModConfig>? _gmcmHost;
     private ILog? _log;
     private IModFacade? _facade;
     private object? _api;
@@ -256,7 +264,9 @@ var jsonReader = new SmapiJsonFileReader(helper);
 
         RegisterCommands(helper, _log);
 
+        helper.Events.GameLoop.GameLaunched += OnGameLaunched;
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+        helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
         helper.Events.GameLoop.Saving += OnSaving;
         helper.Events.GameLoop.DayStarted += OnDayStarted;
         helper.Events.GameLoop.DayEnding += OnDayEnding;
@@ -575,7 +585,245 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
             _log?.Log($"Config: failed seeding AnimalProgressionMode defaults. {ex.GetType().Name}: {ex.Message}", LogLevel.Trace);
         }
     }
+    private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+    {
+        if (_config is null)
+            return;
 
+        _gmcmHost = GmcmConfigHost<ModConfig>.TryCreate(
+            helper: Helper,
+            manifest: ModManifest,
+            configProvider: _config
+        );
+
+        RebuildGmcmLayout(force: true);
+    }
+
+    private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+    {
+        RebuildGmcmLayout(force: true);
+    }
+
+    private void RebuildGmcmLayout(bool force)
+    {
+        if (_gmcmHost is null || _config is null)
+            return;
+
+        _gmcmHost.RebuildLayout(layout =>
+        {
+            layout.Root(root =>
+            {
+                root.Bool(cfg => cfg.ProgressionMode, optionId: "general.progressionMode", tooltip: true);
+                root.Bool(cfg => cfg.DesertTombModuleEnabled, optionId: "desertTomb.enabled", tooltip: true);
+
+                root.Separator("pages", simple: true);
+                root.Link("desertTomb");
+                root.Link("items");
+                root.Link("hatching");
+                root.Link("prices");
+                root.Link("animalNotes");
+                root.Link("animalProgression");
+                root.Link("debug");
+            });
+
+            layout.Page("desertTomb", page =>
+            {
+                page.Enum(cfg => cfg.TombChance, optionId: "desertTomb.tombChance", tooltip: true);
+            });
+
+            layout.Page("items", page =>
+            {
+                page.Bool(cfg => cfg.AlternatePotionSprite, optionId: "items.alternatePotionSprite", tooltip: true);
+                page.Bool(cfg => cfg.NeedsFern, optionId: "items.incubatorNeedsFern", tooltip: true);
+            });
+
+            layout.Page("hatching", page =>
+            {
+                page.Bool(cfg => cfg.HatchDinoEggs, optionId: "hatching.hatchDinoEggs", tooltip: true);
+                page.Bool(cfg => cfg.DinoEggsExclusiveHatch, optionId: "hatching.dinoExclusiveHatch", tooltip: true);
+            });
+
+            layout.Page("prices", page =>
+            {
+                page.Text(cfg => cfg.DinoPrice, optionId: "prices.dino", tooltip: true);
+                page.Text(cfg => cfg.VoidChickenPrice, optionId: "prices.voidChicken", tooltip: true);
+                page.Text(cfg => cfg.OstrichPrice, optionId: "prices.ostrich", tooltip: true);
+            });
+
+            layout.Page("animalNotes", page =>
+            {
+                page.Int(cfg => cfg.AnimalNotesWarnAfterDays, optionId: "animalNotes.warnAfterDays", tooltip: true, min: 0);
+                page.Int(cfg => cfg.AnimalNotesPlacementRadius, optionId: "animalNotes.placementRadius", tooltip: true, min: 0);
+                page.Bool(cfg => cfg.AnimalNotesQuestMailHostOnly, optionId: "animalNotes.hostOnlyQuestMail", tooltip: true);
+                page.Bool(cfg => cfg.AnimalNotesAllowClientDiscoveries, optionId: "animalNotes.allowClientDiscoveries", tooltip: true);
+
+                page.Separator("animalNotes_advanced", simple: true);
+                page.Link("animalProgression", tooltip: true);
+                page.Paragraph("animalNotes.progressionOverrides");
+            });
+
+            layout.Page("animalProgression", BuildAnimalProgressionPage);
+
+            layout.Page("debug", page =>
+            {
+                page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
+                page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
+                page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
+            });
+        }, force: force);
+    }
+
+    private void BuildAnimalProgressionPage(GmcmPageBuilder<ModConfig> page)
+    {
+        page.Paragraph("animalProgression.description");
+
+        if (!Context.IsWorldReady)
+        {
+            page.Separator("animalProgression_loadSave", simple: true);
+            page.Paragraph("animalProgression.loadSave");
+            return;
+        }
+
+        Dictionary<string, FarmAnimalData>? farmAnimals;
+        try
+        {
+            farmAnimals = Game1.content.Load<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+        }
+        catch
+        {
+            page.Separator("animalProgression_loadFailed", simple: true);
+            page.Paragraph("animalProgression.loadFailed");
+            return;
+        }
+
+        if (farmAnimals is null || farmAnimals.Count == 0)
+        {
+            page.Separator("animalProgression_empty", simple: true);
+            page.Paragraph("animalProgression.empty");
+            return;
+        }
+
+        var config = _config!.Get();
+        var anchors = ShopAnchorIndex.Build(farmAnimals);
+        var enabledText = Helper.Translation.Get("config.animalProgression.state.enabled").ToString();
+        var disabledText = Helper.Translation.Get("config.animalProgression.state.disabled").ToString();
+
+        page.Section("animalProgression.animals");
+
+        foreach (var row in farmAnimals
+                     .Where(kvp => !string.Equals(kvp.Key, "Blue Chicken", StringComparison.OrdinalIgnoreCase))
+                     .Select(kvp => new
+                     {
+                         Id = kvp.Key,
+                         Name = kvp.Value?.ShopDisplayName ?? kvp.Value?.DisplayName ?? kvp.Key
+                     })
+                     .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(x => x.Id, StringComparer.OrdinalIgnoreCase))
+        {
+            var animalId = row.Id;
+            var displayName = row.Name;
+
+            var defaultEnabled = AnimalShopProgressionPolicy.DefaultEnabled(animalId, farmAnimals, anchors);
+            var defaultState = defaultEnabled ? enabledText : disabledText;
+
+            var elementId = GmcmDynamicIds.ElementId("animalProgression", animalId);
+
+            page.BoolLabel(
+                elementId: elementId,
+                name: () => displayName,
+                tooltip: () => Helper.Translation.Get(
+                        "config.animalProgression.entry.tooltip",
+                        new { animalId, defaultState }
+                    )
+                    .ToString(),
+                getValue: () =>
+                {
+                    var dict = config.AnimalProgressionMode;
+                    if (dict is not null)
+                    {
+                        if (dict.TryGetValue(animalId, out var enabled))
+                            return enabled;
+
+                        var match = dict.Keys.FirstOrDefault(k => string.Equals(k, animalId, StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrWhiteSpace(match) && dict.TryGetValue(match, out enabled))
+                            return enabled;
+                    }
+
+                    return defaultEnabled;
+                },
+                setValue: value =>
+                {
+                    EnsureAnimalProgressionComparer(config);
+
+                    var dict = config.AnimalProgressionMode!;
+                    if (value == defaultEnabled)
+                        dict.Remove(animalId);
+                    else
+                        dict[animalId] = value;
+                }
+            );
+        }
+    }
+
+    private static void EnsureAnimalProgressionComparer(ModConfig config)
+    {
+        if (config.AnimalProgressionMode is null)
+        {
+            config.AnimalProgressionMode = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            return;
+        }
+
+        if (config.AnimalProgressionMode.Comparer != StringComparer.OrdinalIgnoreCase)
+        {
+            config.AnimalProgressionMode =
+                new Dictionary<string, bool>(config.AnimalProgressionMode, StringComparer.OrdinalIgnoreCase);
+        }
+    }
+);
+
+            layout.Page("desertTomb", page =>
+            {
+                page.Enum(cfg => cfg.TombChance, optionId: "desertTomb.tombChance", tooltip: true);
+            });
+
+            layout.Page("items", page =>
+            {
+                page.Bool(cfg => cfg.AlternatePotionSprite, optionId: "items.alternatePotionSprite", tooltip: true);
+                page.Bool(cfg => cfg.NeedsFern, optionId: "items.incubatorNeedsFern", tooltip: true);
+            });
+
+            layout.Page("hatching", page =>
+            {
+                page.Bool(cfg => cfg.HatchDinoEggs, optionId: "hatching.hatchDinoEggs", tooltip: true);
+                page.Bool(cfg => cfg.DinoEggsExclusiveHatch, optionId: "hatching.dinoExclusiveHatch", tooltip: true);
+            });
+
+            layout.Page("prices", page =>
+            {
+                page.Text(cfg => cfg.DinoPrice, optionId: "prices.dino", tooltip: true);
+                page.Text(cfg => cfg.VoidChickenPrice, optionId: "prices.voidChicken", tooltip: true);
+                page.Text(cfg => cfg.OstrichPrice, optionId: "prices.ostrich", tooltip: true);
+            });
+
+            layout.Page("animalNotes", page =>
+            {
+                page.Int(cfg => cfg.AnimalNotesWarnAfterDays, optionId: "animalNotes.warnAfterDays", tooltip: true, min: 0);
+                page.Int(cfg => cfg.AnimalNotesPlacementRadius, optionId: "animalNotes.placementRadius", tooltip: true, min: 0);
+                page.Bool(cfg => cfg.AnimalNotesQuestMailHostOnly, optionId: "animalNotes.hostOnlyQuestMail", tooltip: true);
+                page.Bool(cfg => cfg.AnimalNotesAllowClientDiscoveries, optionId: "animalNotes.allowClientDiscoveries", tooltip: true);
+
+                page.Separator("animalNotes_advanced", simple: true);
+                page.Paragraph("animalNotes.progressionOverrides");
+            });
+
+            layout.Page("debug", page =>
+            {
+                page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
+                page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
+                page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
+            });
+        });
+    }
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
@@ -592,6 +840,8 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
         {
             // best-effort diagnostics
         }
+
+        RebuildGmcmLayout(force: true);
 
         _pendingAnimalNotesValidation = true;
     }

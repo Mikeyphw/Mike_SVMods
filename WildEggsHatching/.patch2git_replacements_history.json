@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-20T13:36:21-03:00",
+  "updated_at": "2026-02-20T15:57:06-03:00",
   "replacements": [
     {
       "id": "20260219T212821-0300-01",
@@ -41,6 +41,16 @@
       "id": "20260220T132719-0300-01",
       "title": "GMCM V2 phased plans + Debug page gating",
       "created_at": "2026-02-20T13:27:19-03:00"
+    },
+    {
+      "id": "20260220T134749-0300-01",
+      "title": "WildEggsHatching Phase 2 - GMCM baseline menu",
+      "created_at": "2026-02-20T13:47:49-03:00"
+    },
+    {
+      "id": "20260220T153015-0300-01",
+      "title": "WildEggsHatching Phase 6 - GMCM per-animal progression overrides",
+      "created_at": "2026-02-20T15:30:15-03:00"
     }
   ]
 }
