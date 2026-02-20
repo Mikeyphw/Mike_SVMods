@@ -77,10 +77,10 @@
   - if master listing is locked, copy master shop fields onto the unlocked entry
   - merge master + variant conditions where needed
   - append/set `PLAYER_HAS_MAIL Host <noteMailId> Received` to gate visibility
-- **6.4** Preserve special cases (e.g., Blue Chicken purchasability, LetMeHatch clone handling if still applicable).
+- **6.4** Preserve special cases (Blue Chicken handled; LetMeHatchThisEgg-clone handling deferred; safer plan: clone variants inherit the female unlock condition and are never gated directly).
 
 ## Phase 7 — Tests and verification
-- **7.1** Tests: anchor mapping; effective value priority; produce math (DaysToMature/DaysToProduce); clamp bounds; unlocked penalty; locked variant removal.
-- **7.2** Add/extend verifier output: min/median/max weight stats and anchored variant coverage.
-- **7.3** Update `docs/TODO.md` to reflect remaining work only; mark plan steps done as implemented.
+- **7.1** ✅ Tests: anchor mapping; effective value priority; produce math (DaysToMature/DaysToProduce); clamp bounds; unlocked penalty; locked variant removal.
+- **7.2** ✅ Add/extend verifier output: min/median/max weight stats and anchored variant coverage.
+- **7.3** ✅ Update `docs/TODO.md` to reflect remaining work only; mark plan steps done as implemented.
 

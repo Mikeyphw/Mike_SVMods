@@ -37,11 +37,11 @@
 ## Phase 6 — Restore original shop lock/unlock behavior with GSQ gating
 - [x] 6.1 Restore/ensure AnimalProgressionMode defaulting (locked by default)
 - [x] 6.2 Implement locked edits (PurchasePrice=-1, remove from alternates)
-- [ ] 6.3 Implement unlocked edits (copy master fields, merge conditions, mail GSQ)
-- [ ] 6.4 Preserve special cases (Blue Chicken, LetMeHatch clone if applicable)
+- [x] 6.3 Implement unlocked edits (copy master fields, merge conditions, mail GSQ)
+- [ ] 6.4 Preserve special cases (Blue Chicken handled; LetMeHatchThisEgg-clone handling deferred)
 
 ## Phase 7 — Tests and verification
-- [ ] 7.1 Add tests for mapping/value/weights/clamps/unlock behavior
-- [ ] 7.2 Add/extend verifier output for weights + anchor coverage
-- [ ] 7.3 Update docs/TODO.md (remaining work only) and mark completed checklist items
+- [x] 7.1 Add tests for mapping/value/weights/clamps/unlock behavior
+- [x] 7.2 Add/extend verifier output for weights + anchor coverage
+- [x] 7.3 Update docs/TODO.md (remaining work only) and mark completed checklist items
 

@@ -604,9 +604,9 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
 
     public override object? GetApi()
     {
-        if (_facade is null)
+        if (_dataLoader is null || _chosenEggs is null)
             return null;
 
-        return _api ??= new WildEggsApi(_facade);
+        return _api ??= new WildEggsApi(_dataLoader, Helper.ModRegistry, _chosenEggs);
     }
 }

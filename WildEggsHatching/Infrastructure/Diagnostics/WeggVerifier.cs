@@ -407,6 +407,45 @@ catch (Exception ex)
 {
     report.Add("farmanimals/anchors", WeggVerifyStatus.Warn, $"Anchor mapping probe failed (best-effort): {ex.GetType().Name}");
 }
+// Anchor coverage: among hidden (PurchasePrice<0) candidate animals, how many can be anchored to a visible listing?
+try
+{
+    var farmAnimals = SafeLoad<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+    if (farmAnimals is null || farmAnimals.Count == 0)
+    {
+        report.Add("farmanimals/anchor-coverage", WeggVerifyStatus.Warn, "Could not load Data/FarmAnimals to compute anchor coverage.");
+    }
+    else
+    {
+        var snapshot = _dataLoader.Load();
+        var candidateIds = BuildVerifyCandidateIds(snapshot, farmAnimals);
+        var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => _log.Log(msg, LogLevel.Trace));
+
+        var hidden = candidateIds
+            .Where(id => farmAnimals.TryGetValue(id, out var a) && a is not null && a.PurchasePrice < 0)
+            .ToList();
+
+        var anchored = hidden.Count(id => anchors.HasAnchor(id));
+        var missing = hidden
+            .Where(id => !anchors.HasAnchor(id))
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var n = options.Full ? 10 : 6;
+        var samples = missing.Take(n).ToList();
+
+        var status = missing.Count == 0 ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn;
+        var msg = $"HiddenCandidates={hidden.Count} anchored={anchored} missing={missing.Count}"
+                  + (samples.Count > 0 ? $". Missing samples: {string.Join(", ", samples)}" : ".");
+
+        report.Add("farmanimals/anchor-coverage", status, msg);
+    }
+}
+catch (Exception ex)
+{
+    report.Add("farmanimals/anchor-coverage", WeggVerifyStatus.Warn, $"Anchor coverage probe failed (best-effort): {ex.GetType().Name}");
+}
+
 // Farm animal economy-weight diagnostics (top/bottom N by weight; includes effective value + penalties).
 try
 {
@@ -434,12 +473,18 @@ try
 
             var isUnlocked = BuildUnlockedResolver();
             var rows = BuildWeightRows(candidateIds, farmAnimals, anchors, values, isUnlocked);
+var rawMin = rows.Min(r => r.RawWeight);
+var rawMax = rows.Max(r => r.RawWeight);
+var finalMin = rows.Min(r => r.FinalWeight);
+var finalMax = rows.Max(r => r.FinalWeight);
+var finalMedian = MedianMath.MedianOrDefault(rows.Select(r => r.FinalWeight).ToList(), defaultValue: 0.0);
+
 
             var n = options.Full ? 10 : 6;
             var common = rows.OrderByDescending(r => r.FinalWeight).ThenBy(r => r.Id, StringComparer.OrdinalIgnoreCase).Take(n).ToList();
             var rare = rows.OrderBy(r => r.FinalWeight).ThenBy(r => r.Id, StringComparer.OrdinalIgnoreCase).Take(n).ToList();
 
-            var summary = $"Candidates={rows.Count} medianRaw={rows.MedianRaw:0.###E+0} clamp=[{rows.MinClamp:0.###E+0},{rows.MaxClamp:0.###E+0}] " +
+            var summary = $"Candidates={rows.Count} raw=[{rawMin:0.###E+0},{rows.MedianRaw:0.###E+0},{rawMax:0.###E+0}] final=[{finalMin:0.###E+0},{finalMedian:0.###E+0},{finalMax:0.###E+0}] clamp=[{rows.MinClamp:0.###E+0},{rows.MaxClamp:0.###E+0}] " +
                           $"penalties: hiddenNoAnchor×{WeggWeightingDefaults.HiddenNoAnchorPenalty} unlocked×{WeggWeightingDefaults.UnlockedFactor}";
 
             var msg = summary
