@@ -1,45 +1,31 @@
-# LetMeHatchThisEgg CHECKLIST
+# CHECKLIST — LetMeHatchThisEgg
 
-## Phase 0 — Baseline + Guardrails ✅
-- [x] Fail-fast if BOAF missing; assert no local BOAF copies.
-- [x] Centralize core context creation (`CoreContext`).
-
-## Phase 1 — Coordinator skeleton ✅
-- [x] Add `LmhCoordinator` to own mod lifecycle wiring.
-- [x] Move wiring out of `ModEntry` into coordinator.
-
-## Phase 2 — Content routing + loaders/editors ✅
-- [x] Document inventory + freeze rules (`Docs/phase2_content_routing_inventory.md`).
-- [x] Add mod-specific loaders (`Infrastructure/Content/Loaders/*`).
-- [x] Add mod-specific editors (`Infrastructure/Content/Editors/*`).
-- [x] Centralize registrations in `LetMeHatchContentPipeline`.
-- [x] Coordinator delegates `AssetRequested` to pipeline.
-
-## Phase 3 — Layered architecture (Core/Application/Infrastructure) ✅
-- [x] Extract pure rules into `Core/` (no SMAPI/Game1).
-- [x] Add Application use-cases/orchestrators as editor/loader entrypoints.
-- [x] Add Infrastructure gateways (WEH-style adapters).
-- [x] Rewire editors/loaders to call Application (and gateways) instead of `GameAssetManager`.
-- [x] Add `Reports/PreBuildValidation` (Core purity + BOAF-duplicate checks).
-
-## Phase 4 — Invalidation + scheduling ✅
-- [x] Use BOAF `AssetInvalidationBatcher` + next-tick scheduling for invalidations.
-- [x] Centralize invalidate-all behavior in the asset pipeline.
-- [x] Remove direct `GameContent.InvalidateCache` remnants in `Managers/*`.
-
-## Phase 5 — Save-data + config polish (N/A)
-- [x] N/A — mod does not persist state beyond runtime.
-- [x] N/A — no legacy compatibility shims required.
-
-## Phase 6 — Tests
-- [x] Add testable Core services + unit tests under `Tests/` (separate Tests zip rules).
-- [x] Add unit tests for Application use-cases (façades).
-- [x] Add contract-style tests for Infrastructure adapters (gating paths; no SMAPI runtime required).
-- [x] Add CI-friendly runner script (`dotnet test`) + hook PreBuildValidation.
-- [x] Add positive-path edit-service tests (ops-injected Application services) so adapters stay thin and testable.
-- [x] Add positive-path tests for FarmAnimals + Machines edit services.
-
-## Phase 7 — Packaging + release
-- [ ] Verify no local duplicates remain.
-- [ ] Ensure packaging + versioning + smoke tests.
-
+## Scope
+## Phase 0 — Keep docs in sync
+- [ ] Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
+- [ ] Keep all debug/diagnostics options on GMCM page id `debug` only.
+- [ ] Keep option IDs stable forever (translation keys and field IDs depend on this).
+## Phase 3 — Baseline GMCM menu via BOAF host + DSL
+- [ ] Remove/retire legacy GMCM UI plumbing in favor of BOAF host + DSL.
+- [ ] Wire `GmcmConfigHost` in `GameLaunched`; if GMCM missing, return.
+- [ ] Build pages: `root`, `cloning`, `colors`, `breeding`, `advanced`, `debug`.
+- [ ] Bind scalar options with stable `optionId`s; put all logging/show-debug toggles on `debug`.
+- [ ] Add i18n keys under `config.*`; use `onSaved` only if cache refresh is needed.
+## Phase 7A — Dynamic per-pack/per-animal toggles (low risk)
+- [ ] Add page `edits` populated from LMH’s known sources (packs/animal keys).
+- [ ] Render one toggle per entry with custom label funcs (friendly name fallback to key).
+- [ ] Use default-vs-override dictionary storage (remove key when equals default).
+- [ ] Rebuild on `SaveLoaded` so dynamic sources are available.
+- [ ] Keep option IDs stable using BOAF dynamic ID helper.
+## Phase 7B — Egg color controls (medium risk)
+- [ ] Keep scalar toggles on `colors` page (`ChangeEggColors`, `LinkAnimalColorToEgg`).
+- [ ] Add dynamic sections per animal for configurable color pickers.
+- [ ] Keep UI bounded; avoid rendering huge lists.
+- [ ] Use stable element IDs derived from keys.
+- [ ] Rebuild on `SaveLoaded`.
+## Phase 7C — ItemToClone editor (highest risk; bounded UI)
+- [ ] Add page `itemMappings` limited to curated/known animal relation order.
+- [ ] Use dropdowns for known choices + a “Custom” fallback text entry.
+- [ ] Keep allowed-values lists curated (avoid huge item catalogs).
+- [ ] Validate and normalize mapping data before saving.
+- [ ] Preserve config-file editing as an escape hatch.
