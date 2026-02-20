@@ -40,6 +40,25 @@ public sealed class GmcmPageBuilder<TConfig>
         => _menu.AddSectionTitle(sectionName, tooltip);
 
     public void Paragraph(string paragraphName)
+
+    public void ParagraphDynamic(Func<string> text, bool styled = false, string? id = null)
+    {
+        var seed = id ?? $"para_{++_autoIdCounter}";
+        var logName = $"{_fieldIdPrefix}.{_pageId}.{GmcmFieldIds.Normalize(seed)}";
+        _menu.AddDynamicParagraph(logName, text, isStyledText: styled);
+    }
+
+    public void ParagraphGmcmOptionsStatus()
+    {
+        ParagraphDynamic(
+            text: () => _menu.SupportsExtraOptions
+                ? "<b>GMCM Options detected.</b> Enhanced widgets enabled."
+                : "GMCM Options not installed. Enhanced widgets disabled.",
+            styled: true,
+            id: "gmcmoptions_status"
+        );
+    }
+
         => _menu.AddParagraph(paragraphName);
 
     public void Link(string pageId, bool tooltip = false)
@@ -57,12 +76,10 @@ public sealed class GmcmPageBuilder<TConfig>
     /// </summary>
     public void Separator(string id, bool simple = false, string? fieldId = null)
     {
-        var fid = fieldId ?? AutoFieldId(id);
-
         if (simple)
-            _menu.AddSimpleHorizontalSeparator(fid);
+            _menu.AddSimpleHorizontalSeparator(fieldId);
         else
-            _menu.AddHorizontalSeparator(fid);
+            _menu.AddHorizontalSeparator(fieldId);
     }
 
     public void Image(Func<Texture2D> texture, Rectangle? texturePixelArea = null, int scale = Game1.pixelZoom)
@@ -119,8 +136,28 @@ public sealed class GmcmPageBuilder<TConfig>
         bool tooltip = false,
         bool showAlpha = true,
         uint colorPickerStyle = 0,
-        string? fieldId = null)
-        => Bind(member, optionId, (get, set, id) => _menu.AddColorOption(get, set, id, tooltip, showAlpha, colorPickerStyle, fieldId ?? AutoFieldId(id)));
+        string? fieldId = null,
+        Action<SpriteBatch, int, int, Color>? drawSample = null)
+        => Bind(member, optionId, (get, set, id) => _menu.AddColorOption(get, set, id, tooltip, showAlpha, colorPickerStyle, fieldId ?? AutoFieldId(id), drawSample));
+
+    public void ColorSwatch(
+        Expression<Func<TConfig, Color>> member,
+        string? optionId = null,
+        bool tooltip = false,
+        bool showAlpha = true,
+        uint colorPickerStyle = 0,
+        string? fieldId = null,
+        Action<SpriteBatch, int, int, Color>? drawSample = null)
+        => Color(
+            member,
+            optionId: optionId,
+            tooltip: tooltip,
+            showAlpha: showAlpha,
+            colorPickerStyle: colorPickerStyle,
+            fieldId: fieldId,
+            drawSample: drawSample ?? _menu.MakeColorSwatchDrawer()
+        );
+
 
     // -----------------------------
     // Unbound options (manual get/set, still auto fieldIds by default)
@@ -170,8 +207,9 @@ public sealed class GmcmPageBuilder<TConfig>
         bool tooltip = false,
         bool showAlpha = true,
         uint colorPickerStyle = 0,
-        string? fieldId = null)
-        => _menu.AddColorOption(getValue, setValue, optionId, tooltip, showAlpha, colorPickerStyle, fieldId ?? AutoFieldId(optionId));
+        string? fieldId = null,
+        Action<SpriteBatch, int, int, Color>? drawSample = null)
+        => _menu.AddColorOption(getValue, setValue, optionId, tooltip, showAlpha, colorPickerStyle, fieldId ?? AutoFieldId(optionId), drawSample);
 
     public void ImageOption(
         string optionId,

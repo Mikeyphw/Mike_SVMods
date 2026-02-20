@@ -404,3 +404,23 @@ Use the `*Label` overloads on `GmcmPageBuilder<TConfig>` when you need to render
 Example patterns:
 - `b.EnumLabel(...)` for per-key enum selection.
 - Use `GmcmDynamicIds.ElementId(prefix, key)` to build stable element IDs.
+
+## GMCM Options (jltaylor-us.GMCMOptions)
+
+BOAF will automatically detect **GMCM Options** (Jamie Taylor) and expose its complex widgets through `GmcmPageBuilder`:
+- `Color(...)` (color picker)
+- `ImageOption(...)` (image picker)
+- `Separator(...)` (horizontal separator)
+- `DynamicParagraph(...)` (dynamic/styled paragraphs)
+
+If GMCM Options isn't installed, these calls are **silently ignored** (they won't render, but the menu still works).
+
+GMCM Options UniqueID: `jltaylor-us.GMCMOptions`.
+
+
+
+## GMCM Options helpers (optional)
+
+- `page.Separator(...)`: uses GMCM Options horizontal separator when available; ignored if GMCM Options isn't installed.
+- `page.ParagraphDynamic(...)`: uses GMCM Options dynamic paragraph when available; falls back to native `AddParagraph`.
+- `page.ColorSwatch(...)`: same as `Color(...)` but auto-uses `MakeColorSwatchDrawer()` when GMCM Options is available.

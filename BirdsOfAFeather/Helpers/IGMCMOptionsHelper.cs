@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.BirdsOfAFeather.Framework;
@@ -34,6 +35,9 @@ public sealed class IGMCMOptionsHelper
         _manifest = manifest;
     }
 
+
+    public bool SupportsExtraOptions => _extraOptionsApi is not null;
+
     private static string Key(params string?[] parts)
         => string.Join(".", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
 
@@ -43,7 +47,11 @@ public sealed class IGMCMOptionsHelper
     private string TranslateIfKey(string keyOrText)
         => _i18n.TryGet(keyOrText, out var t) ? t : keyOrText;
 
-    private Func<string> GetName(string optionName)
+    
+    private static string StripXmlLikeMarkup(string text)
+        => string.IsNullOrWhiteSpace(text) ? string.Empty : Regex.Replace(text, "<[^>]+>", string.Empty);
+
+private Func<string> GetName(string optionName)
         => () => Translate(Key("config", optionName, "name"), optionName);
 
     private Func<string> GetPageTitle(string pageId)
@@ -377,7 +385,8 @@ public sealed class IGMCMOptionsHelper
         bool tooltip = false,
         bool showAlpha = true,
         uint colorPickerStyle = 0,
-        string? fieldId = null)
+        string? fieldId = null,
+        Action<SpriteBatch, int, int, Color>? drawSample = null)
     {
         _extraOptionsApi?.AddColorOption(
             _manifest,
@@ -387,7 +396,8 @@ public sealed class IGMCMOptionsHelper
             tooltip: tooltip ? GetDescription(optionName) : null,
             showAlpha,
             colorPickerStyle,
-            fieldId
+            fieldId,
+            drawSample
         );
     }
 
@@ -398,7 +408,8 @@ public sealed class IGMCMOptionsHelper
         Func<string>? tooltip = null,
         bool showAlpha = true,
         uint colorPickerStyle = 0,
-        string? fieldId = null)
+        string? fieldId = null,
+        Action<SpriteBatch, int, int, Color>? drawSample = null)
     {
         _extraOptionsApi?.AddColorOption(
             _manifest,
@@ -408,11 +419,22 @@ public sealed class IGMCMOptionsHelper
             tooltip,
             showAlpha,
             colorPickerStyle,
-            fieldId
+            fieldId,
+            drawSample
         );
     }
 
-    public void AddImageOption(
+    
+    /// <summary>
+    /// Create a draw function suitable for the <c>drawSample</c> parameter of <see cref="AddColorOption"/>.
+    /// Returns null if GMCM Options isn't installed.
+    /// </summary>
+    public Action<SpriteBatch, int, int, Color>? MakeColorSwatchDrawer(
+        Action<SpriteBatch, int, int>? drawBackground = null,
+        Action<SpriteBatch, int, int, Color>? drawForeground = null)
+        => _extraOptionsApi?.MakeColorSwatchDrawer(drawBackground, drawForeground);
+
+public void AddImageOption(
         Func<uint> getValue,
         Action<uint> setValue,
         string optionName,
@@ -483,11 +505,28 @@ public sealed class IGMCMOptionsHelper
     }
 
     public void AddHorizontalSeparator(string? fieldId = null)
-        => _extraOptionsApi?.AddHorizontalSeparator(_manifest, fieldId);
+        => _extraOptionsApi?.AddHorizontalSeparator(_manifest);
 
     public void AddSimpleHorizontalSeparator(string? fieldId = null)
-        => _extraOptionsApi?.AddSimpleHorizontalSeparator(_manifest, fieldId);
+        => _extraOptionsApi?.AddSimpleHorizontalSeparator(_manifest);
+public void AddDynamicParagraph(string logName, string textOrKey, bool isStyledText)
+        => AddDynamicParagraph(logName, () => textOrKey, isStyledText);
 
-    public void AddDynamicParagraph(string logName, string text, bool isStyledText)
-        => _extraOptionsApi?.AddDynamicParagraph(_manifest, logName, () => TranslateIfKey(text), isStyledText);
+    public void AddDynamicParagraph(string logName, Func<string> text, bool isStyledText)
+    {
+        if (_extraOptionsApi is not null)
+        {
+            _extraOptionsApi.AddDynamicParagraph(_manifest, logName, () => TranslateIfKey(text()), isStyledText);
+            return;
+        }
+
+        _gmcm?.AddParagraph(
+            _manifest,
+            () =>
+            {
+                var raw = TranslateIfKey(text());
+                return isStyledText ? StripXmlLikeMarkup(raw) : raw;
+            }
+        );
+    }
 }

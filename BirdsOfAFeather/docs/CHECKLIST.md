@@ -17,5 +17,6 @@
 - [x] Add `GmcmDynamicIds` helper for stable element IDs derived from dynamic keys.
 - [x] Add `EnumLabel` overload supporting custom allowed-value formatting.
 - [ ] Add host rebuild helpers for save-dependent menus (`SaveLoaded` / `ReturnedToTitle`) with next-tick scheduling.
+- [x] Integrate GMCM Options complex widgets (Color/Image/Separator/DynamicParagraph) behind optional API discovery.
 - [ ] Document patterns: default-vs-override dictionary storage (remove key when equals default).
 - [ ] (Optional) Add unit tests for ID normalization/determinism.

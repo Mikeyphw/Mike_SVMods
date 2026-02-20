@@ -28,3 +28,4 @@
 3. Add host rebuild helpers for save-dependent menus (`SaveLoaded` / `ReturnedToTitle`) with next-tick scheduling.
 4. Document patterns: default-vs-override dictionary storage (remove key when equals default).
 5. (Optional) Add unit tests for ID normalization/determinism.
+6. Integrate GMCM Options complex widgets (color picker, image picker, separator, dynamic paragraph) and keep them no-op if the mod isn't installed.

@@ -57,8 +57,16 @@ namespace Mikew.BirdsOfAFeather.Framework {
         /// <param name="showAlpha">Whether the color picker should allow setting the Alpha channel</param>
         /// <param name="colorPickerStyle">Flags to control how the color picker is rendered.  <see cref="ColorPickerStyle"/></param>
         /// <param name="fieldId">The unique field ID for use with GMCM's <c>OnFieldChanged</c>, or <c>null</c> to auto-generate a randomized ID.</param>
-        void AddColorOption(IManifest mod, Func<Color> getValue, Action<Color> setValue, Func<string> name,
-            Func<string>? tooltip = null, bool showAlpha = true, uint colorPickerStyle = 0, string? fieldId = null);
+        void AddColorOption(
+            IManifest mod,
+            Func<Color> getValue,
+            Action<Color> setValue,
+            Func<string> name,
+            Func<string>? tooltip = null,
+            bool showAlpha = true,
+            uint colorPickerStyle = 0,
+            string? fieldId = null,
+            Action<SpriteBatch, int, int, Color>? drawSample = null);
 
         #pragma warning disable format
         /// <summary>
@@ -77,7 +85,23 @@ namespace Mikew.BirdsOfAFeather.Framework {
         }
         #pragma warning restore format
 
+        
         /// <summary>
+        /// Return a function (suitable for passing as the drawSample parameter of <see cref="AddColorOption"/>)
+        /// that draws a color swatch.
+        /// </summary>
+        /// <param name="drawBackground">
+        /// A function that draws the background of the color swatch. By default (null), draws a checkerboard.
+        /// </param>
+        /// <param name="drawForeground">
+        /// A function that draws the foreground of the color swatch. By default (null), draws a square of the given color.
+        /// </param>
+        /// <returns>A function that draws a color swatch.</returns>
+        Action<SpriteBatch, int, int, Color> MakeColorSwatchDrawer(
+            Action<SpriteBatch, int, int>? drawBackground = null,
+            Action<SpriteBatch, int, int, Color>? drawForeground = null);
+
+/// <summary>
         /// Add an image picker option.  This is really an "array index picker" where you can specify what to draw
         /// for each index.  The underlying value is always a <c>uint</c> (the index).
         /// </summary>
