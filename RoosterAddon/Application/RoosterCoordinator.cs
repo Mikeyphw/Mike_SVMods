@@ -216,6 +216,8 @@ AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
         InvalidateDailyPlanCache("save loaded");
 
         RunStartupValidationV2();
+
+        RequestGmcmRebuild();
     }
 
     public void OnSaving(object? sender, SavingEventArgs e)
@@ -246,6 +248,8 @@ AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
             Helper.Events.GameLoop.UpdateTicked -= OnNextTick;
             _nextTickHooked = false;
         }
+
+        RequestGmcmRebuild();
     }
 
     private void RequestInvalidate(string assetName)

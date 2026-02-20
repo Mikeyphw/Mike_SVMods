@@ -1,5 +1,7 @@
 # PLAN — GMCM Menu (RoosterAddon)
 
+Status: Phase 8B produce tables + localized female assignment values implemented.
+
 ## Scope
 - Subdir: `RoosterAddon`
 - Dependency: BOAF Phase 1 (host helper). Dynamic editor work depends on BOAF Phase 5.

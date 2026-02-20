@@ -76,6 +76,8 @@ internal sealed partial class RoosterCoordinator
         }
 
         RunFarmAnimalsDailySystems();
+
+        RequestGmcmRebuild();
     }
 
     private void EnsureRoostersSetup()
