@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
+using Mikew.BirdsOfAFeather.Framework;
 using LetMeHatchThisEgg.Helpers;
 using LetMeHatchThisEgg.Integrations;
 using LetMeHatchThisEgg.Models;

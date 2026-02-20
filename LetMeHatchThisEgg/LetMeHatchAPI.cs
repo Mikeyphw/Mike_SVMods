@@ -1,88 +1,32 @@
-// using LetMeHatchThisEgg.Models;
-
-// public class LetMeHatchApi
-// {
-//     private static LetMeHatchApi _instance;
-
-//     public static LetMeHatchApi Instance
-//     {
-//         get { return _instance ??= new LetMeHatchApi(); }
-//     }
-
-//     public List<string> AnimalsWithClonedEggs { get; private set; } = new();
-//     public bool CloneEggs { get; private set; } = false;
-//     public int EDIT_BIRTH_TEXT_PRIORITY { get; private set; }
-//     public int EDIT_EGG_LIST_PRIORITY { get; private set; }
-//     public int CLONED_EGGS_PRIORITY { get; private set; }
-//     public int NEW_EGGS_ADD_PRIORITY { get; private set; }
-//     public List<(string FemaleKey, string MaleKey, bool AddAsAlternatePurchase)> ClonedAnimalsInfo {get; private set;} = new();
-
-//     public void SetClonedAnimalsInfo(List<ClonedAnimalInfo> clonedAnimalInfos)
-//     {
-//         ClonedAnimalsInfo = clonedAnimalInfos
-//             .Select(info => (info.FemaleKey, info.MaleKey, info.AddAsAlternatePurchase))
-//             .ToList();
-//     }
-
-//     public void SetPriorities(int birthText, int eggList, int clonedEggs, int newEggsAdd)
-//     {
-//         EDIT_BIRTH_TEXT_PRIORITY = birthText;
-//         EDIT_EGG_LIST_PRIORITY = eggList;
-//         CLONED_EGGS_PRIORITY = clonedEggs;
-//         NEW_EGGS_ADD_PRIORITY = newEggsAdd;
-//     }
-
-//     public void SetCloneEggs(bool cloneEggs)
-//     {
-//         CloneEggs = cloneEggs;
-//     }
-
-//     private LetMeHatchApi() { }
-// }
+using System.Collections.Generic;
+using System.Linq;
 using LetMeHatchThisEgg.GameAssetManagement;
-using LetMeHatchThisEgg.Models;
+using Mikew.BirdsOfAFeather.Framework;
 
-public class LetMeHatchApi
+namespace LetMeHatchThisEgg;
+
+/// <summary>
+/// Public API object returned by SMAPI <c>GetApi()</c>.
+/// Must implement BOAF's <see cref="ILetMeHatchApi"/> so other BOAF-first mods can consume it safely.
+/// </summary>
+public sealed class LetMeHatchApi : ILetMeHatchApi
 {
-    // Public properties
     public List<string> AnimalsWithClonedEggs { get; private set; } = new();
-    public bool FinishedEarlyStuff { get; private set; } = false;
+
+    public bool FinishedEarlyStuff { get; private set; }
+
     public int EDIT_BIRTH_TEXT_PRIORITY { get; private set; }
     public int EDIT_EGG_LIST_PRIORITY { get; private set; }
     public int CLONED_EGGS_PRIORITY { get; private set; }
     public int NEW_EGGS_ADD_PRIORITY { get; private set; }
+
     private GameAssetManager? _gameAssetManager;
 
-    // Public constructor to allow instance creation
-    public LetMeHatchApi()
-    {
-    }
-    public void SetGameAssetManager(GameAssetManager gameAssetManager){
-        _gameAssetManager = gameAssetManager;
-    }
+    public LetMeHatchApi() { }
 
-    public List<(
-        string FemaleKey,
-        string MaleKey,
-        bool AddAsAlternatePurchase
-    )> GetClonedAnimalsInfo()
-    {
-        if (_gameAssetManager != null)
-        {
-            return _gameAssetManager
-                .ClonedAnimalsInfoList.Select(info =>
-                    (info.FemaleKey, info.MaleKey, info.AddAsAlternatePurchase)
-                )
-                .ToList();
-        }
-        else
-        {
-            return new();
-        }
-    }
-    public void SetFinishedEarlyStuff(bool finished){
-        FinishedEarlyStuff = finished;
-    }
+    public void SetGameAssetManager(GameAssetManager gameAssetManager) => _gameAssetManager = gameAssetManager;
+
+    public void SetFinishedEarlyStuff(bool finished) => FinishedEarlyStuff = finished;
 
     public void SetPriorities(int birthText, int eggList, int clonedEggs, int newEggsAdd)
     {
@@ -92,5 +36,16 @@ public class LetMeHatchApi
         NEW_EGGS_ADD_PRIORITY = newEggsAdd;
     }
 
+    public List<(string FemaleKey, string MaleKey, bool AddAsAlternatePurchase)> GetClonedAnimalsInfo()
+    {
+        if (_gameAssetManager is null)
+            return new();
 
+        var list = _gameAssetManager.ClonedAnimalsInfoList
+            .Select(info => (info.FemaleKey, info.MaleKey, info.AddAsAlternatePurchase))
+            .ToList();
+
+        AnimalsWithClonedEggs = list.Select(x => x.FemaleKey).Distinct().ToList();
+        return list;
+    }
 }

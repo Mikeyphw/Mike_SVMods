@@ -10,6 +10,7 @@ using LetMeHatchThisEgg.Infrastructure.Cloning;
 using LetMeHatchThisEgg.Infrastructure.GameData;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
+using Mikew.BirdsOfAFeather.Framework;
 using LetMeHatchThisEgg.Helpers;
 using LetMeHatchThisEgg.Models;
 using Microsoft.Xna.Framework.Graphics;

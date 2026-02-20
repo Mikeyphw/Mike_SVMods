@@ -150,6 +150,7 @@ namespace LetMeHatchThisEgg.AssetManagement
 // }
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
+using Mikew.BirdsOfAFeather.Framework;
 using LetMeHatchThisEgg.Helpers;
 using StardewModdingAPI;
 using StardewValley;
