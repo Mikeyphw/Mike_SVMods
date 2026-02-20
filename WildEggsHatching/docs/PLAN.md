@@ -69,11 +69,11 @@
 - **5.4** Added `wegg verify` output (`farmanimals/weights`) showing top/bottom N by weight, with effective value and penalty flags.
 
 ## Phase 6 — Restore original shop lock/unlock behavior (parity) with GSQ gating
-- **6.1** Restore/ensure `AnimalProgressionMode` defaulting behavior from the WildAnimalsList-derived keys (default locked unless disabled).
-- **6.2** Implement locked edits:
+- **6.1** ✅ Restore/ensure `AnimalProgressionMode` defaulting behavior from the WildAnimalsList-derived keys (default locked unless disabled).
+- **6.2** ✅ Implement locked edits:
   - set `PurchasePrice=-1`
   - remove locked animals from any parent `AlternatePurchaseTypes[*].AnimalIds`
-- **6.3** Implement unlocked edits:
+- **6.3** ✅ Implement unlocked edits:
   - if master listing is locked, copy master shop fields onto the unlocked entry
   - merge master + variant conditions where needed
   - append/set `PLAYER_HAS_MAIL Host <noteMailId> Received` to gate visibility

@@ -59,4 +59,12 @@ public sealed class ModConfig
     /// </summary>
     public bool AnimalNotesAllowClientDiscoveries { get; set; } = true;
 
+
+
+    /// <summary>
+    /// Per-animal progression gating for shop availability.
+    /// True = locked by default, becomes available after AnimalNotes unlock mail.
+    /// False = never gated by AnimalNotes (always follow base game/mod shop behavior).
+    /// </summary>
+    public System.Collections.Generic.Dictionary<string, bool> AnimalProgressionMode { get; set; } = new(System.StringComparer.OrdinalIgnoreCase);
 }

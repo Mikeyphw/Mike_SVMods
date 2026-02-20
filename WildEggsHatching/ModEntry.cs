@@ -41,6 +41,7 @@ using System.IO;
 using Mikew.BirdsOfAFeather.Models;
 using System.Collections.Generic;
 using WildEggsHatching.Core.Assets;
+using WildEggsHatching.Core.ShopProgression;
 
 namespace WildEggsHatching;
 
@@ -526,6 +527,7 @@ private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Con
         var snapshot = _dataLoader.Load();
         _modDataSnapshot = snapshot;
 
+        SeedAnimalProgressionModeDefaults(snapshot);
         var modAvailability = new SmapiModAvailability(Helper.ModRegistry);
 var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.WildAnimals);
 
@@ -538,6 +540,42 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
             LogLevel.Debug
         );
     }
+
+    private void SeedAnimalProgressionModeDefaults(ModDataSnapshot snapshot)
+    {
+        try
+        {
+            if (_config is null || snapshot is null)
+                return;
+
+            var cfg = _config.Get();
+            cfg.AnimalProgressionMode ??= new System.Collections.Generic.Dictionary<string, bool>(System.StringComparer.OrdinalIgnoreCase);
+
+            var changed = false;
+            foreach (var key in snapshot.WildAnimals.Keys)
+            {
+                if (string.IsNullOrWhiteSpace(key))
+                    continue;
+
+                if (!cfg.AnimalProgressionMode.ContainsKey(key))
+                {
+                    cfg.AnimalProgressionMode[key] = AnimalShopProgressionPolicy.DefaultEnabled(key);
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                Helper.WriteConfig(cfg);
+                _log?.Log($"Config: seeded AnimalProgressionMode defaults for {snapshot.WildAnimals.Count} animals.", LogLevel.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            _log?.Log($"Config: failed seeding AnimalProgressionMode defaults. {ex.GetType().Name}: {ex.Message}", LogLevel.Trace);
+        }
+    }
+
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {

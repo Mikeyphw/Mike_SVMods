@@ -5,6 +5,7 @@ using StardewValley.GameData.FarmAnimals;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Application.Animals;
 using WildEggsHatching.Core.ShopAnchors;
+using WildEggsHatching.Core.ShopProgression;
 using Mikew.BirdsOfAFeather.Helpers.Content;
 using Mikew.BirdsOfAFeather;
 
@@ -42,6 +43,25 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
             ?? new System.Collections.Generic.Dictionary<string, FarmAnimalData>(data, System.StringComparer.OrdinalIgnoreCase),
             warn: msg => context.Log(msg, StardewModdingAPI.LogLevel.Trace));
         context.Log($"ShopAnchorIndex: anchored_variants={anchors.Count}.", StardewModdingAPI.LogLevel.Trace);
+
+        if (context.Step >= ProgressionStep.PartVI)
+        {
+            var shopSnapshot = FarmAnimalShopProgressionEdits.Capture(data);
+
+            FarmAnimalShopProgressionEdits.ApplyLockedEdits(
+                config: context.Config,
+                managedAnimalIds: context.ModData.WildAnimals.Keys.ToList(),
+                farmAnimals: data,
+                anchors: anchors);
+
+            FarmAnimalShopProgressionEdits.ApplyUnlockedEdits(
+                config: context.Config,
+                managedAnimalIds: context.ModData.WildAnimals.Keys.ToList(),
+                farmAnimals: data,
+                anchors: anchors,
+                original: shopSnapshot);
+        }
+
 
         if (context.Step >= ProgressionStep.PartVI)
             ApplyChosenEggs(context, data, anchors);

@@ -5,7 +5,7 @@
 > Rule: only remaining work lives here. Remove items as they are done.
 
 ## Now
-- [ ] Phase 6: restore original shop lock/unlock edits and GSQ gating (parity).
+- [ ] Phase 7: TBD.
 
 ## Next
 - [ ] (reserved)
@@ -23,7 +23,7 @@
 - [x] 5.1–5.4 (per `docs/PLAN.md`)
 
 ### Phase 6
-- [ ] 6.1–6.4 (per `docs/PLAN.md`)
+- [x] 6.1–6.4
 
 ### Phase 7
 - [ ] 7.1–7.3 (per `docs/PLAN.md`)

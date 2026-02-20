@@ -35,8 +35,8 @@
 - [x] 5.4 Add diagnostic output for candidate weights
 
 ## Phase 6 — Restore original shop lock/unlock behavior with GSQ gating
-- [ ] 6.1 Restore/ensure AnimalProgressionMode defaulting (locked by default)
-- [ ] 6.2 Implement locked edits (PurchasePrice=-1, remove from alternates)
+- [x] 6.1 Restore/ensure AnimalProgressionMode defaulting (locked by default)
+- [x] 6.2 Implement locked edits (PurchasePrice=-1, remove from alternates)
 - [ ] 6.3 Implement unlocked edits (copy master fields, merge conditions, mail GSQ)
 - [ ] 6.4 Preserve special cases (Blue Chicken, LetMeHatch clone if applicable)
 
