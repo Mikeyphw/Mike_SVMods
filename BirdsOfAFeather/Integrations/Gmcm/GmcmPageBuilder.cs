@@ -39,7 +39,11 @@ public sealed class GmcmPageBuilder<TConfig>
     public void Section(string sectionName, bool tooltip = false)
         => _menu.AddSectionTitle(sectionName, tooltip);
 
+    public void SectionLabel(Func<string> text, Func<string>? tooltip = null)
+        => _menu.AddSectionTitle(text, tooltip);
+
     public void Paragraph(string paragraphName)
+        => _menu.AddParagraph(paragraphName);
 
     public void ParagraphDynamic(Func<string> text, bool styled = false, string? id = null)
     {
@@ -58,8 +62,6 @@ public sealed class GmcmPageBuilder<TConfig>
             id: "gmcmoptions_status"
         );
     }
-
-        => _menu.AddParagraph(paragraphName);
 
     public void Link(string pageId, bool tooltip = false)
         => _menu.AddPageLink(pageId, tooltip);
@@ -287,6 +289,25 @@ public sealed class GmcmPageBuilder<TConfig>
         string? fieldId = null)
         => _menu.AddTextOption(getValue, setValue, name, tooltip, allowedValues, formatAllowedValue, fieldId ?? AutoFieldId(elementId));
 
+    public void TextLabel(
+        string elementId,
+        Func<string> name,
+        Func<string>? tooltip,
+        Func<string> getValue,
+        Action<string> setValue,
+        string[]? allowedValues,
+        Func<string, string>? formatValue,
+        string? fieldId = null)
+        => _menu.AddTextOption(
+            getValue: getValue,
+            setValue: setValue,
+            name: name,
+            allowedValues: allowedValues,
+            formatValue: formatValue ?? (v => v),
+            tooltip: tooltip,
+            fieldId: fieldId ?? AutoFieldId(elementId)
+        );
+
     public void EnumLabel<TEnum>(
         string elementId,
         Func<string> name,
@@ -327,6 +348,40 @@ public sealed class GmcmPageBuilder<TConfig>
             fieldId: fieldId ?? AutoFieldId(elementId)
         );
     }
+    public void ColorLabel(
+        string elementId,
+        Func<string> name,
+        Func<string>? tooltip,
+        Func<Color> getValue,
+        Action<Color> setValue,
+        bool showAlpha = true,
+        uint colorPickerStyle = 0,
+        string? fieldId = null,
+        Action<SpriteBatch, int, int, Color>? drawSample = null)
+        => _menu.AddColorOption(getValue, setValue, name, tooltip, showAlpha, colorPickerStyle, fieldId ?? AutoFieldId(elementId), drawSample);
+
+    public void ColorSwatchLabel(
+        string elementId,
+        Func<string> name,
+        Func<string>? tooltip,
+        Func<Color> getValue,
+        Action<Color> setValue,
+        bool showAlpha = true,
+        uint colorPickerStyle = 0,
+        string? fieldId = null,
+        Action<SpriteBatch, int, int, Color>? drawSample = null)
+        => ColorLabel(
+            elementId: elementId,
+            name: name,
+            tooltip: tooltip,
+            getValue: getValue,
+            setValue: setValue,
+            showAlpha: showAlpha,
+            colorPickerStyle: colorPickerStyle,
+            fieldId: fieldId,
+            drawSample: drawSample ?? _menu.MakeColorSwatchDrawer()
+        );
+
     private void Bind<T>(
         Expression<Func<TConfig, T>> member,
         string? optionId,

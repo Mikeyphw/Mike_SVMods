@@ -424,3 +424,4 @@ GMCM Options UniqueID: `jltaylor-us.GMCMOptions`.
 - `page.Separator(...)`: uses GMCM Options horizontal separator when available; ignored if GMCM Options isn't installed.
 - `page.ParagraphDynamic(...)`: uses GMCM Options dynamic paragraph when available; falls back to native `AddParagraph`.
 - `page.ColorSwatch(...)`: same as `Color(...)` but auto-uses `MakeColorSwatchDrawer()` when GMCM Options is available.
+- `page.ColorSwatchLabel(...)`: dynamic-label version for dictionary/derived values; falls back to native GMCM color option if GMCM Options isn't installed.

@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-20T16:35:14-03:00",
+  "updated_at": "2026-02-20T19:21:38-03:00",
   "replacements": [
     {
       "id": "20260220T000621-0300-01",
@@ -41,6 +41,16 @@
       "id": "20260220T162110-0300-01",
       "title": "GMCM Options UX helpers: separators, status paragraphs, color swatch",
       "created_at": "2026-02-20T16:21:10-03:00"
+    },
+    {
+      "id": "20260220T164530-0300-01",
+      "title": "LMH Phase 7B egg color editors + BOAF color picker fallback",
+      "created_at": "2026-02-20T16:45:30-03:00"
+    },
+    {
+      "id": "20260220T171500-0300-01",
+      "title": "LMH Phase 7C ItemToClone editor + runtime overrides (BOAF dropdown formatter fix)",
+      "created_at": "2026-02-20T17:15:00-03:00"
     }
   ]
 }

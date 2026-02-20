@@ -388,20 +388,35 @@ private Func<string> GetName(string optionName)
         string? fieldId = null,
         Action<SpriteBatch, int, int, Color>? drawSample = null)
     {
-        _extraOptionsApi?.AddColorOption(
+        if (_extraOptionsApi is not null)
+        {
+            _extraOptionsApi.AddColorOption(
+                _manifest,
+                getValue,
+                setValue,
+                name: GetName(optionName),
+                tooltip: tooltip ? GetDescription(optionName) : null,
+                showAlpha,
+                colorPickerStyle,
+                fieldId,
+                drawSample
+            );
+            return;
+        }
+
+        _gmcm?.AddColorOption(
             _manifest,
             getValue,
             setValue,
             name: GetName(optionName),
             tooltip: tooltip ? GetDescription(optionName) : null,
-            showAlpha,
-            colorPickerStyle,
-            fieldId,
-            drawSample
+            showAlpha: showAlpha,
+            fieldId: fieldId
         );
     }
 
-    public void AddColorOption(
+
+public void AddColorOption(
         Func<Color> getValue,
         Action<Color> setValue,
         Func<string> name,
@@ -411,21 +426,36 @@ private Func<string> GetName(string optionName)
         string? fieldId = null,
         Action<SpriteBatch, int, int, Color>? drawSample = null)
     {
-        _extraOptionsApi?.AddColorOption(
+        if (_extraOptionsApi is not null)
+        {
+            _extraOptionsApi.AddColorOption(
+                _manifest,
+                getValue,
+                setValue,
+                name,
+                tooltip,
+                showAlpha,
+                colorPickerStyle,
+                fieldId,
+                drawSample
+            );
+            return;
+        }
+
+        _gmcm?.AddColorOption(
             _manifest,
             getValue,
             setValue,
             name,
             tooltip,
-            showAlpha,
-            colorPickerStyle,
-            fieldId,
-            drawSample
+            showAlpha: showAlpha,
+            fieldId: fieldId
         );
     }
 
-    
-    /// <summary>
+
+
+/// <summary>
     /// Create a draw function suitable for the <c>drawSample</c> parameter of <see cref="AddColorOption"/>.
     /// Returns null if GMCM Options isn't installed.
     /// </summary>
