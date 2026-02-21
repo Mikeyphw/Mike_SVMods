@@ -75,6 +75,8 @@ public sealed class ModEntry : Mod
     private WildEggSpawnOrchestrator? _spawner;
 
     private ProgressionService? _progression;
+
+    private const int ProgressionPollIntervalTicks = 600; // ~10s at 60 ticks/sec.
     private int _tickCounter;
 
     private DesertTombRuntime? _desertTomb;
@@ -362,7 +364,7 @@ var jsonReader = new SmapiJsonFileReader(helper);
             return;
 
         _tickCounter++;
-        _progression?.OnUpdateTicked(isMultipleOf60Ticks: _tickCounter % 60 == 0);
+        _progression?.OnUpdateTicked(_tickCounter % ProgressionPollIntervalTicks == 0);
         _desertTomb?.OnUpdateTicked();
     }
 

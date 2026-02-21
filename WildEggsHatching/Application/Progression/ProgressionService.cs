@@ -193,9 +193,9 @@ public void OnSaveLoaded()
         Evaluate(ProgressionTrigger.DayStarted);
     }
 
-    public void OnUpdateTicked(bool isMultipleOf60Ticks)
+    public void OnUpdateTicked(bool isPollingTick)
     {
-        if (!isMultipleOf60Ticks)
+        if (!isPollingTick)
             return;
 
         EnsureInitialized();

@@ -30,7 +30,7 @@ public sealed class ProgressionPollingTests
         facts.ReceivedMail[ProgressionIds.Mail.SpecialOrderDoneI] = true;
         mail.AddReceivedMail(ProgressionIds.Mail.SpecialOrderDoneI, noLetter: true);
 
-        svc.OnUpdateTicked(isMultipleOf60Ticks: true);
+        svc.OnUpdateTicked(isPollingTick: true);
 
         Assert.Equal(ProgressionStep.PartII, svc.GetCurrentStep());
         Assert.Contains(mail.Tomorrow, x => x.Id == ProgressionIds.Mail.MarnieThanks);
@@ -72,7 +72,7 @@ public sealed class ProgressionPollingTests
         quests.SetCompletedQuest(ProgressionIds.Quests.WizardStudy, true);
         facts.CompletedQuests[ProgressionIds.Quests.WizardStudy] = true;
 
-        svc.OnUpdateTicked(isMultipleOf60Ticks: true);
+        svc.OnUpdateTicked(isPollingTick: true);
 
         // Not enough days passed to unlock PartIII yet (wait=2).
         Assert.Equal(ProgressionStep.PartII, svc.GetCurrentStep());
