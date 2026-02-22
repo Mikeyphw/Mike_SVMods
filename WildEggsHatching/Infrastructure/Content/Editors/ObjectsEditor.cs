@@ -17,11 +17,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
     private const string PrismaticValleyColorKey = "JollyLlama.PrismaticValleyFramework/Color";
     private const string PrismaticValleyPaletteKey = "JollyLlama.PrismaticValleyFramework/Palette";
     private const string PrismaticValleyCustomPalette = "Custom Palette";
-
-    private static readonly object LockObj = new();
-    private static IReadOnlyList<EggDefinition>? _eggDefinitions;
-    private static IReadOnlyList<string>? _animalKeys;
-
     public override void Edit(IAssetData asset, ContentContext context)
     {
         var data = asset.AsDictionary<string, ObjectData>().Data;
@@ -244,54 +239,29 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
 
         return new string(chars.ToArray());
     }
-
-
     private static IReadOnlyList<string> GetAnimalKeys(ContentContext context)
     {
-        if (_animalKeys is not null)
-            return _animalKeys;
-
-        lock (LockObj)
-        {
-            if (_animalKeys is not null)
-                return _animalKeys;
-
-            var keys = context.ModData.WildAnimals.Keys
-                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            _animalKeys = keys;
-            return _animalKeys;
-        }
+        return context.ModData.WildAnimals.Keys
+            .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
+
 
 
     private static string TranslateOrFallback(ContentContext context, string key, string fallback)
         => context.I18n.GetOrDefault(key, fallback);
-
-
     private static IReadOnlyList<EggDefinition> GetEggDefinitions(ContentContext context)
     {
-        if (_eggDefinitions is not null)
-            return _eggDefinitions;
+        var ids = SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas);
 
-        lock (LockObj)
-        {
-            if (_eggDefinitions is not null)
-                return _eggDefinitions;
-
-            var ids = SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas);
-
-            _eggDefinitions = ids
-                .Select(id => new EggDefinition(
-                    EggItemId: id,
-                    LocationToken: ExtractRegionToken(id),
-                    Kind: EggKindExtensions.FromEggItemId(id)))
-                .ToList();
-
-            return _eggDefinitions;
-        }
+        return ids
+            .Select(id => new EggDefinition(
+                EggItemId: id,
+                LocationToken: ExtractRegionToken(id),
+                Kind: EggKindExtensions.FromEggItemId(id)))
+            .ToList();
     }
+
 
     private sealed record EggDefinition(string EggItemId, string LocationToken, EggKind Kind);
 }

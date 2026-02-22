@@ -11,9 +11,6 @@ namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 public sealed class QuestEditor : AssetEditorBase<ContentContext>
 {
-    private static readonly object LockObj = new();
-    private static IReadOnlyList<string>? _animalKeys;
-
     public override string AssetName => Strings.AssetNames.Quests;
 
     public override void Edit(IAssetData asset, ContentContext context)
@@ -93,26 +90,13 @@ public sealed class QuestEditor : AssetEditorBase<ContentContext>
 
         return quests;
     }
-
-    
     private static IReadOnlyList<string> GetAnimalKeys(ContentContext context)
     {
-        if (_animalKeys is not null)
-            return _animalKeys;
-
-        lock (LockObj)
-        {
-            if (_animalKeys is not null)
-                return _animalKeys;
-
-            var keys = context.ModData.WildAnimals.Keys
-                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            _animalKeys = keys;
-            return _animalKeys;
-        }
+        return context.ModData.WildAnimals.Keys
+            .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
+
 
     private static string NormalizeToken(string s)
         => (s ?? string.Empty).Replace(" ", string.Empty, StringComparison.Ordinal);

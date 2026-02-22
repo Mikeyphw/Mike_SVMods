@@ -12,9 +12,6 @@ namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 public sealed class MailEditor : AssetEditorBase<ContentContext>
 {
-    private static readonly object LockObj = new();
-    private static IReadOnlyList<string>? _animalKeys;
-
     public override string AssetName => Strings.AssetNames.Mail;
 
     public override void Edit(IAssetData asset, ContentContext context)
@@ -95,25 +92,13 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
 
         return $"{body} {banner} {displayName}**[#]{displayName} Avaliable";
     }
-
     private static IReadOnlyList<string> GetAnimalKeys(ContentContext context)
     {
-        if (_animalKeys is not null)
-            return _animalKeys;
-
-        lock (LockObj)
-        {
-            if (_animalKeys is not null)
-                return _animalKeys;
-
-            var keys = context.ModData.WildAnimals.Keys
-                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            _animalKeys = keys;
-            return _animalKeys;
-        }
+        return context.ModData.WildAnimals.Keys
+            .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
+
 
     private static string CreateMailWithItem(
         ContentContext context,

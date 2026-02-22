@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-22T15:08:50-03:00",
+  "updated_at": "2026-02-22T15:10:02-03:00",
   "replacements": [
     {
       "id": "20260219T212821-0300-01",
@@ -124,8 +124,13 @@
     },
     {
       "id": "20260222T010833-0300-01",
-      "title": "WildEggs: use BOAF multiphase post-pass for Machines/FarmAnimals",
+      "title": "BOAF post-pass multiphase + apply to Machines/FarmAnimals",
       "created_at": "2026-02-22T01:08:33-03:00"
+    },
+    {
+      "id": "20260222T105025-0300-01",
+      "title": "Remove static editor caches (reload-safe)",
+      "created_at": "2026-02-22T10:50:25-03:00"
     }
   ]
 }
