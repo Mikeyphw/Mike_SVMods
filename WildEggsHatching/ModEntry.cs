@@ -92,6 +92,9 @@ public sealed class ModEntry : Mod
 
     private DesertTombDiagnostics? _desertTombDiagnostics;
 
+    private PharaohTrackerOverlay? _pharaohTrackerOverlay;
+    private Harmony? _harmony;
+
     public override void Entry(IModHelper helper)
     {
         FailFastDependencies(helper);
@@ -245,6 +248,7 @@ public sealed class ModEntry : Mod
         if (cfg.DesertTombModuleEnabled)
         {
             _desertTombDiagnostics = new DesertTombDiagnostics(helper, _config, _log);
+            _pharaohTrackerOverlay = new PharaohTrackerOverlay(helper, _config);
 
             var spawnConfig = new SpawnConfiguration();
             var generator = new DesertTombLevelGenerator(spawnConfig);
@@ -268,6 +272,8 @@ public sealed class ModEntry : Mod
         }
 
 
+        InstallHarmonyPatches();
+
         RegisterCommands(helper, _log);
 
         helper.Events.GameLoop.GameLaunched += OnGameLaunched;
@@ -281,6 +287,7 @@ public sealed class ModEntry : Mod
         helper.Events.Player.Warped += OnWarped;
         helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
         helper.Events.Multiplayer.PeerConnected += OnPeerConnected;
+        helper.Events.Display.RenderingHud += OnRenderingHud;
     }
 
 
@@ -948,4 +955,24 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
 
         return _api ??= new WildEggsApi(_facade);
     }
+
+    private void InstallHarmonyPatches()
+    {
+        if (_harmony is not null)
+            return;
+
+        _harmony = new Harmony($"{Constants.ModId}.harmony");
+
+        AnimalNotesItemPatches.Install(_harmony);
+
+        if (_desertTomb is not null)
+            DesertTombMineShaftPatches.Install(_harmony, _desertTomb);
+    }
+
+    private void OnRenderingHud(object? sender, RenderingHudEventArgs e)
+    {
+        _pharaohTrackerOverlay?.Render(e.SpriteBatch);
+    }
+
+
 }
