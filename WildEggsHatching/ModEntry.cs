@@ -376,6 +376,7 @@ public sealed class ModEntry : Mod
         pipeline.RegisterEditor(new BigCraftablesEditor(), ProgressionStep.PartI, getStep, order: 20);
         pipeline.RegisterEditor(new CraftingRecipesEditor(), ProgressionStep.PartI, getStep, order: 30);
         pipeline.RegisterEditor(new MachinesEditor(), ProgressionStep.PartI, getStep, order: 40);
+        pipeline.RegisterEditor(new MonstersEditor(), ProgressionStep.PartI, getStep, order: 45);
         pipeline.RegisterEditor(new MailEditor(), ProgressionStep.PartI, getStep, order: 50);
         pipeline.RegisterEditor(new QuestEditor(), ProgressionStep.PartI, getStep, order: 60);
         pipeline.RegisterEditor(new SpecialOrdersEditor(), ProgressionStep.PartI, getStep, order: 70);
