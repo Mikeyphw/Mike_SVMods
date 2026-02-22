@@ -56,9 +56,15 @@ namespace Mikew.BirdsOfAFeather.Helpers.Content
                 {
                     e.Edit(asset => editor.Edit(asset, ctx), editor.Priority);
 
-                    if (editor is IPostPassAssetEditor<TContext> post)
+                    if (editor is IPostPassAssetEditor<TContext> post && post.PostPasses is not null)
                     {
-                        e.Edit(asset => post.EditPost(asset, ctx), post.PostPriority);
+                        foreach (var pass in post.PostPasses)
+                        {
+                            if (pass is null)
+                                continue;
+
+                            e.Edit(asset => pass.Apply(asset, ctx), pass.Priority);
+                        }
                     }
                 },
                 shouldApply: shouldApply

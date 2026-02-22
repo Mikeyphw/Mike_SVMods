@@ -1,21 +1,16 @@
-using StardewModdingAPI.Events;
+using System.Collections.Generic;
 
 namespace Mikew.BirdsOfAFeather.Helpers.Content
 {
     /// <summary>
-    /// Optional second-pass editor hook that runs after the primary edit phase.
-    /// Use this to apply compatibility fixes similar to a "Late+N" edit layer.
+    /// Optional extension for <see cref="IAssetEditor{TContext}"/> which allows registering one or more extra
+    /// edit phases for the same asset request (e.g. Late, Late+100).
     /// </summary>
-    public interface IPostPassAssetEditor<in TContext> : IAssetEditor<TContext>
+    public interface IPostPassAssetEditor<TContext> : IAssetEditor<TContext>
     {
         /// <summary>
-        /// The priority to use for the post-pass edit. Choose a late priority to run after most edits.
+        /// Ordered list of post-pass edits to register. Each pass is registered as a separate <c>e.Edit</c>.
         /// </summary>
-        AssetEditPriority PostPriority { get; }
-
-        /// <summary>
-        /// Apply the post-pass edit.
-        /// </summary>
-        void EditPost(IAssetData asset, TContext context);
+        IReadOnlyList<AssetPostPass<TContext>> PostPasses { get; }
     }
 }
