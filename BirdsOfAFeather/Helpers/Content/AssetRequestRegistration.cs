@@ -55,6 +55,11 @@ namespace Mikew.BirdsOfAFeather.Helpers.Content
                 handle: (ctx, e) =>
                 {
                     e.Edit(asset => editor.Edit(asset, ctx), editor.Priority);
+
+                    if (editor is IPostPassAssetEditor<TContext> post)
+                    {
+                        e.Edit(asset => post.EditPost(asset, ctx), post.PostPriority);
+                    }
                 },
                 shouldApply: shouldApply
             );

@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-20T19:21:38-03:00",
+  "updated_at": "2026-02-22T01:01:16-03:00",
   "replacements": [
     {
       "id": "20260220T000621-0300-01",
@@ -51,6 +51,11 @@
       "id": "20260220T171500-0300-01",
       "title": "LMH Phase 7C ItemToClone editor + runtime overrides (BOAF dropdown formatter fix)",
       "created_at": "2026-02-20T17:15:00-03:00"
+    },
+    {
+      "id": "20260222T005037-0300-01",
+      "title": "BOAF: add post-pass asset editor support",
+      "created_at": "2026-02-22T00:50:37-03:00"
     }
   ]
 }
