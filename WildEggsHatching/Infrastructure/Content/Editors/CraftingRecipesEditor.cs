@@ -18,21 +18,19 @@ public sealed class CraftingRecipesEditor : AssetEditorBase<ContentContext>
     {
         var data = asset.AsDictionary<string, string>().Data;
 
+        // Original behavior: recipes are always defined; progression mode controls whether unlock conditions are handled externally.
         var unlock = context.Config.ProgressionMode ? "none" : "default";
 
-        if (context.Step >= ProgressionStep.PartV)
-            data[ElixirRecipeKey] = CreateElixirRecipe(unlock);
-
-        if (context.Step >= ProgressionStep.PartVI)
-            data[IncubatorRecipeKey] = CreateIncubatorRecipe(context, unlock);
+        data[ElixirRecipeKey] = CreateElixirRecipe(context, unlock);
+        data[IncubatorRecipeKey] = CreateIncubatorRecipe(context, unlock);
     }
 
-    private static string CreateElixirRecipe(string unlock)
+    private static string CreateElixirRecipe(ContentContext context, string unlock)
         => CreateLegacyRecipeString(
             new List<(string itemId, int qty)>
             {
                 ("118", 1),
-                ("114", 1),
+                ((context.Config.FruitInsteadOfSeed ? "454" : "114"), 1),
                 ("734", 1),
                 ("107", 1),
             },

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using StardewValley;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using WildEggsHatching.Application.AnimalNotes;
@@ -82,8 +83,11 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
 
     private static string CreateNoteMail(ContentContext context, string animalKey)
     {
-        // Use a stable variant so mail content is deterministic across loads.
-        var body = TranslateOrFallback(context, "mail.animalAvaliable0",
+        var variant = Game1.random.Next(4);
+        var bodyKey = $"mail.animalAvaliable{variant}";
+        var body = TranslateOrFallback(
+            context,
+            bodyKey,
             "Dear @,^^Thanks for the note! The animals are doing great and are now available in my shop.");
 
         var banner = TranslateOrFallback(context, "mail.animalAvaliable.newAnimal", "**New Animal Avaliable:");

@@ -325,6 +325,7 @@ var jsonReader = new SmapiJsonFileReader(helper);
 
         // Editors do additional step-gating internally; keep pipeline gating permissive.
         pipeline.RegisterEditor(new ObjectsEditor(), ProgressionStep.PartI, getStep, order: 0);
+        pipeline.RegisterEditor(new WildEggIncubatorTextureEditor(), ProgressionStep.PartI, getStep, order: 5);
         pipeline.RegisterEditor(new FarmAnimalsEditor(_chosenEggs ?? throw new InvalidOperationException(\"ChosenEggAssignments not initialized.\")), ProgressionStep.PartI, getStep, order: 10);
         pipeline.RegisterEditor(new BigCraftablesEditor(), ProgressionStep.PartI, getStep, order: 20);
         pipeline.RegisterEditor(new CraftingRecipesEditor(), ProgressionStep.PartI, getStep, order: 30);

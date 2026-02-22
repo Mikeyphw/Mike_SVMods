@@ -32,7 +32,7 @@ public sealed class WeggAssetPipeline : IDisposable
                 order: order,
                 isMatch: e => handler.HasGamePath(e.NameWithoutLocale.BaseName),
                 handle: (_, e) => router.TryHandle(e),
-                stopAfterHandle: true
+                stopAfterHandle: false
             )
         );
     }

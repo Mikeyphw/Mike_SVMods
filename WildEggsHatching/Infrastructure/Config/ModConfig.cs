@@ -24,6 +24,8 @@ public sealed class ModConfig
 
     public bool AlternatePotionSprite { get; set; } = false;
     public bool NeedsFern { get; set; } = true;
+    public bool FruitInsteadOfSeed { get; set; } = false;
+
     public bool HatchDinoEggs { get; set; } = true;
     public bool DinoEggsExclusiveHatch { get; set; } = false;
 

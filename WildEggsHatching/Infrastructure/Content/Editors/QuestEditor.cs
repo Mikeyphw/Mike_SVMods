@@ -38,7 +38,7 @@ public sealed class QuestEditor : AssetEditorBase<ContentContext>
                 details: TranslateOrFallback(context, "quest.WizardStudy.questDetails", "Bring the requested item to the Wizard."),
                 hint: TranslateOrFallback(context, "quest.WizardStudy.hint", "The Wizard wants to study a strange egg."),
                 solution: $"Wizard {ModItemIds.FarmLargeWildEgg}",
-                gold: 0,
+                gold: goldReward,
                 cancellable: false,
                 reaction: TranslateOrFallback(context, "quest.WizardStudy.reactionText", "Interesting... very interesting.")
             );
@@ -73,13 +73,18 @@ public sealed class QuestEditor : AssetEditorBase<ContentContext>
                 var reactionKey = $"quest.NoteDelivery.reactionText{StardewValley.Game1.random.Next(4)}";
                 var reaction = TranslateOrFallback(context, reactionKey, "Thanks for bringing this to me.");
 
+                var goldReward = GetNoteQuestGoldReward(context, animalKey);
+                var shopDescription = TryGetAnimalShopDescription(animalKey);
+                if (!string.IsNullOrWhiteSpace(shopDescription))
+                    reaction = $"{reaction}^^{shopDescription}";
+
                 quests[questId] = CreateQuestString(
                     type: "ItemDelivery",
                     title: $"{baseTitle}: {animalKey}",
                     details: $"{baseDetails}: {animalKey}.",
                     hint: $"{baseHint}: {animalKey}.",
                     solution: $"Marnie {noteId}",
-                    gold: 0,
+                    gold: goldReward,
                     cancellable: false,
                     reaction: reaction
                 );
@@ -136,6 +141,28 @@ private static string CreateQuestString(
             cancellable.ToString(),
             reaction
         );
+    }
+
+    private static int GetNoteQuestGoldReward(ContentContext context, string animalKey)
+    {
+        if (Game1.farmAnimalData is not null && Game1.farmAnimalData.TryGetValue(animalKey, out var data))
+        {
+            if (data.PurchasePrice > 0)
+                return data.PurchasePrice;
+        }
+
+        if (context.ModData.WildAnimals.TryGetValue(animalKey, out var wild) && wild.Price > 0)
+            return wild.Price;
+
+        return 0;
+    }
+
+    private static string? TryGetAnimalShopDescription(string animalKey)
+    {
+        if (Game1.farmAnimalData is null || !Game1.farmAnimalData.TryGetValue(animalKey, out var data))
+            return null;
+
+        return data.ShopDescription;
     }
 
     private static string TranslateOrFallback(ContentContext context, string key, string fallback)

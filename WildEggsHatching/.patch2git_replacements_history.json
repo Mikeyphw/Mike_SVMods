@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-21T23:22:24-03:00",
+  "updated_at": "2026-02-22T00:36:22-03:00",
   "replacements": [
     {
       "id": "20260219T212821-0300-01",
@@ -111,6 +111,16 @@
       "id": "20260221T231015-0300-01",
       "title": "Shop parity: mod-authored shop description + shop icons for Dino/VoidChicken/Ostrich",
       "created_at": "2026-02-21T23:10:15-03:00"
+    },
+    {
+      "id": "20260221T234600-0300-01",
+      "title": "Mail RNG variants + quest rewards + special order FruitInsteadOfSeed + BOAF conditions",
+      "created_at": "2026-02-21T23:46:00-03:00"
+    },
+    {
+      "id": "20260222T001548-0300-01",
+      "title": "Incubator always injected + NeedsFern sprite patch + recipe parity",
+      "created_at": "2026-02-22T00:15:48-03:00"
     }
   ]
 }

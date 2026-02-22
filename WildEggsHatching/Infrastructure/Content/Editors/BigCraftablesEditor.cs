@@ -15,9 +15,6 @@ public sealed class BigCraftablesEditor : AssetEditorBase<ContentContext>
 
     public override void Edit(IAssetData asset, ContentContext context)
     {
-        if (context.Step < ProgressionStep.PartVI)
-            return;
-
         var data = asset.AsDictionary<string, BigCraftableData>().Data;
         data[ModItemIds.WildEggIncubator] = CreateWildEggIncubator(context);
     }

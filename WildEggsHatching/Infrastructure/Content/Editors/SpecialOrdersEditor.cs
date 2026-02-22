@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using StardewModdingAPI.Events;
 using StardewValley.GameData.SpecialOrders;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using Mikew.BirdsOfAFeather.Helpers.Content;
+using Mikew.BirdsOfAFeather.Helpers.GameStateQueries;
 using Mikew.BirdsOfAFeather;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
@@ -38,7 +38,7 @@ public sealed class SpecialOrdersEditor : AssetEditorBase<ContentContext>
         //  condition blocks after completion and in winter.
         return new SpecialOrderData
         {
-            Condition = $"!PLAYER_HAS_MAIL Host {ProgressionIds.Mail.SpecialOrderDoneI} Received, !SEASON winter",
+            Condition = string.Join(", ", Not(PlayerCondition.HasMail(ProgressionIds.Mail.SpecialOrderDoneI, MailType.Received, player: "Host")), Not(TimeCondition.Season("winter"))),
             Duration = QuestDuration.Month,
             Name = T(context, "specialOrder.WildEggIncubatorI.name", "Wild Eggs for Marnie"),
             Text = T(context, "specialOrder.WildEggIncubatorI.text", "Marnie asked you to gather wild eggs."),
@@ -82,9 +82,20 @@ public sealed class SpecialOrdersEditor : AssetEditorBase<ContentContext>
     private static SpecialOrderData CreateOrderII(ContentContext context)
     {
         //  requires WizardDone flag mail.
+        var useFruit = context.Config.FruitInsteadOfSeed;
+        var seedOrFruitTag = useFruit ? "item_ancient_fruit" : "item_ancient_seed";
+        var objective0MessageKey = useFruit
+            ? "specialOrder.WildEggIncubatorII.objective.0.message_fruit"
+            : "specialOrder.WildEggIncubatorII.objective.0.message_seed";
+        var objective0TextKey = useFruit
+            ? "specialOrder.WildEggIncubatorII.objective.0.text_fruit"
+            : "specialOrder.WildEggIncubatorII.objective.0.text_seed";
+        var objective0MessageFallback = useFruit ? "Bring me an ancient fruit." : "Bring me an ancient seed.";
+        var objective0TextFallback = useFruit ? "Deliver an ancient fruit to the Wizard." : "Deliver an ancient seed to the Wizard.";
+
         return new SpecialOrderData
         {
-            Condition = $"!PLAYER_HAS_MAIL Host {ProgressionIds.Mail.SpecialOrderDoneII} Received, PLAYER_HAS_MAIL Host {ProgressionIds.Mail.WizardDone} Received",
+            Condition = string.Join(", ", Not(PlayerCondition.HasMail(ProgressionIds.Mail.SpecialOrderDoneII, MailType.Received, player: "Host")), PlayerCondition.HasMail(ProgressionIds.Mail.WizardDone, MailType.Received, player: "Host")),
             Duration = QuestDuration.Month,
             Name = T(context, "specialOrder.WildEggIncubatorII.name", "Wizard's Request"),
             Text = T(context, "specialOrder.WildEggIncubatorII.text", "The Wizard needs rare ingredients."),
@@ -97,12 +108,12 @@ public sealed class SpecialOrdersEditor : AssetEditorBase<ContentContext>
                     Type = "Deliver",
                     Data = new Dictionary<string, string>
                     {
-                        { "Message", T(context, "specialOrder.WildEggIncubatorII.objective.0.message_seed", "Bring me an ancient seed.") },
+                        { "Message", T(context, objective0MessageKey, objective0MessageFallback) },
                         { "TargetName", "Wizard" },
-                        { "AcceptedContextTags", "item_ancient_seed" },
+                        { "AcceptedContextTags", seedOrFruitTag },
                     },
                     RequiredCount = "1",
-                    Text = T(context, "specialOrder.WildEggIncubatorII.objective.0.text_seed", "Deliver an ancient seed to the Wizard.")
+                    Text = T(context, objective0TextKey, objective0TextFallback)
                 },
                 new()
                 {
@@ -140,6 +151,9 @@ public sealed class SpecialOrdersEditor : AssetEditorBase<ContentContext>
             CustomFields = new Dictionary<string, string> { { "Untimed", "true" } },
         };
     }
+
+    private static string Not(string query)
+        => "!" + query;
 
     private static string T(ContentContext context, string key, string fallback)
     {
