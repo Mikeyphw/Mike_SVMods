@@ -87,6 +87,9 @@ public sealed class ModEntry : Mod
     private AnimalNotesStartupValidator? _animalNotesValidator;
     private bool _pendingAnimalNotesValidation;
 
+    private bool _pendingInvalidateAllOnNextTick;
+    private bool _pipelineAttached;
+
     private DesertTombDiagnostics? _desertTombDiagnostics;
 
     public override void Entry(IModHelper helper)
@@ -97,24 +100,20 @@ public sealed class ModEntry : Mod
         var i18n = new I18TranslationHelper(helper);
         _core = new CoreContext(helper, Monitor, ModManifest, i18n);
 
-        _config = new SmapiConfigProvider<ModConfig>(Helper, Monitor);
-        _config.ConfigUpdated += (_, __) => _assetPipeline?.RequestInvalidateAll();
-
         _log = new SmapiLog(Monitor);
 
-        _saveData = new SmapiSaveDataStore(Helper, Monitor);
-var jsonReader = new SmapiJsonFileReader(helper);
+        _config = new SmapiConfigProvider<ModConfig>(Helper, _log);
+        _config.ConfigUpdated += (_, __) => _assetPipeline?.RequestInvalidateAll();
+
+        _saveData = new SmapiSaveDataStore(Helper, _log);
+        var jsonReader = new SmapiJsonFileReader(helper);
         _dataLoader = new ModDataLoader(jsonReader, _log);
 
         var mail = new GameMailService();
         var unlocked = new AnimalUnlockedState(_saveData, mail);
         _chosenEggs = new ChosenEggAssignments(_dataLoader, helper.ModRegistry, _log, isUnlocked: unlocked.IsUnlocked);
 
-        LoadModData(_log);
-
-        
-
-        _modAssets = new ModAssetHandler(Constants.ModId, Monitor);
+        _modAssets = new ModAssetHandler(Constants.ModId, _log);
         RegisterModAssets(_modAssets);
         _modAssets.SetUpAssets();
 
@@ -127,13 +126,13 @@ var jsonReader = new SmapiJsonFileReader(helper);
                 i18n: Helper.Translation,
                 config: _config.Get(),
                 step: _progression?.GetCurrentStep() ?? ProgressionStep.PartI,
-                modData: _modDataSnapshot ?? _dataLoader?.Load() ?? ModDataSnapshot.Empty
+                modData: _modDataSnapshot ?? ModDataSnapshot.Empty
             )
         );
 
         _assetPipeline.RegisterModAssets(_modAssets);
         RegisterEditors(_assetPipeline);
-        _assetPipeline.Attach();
+
 
         var modAssetPaths = new[]
         {
@@ -160,7 +159,7 @@ var jsonReader = new SmapiJsonFileReader(helper);
             Strings.AssetNames.AdditionalMineMaps,
         };
 
-        BoafPipelineSnapshot.Set(attached: true, editorAssets: editorAssets, modAssetPaths: modAssetPaths);
+        BoafPipelineSnapshot.Set(attached: false, editorAssets: editorAssets, modAssetPaths: modAssetPaths);
 
 
         _game = new GameStateReader();
@@ -319,6 +318,46 @@ var jsonReader = new SmapiJsonFileReader(helper);
         });
     }
 
+
+    private void EnsurePipelineAttached()
+    {
+        if (_pipelineAttached)
+            return;
+
+        if (_assetPipeline is null)
+            return;
+
+        _assetPipeline.Attach();
+
+        var modAssetPaths = new[]
+        {
+            Strings.AssetNames.Cursors,
+            $"Mods/{Constants.ModId}/objects/note",
+            $"Mods/{Constants.ModId}/animals/note",
+            $"Mods/{Constants.ModId}/hats/birdhat",
+            $"Mods/{Constants.ModId}/hats/cowboyhat",
+            $"Mods/{Constants.ModId}/misc/dinosaurShopIcon",
+            $"Mods/{Constants.ModId}/misc/voidChickenShopIcon",
+            $"Mods/{Constants.ModId}/misc/ostrichShopIcon",
+        };
+
+        var editorAssets = new[]
+        {
+            Strings.AssetNames.Objects,
+            Strings.AssetNames.FarmAnimals,
+            Strings.AssetNames.Mail,
+            Strings.AssetNames.Quests,
+            Strings.AssetNames.SpecialOrders,
+            Strings.AssetNames.BigCraftables,
+            Strings.AssetNames.CraftingRecipes,
+            Strings.AssetNames.Machines,
+            Strings.AssetNames.AdditionalMineMaps,
+        };
+
+        BoafPipelineSnapshot.Set(attached: true, editorAssets: editorAssets, modAssetPaths: modAssetPaths);
+        _pipelineAttached = true;
+    }
+
     private void RegisterEditors(WeggAssetPipeline pipeline)
     {
         Func<ProgressionStep> getStep = () => _progression?.GetCurrentStep() ?? ProgressionStep.PartI;
@@ -370,6 +409,12 @@ var jsonReader = new SmapiJsonFileReader(helper);
     {
         if (!Context.IsWorldReady)
             return;
+
+        if (_pendingInvalidateAllOnNextTick)
+        {
+            _pendingInvalidateAllOnNextTick = false;
+            _assetPipeline?.RequestInvalidateAll();
+        }
 
         _tickCounter++;
         _progression?.OnUpdateTicked(_tickCounter % ProgressionPollIntervalTicks == 0);
@@ -541,7 +586,7 @@ var jsonReader = new SmapiJsonFileReader(helper);
 private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Config.ConfigChangedEventArgs e)
     {
         _log?.Log($"Config changed ({e.Reason}). Invalidating assets.", LogLevel.Info);
-        _assetPipeline?.RequestInvalidateAll();
+        _pendingInvalidateAllOnNextTick = true;
     }
 
     private void ReloadAll(ILog log)
@@ -551,7 +596,7 @@ private void OnConfigChanged(object? sender, WildEggsHatching.Infrastructure.Con
 
         _config.Reload();
         LoadModData(log);
-        _assetPipeline?.RequestInvalidateAll();
+        _pendingInvalidateAllOnNextTick = true;
 
         _log?.Log("Reloaded config + ModData.", LogLevel.Info);
     }
@@ -624,6 +669,11 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
         );
 
         RebuildGmcmLayout(force: true);
+
+        if (_log is not null)
+            LoadModData(_log);
+
+        EnsurePipelineAttached();
     }
 
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
@@ -868,7 +918,7 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
     {
         _progression?.OnSaveLoaded();
         _animalNotes?.OnSaveLoaded();
-        _assetPipeline?.RequestInvalidateAll();
+        _pendingInvalidateAllOnNextTick = true;
 
         try
         {

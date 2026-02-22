@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-22T15:10:02-03:00",
+  "updated_at": "2026-02-22T15:10:15-03:00",
   "replacements": [
     {
       "id": "20260219T212821-0300-01",
@@ -131,6 +131,11 @@
       "id": "20260222T105025-0300-01",
       "title": "Remove static editor caches (reload-safe)",
       "created_at": "2026-02-22T10:50:25-03:00"
+    },
+    {
+      "id": "20260222T113638-0300-01",
+      "title": "BOAF ctor/log fixes + phased init + explicit editor ordering",
+      "created_at": "2026-02-22T11:36:38-03:00"
     }
   ]
 }
