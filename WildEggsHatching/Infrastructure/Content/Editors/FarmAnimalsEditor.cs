@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
+using Mikew.BirdsOfAFeather.EnumsAndStrings;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Application.Animals;
 using WildEggsHatching.Core.ShopAnchors;
@@ -9,12 +10,22 @@ using WildEggsHatching.Core.ShopProgression;
 using Mikew.BirdsOfAFeather.Helpers.Content;
 using Mikew.BirdsOfAFeather;
 using Mikew.BirdsOfAFeather.Framework;
+using WildEggsHatching.Infrastructure.ModData;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
-public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
+public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>, IPostPassAssetEditor<ContentContext>
 {
     public override string AssetName => Strings.AssetNames.FarmAnimals;
+
+    public System.Collections.Generic.IReadOnlyList<AssetPostPass<ContentContext>> PostPasses => new[]
+    {
+        new AssetPostPass<ContentContext>(
+            debugName: "WildEggs.FarmAnimals.ApplyChosenEggs",
+            priority: (AssetEditPriority)((int)AssetEditPriority.Late + 50),
+            apply: (asset, ctx) => ApplyChosenEggsPost(asset, ctx)
+        ),
+    };
 
     private const string DinosaurId = "Dinosaur";
     private const string OstrichId = "Ostrich";
@@ -65,10 +76,6 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
             TryApplyLetMeHatchCloneInheritUnlock(context, data);
 
         }
-
-
-        if (context.Step >= ProgressionStep.PartVI)
-            ApplyChosenEggs(context, data, anchors);
     }
 
     private static void TryApplyLetMeHatchCloneInheritUnlock(ContentContext context, System.Collections.Generic.IDictionary<string, FarmAnimalData> data)
@@ -91,7 +98,21 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
         }
     }
 
-    private void ApplyChosenEggs(
+    
+private void ApplyChosenEggsPost(IAssetData asset, ContentContext context)
+{
+    var data = asset.AsDictionary<string, FarmAnimalData>().Data;
+
+    var anchors = ShopAnchorIndex.Build(
+        data as System.Collections.Generic.IReadOnlyDictionary<string, FarmAnimalData>
+        ?? new System.Collections.Generic.Dictionary<string, FarmAnimalData>(data, System.StringComparer.OrdinalIgnoreCase),
+        warn: msg => context.Log(msg, StardewModdingAPI.LogLevel.Trace));
+
+    if (context.Step >= ProgressionStep.PartVI)
+        ApplyChosenEggs(context, data, anchors);
+}
+
+private void ApplyChosenEggs(
         ContentContext context,
         System.Collections.Generic.IDictionary<string, FarmAnimalData> data,
         ShopAnchorIndex anchors)
@@ -115,7 +136,7 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>
         System.Collections.Generic.IDictionary<string, FarmAnimalData> data)
     {
         var wildEggIds = new System.Collections.Generic.HashSet<string>(
-            context.ModData.SpawnAreas.Keys,
+            SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas, context.Logger),
             System.StringComparer.OrdinalIgnoreCase);
 
         // Remove previous wild-egg assignments.

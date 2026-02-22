@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
-using StardewModdingAPI.Events;
-using StardewValley.GameData;
+using StardewValley;
 using StardewValley.GameData.Machines;
-using Mikew.BirdsOfAFeather;
+using Mikew.BirdsOfAFeather.EnumsAndStrings;
 using Mikew.BirdsOfAFeather.Helpers.Content;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
@@ -13,202 +12,182 @@ using WildEggsHatching.Infrastructure.ModData;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
-/// <summary>
-/// Edits <c>Data/Machines</c> for incubator behavior and egg product machines.
-/// Uses a BOAF post-pass to apply compatibility fixes after most edits.
-/// </summary>
 public sealed class MachinesEditor : AssetEditorBase<ContentContext>, IPostPassAssetEditor<ContentContext>
 {
     public override string AssetName => Strings.AssetNames.Machines;
 
-    /// <summary>
-    /// Run compatibility repairs at a very-late priority (original parity: Late+100).
-    /// </summary>
-    public AssetEditPriority PostPriority => unchecked((AssetEditPriority)9999);
+    public override AssetEditPriority Priority => AssetEditPriority.Default;
+
+    public IReadOnlyList<AssetPostPass<ContentContext>> PostPasses { get; } = new List<AssetPostPass<ContentContext>>
+    {
+        new(
+            debugName: "WildEggs.Machines.EggOutputs",
+            priority: AssetEditPriority.Late,
+            apply: (asset, ctx) => AddMachineOutputRulesForEggs(asset, ctx)
+        ),
+        new(
+            debugName: "WildEggs.Machines.OtherIncubators",
+            priority: (AssetEditPriority)((int)AssetEditPriority.Late + 100),
+            apply: (asset, ctx) => EditOtherIncubators(asset, ctx)
+        ),
+    };
 
     private const string DinoEggId = "107";
-    private const string IncubatorOutputMethod = "StardewValley.Object, Stardew Valley: OutputIncubator";
 
-    private const string PreserveJarKey = "(BC)15";
-    private const string MayonnaiseMachineKey = "(BC)24";
+    private const string IncubatorOutputMethod =
+        "StardewValley.Object, Stardew Valley: OutputIncubator";
 
-    private const string CpPickledWildEggs = "yourdorkbrains.cp_PickledWildEggs";
-    private const string CpWildEggMayo = "yourdorkbrains.cp_WildEggMayo";
-
-    private static readonly object LockObj = new();
-    private static IReadOnlyList<string>? _eggItemIdsCache;
+    private const string PickledWildEggsId = "yourdorkbrains.cp_PickledWildEggs";
+    private const string WildEggMayoId = "yourdorkbrains.cp_WildEggMayo";
 
     public override void Edit(IAssetData asset, ContentContext context)
     {
         var data = asset.AsDictionary<string, MachineData>().Data;
 
-        ApplyEggProductRules(context, data);
-
-        var incubatorKey = $"(BC){ModItemIds.WildEggIncubator}";
-        data[incubatorKey] = CreateWildEggIncubatorMachineData(context);
-
-        EditWildEggIncubatorRules(context, data, wildEggIncubatorKey: incubatorKey);
+        AddMachineOutputRules(data, context);
     }
 
-    public void EditPost(IAssetData asset, ContentContext context)
+    private static void AddMachineOutputRules(
+        IDictionary<string, MachineData> data,
+        ContentContext context)
     {
-        var data = asset.AsDictionary<string, MachineData>().Data;
-        var incubatorKey = $"(BC){ModItemIds.WildEggIncubator}";
+        RemoveLegacyOutputs(data);
 
-        // Parity: prevent wild eggs from being used in vanilla/other incubators at all progression steps.
-        EditOtherIncubators(context, data, wildEggIncubatorKey: incubatorKey);
+        var incubatorKey = $"(BC){ModItemIds.WildEggIncubator}";
+        data[incubatorKey] = CreateIncubatorMachineData(context);
+
+        ApplyIncubatorConfigOverrides(context, data[incubatorKey]);
     }
 
-    private static IReadOnlyList<string> GetEggItemIds(ContentContext context)
+    private static void RemoveLegacyOutputs(IDictionary<string, MachineData> data)
     {
-        lock (LockObj)
+        RemoveOutputRulesByOutputItem(data, "(BC)15", PickledWildEggsId);
+        RemoveOutputRulesByOutputItem(data, "(BC)24", WildEggMayoId);
+    }
+
+    private static void RemoveOutputRulesByOutputItem(
+        IDictionary<string, MachineData> data,
+        string machineKey,
+        string outputItemId)
+    {
+        if (!data.TryGetValue(machineKey, out var machine) || machine?.OutputRules is null)
+            return;
+
+        machine.OutputRules.RemoveAll(rule =>
+            rule?.OutputItem is not null
+            && rule.OutputItem.Any(o => o is not null && string.Equals(o.ItemId, outputItemId, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static MachineData CreateIncubatorMachineData(ContentContext context)
+    {
+        var eggItemIds = SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas, context.Logger);
+
+        var rules = new List<MachineOutputRule>();
+        foreach (var eggId in eggItemIds.Where(x => !string.IsNullOrWhiteSpace(x)))
         {
-            _eggItemIdsCache ??= SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas, context.Logger);
-            return _eggItemIdsCache;
-        }
-    }
+            var kind = EggKindExtensions.FromEggItemId(eggId);
 
-    private static MachineData CreateWildEggIncubatorMachineData(ContentContext context)
-    {
+            rules.Add(new MachineOutputRule
+            {
+                Id = eggId,
+                Triggers = new List<MachineOutputTriggerRule>
+                {
+                    new()
+                    {
+                        Id = $"ItemPlacedInMachine_{eggId}",
+                        Trigger = MachineOutputTrigger.ItemPlacedInMachine,
+                        RequiredItemId = eggId,
+                    },
+                },
+                UseFirstValidOutput = true,
+                OutputItem = new List<MachineItemOutput>
+                {
+                    new()
+                    {
+                        OutputMethod = IncubatorOutputMethod,
+                        IncrementMachineParentSheetIndex = kind.IsLarge() ? 1 : 0,
+                    },
+                },
+            });
+        }
+
         return new MachineData
         {
             HasInput = false,
             HasOutput = false,
-            InteractMethod = null,
-            OutputRules = CreateIncubatorOutputRules(context),
-            AdditionalConsumedItems = context.Config.NeedsFern ? CreateFernCosts() : null,
-            ReadyTimeModifiers = CreateReadyTimeModifiers(),
+            OutputRules = rules,
+            AdditionalConsumedItems = new List<MachineItemAdditionalConsumedItems>
+            {
+                new()
+                {
+                    ItemId = "259",
+                    RequiredCount = 5,
+                    InvalidCountMessage = "It needs 5 ferns.",
+                },
+            },
+            ReadyTimeModifiers = new List<QuantityModifier>
+            {
+                new()
+                {
+                    Id = "Coopmaster",
+                    Condition = "PLAYER_HAS_PROFESSION Target 2",
+                    Modification = QuantityModifier.ModificationType.Multiply,
+                    Amount = 0.5f,
+                },
+            },
             ReadyTimeModifierMode = QuantityModifier.QuantityModifierMode.Stack,
-            InvalidItemMessage = "Only works with wild eggs.",
+            InvalidItemMessage = "Only work with wild eggs.",
             InvalidItemMessageCondition = "ITEM_CATEGORY Input -5",
-            InvalidCountMessage = null,
-            LoadEffects = CreateLoadEffects(),
-            WorkingEffects = CreateWorkingEffects(),
+            LoadEffects = new List<MachineEffects>
+            {
+                new()
+                {
+                    Id = "Default",
+                    Sounds = new List<MachineSoundData>
+                    {
+                        new() { Id = "trashcan", Delay = 0 },
+                    },
+                    Interval = 100,
+                    ShakeDuration = -1,
+                },
+            },
+            WorkingEffects = new List<MachineEffects>
+            {
+                new()
+                {
+                    Id = "Default",
+                    Sounds = new List<MachineSoundData>
+                    {
+                        new() { Id = "trashcan", Delay = 0 },
+                    },
+                    Interval = 100,
+                    ShakeDuration = -1,
+                    TemporarySprites = new List<TemporaryAnimatedSpriteDefinition>
+                    {
+                        new()
+                        {
+                            Id = "Default",
+                            Texture = "TileSheets\animations",
+                            SourceRect = new Rectangle(0, 704, 64, 64),
+                            Interval = 20f,
+                            Frames = 6,
+                            Loops = 999999,
+                            PositionOffset = new Vector2(0, -32),
+                            Scale = 0.25f,
+                            AlphaFade = 0.005f,
+                        },
+                    },
+                },
+            },
             WorkingEffectChance = 0.33f,
-            WobbleWhileWorking = false,
-            LightWhileWorking = null,
             ShowNextIndexWhileWorking = true,
             AllowFairyDust = true,
             IsIncubator = true,
         };
     }
 
-    private static List<MachineOutputRule> CreateIncubatorOutputRules(ContentContext context)
+    private static void ApplyIncubatorConfigOverrides(ContentContext context, MachineData incubator)
     {
-        var rules = new List<MachineOutputRule>();
-
-        foreach (var eggId in GetEggItemIds(context))
-        {
-            rules.Add(CreateIncubatorOutputRule(eggId, incrementIndex: IsLargeEggId(eggId) ? 1 : 0));
-        }
-
-        return rules;
-    }
-
-    private static MachineOutputRule CreateIncubatorOutputRule(string requiredItemId, int incrementIndex)
-    {
-        return new MachineOutputRule
-        {
-            Id = requiredItemId,
-            Triggers = new List<MachineOutputTriggerRule>
-            {
-                new()
-                {
-                    Id = $"ItemPlacedInMachine_{requiredItemId}",
-                    Trigger = MachineOutputTrigger.ItemPlacedInMachine,
-                    RequiredItemId = requiredItemId,
-                },
-            },
-            UseFirstValidOutput = true,
-            OutputItem = new List<MachineItemOutput>
-            {
-                new()
-                {
-                    OutputMethod = IncubatorOutputMethod,
-                    IncrementMachineParentSheetIndex = incrementIndex,
-                },
-            },
-        };
-    }
-
-    private static List<MachineItemAdditionalConsumedItems> CreateFernCosts()
-    {
-        return new List<MachineItemAdditionalConsumedItems>
-        {
-            new()
-            {
-                ItemId = "259",
-                RequiredCount = 5,
-                InvalidCountMessage = "It needs 5 ferns.",
-            },
-        };
-    }
-
-    private static List<QuantityModifier> CreateReadyTimeModifiers()
-    {
-        return new List<QuantityModifier>
-        {
-            new()
-            {
-                Id = "Coopmaster",
-                Condition = "PLAYER_HAS_PROFESSION Target 2",
-                Modification = QuantityModifier.ModificationType.Multiply,
-                Amount = 0.5f,
-            },
-        };
-    }
-
-    private static List<MachineEffects> CreateLoadEffects()
-    {
-        return new List<MachineEffects>
-        {
-            new()
-            {
-                Id = "Default",
-                Condition = null,
-                Sounds = new List<MachineSoundData> { new() { Id = "trashcan", Delay = 0 } },
-                Interval = 100,
-                ShakeDuration = -1,
-            },
-        };
-    }
-
-    private static List<MachineEffects> CreateWorkingEffects()
-    {
-        return new List<MachineEffects>
-        {
-            new()
-            {
-                Id = "Default",
-                Condition = null,
-                Sounds = new List<MachineSoundData> { new() { Id = "trashcan", Delay = 0 } },
-                Interval = 100,
-                ShakeDuration = -1,
-                TemporarySprites = new List<TemporaryAnimatedSpriteDefinition>
-                {
-                    new()
-                    {
-                        Id = "Default",
-                        Texture = "TileSheets\\animations",
-                        SourceRect = new Rectangle(0, 704, 64, 64),
-                        Interval = 20f,
-                        Frames = 6,
-                        Loops = 999999,
-                        PositionOffset = new Vector2(0, -32),
-                        Flicker = false,
-                        Scale = 0.25f,
-                        AlphaFade = 0.005f,
-                    },
-                },
-            },
-        };
-    }
-
-    private static void EditWildEggIncubatorRules(ContentContext context, IDictionary<string, MachineData> data, string wildEggIncubatorKey)
-    {
-        if (!data.TryGetValue(wildEggIncubatorKey, out var incubator))
-            return;
-
         if (context.Config.HatchDinoEggs)
         {
             incubator.OutputRules ??= new List<MachineOutputRule>();
@@ -237,158 +216,121 @@ public sealed class MachinesEditor : AssetEditorBase<ContentContext>, IPostPassA
         }
 
         if (!context.Config.NeedsFern)
-        {
             incubator.AdditionalConsumedItems = null;
-        }
     }
 
-    private static void ApplyEggProductRules(ContentContext context, IDictionary<string, MachineData> data)
+    private static void AddMachineOutputRulesForEggs(IAssetData asset, ContentContext context)
     {
-        if (context.Step < ProgressionStep.PartVI)
+        if (!TryIsRegisteredItem(PickledWildEggsId) || !TryIsRegisteredItem(WildEggMayoId))
             return;
 
-        if (data.TryGetValue(PreserveJarKey, out var preserveJar))
-            RemoveOutputRulesByItemId(preserveJar, CpPickledWildEggs);
+        var data = asset.AsDictionary<string, MachineData>().Data;
 
-        if (data.TryGetValue(MayonnaiseMachineKey, out var mayo))
-            RemoveOutputRulesByItemId(mayo, CpWildEggMayo);
-
-        if (data.TryGetValue(PreserveJarKey, out preserveJar))
-            AddEggTypeRules(preserveJar, CpPickledWildEggs);
-
-        if (data.TryGetValue(MayonnaiseMachineKey, out mayo))
-            AddEggTypeRules(mayo, CpWildEggMayo);
+        AddOutputRulesForEggKinds(data, "(BC)15", PickledWildEggsId);
+        AddOutputRulesForEggKinds(data, "(BC)24", WildEggMayoId);
     }
 
-    private static void RemoveOutputRulesByItemId(MachineData machine, string itemId)
+    private static void AddOutputRulesForEggKinds(
+        IDictionary<string, MachineData> data,
+        string machineKey,
+        string outputItemId)
     {
-        if (machine.OutputRules is null || machine.OutputRules.Count == 0)
+        if (!data.TryGetValue(machineKey, out var machine) || machine?.OutputRules is null)
             return;
 
-        machine.OutputRules.RemoveAll(rule =>
-            rule.OutputItem != null
-            && rule.OutputItem.Any(o => string.Equals(o.ItemId, itemId, StringComparison.OrdinalIgnoreCase)));
-    }
+        var baseTime = 200;
+        var baseQty = 1;
 
-    private static void AddEggTypeRules(MachineData machine, string outputItemId)
-    {
-        machine.OutputRules ??= new List<MachineOutputRule>();
-
-        const int baseTime = 200;
-        const int baseQuantity = 1;
-
-        foreach (var eggType in new[]
-                 {
-                     EggType.wildEgg,
-                     EggType.largeWildEgg,
-                     EggType.magicWildEgg,
-                     EggType.largeMagicWildEgg,
-                 })
+        foreach (EggKind kind in Enum.GetValues(typeof(EggKind)))
         {
-            var quantity = eggType switch
+            var multiplier = kind switch
             {
-                EggType.wildEgg => baseQuantity,
-                EggType.largeWildEgg => baseQuantity * 2,
-                EggType.magicWildEgg => baseQuantity * 4,
-                EggType.largeMagicWildEgg => baseQuantity * 8,
-                _ => baseQuantity,
+                EggKind.Wild => 1,
+                EggKind.LargeWild => 2,
+                EggKind.Magic => 4,
+                EggKind.LargeMagic => 8,
+                _ => 1,
             };
 
-            var time = eggType switch
+            var contextTag = "wildegg_" + kind.ToSpawnParametersKey();
+            var ruleId = $"{Constants.ModId}_{kind.ToSpawnParametersKey()}";
+
+            var trigger = new MachineOutputTriggerRule
             {
-                EggType.wildEgg => baseTime,
-                EggType.largeWildEgg => baseTime * 2,
-                EggType.magicWildEgg => baseTime * 4,
-                EggType.largeMagicWildEgg => baseTime * 8,
-                _ => baseTime,
+                Id = contextTag,
+                Trigger = MachineOutputTrigger.ItemPlacedInMachine,
+                RequiredCount = 1,
+                RequiredTags = new List<string> { contextTag },
             };
 
-            var tag = "wildegg_" + eggType;
+            var output = new MachineItemOutput
+            {
+                CopyQuality = true,
+                Id = outputItemId,
+                ItemId = outputItemId,
+                MinStack = baseQty * multiplier,
+                MaxStack = baseQty * multiplier,
+            };
 
             machine.OutputRules.Add(new MachineOutputRule
             {
-                Id = $"{Constants.ModId}_{eggType}",
-                OutputItem = new List<MachineItemOutput>
-                {
-                    new()
-                    {
-                        CopyQuality = true,
-                        Id = outputItemId,
-                        ItemId = outputItemId,
-                        MinStack = quantity,
-                        MaxStack = quantity,
-                    },
-                },
-                MinutesUntilReady = time,
-                Triggers = new List<MachineOutputTriggerRule>
-                {
-                    new()
-                    {
-                        Id = tag,
-                        Trigger = MachineOutputTrigger.ItemPlacedInMachine,
-                        RequiredCount = 1,
-                        RequiredTags = new List<string> { tag },
-                    },
-                },
+                Id = ruleId,
+                OutputItem = new List<MachineItemOutput> { output },
+                MinutesUntilReady = baseTime * multiplier,
+                Triggers = new List<MachineOutputTriggerRule> { trigger },
             });
         }
     }
 
-    private static void EditOtherIncubators(ContentContext context, IDictionary<string, MachineData> data, string wildEggIncubatorKey)
+    private static bool TryIsRegisteredItem(string itemId)
     {
-        var keys = data.Keys.ToList();
-
-        foreach (var key in keys)
+        try
         {
-            if (string.Equals(key, wildEggIncubatorKey, StringComparison.OrdinalIgnoreCase))
+            return ItemRegistry.GetData(itemId) is not null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void EditOtherIncubators(IAssetData asset, ContentContext context)
+    {
+        var data = asset.AsDictionary<string, MachineData>().Data;
+
+        var wildEggIncubatorKey = $"(BC){ModItemIds.WildEggIncubator}";
+
+        var incubators = data.Keys
+            .Where(k => k is not null)
+            .Where(k =>
+                (k.Contains("incubator", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(k, "(BC)101", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(k, "(BC)254", StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(k, wildEggIncubatorKey, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        foreach (var key in incubators)
+        {
+            if (!data.TryGetValue(key, out var machine) || machine is null)
                 continue;
 
-            if (!IsIncubatorKey(key))
-                continue;
-
-            var machine = data[key];
-            if (machine.OutputRules is null)
-                continue;
-
-            foreach (var outputRule in machine.OutputRules)
+            if (machine.OutputRules is not null)
             {
-                if (outputRule.Triggers is null)
-                    continue;
-
-                foreach (var trigger in outputRule.Triggers)
+                foreach (var rule in machine.OutputRules.Where(r => r is not null))
+                foreach (var trig in rule.Triggers?.Where(t => t is not null) ?? Enumerable.Empty<MachineOutputTriggerRule>())
                 {
-                    trigger.RequiredTags ??= new List<string>();
-                    trigger.RequiredTags.Add("!wildegg_item");
+                    trig.RequiredTags ??= new List<string>();
 
-                    if (context.Config.DinoEggsExclusiveHatch)
-                        trigger.RequiredTags.Add("!item_dinosaur_egg");
+                    if (!trig.RequiredTags.Contains("!wildegg_item"))
+                        trig.RequiredTags.Add("!wildegg_item");
+
+                    if (context.Config.DinoEggsExclusiveHatch && !trig.RequiredTags.Contains("!item_dinosaur_egg"))
+                        trig.RequiredTags.Add("!item_dinosaur_egg");
                 }
             }
 
             machine.InvalidItemMessageCondition = "ITEM_CONTEXT_TAG Input wildegg_item";
             machine.InvalidItemMessage = "You can't hatch wild eggs here.";
         }
-    }
-
-    private static bool IsIncubatorKey(string key)
-    {
-        if (key.IndexOf("incubator", StringComparison.OrdinalIgnoreCase) >= 0)
-            return true;
-
-        if (string.Equals(key, $"(BC){BaseGameBigCraftableIds.Incubator}", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (string.Equals(key, $"(BC){BaseGameBigCraftableIds.OstrichIncubator}", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    }
-
-    private static bool IsLargeEggId(string eggItemId)
-    {
-        return eggItemId.EndsWith("LWEgg", StringComparison.OrdinalIgnoreCase)
-            || eggItemId.EndsWith("LMWEgg", StringComparison.OrdinalIgnoreCase)
-            || eggItemId.EndsWith("largeWildEgg", StringComparison.OrdinalIgnoreCase)
-            || eggItemId.EndsWith("largeMagicWildEgg", StringComparison.OrdinalIgnoreCase);
     }
 }
