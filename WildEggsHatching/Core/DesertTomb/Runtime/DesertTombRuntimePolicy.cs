@@ -19,8 +19,8 @@ public static class DesertTombRuntimePolicy
     public static bool IsEligibleByProgression(bool progressionModeEnabled, ProgressionStep step)
         => !progressionModeEnabled || step >= ProgressionStep.PartIV;
 
-    public static bool IsTombCandidate(int mineLevel, string? mapPath)
-        => mineLevel > 120 || TryParseMineLevel(mapPath, out _);
+    public static bool IsTombCandidate(int mineLevel)
+        => mineLevel > 120;
 
     public static bool TryParseMineLevel(string? mapPath, out MineLevel mineLevel)
     {

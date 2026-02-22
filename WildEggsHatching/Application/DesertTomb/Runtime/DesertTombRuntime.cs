@@ -23,7 +23,7 @@ namespace WildEggsHatching.Application.DesertTomb.Runtime;
 
 /// <summary>
 /// Runtime integration for DesertTomb:
-/// - Detect tomb floors (via AdditionalMineMaps or direct tomb map paths),
+/// - Detect tomb floors (via random chance on mine floors),
 /// - Apply level visuals/containers,
 /// - Plan and spawn tomb monsters with paced waves (Phase 3).
 /// </summary>
@@ -74,23 +74,23 @@ public sealed class DesertTombRuntime
     /// </summary>
     public void OnWarped(GameLocation newLocation)
     {
-        if (newLocation is MineShaft mineShaft)
-        {
-            if (_activeFloor is not null && !ReferenceEquals(_activeFloor.MineShaft, mineShaft))
-                _activeFloor = null;
-        _loggedTombLoadLevelVerifier = false;
-        _loggedTombPopulateVerifier = false;
-
-            _pending = mineShaft;
-        }
-        else
+        if (newLocation is not MineShaft mineShaft)
         {
             _pending = null;
             _activeFloor = null;
-        _loggedTombLoadLevelVerifier = false;
-        _loggedTombPopulateVerifier = false;
+            return;
         }
+
+        if (_activeFloor is not null && !ReferenceEquals(_activeFloor.MineShaft, mineShaft))
+            _activeFloor = null;
+
+        // Next-tick activation is a fallback: only schedule if the harmony path didn't already process today.
+        if (!AlreadyProcessedToday(mineShaft) && ShouldEdit(mineShaft))
+            _pending = mineShaft;
+        else
+            _pending = null;
     }
+
 
     /// <summary>
     /// Consolidated eligibility gate for Harmony patches.
@@ -117,7 +117,10 @@ public sealed class DesertTombRuntime
         if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, step))
             return false;
 
-        if (!DesertTombRuntimePolicy.IsTombCandidate(mineShaft.mineLevel, mineShaft.mapPath.Value))
+        if (mineShaft.mineLevel <= 120)
+            return false;
+
+        if (!RollTombChance(cfg.TombChance, mineShaft.mineLevel))
             return false;
 
         if (AlreadyProcessedToday(mineShaft))
@@ -263,12 +266,14 @@ public sealed class DesertTombRuntime
 
     public void OnUpdateTicked()
     {
-        // Activation takes priority on the tick after a warp.
+        // Fallback activation on the tick after a warp: only if harmony didn't already mark this floor processed today.
         if (_pending is not null)
         {
             var mineShaft = _pending;
             _pending = null;
-            ActivateCoreIfEligible(mineShaft);
+
+            if (!AlreadyProcessedToday(mineShaft))
+                ActivateCoreIfEligible(mineShaft);
         }
 
         // Runtime population pacing (Phase 3).
@@ -277,15 +282,7 @@ public sealed class DesertTombRuntime
             if (!ReferenceEquals(Game1.currentLocation, _activeFloor.MineShaft))
             {
                 _activeFloor = null;
-        _loggedTombLoadLevelVerifier = false;
-        _loggedTombPopulateVerifier = false;
-                return;
-            }
 
-            _activeFloor.Population.UpdateTicked();
-            _roleEnforcer.UpdateTicked(_activeFloor.MineShaft);
-        }
-    }
 
     
     private void ActivateCoreIfEligible(MineShaft mineShaft)

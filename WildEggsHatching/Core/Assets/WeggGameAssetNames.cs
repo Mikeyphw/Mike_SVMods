@@ -6,7 +6,7 @@ public static class WeggGameAssetNames
     /// <summary>Root key for vanilla mine maps.</summary>
     public const string MinesMapsRoot = "Maps/Mines";
 
-    /// <summary>Desert Tomb entry map key registered via AdditionalMineMaps.</summary>
+    /// <summary>Desert Tomb entry map key used by DesertTomb.</summary>
     public const string DesertTombMap = "Maps/Mines/Level77377";
 
     /// <summary>Desert Tomb tilesheet key.</summary>

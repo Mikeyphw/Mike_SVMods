@@ -30,11 +30,11 @@ public sealed class DesertTombRuntimePolicyTests
     }
 
     [Theory]
-    [InlineData(121, null, true)]
-    [InlineData(5, WeggGameAssetNames.DesertTombMap, true)]
-    [InlineData(5, "Maps/Mines/SomeOtherMap", false)]
-    public void IsTombCandidate_DetectsMineLevelOrMapPath(int mineLevel, string? mapPath, bool expected)
+    [InlineData(121, true)]
+    [InlineData(120, false)]
+    [InlineData(5, false)]
+    public void IsTombCandidate_RequiresMineLevelAbove120(int mineLevel, bool expected)
     {
-        Assert.Equal(expected, DesertTombRuntimePolicy.IsTombCandidate(mineLevel, mapPath));
+        Assert.Equal(expected, DesertTombRuntimePolicy.IsTombCandidate(mineLevel));
     }
 }

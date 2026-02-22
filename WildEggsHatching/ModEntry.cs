@@ -159,7 +159,6 @@ public sealed class ModEntry : Mod
             Strings.AssetNames.BigCraftables,
             Strings.AssetNames.CraftingRecipes,
             Strings.AssetNames.Machines,
-            Strings.AssetNames.AdditionalMineMaps,
         };
 
         BoafPipelineSnapshot.Set(attached: false, editorAssets: editorAssets, modAssetPaths: modAssetPaths);
@@ -358,7 +357,6 @@ public sealed class ModEntry : Mod
             Strings.AssetNames.BigCraftables,
             Strings.AssetNames.CraftingRecipes,
             Strings.AssetNames.Machines,
-            Strings.AssetNames.AdditionalMineMaps,
         };
 
         BoafPipelineSnapshot.Set(attached: true, editorAssets: editorAssets, modAssetPaths: modAssetPaths);
