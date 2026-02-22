@@ -46,6 +46,9 @@ public sealed class DesertTombRuntime
 
     private MineShaft? _pending;
 
+    private bool _loggedTombLoadLevelVerifier;
+    private bool _loggedTombPopulateVerifier;
+
     public DesertTombRuntime(
         SmapiConfigProvider<ModConfig> config,
         Func<ProgressionStep> getStep,
@@ -75,6 +78,8 @@ public sealed class DesertTombRuntime
         {
             if (_activeFloor is not null && !ReferenceEquals(_activeFloor.MineShaft, mineShaft))
                 _activeFloor = null;
+        _loggedTombLoadLevelVerifier = false;
+        _loggedTombPopulateVerifier = false;
 
             _pending = mineShaft;
         }
@@ -82,6 +87,8 @@ public sealed class DesertTombRuntime
         {
             _pending = null;
             _activeFloor = null;
+        _loggedTombLoadLevelVerifier = false;
+        _loggedTombPopulateVerifier = false;
         }
     }
 
@@ -145,11 +152,19 @@ public sealed class DesertTombRuntime
 
         var chosen = ChooseTombMapPath(mineShaft, cfg.ProgressionMode, step);
 
-        if (!string.Equals(mineShaft.mapPath.Value, chosen, StringComparison.OrdinalIgnoreCase))
+        var before = mineShaft.mapPath.Value;
+
+        if (!string.Equals(before, chosen, StringComparison.OrdinalIgnoreCase))
         {
             mineShaft.mapPath.Value = chosen;
             mineShaft.loadedMapNumber = DesertTombRuntimePolicy.ParseLoadedMapNumber(chosen);
             mineShaft.updateMap();
+
+            if (!_loggedTombLoadLevelVerifier)
+            {
+                _loggedTombLoadLevelVerifier = true;
+                _log.Info($"[Verifier][DesertTomb] loadLevel override applied: mineLevel={mineShaft.mineLevel}, before={before}, after={chosen}");
+            }
         }
 
         ResetVanillaSpecialFlagsForTomb(mineShaft);
@@ -208,6 +223,12 @@ public sealed class DesertTombRuntime
         if (!ShouldEdit(mineShaft))
             return;
 
+        if (!_loggedTombPopulateVerifier)
+        {
+            _loggedTombPopulateVerifier = true;
+            _log.Info($"[Verifier][DesertTomb] populateLevel fired: mineLevel={mineShaft.mineLevel}, mapPath={mineShaft.mapPath.Value}");
+        }
+
         ActivateCore(mineShaft);
     }
 
@@ -236,6 +257,8 @@ public sealed class DesertTombRuntime
     {
         _pending = null;
         _activeFloor = null;
+        _loggedTombLoadLevelVerifier = false;
+        _loggedTombPopulateVerifier = false;
     }
 
     public void OnUpdateTicked()
@@ -254,6 +277,8 @@ public sealed class DesertTombRuntime
             if (!ReferenceEquals(Game1.currentLocation, _activeFloor.MineShaft))
             {
                 _activeFloor = null;
+        _loggedTombLoadLevelVerifier = false;
+        _loggedTombPopulateVerifier = false;
                 return;
             }
 
