@@ -79,7 +79,7 @@ public sealed class ChosenEggAssignments
         anchors ??= ShopAnchorIndex.Empty;
 
         var daySeed = ComputeDaySeed();
-        var seed = MixInt(daySeed, (int)step);
+        var seed = MixInt(MixInt(daySeed, (int)step), Game1.timeOfDay);
 
         if (_lastSeed == seed && _eggToAnimal.Count > 0)
             return;
@@ -93,7 +93,7 @@ public sealed class ChosenEggAssignments
         if (objects is not null && objects.Count > 0)
             economy = new WeggEconomyWeightCalculator(farmAnimals, anchors, objects, _isUnlocked);
 
-        foreach (var eggId in snapshot.SpawnAreas.Keys.OrderBy(s => s, KeyComparer))
+        foreach (var eggId in SpawnAreaEggIds.GetEggItemIds(snapshot.SpawnAreas, _log))
         {
             var kind = EggKindExtensions.FromEggItemId(eggId);
             if (kind.IsMagic() && step < ProgressionStep.PartVI)
@@ -219,6 +219,8 @@ public sealed class ChosenEggAssignments
         if (ids.Count == 0)
             return new List<string>();
 
+        InjectLetMeHatchClones(ids);
+
         var requiredHouse = kind.IsLarge() ? "Barn" : "Coop";
 
         var filtered = ids
@@ -236,6 +238,40 @@ public sealed class ChosenEggAssignments
             ids.Add(id);
         }
     }
+
+    private void InjectLetMeHatchClones(HashSet<string> ids)
+    {
+        if (ids is null || ids.Count == 0)
+            return;
+
+        try
+        {
+            var api = _registry.GetApi<ILetMeHatchApi>("Mikew.lmh");
+            if (api is null)
+                return;
+
+            var pairs = api.GetClonedAnimalsInfo();
+            if (pairs is null || pairs.Count == 0)
+                return;
+
+            foreach (var (female, male, _) in pairs)
+            {
+                if (string.IsNullOrWhiteSpace(female) || string.IsNullOrWhiteSpace(male))
+                    continue;
+                if (female.Equals(male, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (ids.Contains(female))
+                    ids.Add(male);
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Log($"ChosenEggAssignments: LetMeHatch clone injection skipped ({ex.GetType().Name}: {ex.Message}).", LogLevel.Trace);
+        }
+    }
+
+
 
     private static bool IsHouseCompatible(FarmAnimalData animal, string requiredHouse)
     {

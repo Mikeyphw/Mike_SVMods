@@ -73,6 +73,7 @@ public sealed class ModEntry : Mod
     private IGameStateReader? _game;
     private IWorldLocations? _world;
     private WildEggSpawnOrchestrator? _spawner;
+    private SpawnWeatherHistory? _spawnWeatherHistory;
 
     private ProgressionService? _progression;
 
@@ -141,6 +142,9 @@ var jsonReader = new SmapiJsonFileReader(helper);
             $"Mods/{Constants.ModId}/animals/note",
             $"Mods/{Constants.ModId}/hats/birdhat",
             $"Mods/{Constants.ModId}/hats/cowboyhat",
+            $"Mods/{Constants.ModId}/misc/dinosaurShopIcon",
+            $"Mods/{Constants.ModId}/misc/voidChickenShopIcon",
+            $"Mods/{Constants.ModId}/misc/ostrichShopIcon",
         };
 
         var editorAssets = new[]
@@ -186,7 +190,8 @@ var jsonReader = new SmapiJsonFileReader(helper);
         var histogram = new TileSearchHistogram();
 
         var mods = new SmapiModAvailability(helper.ModRegistry);
-        var conditions = new DefaultAreaConditionsEvaluator(_game);
+        _spawnWeatherHistory = new SpawnWeatherHistory(_saveData!, _log!);
+        var conditions = new DefaultAreaConditionsEvaluator(_game, _spawnWeatherHistory);
 
         var planner = new SpawnPlanner(_world, mods, conditions, _log);
         var spawnService = new EggSpawnService(_world, placer, tileFinder, _log, histogram);
@@ -271,6 +276,7 @@ var jsonReader = new SmapiJsonFileReader(helper);
         helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
         helper.Events.GameLoop.Saving += OnSaving;
         helper.Events.GameLoop.DayStarted += OnDayStarted;
+        helper.Events.GameLoop.TimeChanged += OnTimeChanged;
         helper.Events.GameLoop.DayEnding += OnDayEnding;
         helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
         helper.Events.Player.Warped += OnWarped;
@@ -301,9 +307,10 @@ var jsonReader = new SmapiJsonFileReader(helper);
     {
         handler.AddAssets(new List<AssetData>
         {
-            // Mods/<modId>/<asset>
+            // Mods/<modId>/<folder>/<asset>
             new(typeof(WeggObjectTexture), WeggAssetFolder.objects, ModAssetHandler.FileExtension.Png, $"Mods/{Constants.ModId}"),
             new(typeof(WeggBigCraftableTexture), WeggAssetFolder.bigcraftables, ModAssetHandler.FileExtension.Png, $"Mods/{Constants.ModId}"),
+            new(typeof(WeggMiscTexture), WeggAssetFolder.misc, ModAssetHandler.FileExtension.Png, $"Mods/{Constants.ModId}"),
 
             // Vanilla-like keys.
             new(typeof(WeggMineMap), WeggAssetFolder.mines, ModAssetHandler.FileExtension.Tmx, WeggGameAssetNames.MinesMapsRoot),
@@ -372,6 +379,8 @@ var jsonReader = new SmapiJsonFileReader(helper);
     {
         _progression?.OnDayStarted();
 
+        _spawnWeatherHistory?.UpdateForDayStarted(_game?.GetDayNumber() ?? 0);
+
         var step = _progression?.GetCurrentStep() ?? ProgressionStep.PartI;
         _chosenEggs?.RecomputeIfNeeded(step);
         if (step >= ProgressionStep.PartVI)
@@ -386,6 +395,21 @@ var jsonReader = new SmapiJsonFileReader(helper);
         _desertTomb?.OnDayStarted();
         _animalNotes?.OnDayStarted();
         _animalNotesClient?.OnDayStarted();
+    }
+
+
+    private void OnTimeChanged(object? sender, TimeChangedEventArgs e)
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        var step = _progression?.GetCurrentStep() ?? ProgressionStep.PartI;
+        if (step < ProgressionStep.PartVI)
+            return;
+
+        // Force a refresh of chosen egg -> animal mapping for this time bucket.
+        _chosenEggs?.Clear();
+        _assetPipeline?.RequestInvalidate(Strings.AssetNames.FarmAnimals);
     }
 
     private void OnDayEnding(object? sender, DayEndingEventArgs e)

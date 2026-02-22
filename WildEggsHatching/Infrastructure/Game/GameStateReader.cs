@@ -22,4 +22,6 @@ public sealed class GameStateReader : IGameStateReader
     public int GetYear() => Game1.year;
     public string GetSeason() => Game1.currentSeason;
     public int GetDayOfMonth() => Game1.dayOfMonth;
+
+    public int GetTimeOfDay() => Game1.timeOfDay;
 }

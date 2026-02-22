@@ -6,6 +6,7 @@ public enum WeggAssetFolder
     objects,
     bigcraftables,
     mines,
+    misc,
 }
 
 public enum WeggObjectTexture
@@ -19,6 +20,13 @@ public enum WeggObjectTexture
 public enum WeggBigCraftableTexture
 {
     wildeggincubator,
+}
+
+public enum WeggMiscTexture
+{
+    dinosaurShopIcon,
+    voidChickenShopIcon,
+    ostrichShopIcon,
 }
 
 public enum WeggMineMap

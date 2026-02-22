@@ -4,6 +4,7 @@ using System.Linq;
 using StardewValley.GameData.Objects;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
+using WildEggsHatching.Infrastructure.ModData;
 using Mikew.BirdsOfAFeather.Helpers.Content;
 using Mikew.BirdsOfAFeather;
 
@@ -13,8 +14,12 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
 {
     public override string AssetName => Strings.AssetNames.Objects;
 
+    private const string PrismaticValleyColorKey = "JollyLlama.PrismaticValleyFramework/Color";
+    private const string PrismaticValleyPaletteKey = "JollyLlama.PrismaticValleyFramework/Palette";
+    private const string PrismaticValleyCustomPalette = "Custom Palette";
+
     private static readonly object LockObj = new();
-    private static IReadOnlyList<string>? _eggItemIds;
+    private static IReadOnlyList<EggDefinition>? _eggDefinitions;
     private static IReadOnlyList<string>? _animalKeys;
 
     public override void Edit(IAssetData asset, ContentContext context)
@@ -29,15 +34,13 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
     {
         var items = new Dictionary<string, ObjectData>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var eggId in GetEggItemIds(context))
+        foreach (var def in GetEggDefinitions(context))
         {
-            var kind = EggKindExtensions.FromEggItemId(eggId);
-
             // Keep magic eggs progression-gated for cleaner validation/diagnosis.
-            if (kind.IsMagic() && context.Step < ProgressionStep.PartVI)
+            if (def.Kind.IsMagic() && context.Step < ProgressionStep.PartVI)
                 continue;
 
-            items[eggId] = CreateEggObjectData(eggId, kind);
+            items[def.EggItemId] = CreateEggObjectData(def, context);
         }
 
         if (context.Step >= ProgressionStep.PartIII)
@@ -58,31 +61,72 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         return items;
     }
 
-    private static ObjectData CreateEggObjectData(string eggId, EggKind kind)
+    private static ObjectData CreateEggObjectData(EggDefinition def, ContentContext context)
     {
-        var region = HumanizeRegion(ExtractRegionToken(eggId));
-        var size = kind.IsLarge() ? "Large " : "";
-        var magic = kind.IsMagic() ? "Magic " : "";
+        var regionDisplay = HumanizeRegion(def.LocationToken);
+        var size = def.Kind.IsLarge() ? "Large " : "";
+        var magic = def.Kind.IsMagic() ? "Magic " : "";
+
+        var eggTypeName = EggTypeNameForContextTag(def.Kind);
+        var colorTag = def.Kind.IsMagic() ? "color_purple" : "color_white";
 
         return new ObjectData
         {
-            Name = eggId,
-            DisplayName = $"{region} {size}{magic}Wild Egg".Trim(),
-            Description = $"A mysterious wild egg found in the {region}.",
+            Name = def.EggItemId,
+            DisplayName = $"{regionDisplay} {size}{magic}Wild Egg".Trim(),
+            Description = $"A mysterious wild egg found in the {regionDisplay}.",
             Type = "AnimalProduct",
             Category = -5,
-            Price = 0,
-            Texture = $"Mods/Mikew.wildeggshatching/eggs",
-            SpriteIndex = EggSpriteIndex(kind),
+            Price = EggPrice(def.Kind),
+            Texture = $"Mods/Mikew.wildeggshatching/objects/eggs",
+            SpriteIndex = EggSpriteIndex(def.Kind),
             Edibility = 15,
             IsDrink = false,
             ExcludeFromRandomSale = true,
-            ContextTags = new List<string> { "category_egg", "wildegg_item" },
+            ContextTags = new List<string>
+            {
+                colorTag,
+                "forage_item",
+                "category_egg",
+                "wildegg_item",
+                "wildegg_" + eggTypeName,
+            },
             CustomFields = new Dictionary<string, string>
             {
-                ["WildEggs.Region"] = region,
-                ["WildEggs.Kind"] = kind.ToString()
+                ["WildEggs.Region"] = regionDisplay,
+                ["WildEggs.Kind"] = def.Kind.ToString(),
+                ["wildEggLocation"] = def.LocationToken,
             }
+        };
+    }
+
+    private static string EggTypeNameForContextTag(EggKind kind)
+    {
+        if (kind.IsMagic() && kind.IsLarge())
+            return "largeMagicWildEgg";
+
+        if (kind.IsMagic())
+            return "magicWildEgg";
+
+        if (kind.IsLarge())
+            return "largeWildEgg";
+
+        return "wildEgg";
+    }
+
+    private static int EggPrice(EggKind kind)
+    {
+        if (kind.IsMagic() && kind.IsLarge())
+            return 200;
+
+        if (kind.IsLarge())
+            return 150;
+
+        if (kind.IsMagic())
+            return 100;
+
+        return 100;
+    }
         };
     }
 
@@ -95,12 +139,18 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             Type = "Basic",
             Category = 0,
             Price = 0,
-            Texture = $"Mods/Mikew.wildeggshatching/scroll",
+            Texture = $"Mods/Mikew.wildeggshatching/objects/scroll",
             SpriteIndex = 0,
             Edibility = 15,
             IsDrink = false,
             ExcludeFromRandomSale = true,
             ContextTags = new List<string> { "wildegg_item" },
+            CustomFields = new Dictionary<string, string>
+            {
+                [PrismaticValleyColorKey] = PrismaticValleyCustomPalette,
+                [PrismaticValleyPaletteKey] = " #FFC080, #E67E73, #342B1F",
+            },
+
         };
 
     
@@ -113,7 +163,7 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             Type = "Basic",
             Category = 0,
             Price = 0,
-            Texture = $"Mods/Mikew.wildeggshatching/note",
+            Texture = $"Mods/Mikew.wildeggshatching/objects/note",
             SpriteIndex = 0,
             Edibility = -300,
             IsDrink = false,
@@ -123,6 +173,9 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             {
                 ["WildEggs.Animal"] = animalKey,
                 ["WildEggs.IsNote"] = "true",
+                [PrismaticValleyColorKey] = PrismaticValleyCustomPalette,
+                [PrismaticValleyPaletteKey] = " #34C759, #8BC34A, #2E865F",
+                ["Animal"] = animalKey,
             },
         };
 
@@ -136,12 +189,18 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             Type = "Basic",
             Category = 0,
             Price = 0,
-            Texture = $"Mods/Mikew.wildeggshatching/elixir",
+            Texture = $"Mods/Mikew.wildeggshatching/objects/elixir",
             SpriteIndex = 0,
             Edibility = 15,
             IsDrink = false,
             ExcludeFromRandomSale = true,
             ContextTags = new List<string> { "wildegg_item" },
+            CustomFields = new Dictionary<string, string>
+            {
+                [PrismaticValleyColorKey] = PrismaticValleyCustomPalette,
+                [PrismaticValleyPaletteKey] = " #FFC080, #E67E73, #342B1F",
+            },
+
         };
 
     private static int EggSpriteIndex(EggKind kind)
@@ -211,22 +270,29 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         => context.I18n.GetOrDefault(key, fallback);
 
 
-    private static IReadOnlyList<string> GetEggItemIds(ContentContext context)
+    private static IReadOnlyList<EggDefinition> GetEggDefinitions(ContentContext context)
     {
-        if (_eggItemIds is not null)
-            return _eggItemIds;
+        if (_eggDefinitions is not null)
+            return _eggDefinitions;
 
         lock (LockObj)
         {
-            if (_eggItemIds is not null)
-                return _eggItemIds;
+            if (_eggDefinitions is not null)
+                return _eggDefinitions;
 
-            var ids = context.ModData.SpawnAreas.Keys
-                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+            var ids = SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas);
+
+            _eggDefinitions = ids
+                .Select(id => new EggDefinition(
+                    EggItemId: id,
+                    LocationToken: ExtractRegionToken(id),
+                    Kind: EggKindExtensions.FromEggItemId(id)))
                 .ToList();
 
-            _eggItemIds = ids;
-            return _eggItemIds;
+            return _eggDefinitions;
         }
     }
+
+    private sealed record EggDefinition(string EggItemId, string LocationToken, EggKind Kind);
 }
+

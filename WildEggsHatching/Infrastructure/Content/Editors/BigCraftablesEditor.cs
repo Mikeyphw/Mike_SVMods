@@ -32,7 +32,7 @@ public sealed class BigCraftablesEditor : AssetEditorBase<ContentContext>
                 "object.WildEggIncubator.description",
                 "A sturdy incubator designed to hatch wild eggs."
             ),
-            Texture = $"Mods/{Constants.ModId}/wildeggincubator",
+            Texture = $"Mods/{Constants.ModId}/bigcraftables/wildeggincubator",
             SpriteIndex = 0,
             CanBePlacedIndoors = true,
             CanBePlacedOutdoors = false,

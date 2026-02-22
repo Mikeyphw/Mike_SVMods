@@ -69,5 +69,8 @@
   "quest.NoteDelivery.reactionText2": "Fantastic! This note is perfect. I'll head out to find this egg right away.$h#$b#It's always a joy to add a new member to my farm. I really appreciate your assistance!$h#$b#",
   "quest.NoteDelivery.reactionText3": "Oh, that's marvelous! This note will guide me to the egg, and I can't wait to see what hatches.$h#$b#Thank you for being so thoughtful and helping me grow my farm!$h#$b#",
   "quest.NoteDelivery.reactionText_AnimalInfo": "It says this about this animal: ",
-  "quest.NoteDelivery.title": "Note Delivery"
+  "quest.NoteDelivery.title": "Note Delivery",
+  "shop.description.Dinosaur": "A prehistoric reptile. Large, hardy, and surprisingly affectionate.",
+  "shop.description.Ostrich": "A tall bird with a big egg. Needs plenty of space.",
+  "shop.description.VoidChicken": "A chicken touched by the void. Lays void eggs."
 }

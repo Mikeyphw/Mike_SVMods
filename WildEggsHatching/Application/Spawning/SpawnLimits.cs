@@ -6,14 +6,15 @@ using WildEggsHatching.Infrastructure.ModData.Models;
 
 namespace WildEggsHatching.Application.Spawning;
 
+/// <summary>
+/// Tracks map-level egg counts for enforcing legacy per-map caps.
+/// World and per-type world caps are enforced by the spawner service (per-day semantics).
+/// </summary>
 public sealed class SpawnLimits
 {
-    public SpawnLimits() { }
-
     private readonly Dictionary<string, int> _mapAny = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, int> _mapMagic = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, int> _mapLarge = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<EggKind, int> _worldByKind = new();
 
     public static SpawnLimits SnapshotFromWorld(IEnumerable<GameLocation> locations)
     {
@@ -45,36 +46,43 @@ public sealed class SpawnLimits
     {
         reason = "";
 
-        var worldCap = GetWorldCap(kind, p);
-        var worldCount = _worldByKind.TryGetValue(kind, out var c) ? c : 0;
-        if (worldCount >= worldCap)
-        {
-            reason = $"world cap hit ({kind}:{worldCount}/{worldCap})";
-            return false;
-        }
-
         var anyCap = Math.Max(0, p.MaxEggPerMap_Any);
-        var effective = anyCap > 0 ? anyCap : int.MaxValue;
+        if (anyCap > 0)
+        {
+            var anyCount = _mapAny.TryGetValue(mapName, out var a) ? a : 0;
+            if (anyCount >= anyCap)
+            {
+                reason = $"map any cap hit ({mapName}:{anyCount}/{anyCap})";
+                return false;
+            }
+        }
 
         if (kind.IsMagic())
         {
             var magicCap = Math.Max(0, p.MaxEggPerMap_Magic);
             if (magicCap > 0)
-                effective = Math.Min(effective, magicCap);
+            {
+                var magicCount = _mapMagic.TryGetValue(mapName, out var m) ? m : 0;
+                if (magicCount >= magicCap)
+                {
+                    reason = $"map magic cap hit ({mapName}:{magicCount}/{magicCap})";
+                    return false;
+                }
+            }
         }
 
         if (kind.IsLarge())
         {
             var largeCap = Math.Max(0, p.MaxEggPerMap_Large);
             if (largeCap > 0)
-                effective = Math.Min(effective, largeCap);
-        }
-
-        var mapCount = _mapAny.TryGetValue(mapName, out var mc) ? mc : 0;
-        if (mapCount >= effective)
-        {
-            reason = $"map cap hit ({mapName}:{mapCount}/{effective})";
-            return false;
+            {
+                var largeCount = _mapLarge.TryGetValue(mapName, out var l) ? l : 0;
+                if (largeCount >= largeCap)
+                {
+                    reason = $"map large cap hit ({mapName}:{largeCount}/{largeCap})";
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -89,15 +97,13 @@ public sealed class SpawnLimits
 
         if (kind.IsLarge())
             _mapLarge[mapName] = (_mapLarge.TryGetValue(mapName, out var l) ? l : 0) + 1;
-
-        _worldByKind[kind] = (_worldByKind.TryGetValue(kind, out var w) ? w : 0) + 1;
     }
 
     private static bool IsWildEgg(string itemId)
         => itemId.StartsWith("Mikew.wildeggshatching_", StringComparison.OrdinalIgnoreCase)
            && itemId.EndsWith("Egg", StringComparison.OrdinalIgnoreCase);
 
-    private static int GetWorldCap(EggKind kind, SpawnParametersJson p)
+    public static int GetPerKindWorldCap(EggKind kind, SpawnParametersJson p)
     {
         var key = kind.ToSpawnParametersKey();
         if (p.MaxWorldEggs is not null && p.MaxWorldEggs.TryGetValue(key, out var cap) && cap > 0)

@@ -45,7 +45,7 @@ public sealed class SpawnPlanner
 
         var jobsWithKey = new List<(double key, SpawnJob job)>();
 
-        foreach (var (eggItemId, rules) in snapshot.SpawnAreas)
+        foreach (var (eggItemId, rules) in SpawnAreaEggIds.Normalize(snapshot.SpawnAreas, _log))
         {
             var kind = EggKindExtensions.FromEggItemId(eggItemId);
 
@@ -104,6 +104,8 @@ public sealed class SpawnPlanner
             .ToList();
 
         MarkCertainJobs(ordered, parameters);
+
+        ordered = FilterJobsByAreaChance(ordered, saveId, dayNumber);
 
         return new SpawnPlan(packBudgets, ordered);
     }
@@ -168,7 +170,40 @@ public sealed class SpawnPlanner
         return rng.Next(pmin, pmax + 1);
     }
 
-    private static void MarkCertainJobs(List<SpawnJob> jobs, SpawnParametersJson parameters)
+    
+    private List<SpawnJob> FilterJobsByAreaChance(List<SpawnJob> ordered, long saveId, int dayNumber)
+    {
+        var kept = new List<SpawnJob>(ordered.Count);
+
+        foreach (var job in ordered)
+        {
+            if (job.BypassRandomChance || job.SpawnChance >= 1.0)
+            {
+                kept.Add(job);
+                continue;
+            }
+
+            if (job.SpawnChance <= 0.0)
+                continue;
+
+            var rng = new SeededRandomProvider(
+                DeterministicSeed.For(saveId, dayNumber, "job-chance", job.EggItemId, job.MapName, job.PackId));
+
+            if (rng.NextDouble() < job.SpawnChance)
+            {
+                kept.Add(job);
+                continue;
+            }
+
+            _log.Log(
+                $"Spawn plan: excluded job due to random chance (job={job.EggItemId} map={job.MapName} chance={job.SpawnChance:0.###})",
+                StardewModdingAPI.LogLevel.Trace);
+        }
+
+        return kept;
+    }
+
+private static void MarkCertainJobs(List<SpawnJob> jobs, SpawnParametersJson parameters)
     {
         var remainingVanilla = Math.Max(0, parameters.Parameters_Vanilla.CertainEggs);
         var remainingPacks = Math.Max(0, parameters.Parameters_Packs.CertainEggs);

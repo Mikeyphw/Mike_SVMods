@@ -18,4 +18,6 @@ public interface IGameStateReader
     int GetYear();
     string GetSeason();
     int GetDayOfMonth();
+
+    int GetTimeOfDay();
 }

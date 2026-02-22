@@ -9,9 +9,12 @@ namespace WildEggsHatching.Application.Spawning;
 public sealed class DefaultAreaConditionsEvaluator : IAreaConditionsEvaluator
 {
     private readonly IGameStateReader _game;
-    public DefaultAreaConditionsEvaluator(IGameStateReader game)
+    private readonly SpawnWeatherHistory _weather;
+
+    public DefaultAreaConditionsEvaluator(IGameStateReader game, SpawnWeatherHistory weather)
     {
         _game = game;
+        _weather = weather;
     }
 
     public bool AreMet(ExtraConditionsJson conditions)
@@ -28,7 +31,24 @@ public sealed class DefaultAreaConditionsEvaluator : IAreaConditionsEvaluator
         if (conditions.Days.Count > 0 && !conditions.Days.Contains(_game.GetDayOfMonth()))
             return false;
 
-        // Weather conditions intentionally deferred (orig uses stored weather strings).
+        if (conditions.SpawnTimeHour is >= 0 and <= 23)
+        {
+            var currentHour = _game.GetTimeOfDay() / 100;
+            if (currentHour != conditions.SpawnTimeHour)
+                return false;
+        }
+
+        var w = _weather.GetSnapshot();
+
+        if (conditions.WeatherToday.Count > 0 && !conditions.WeatherToday.Any(x => string.Equals(x, w.WeatherToday, StringComparison.OrdinalIgnoreCase)))
+            return false;
+
+        if (conditions.WeatherTomorrow.Count > 0 && !conditions.WeatherTomorrow.Any(x => string.Equals(x, w.WeatherTomorrow, StringComparison.OrdinalIgnoreCase)))
+            return false;
+
+        if (conditions.WeatherYesterday.Count > 0 && !conditions.WeatherYesterday.Any(x => string.Equals(x, w.WeatherYesterday, StringComparison.OrdinalIgnoreCase)))
+            return false;
+
         return true;
     }
 }
