@@ -35,7 +35,7 @@ public sealed class QuestEditor : AssetEditorBase<ContentContext>
                 details: TranslateOrFallback(context, "quest.WizardStudy.questDetails", "Bring the requested item to the Wizard."),
                 hint: TranslateOrFallback(context, "quest.WizardStudy.hint", "The Wizard wants to study a strange egg."),
                 solution: $"Wizard {ModItemIds.FarmLargeWildEgg}",
-                gold: goldReward,
+                gold: 0,
                 cancellable: false,
                 reaction: TranslateOrFallback(context, "quest.WizardStudy.reactionText", "Interesting... very interesting.")
             );
@@ -81,7 +81,7 @@ public sealed class QuestEditor : AssetEditorBase<ContentContext>
                     details: $"{baseDetails}: {animalKey}.",
                     hint: $"{baseHint}: {animalKey}.",
                     solution: $"Marnie {noteId}",
-                    gold: goldReward,
+                    gold: 0,
                     cancellable: false,
                     reaction: reaction
                 );

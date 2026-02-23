@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
+using StardewValley.GameData.SpecialOrders;
 using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Application.Progression;
 using WildEggsHatching.Infrastructure.Config;
@@ -318,6 +319,46 @@ public sealed class WeggVerifier
         TryProbe<Texture2D>(report, "probe/tex/tombtilesheet", WeggGameAssetNames.DesertTombTilesheet);
         TryProbe<Texture2D>(report, "probe/tex/tracker", WeggGameAssetNames.DesertTombTrackerTexture);
         TryProbe<Texture2D>(report, "probe/tex/object-note", $"Mods/{Constants.ModId}/objects/note");
+
+        // ID validation: SpawnAreas egg IDs must exist in Data/Objects; progression IDs must match injected assets.
+        try
+        {
+            var snapshot = _dataLoader.Load();
+            var eggIds = SpawnAreaEggIds.GetEggItemIds(snapshot.SpawnAreas, _log)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var objects = SafeLoad<Dictionary<string, ObjectData>>(Strings.AssetNames.Objects);
+            var (eggStatus, eggMsg) = EggIdsValidator.Validate(eggIds, objects, full: options.Full);
+            report.Add("ids/eggs", eggStatus, eggMsg);
+        }
+        catch (Exception ex)
+        {
+            report.Add("ids/eggs", WeggVerifyStatus.Warn, $"Egg ID validation failed (best-effort): {ex.GetType().Name}");
+        }
+
+        try
+        {
+            var mail = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.Strings.AssetNames.Mail);
+            var quests = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.Strings.AssetNames.Quests);
+            var orders = SafeLoad<Dictionary<string, SpecialOrderData>>(Strings.AssetNames.SpecialOrders);
+
+            var (pStatus, pMsg) = ProgressionIdsValidator.Validate(
+                step: options.ProgressionStep,
+                mail: mail,
+                quests: quests,
+                specialOrders: orders,
+                full: options.Full);
+
+            report.Add("ids/progression", pStatus, pMsg);
+        }
+        catch (Exception ex)
+        {
+            report.Add("ids/progression", WeggVerifyStatus.Warn, $"Progression ID validation failed (best-effort): {ex.GetType().Name}");
+        }
+
 
         // Content pack validation (requires world-ready).
         var cpOk = _helper.ModRegistry.IsLoaded("Pathoschild.ContentPatcher");

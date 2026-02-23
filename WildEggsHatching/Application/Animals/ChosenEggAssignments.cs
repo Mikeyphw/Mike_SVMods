@@ -105,23 +105,60 @@ public sealed class ChosenEggAssignments
 
             var eggSeed = MixInt(seed, StableHash32Upper(eggId));
 
-            // Determine eligible wild-animal buckets (uniform pick).
+            // Determine eligible wild-animal buckets (filtered to installed animals, then weighted by candidate key weights).
             var eligibleWild = snapshot.WildAnimals
-                .Where(kvp => IsEligible(kvp.Value, regionToken, kind))
+                .Where(kvp => farmAnimals.ContainsKey(kvp.Key) && IsEligible(kvp.Value, regionToken, kind))
                 .OrderBy(kvp => kvp.Key, KeyComparer)
                 .ToList();
 
             if (eligibleWild.Count == 0)
                 continue;
 
-            var wildPickRng = new Random(eggSeed);
-            var chosenWild = eligibleWild[wildPickRng.Next(eligibleWild.Count)];
+            var missingFarmAnimalKeys = new HashSet<string>(KeyComparer);
+            var wildCandidates = new List<(string WildKey, WildAnimalJson Wild, List<string> Candidates, double Weight)>();
 
-            if (!TryPickFarmAnimalKey(
-                    chosenWild.Value,
-                    kind,
-                    farmAnimals,
-                    economy,
+            foreach (var kvp in eligibleWild)
+            {
+                var wildKey = kvp.Key;
+                var wild = kvp.Value;
+
+                var candidates = BuildCandidateFarmAnimalIds(wild, kind, farmAnimals, out var missingKeys);
+                foreach (var mk in missingKeys)
+                    missingFarmAnimalKeys.Add(mk);
+
+                if (candidates.Count == 0)
+                    continue;
+
+                var weight = ComputeWildWeight(candidates, economy);
+                wildCandidates.Add((wildKey, wild, candidates, weight));
+            }
+
+            if (missingFarmAnimalKeys.Count > 0)
+            {
+                var orderedMissing = missingFarmAnimalKeys.OrderBy(k => k, KeyComparer).ToList();
+                _log.Log(
+                    $"ChosenEggAssignments: egg={eggId} MissingFarmAnimalKeys=[{string.Join(", ", orderedMissing)}]",
+                    LogLevel.Debug);
+            }
+
+            if (wildCandidates.Count == 0)
+                continue;
+
+            var orderedWild = wildCandidates.OrderBy(c => c.WildKey, KeyComparer).ToList();
+            var weights = orderedWild.Select(c => c.Weight).ToList();
+
+            if (!DeterministicWeightedPicker.TryPick(
+                    orderedItems: orderedWild,
+                    weights: weights,
+                    seed: MixInt(eggSeed, 0x5B3A4D11),
+                    out var chosenWild))
+            {
+                chosenWild = orderedWild[0];
+            }
+
+            if (!TryPickFarmAnimalKeyFromCandidates(
+                    candidates: chosenWild.Candidates,
+                    economy: economy,
                     seed: eggSeed,
                     out var farmAnimalKey))
             {
@@ -149,18 +186,36 @@ public sealed class ChosenEggAssignments
         return wildAnimal.LocationTypes.TryGetValue(regionToken, out var ok) && ok;
     }
 
-    private bool TryPickFarmAnimalKey(
-        WildAnimalJson wildAnimal,
-        EggKind kind,
-        IReadOnlyDictionary<string, FarmAnimalData> farmAnimals,
+    private static double ComputeWildWeight(
+        IReadOnlyList<string> candidates,
+        WeggEconomyWeightCalculator? economy)
+    {
+        if (candidates is null || candidates.Count == 0)
+            return 0;
+
+        if (economy is not null)
+        {
+            var weights = economy.ComputeWeights(candidates);
+            if (weights.Count > 0)
+            {
+                var sum = weights.Values.Where(v => double.IsFinite(v) && v > 0).Sum();
+                if (sum > 0)
+                    return sum;
+            }
+        }
+
+        return candidates.Count;
+    }
+
+    private bool TryPickFarmAnimalKeyFromCandidates(
+        IReadOnlyList<string> candidates,
         WeggEconomyWeightCalculator? economy,
         int seed,
         out string farmAnimalKey)
     {
         farmAnimalKey = string.Empty;
 
-        var candidates = BuildCandidateFarmAnimalIds(wildAnimal, kind, farmAnimals);
-        if (candidates.Count == 0)
+        if (candidates is null || candidates.Count == 0)
             return false;
 
         if (economy is not null)
@@ -184,11 +239,25 @@ public sealed class ChosenEggAssignments
         return true;
     }
 
+    private bool TryPickFarmAnimalKey(
+        WildAnimalJson wildAnimal,
+        EggKind kind,
+        IReadOnlyDictionary<string, FarmAnimalData> farmAnimals,
+        WeggEconomyWeightCalculator? economy,
+        int seed,
+        out string farmAnimalKey)
+    {
+        var candidates = BuildCandidateFarmAnimalIds(wildAnimal, kind, farmAnimals, out _);
+        return TryPickFarmAnimalKeyFromCandidates(candidates, economy, seed, out farmAnimalKey);
+    }
+
     private List<string> BuildCandidateFarmAnimalIds(
         WildAnimalJson wildAnimal,
         EggKind kind,
-        IReadOnlyDictionary<string, FarmAnimalData> farmAnimals)
+        IReadOnlyDictionary<string, FarmAnimalData> farmAnimals,
+        out IReadOnlyList<string> missingFarmAnimalKeys)
     {
+        missingFarmAnimalKeys = Array.Empty<string>();
         if (wildAnimal.ExtraModAnimalKeys.Count == 0)
             return new List<string>();
 
@@ -220,6 +289,10 @@ public sealed class ChosenEggAssignments
             return new List<string>();
 
         InjectLetMeHatchClones(ids);
+        missingFarmAnimalKeys = ids
+            .Where(id => !farmAnimals.ContainsKey(id))
+            .OrderBy(id => id, KeyComparer)
+            .ToList();
 
         var requiredHouse = kind.IsLarge() ? "Barn" : "Coop";
 
