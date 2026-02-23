@@ -8,6 +8,8 @@ using WildEggsHatching.Core.Enums;
 using StardewValley;
 using StardewValley.GameData.Objects;
 using StardewValley.GameData.FarmAnimals;
+using Mikew.BirdsOfAFeather.Helpers.Logging;
+using WildEggsHatching.Infrastructure.ModData;
 
 namespace WildEggsHatching.Infrastructure.Api;
 
@@ -24,7 +26,15 @@ public sealed class WildEggsApi : IWildEggsApi
     private string? _chosenMagicCoop;
     private string? _chosenMagicBarn;
 
-    public WildEggsApi(IModFacade facade) => _facade = facade;
+    private readonly IModDataLoader _data;
+    private readonly ILog? _log;
+
+    public WildEggsApi(IModFacade facade, IModDataLoader data, ILog? log = null)
+    {
+        _facade = facade;
+        _data = data;
+        _log = log;
+    }
 
     public int ApiVersion => 1;
 
@@ -71,63 +81,116 @@ public sealed class WildEggsApi : IWildEggsApi
 
     public IReadOnlyDictionary<string, int> GetQuestCompletionDays() => _facade.GetQuestCompletionDays();
 
-    private HashSet<string> ComputeWildEggIds()
+    
+private HashSet<string> ComputeWildEggIds()
+{
+    var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    try
     {
-        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        try
+        var snapshot = _data.Load();
+        foreach (var id in SpawnAreaEggIds.GetEggItemIds(snapshot.SpawnAreas, _log))
         {
-            var data = Game1.content.Load<Dictionary<string, ObjectData>>(Strings.AssetNames.Objects);
-            if (data is null || data.Count == 0)
-                return ids;
-
-            foreach (var (id, obj) in data)
-            {
-                if (string.IsNullOrWhiteSpace(id) || obj is null)
-                    continue;
-
-                if (IsWildEggObject(id, obj))
-                    ids.Add(id);
-            }
+            if (!string.IsNullOrWhiteSpace(id))
+                ids.Add(id);
         }
-        catch
-        {
-            // best-effort: API callers can also inject IDs via SetWildEggsIDs.
-        }
-
-        return ids;
+    }
+    catch
+    {
+        // best-effort: fall back to scanning object data below.
     }
 
-    private HashSet<string> ComputeValidAnimals()
+    if (ids.Count > 0)
+        return ids;
+
+    try
     {
-        var animals = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var data = Game1.content.Load<Dictionary<string, ObjectData>>(Strings.AssetNames.Objects);
+        if (data is null || data.Count == 0)
+            return ids;
 
-        var wildEggIds = _cachedWildEggIds ??= ComputeWildEggIds();
-        if (wildEggIds.Count == 0)
-            return animals;
-
-        try
+        foreach (var (id, obj) in data)
         {
-            var data = Game1.content.Load<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
-            if (data is null || data.Count == 0)
-                return animals;
+            if (string.IsNullOrWhiteSpace(id) || obj is null)
+                continue;
 
-            foreach (var (animalId, animal) in data)
+            if (IsWildEggObject(id, obj))
+                ids.Add(id);
+        }
+    }
+    catch
+    {
+        // best-effort: API callers can also inject IDs via SetWildEggsIDs.
+    }
+
+    return ids;
+}
+
+    
+private HashSet<string> ComputeValidAnimals()
+{
+    var animals = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    HashSet<string> candidateIds;
+
+    try
+    {
+        var snapshot = _data.Load();
+
+        candidateIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var wild in snapshot.WildAnimals.Values)
+        {
+            if (wild?.ExtraModAnimalKeys is null)
+                continue;
+
+            foreach (var block in wild.ExtraModAnimalKeys.Values)
             {
-                if (string.IsNullOrWhiteSpace(animalId) || animal?.EggItemIds is null || animal.EggItemIds.Count == 0)
+                if (block is null)
                     continue;
 
-                if (animal.EggItemIds.Any(id => !string.IsNullOrWhiteSpace(id) && wildEggIds.Contains(id)))
-                    animals.Add(animalId);
+                foreach (var id in block.FarmAnimalKeysSameWeight)
+                {
+                    if (!string.IsNullOrWhiteSpace(id))
+                        candidateIds.Add(id);
+                }
+
+                foreach (var w in block.FarmAnimalKeysWeighted)
+                {
+                    if (!string.IsNullOrWhiteSpace(w?.Id))
+                        candidateIds.Add(w.Id);
+                }
             }
         }
-        catch
+    }
+    catch
+    {
+        candidateIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    if (candidateIds.Count == 0)
+        return animals;
+
+    try
+    {
+        var data = Game1.content.Load<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+        if (data is null || data.Count == 0)
+            return candidateIds;
+
+        foreach (var id in candidateIds)
         {
-            // best-effort: API callers can also inject valid animals via SetValidAnimals.
+            if (data.ContainsKey(id))
+                animals.Add(id);
         }
 
         return animals;
     }
+    catch
+    {
+        // best-effort: return unfiltered candidates.
+        return candidateIds;
+    }
+}
 
     private static bool IsWildEggObject(string id, ObjectData obj)
     {

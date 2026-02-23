@@ -6,6 +6,7 @@ using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Api;
 using WildEggsHatching.Infrastructure.Config;
 using Xunit;
+using WildEggsHatching.Infrastructure.ModData;
 
 namespace WildEggsHatching.Refactor.Tests;
 
@@ -21,7 +22,7 @@ public sealed class WildEggsApiTests
             Days = new Dictionary<string, int> { { "q1", 5 } }
         };
 
-        IWildEggsApi api = new WildEggsApi(facade);
+        IWildEggsApi api = new WildEggsApi(facade, new FakeModDataLoader());
 
         Assert.Equal(1, api.ApiVersion);
         Assert.Equal(ProgressionStep.PartII, api.GetProgressionStep());
@@ -39,6 +40,11 @@ public sealed class WildEggsApiTests
         var days = api.GetQuestCompletionDays();
         Assert.Equal(5, days["q1"]);
     }
+
+private sealed class FakeModDataLoader : IModDataLoader
+{
+    public ModDataSnapshot Load() => ModDataSnapshot.Empty;
+}
 
     private sealed class FakeFacade : IModFacade
     {

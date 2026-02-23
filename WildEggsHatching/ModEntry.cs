@@ -897,10 +897,10 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
 
     public override object? GetApi()
     {
-        if (_facade is null)
+        if (_facade is null || _dataLoader is null)
             return null;
 
-        return _api ??= new WildEggsApi(_facade);
+        return _api ??= new WildEggsApi(_facade, _dataLoader, _log);
     }
 
     private void InstallHarmonyPatches()
