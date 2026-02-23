@@ -33,7 +33,6 @@ using WildEggsHatching.Infrastructure.Content;
 using WildEggsHatching.Infrastructure.Content.Editors;
 using WildEggsHatching.Infrastructure.Api;
 using WildEggsHatching.Infrastructure.Assets;
-using WildEggsHatching.Infrastructure.DesertTomb.Assets;
 using WildEggsHatching.Infrastructure.Commands;
 using WildEggsHatching.Infrastructure.Diagnostics;
 using WildEggsHatching.Infrastructure.Game;
@@ -867,57 +866,6 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
             config.AnimalProgressionMode =
                 new Dictionary<string, bool>(config.AnimalProgressionMode, StringComparer.OrdinalIgnoreCase);
         }
-    }
-);
-
-            layout.Page("desertTomb", page =>
-            {
-                page.Enum(cfg => cfg.TombChance, optionId: "desertTomb.tombChance", tooltip: true);
-            });
-
-            layout.Page("items", page =>
-            {
-                page.Bool(cfg => cfg.AlternatePotionSprite, optionId: "items.alternatePotionSprite", tooltip: true);
-                page.Bool(cfg => cfg.NeedsFern, optionId: "items.incubatorNeedsFern", tooltip: true);
-            });
-
-            layout.Page("hatching", page =>
-            {
-                page.Bool(cfg => cfg.HatchDinoEggs, optionId: "hatching.hatchDinoEggs", tooltip: true);
-                page.Bool(cfg => cfg.DinoEggsExclusiveHatch, optionId: "hatching.dinoExclusiveHatch", tooltip: true);
-            });
-
-            layout.Page("prices", page =>
-            {
-                page.Text(cfg => cfg.DinoPrice, optionId: "prices.dino", tooltip: true);
-                page.Text(cfg => cfg.VoidChickenPrice, optionId: "prices.voidChicken", tooltip: true);
-                page.Text(cfg => cfg.OstrichPrice, optionId: "prices.ostrich", tooltip: true);
-            });
-
-            layout.Page("animalNotes", page =>
-            {
-                page.Int(cfg => cfg.AnimalNotesWarnAfterDays, optionId: "animalNotes.warnAfterDays", tooltip: true, min: 0);
-                page.Int(cfg => cfg.AnimalNotesPlacementRadius, optionId: "animalNotes.placementRadius", tooltip: true, min: 0);
-                page.Bool(cfg => cfg.AnimalNotesQuestMailHostOnly, optionId: "animalNotes.hostOnlyQuestMail", tooltip: true);
-                page.Bool(cfg => cfg.AnimalNotesAllowClientDiscoveries, optionId: "animalNotes.allowClientDiscoveries", tooltip: true);
-
-                page.Separator("animalNotes_advanced", simple: true);
-                page.Paragraph("animalNotes.progressionOverrides");
-            });
-
-            layout.Page("debug", page =>
-            {
-                page.ParagraphGmcmOptionsStatus();
-                page.Separator("debug_status", simple: true);
-
-                page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
-                page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
-
-                page.Separator("debug_animalNotes", simple: true);
-
-                page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
-            });
-        });
     }
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
