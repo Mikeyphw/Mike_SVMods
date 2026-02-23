@@ -12,17 +12,12 @@ public static class CloneTextureResolver
 
     public static Resolution Resolve(
         string? currentValue,
-        string originalValue,
+        string? originalValue,
         string contentPackId,
         string femaleKey,
         Enums.TextureType textureType
     )
     {
-        if (string.IsNullOrEmpty(originalValue))
-        {
-            throw new ArgumentException("Original texture value must be provided.", nameof(originalValue));
-        }
-
         if (string.IsNullOrWhiteSpace(contentPackId))
         {
             throw new ArgumentException("Content pack id must be provided.", nameof(contentPackId));
@@ -35,7 +30,7 @@ public static class CloneTextureResolver
 
         if (currentValue is null)
         {
-            return new(originalValue, false);
+            return new(originalValue ?? string.Empty, false);
         }
 
         if (currentValue.Equals("cp", StringComparison.OrdinalIgnoreCase))

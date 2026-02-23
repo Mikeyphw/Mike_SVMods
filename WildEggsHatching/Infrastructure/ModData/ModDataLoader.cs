@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData.Models;
+using SmapiLog = Mikew.BirdsOfAFeather.Helpers.Logging.SmapiLog;
 
 namespace WildEggsHatching.Infrastructure.ModData;
 
@@ -9,6 +10,15 @@ public sealed class ModDataLoader : IModDataLoader
 {
     private readonly IJsonFileReader _reader;
     private readonly ILog _log;
+
+    /// <summary>Helper to emit scoped log messages, falling back to basic log if not a SmapiLog instance.</summary>
+    private void LogScoped(string category, string message, StardewModdingAPI.LogLevel level)
+    {
+        if (_log is SmapiLog slog)
+            slog.LogScoped(ScopedLogCatalog.ModWe, category, message, level);
+        else
+            _log.Log(message, level);
+    }
 
     public ModDataLoader(IJsonFileReader reader, ILog log)
     {
@@ -56,7 +66,7 @@ public sealed class ModDataLoader : IModDataLoader
         }
         catch (Exception ex)
         {
-            _log.Log($"Failed reading mod data: {path}. Using defaults. {ex}", StardewModdingAPI.LogLevel.Error);
+            LogScoped("save-data", $"Failed reading mod data: {path}. Using defaults. {ex}", StardewModdingAPI.LogLevel.Error);
             return fallback();
         }
     }
@@ -74,13 +84,13 @@ public sealed class ModDataLoader : IModDataLoader
             wa.ExtraModAnimalKeys ??= new Dictionary<string, ExtraModAnimalKeysJson>();
 
             if (wa.LocationTypes.Count == 0)
-                _log.Log($"WildAnimalsList '{key}' has no LocationTypes; defaulting all to false.", StardewModdingAPI.LogLevel.Trace);
+                LogScoped("save-data", $"WildAnimalsList '{key}' has no LocationTypes; defaulting all to false.", StardewModdingAPI.LogLevel.Trace);
 
             if (wa.ExtraModAnimalKeys.Count == 0)
-                _log.Log($"WildAnimalsList '{key}' has no ExtraModAnimalKeys; it may never resolve to a farm animal.", StardewModdingAPI.LogLevel.Trace);
+                LogScoped("save-data", $"WildAnimalsList '{key}' has no ExtraModAnimalKeys; it may never resolve to a farm animal.", StardewModdingAPI.LogLevel.Trace);
 
             if (string.IsNullOrWhiteSpace(key))
-                _log.Log("WildAnimalsList contains an empty key.", StardewModdingAPI.LogLevel.Warn);
+                LogScoped("save-data", "WildAnimalsList contains an empty key.", StardewModdingAPI.LogLevel.Warn);
         }
 
         foreach (var (areaKey, rules) in spawnAreas)
@@ -88,7 +98,7 @@ public sealed class ModDataLoader : IModDataLoader
             if (rules is null)
             {
                 spawnAreas[areaKey] = new List<SpawnAreaRuleJson>();
-                _log.Log($"SpawnAreas '{areaKey}' had null rules list; defaulted to empty.", StardewModdingAPI.LogLevel.Warn);
+                LogScoped("save-data", $"SpawnAreas '{areaKey}' had null rules list; defaulted to empty.", StardewModdingAPI.LogLevel.Warn);
                 continue;
             }
 

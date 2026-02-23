@@ -9,10 +9,7 @@
   "Dependencies": [
     { "UniqueID": "Meara.Roosters", "IsRequired": true },
     { "UniqueID": "Mikew.letmehatchthisegg.smapi", "IsRequired": false },
-    
-    { "UniqueID": "6480.blueegg", "IsRequired": false },
-    { "UniqueID": "Pathoschild.ContentPatcher",
-    "MinimumVersion": "1.22.0", "IsRequired": true }
+    { "UniqueID": "6480.blueegg", "IsRequired": false }
   ],
   "EntryDll": "RoosterAddon.dll"
 }

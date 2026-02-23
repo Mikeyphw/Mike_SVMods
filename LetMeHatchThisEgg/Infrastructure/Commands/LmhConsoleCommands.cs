@@ -36,5 +36,11 @@ public static class LmhConsoleCommands
             (_, _) => coordinator.InvalidateAllContent()
         );
 
+        helper.ConsoleCommands.Add(
+            "lmh_status",
+            "Print LetMeHatch runtime/integration status.\n\nUsage: lmh_status.",
+            (_, _) => coordinator.PrintStatus()
+        );
+
     }
 }

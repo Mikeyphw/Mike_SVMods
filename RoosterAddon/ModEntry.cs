@@ -5,7 +5,6 @@ using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
 using RoosterAddon.Infrastructure.SaveData;
 using RoosterAddon.Infrastructure.Smapi;
-using Mikew.BirdsOfAFeather.Framework;
 using StardewModdingAPI;
 
 namespace RoosterAddon;
@@ -15,9 +14,6 @@ internal sealed partial class ModEntry : Mod
 {
     private SmapiEventRouter? _eventRouter;
     private RoosterCoordinator? _coordinator;
-
-    /// <summary>Content Patcher API (set at game launch).</summary>
-    internal static IContentPatcherAPI? ContentPatcher;
 
     /// <summary>Typed persisted config (Phase 3+).</summary>
     internal RoosterAddonConfig Config

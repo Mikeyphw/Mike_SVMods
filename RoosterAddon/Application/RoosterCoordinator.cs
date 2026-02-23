@@ -84,9 +84,7 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
     private bool HasDayStarted;
     private LuckyTypes DailyLuck = LuckyTypes.Neutral;
 
-    // "Stuck inside" affects harvest type; maintained via CP conditions for parity.
-    private ManagedConditions? conditionStuckInsideSeason;
-    private ManagedConditions? conditionStuckInsideWeather;
+    // "Stuck inside" affects harvest type.
     private bool isStuckInside;
 
     internal RoosterCoordinator(ModEntry host, ISaveDataStore saveData)
@@ -125,6 +123,12 @@ Helper.ConsoleCommands.Add(
     "ra_catalog",
     "Catalog commands. Use: ra_catalog help",
     CatalogCommand
+);
+
+Helper.ConsoleCommands.Add(
+    "ra_status",
+    "Print RoosterAddon runtime/integration status.",
+    (_, _) => PrintStatus()
 );
 
 AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
@@ -260,6 +264,18 @@ AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
 
         _pendingInvalidations.Add(assetName);
         QueueNextTickAction(FlushInvalidations);
+    }
+
+    private void PrintStatus()
+    {
+        Monitor.Log($"WorldReady={Context.IsWorldReady}", LogLevel.Info);
+        Monitor.Log($"MainPlayer={Context.IsMainPlayer}", LogLevel.Info);
+        Monitor.Log($"LetMeHatchApiReady={HatchApi is not null}", LogLevel.Info);
+        Monitor.Log(
+            $"Catalogs: roosters={_catalogs.Roosters.Roosters.Count}, produce={_catalogs.Produce.Roosters.Count}, hatching={_catalogs.Hatching.Roosters.Count}",
+            LogLevel.Info);
+        Monitor.Log($"PendingInvalidations={_pendingInvalidations.Count}", LogLevel.Info);
+        Monitor.Log($"NeedsRoosterSetup={_needsRoosterSetup}", LogLevel.Info);
     }
 
     private void FlushInvalidations()

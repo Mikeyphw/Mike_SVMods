@@ -73,6 +73,19 @@ public sealed class WeggCommandDispatcherTests
     }
 
     [Fact]
+    public void Status_PrintsCoreSnapshot()
+    {
+        var facade = new FakeFacade { Step = ProgressionStep.PartV };
+        var dispatcher = new WeggCommandDispatcher(facade);
+
+        var res = dispatcher.Execute(new[] { "status" });
+
+        Assert.True(res.Success);
+        Assert.Contains("ProgressionStep=PartV", res.Message);
+        Assert.Contains("ProgressionMode=", res.Message);
+    }
+
+    [Fact]
     public void InvalidStep_ReturnsFailure()
     {
         var facade = new FakeFacade();
@@ -88,6 +101,7 @@ public sealed class WeggCommandDispatcherTests
         public ProgressionStep Step { get; set; } = ProgressionStep.PartI;
 
         public ProgressionStep? LastSetStep { get; private set; }
+        public bool LastApplySideEffects { get; private set; }
         public (string loc, string item, int count, int attempts)? LastPlace { get; private set; }
 
         public ProgressionStep GetProgressionStep() => Step;
@@ -118,6 +132,7 @@ public sealed class WeggCommandDispatcherTests
         public FacadeResult DumpAnimalNotes(AnimalNotesDumpOptions options) => new(true, "ok");
         public FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true, bool force = false) => new(true, "ok");
         public FacadeResult ValidateAnimalNotes() => new(true, "ok");
+        public FacadeResult Verify(string[] args) => new(true, "verify");
         public FacadeResult WipeSchemaData(bool confirmed) => new(true, confirmed ? "wiped" : "no");
     }
 }

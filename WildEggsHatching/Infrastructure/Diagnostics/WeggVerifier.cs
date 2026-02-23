@@ -95,6 +95,8 @@ public sealed class WeggVerifier
         AddTmxChecks(report);
 
         AddConfigChecks(report);
+        AddSaveKeyChecks(report);
+        AddI18nChecks(report, includeAllowedValues: options.Full);
 
         if (options.Full)
         {
@@ -266,6 +268,99 @@ public sealed class WeggVerifier
             report.Add("config/animalnotes-radius", WeggVerifyStatus.Pass, $"AnimalNotesPlacementRadius={c.AnimalNotesPlacementRadius}.");
     }
 
+    private void AddSaveKeyChecks(WeggVerifyReport report)
+    {
+        static bool IsValidSaveKey(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return false;
+
+            foreach (var c in key)
+            {
+                if (char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '-')
+                    continue;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        var invalid = new List<string>();
+        if (!IsValidSaveKey(ProgressionSaveKeys.Progression))
+            invalid.Add(ProgressionSaveKeys.Progression);
+
+        if (!IsValidSaveKey(AnimalNotesSaveKeys.AnimalNotes))
+            invalid.Add(AnimalNotesSaveKeys.AnimalNotes);
+
+        report.Add(
+            "savekeys/format",
+            invalid.Count == 0 ? WeggVerifyStatus.Pass : WeggVerifyStatus.Fail,
+            invalid.Count == 0
+                ? "Save-data keys use valid SMAPI characters."
+                : $"Invalid save-data keys: {string.Join(", ", invalid)}");
+    }
+
+    private void AddI18nChecks(WeggVerifyReport report, bool includeAllowedValues)
+    {
+        Dictionary<string, string>? i18n;
+        try
+        {
+            i18n = _helper.Data.ReadJsonFile<Dictionary<string, string>>("i18n/default.json");
+        }
+        catch (Exception ex)
+        {
+            report.Add("i18n/default", WeggVerifyStatus.Fail, $"Failed to read i18n/default.json ({ex.GetType().Name}).");
+            return;
+        }
+
+        if (i18n is null)
+        {
+            report.Add("i18n/default", WeggVerifyStatus.Fail, "Missing i18n/default.json.");
+            return;
+        }
+
+        var requiredKeys = new List<string>
+        {
+            "command.wegg.help",
+            "command.wegg.error.schema.missing",
+            "command.wegg.error.schema.unknown",
+        };
+
+        if (includeAllowedValues)
+        {
+            requiredKeys.AddRange(new[]
+            {
+                "config.desertTomb.tombChance.allowed.Low",
+                "config.desertTomb.tombChance.allowed.Medium",
+                "config.desertTomb.tombChance.allowed.High",
+                "config.desertTomb.tombChance.allowed.Always",
+                "config.desertTomb.tombDifficulty.allowed.Easy",
+                "config.desertTomb.tombDifficulty.allowed.Moderate",
+                "config.desertTomb.tombDifficulty.allowed.Hard",
+            });
+        }
+
+        var missing = requiredKeys.Where(k => !i18n.ContainsKey(k)).ToList();
+        var empty = requiredKeys.Where(k => i18n.TryGetValue(k, out var v) && string.IsNullOrWhiteSpace(v)).ToList();
+
+        if (missing.Count > 0)
+        {
+            report.Add("i18n/keys", WeggVerifyStatus.Fail, $"Missing i18n keys: {string.Join(", ", missing)}");
+            return;
+        }
+
+        if (empty.Count > 0)
+        {
+            report.Add("i18n/keys", WeggVerifyStatus.Warn, $"Blank i18n values: {string.Join(", ", empty)}");
+            return;
+        }
+
+        report.Add("i18n/keys", WeggVerifyStatus.Pass, includeAllowedValues
+            ? "Required i18n command + GMCM allowed-value keys are present."
+            : "Required i18n command keys are present.");
+    }
+
     private void AddAnimalNotesValidation(WeggVerifyReport report, WeggVerifyOptions options)
     {
         if (!options.IsWorldReady)
@@ -384,7 +479,7 @@ public sealed class WeggVerifier
                 // Best-effort: ask Content Patcher for patch list (reflection; may fail depending on CP version).
                 try
                 {
-                    var cpApi = _helper.ModRegistry.GetApi<IContentPatcherAPI>("Pathoschild.ContentPatcher");
+                    var cpApi = _helper.ModRegistry.GetApi<object>("Pathoschild.ContentPatcher");
                     if (cpApi is not null)
                     {
                         var mi = cpApi.GetType().GetMethod("GetPatches", Type.EmptyTypes);

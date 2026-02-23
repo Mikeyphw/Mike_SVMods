@@ -8,9 +8,9 @@ namespace WildEggsHatching.Infrastructure.Commands;
 public sealed class WeggCommandDispatcher
 {
     private readonly IModFacade _facade;
-    private readonly I18TranslationHelper _i18n;
+    private readonly I18TranslationHelper? _i18n;
 
-    public WeggCommandDispatcher(IModFacade facade, I18TranslationHelper i18n)
+    public WeggCommandDispatcher(IModFacade facade, I18TranslationHelper? i18n = null)
     {
         _facade = facade;
         _i18n = i18n;
@@ -27,6 +27,7 @@ public sealed class WeggCommandDispatcher
         {
             "help" => new CommandResult(true, HelpText()),
             "reload" => ToCommandResult(_facade.ReloadAll()),
+            "status" => HandleStatus(),
             "step" => HandleStep(args),
             "progression" => HandleProgression(args),
             "spawn" => HandleSpawn(args),
@@ -180,12 +181,29 @@ public sealed class WeggCommandDispatcher
         };
     }
 
+    private CommandResult HandleStatus()
+    {
+        var cfg = _facade.GetConfigSnapshot();
+        var lines = new[]
+        {
+            $"ProgressionStep={_facade.GetProgressionStep()}",
+            $"ProgressionMode={cfg.ProgressionMode}",
+            $"DesertTombEnabled={cfg.DesertTombModuleEnabled}",
+            $"AnimalNotesDebugMode={cfg.AnimalNotesDebugMode}",
+            $"QuestCompletionTracked={_facade.GetQuestCompletionDays().Count}",
+        };
+
+        return new CommandResult(true, string.Join(Environment.NewLine, lines));
+    }
+
 
     private string T(string key, string fallback, params object[] tokens)
     {
-        var translated = tokens.Length == 0
-            ? _i18n.GetString(key)
-            : _i18n.GetString(key, tokens);
+        var translated = _i18n is null
+            ? key
+            : tokens.Length == 0
+                ? _i18n.GetString(key)
+                : _i18n.GetString(key, tokens);
 
         if (!string.IsNullOrWhiteSpace(translated) && !string.Equals(translated, key, StringComparison.OrdinalIgnoreCase))
             return translated;
@@ -194,13 +212,14 @@ public sealed class WeggCommandDispatcher
     }
 
     private string HelpText()
-        => _i18n.GetOrDefault("command.wegg.help", DefaultHelpText());
+        => _i18n?.GetOrDefault("command.wegg.help", DefaultHelpText()) ?? DefaultHelpText();
 
     private static string DefaultHelpText()
         => string.Join(
             Environment.NewLine,
             "WildEggsHatching commands:",
             "  wegg help",
+            "  wegg status",
             "  wegg reload",
             "  wegg step get",
             "  wegg step set <PartI|PartII|PartIII|PartIV|PartV|PartVI> [--effects]",

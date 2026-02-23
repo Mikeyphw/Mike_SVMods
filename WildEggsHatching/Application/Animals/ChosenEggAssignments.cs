@@ -13,6 +13,7 @@ using WildEggsHatching.Core.ShopAnchors;
 using WildEggsHatching.Core.Weighting;
 using WildEggsHatching.Infrastructure.ModData;
 using WildEggsHatching.Infrastructure.ModData.Models;
+using SmapiLog = Mikew.BirdsOfAFeather.Helpers.Logging.SmapiLog;
 
 namespace WildEggsHatching.Application.Animals;
 
@@ -29,6 +30,15 @@ public sealed class ChosenEggAssignments
     private readonly IModRegistry _registry;
     private readonly ILog _log;
     private readonly Func<string, bool> _isUnlocked;
+
+    /// <summary>Helper to emit scoped log messages, falling back to basic log if not a SmapiLog instance.</summary>
+    private void LogScoped(string category, string message, LogLevel level)
+    {
+        if (_log is SmapiLog slog)
+            slog.LogScoped(ScopedLogCatalog.ModWe, category, message, level);
+        else
+            _log.Log(message, level);
+    }
 
     private readonly Dictionary<string, string> _eggToAnimal = new(KeyComparer);
     private int? _lastSeed;
@@ -58,11 +68,11 @@ public sealed class ChosenEggAssignments
         var farmAnimals = SafeLoad<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
         if (farmAnimals is null || farmAnimals.Count == 0)
         {
-            _log.Log("ChosenEggAssignments: Data/FarmAnimals unavailable; skipping recompute.", LogLevel.Trace);
+            LogScoped("spawning", "ChosenEggAssignments: Data/FarmAnimals unavailable; skipping recompute.", LogLevel.Trace);
             return;
         }
 
-        var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => _log.Log(msg, LogLevel.Trace));
+        var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => LogScoped("spawning", msg, LogLevel.Trace));
         RecomputeIfNeeded(step, farmAnimals, anchors);
     }
 
@@ -137,7 +147,7 @@ public sealed class ChosenEggAssignments
             if (missingFarmAnimalKeys.Count > 0)
             {
                 var orderedMissing = missingFarmAnimalKeys.OrderBy(k => k, KeyComparer).ToList();
-                _log.Log(
+                LogScoped("spawning",
                     $"ChosenEggAssignments: egg={eggId} MissingFarmAnimalKeys=[{string.Join(", ", orderedMissing)}]",
                     LogLevel.Debug);
             }
@@ -170,7 +180,7 @@ public sealed class ChosenEggAssignments
         }
 
         _lastSeed = seed;
-        _log.Log($"ChosenEggAssignments: mapped {_eggToAnimal.Count} eggs to farm animals for seed={seed}.", LogLevel.Debug);
+        LogScoped("spawning", $"ChosenEggAssignments: mapped {_eggToAnimal.Count} eggs to farm animals for seed={seed}.", LogLevel.Debug);
     }
 
     private static bool IsEligible(WildAnimalJson wildAnimal, string regionToken, EggKind kind)
@@ -343,7 +353,7 @@ public sealed class ChosenEggAssignments
         }
         catch (Exception ex)
         {
-            _log.Log($"ChosenEggAssignments: LetMeHatch clone injection skipped ({ex.GetType().Name}: {ex.Message}).", LogLevel.Trace);
+            LogScoped("spawning", $"ChosenEggAssignments: LetMeHatch clone injection skipped ({ex.GetType().Name}: {ex.Message}).", LogLevel.Trace);
         }
     }
 

@@ -46,7 +46,7 @@ public sealed class CloneTextureBookkeeper : ICloneTextureBookkeeper
 
         cloneData.BabyTexture = ResolveAndRecord(
             currentValue: cloneData.BabyTexture,
-            originalValue: originalData.BabyTexture,
+            originalValue: originalData.BabyTexture ?? placeholderData.BabyTexture ?? cloneData.BabyTexture,
             contentPackId: contentPackId,
             femaleKey: cloneInfo.FemaleKey,
             cloneInfo: cloneInfo,
@@ -55,7 +55,7 @@ public sealed class CloneTextureBookkeeper : ICloneTextureBookkeeper
 
         cloneData.Texture = ResolveAndRecord(
             currentValue: cloneData.Texture,
-            originalValue: originalData.Texture,
+            originalValue: originalData.Texture ?? placeholderData.Texture ?? cloneData.Texture,
             contentPackId: contentPackId,
             femaleKey: cloneInfo.FemaleKey,
             cloneInfo: cloneInfo,
@@ -64,7 +64,7 @@ public sealed class CloneTextureBookkeeper : ICloneTextureBookkeeper
 
         cloneData.HarvestedTexture = ResolveAndRecord(
             currentValue: cloneData.HarvestedTexture,
-            originalValue: originalData.HarvestedTexture,
+            originalValue: originalData.HarvestedTexture ?? placeholderData.HarvestedTexture ?? cloneData.HarvestedTexture,
             contentPackId: contentPackId,
             femaleKey: cloneInfo.FemaleKey,
             cloneInfo: cloneInfo,
@@ -73,7 +73,7 @@ public sealed class CloneTextureBookkeeper : ICloneTextureBookkeeper
 
         cloneData.ShopTexture = ResolveAndRecord(
             currentValue: cloneData.ShopTexture,
-            originalValue: originalData.ShopTexture,
+            originalValue: originalData.ShopTexture ?? placeholderData.ShopTexture ?? cloneData.ShopTexture,
             contentPackId: contentPackId,
             femaleKey: cloneInfo.FemaleKey,
             cloneInfo: cloneInfo,
@@ -83,7 +83,7 @@ public sealed class CloneTextureBookkeeper : ICloneTextureBookkeeper
 
     private static string ResolveAndRecord(
         string? currentValue,
-        string originalValue,
+        string? originalValue,
         string contentPackId,
         string femaleKey,
         ClonedAnimalInfo cloneInfo,

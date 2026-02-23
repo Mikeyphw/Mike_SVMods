@@ -8,6 +8,7 @@ using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Game;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData.Models;
+using SmapiLog = Mikew.BirdsOfAFeather.Helpers.Logging.SmapiLog;
 
 namespace WildEggsHatching.Application.Spawning;
 
@@ -20,6 +21,15 @@ public sealed class EggSpawnService
     private readonly ITileFinder _tileFinder;
     private readonly ILog _log;
     private readonly ITileSearchHistogram _histogram;
+
+    /// <summary>Helper to emit scoped log messages, falling back to basic log if not a SmapiLog instance.</summary>
+    private void LogScoped(string category, string message, LogLevel level)
+    {
+        if (_log is SmapiLog slog)
+            slog.LogScoped(ScopedLogCatalog.ModWe, category, message, level);
+        else
+            _log.Log(message, level);
+    }
 
     public EggSpawnService(
         IWorldLocations world,
@@ -60,13 +70,13 @@ public sealed class EggSpawnService
             var isVanilla = string.Equals(job.PackId, Vanilla, StringComparison.OrdinalIgnoreCase);
             if (isVanilla && spawnedWorldVanilla >= maxWorldVanilla)
             {
-                _log.Log($"Spawn skipped: world vanilla cap hit ({spawnedWorldVanilla}/{maxWorldVanilla}) (map={job.MapName})", LogLevel.Trace);
+                LogScoped("spawning", $"Spawn skipped: world vanilla cap hit ({spawnedWorldVanilla}/{maxWorldVanilla}) (map={job.MapName})", LogLevel.Trace);
                 continue;
             }
 
             if (!isVanilla && spawnedWorldPacks >= maxWorldPacks)
             {
-                _log.Log($"Spawn skipped: world packs cap hit ({spawnedWorldPacks}/{maxWorldPacks}) (map={job.MapName})", LogLevel.Trace);
+                LogScoped("spawning", $"Spawn skipped: world packs cap hit ({spawnedWorldPacks}/{maxWorldPacks}) (map={job.MapName})", LogLevel.Trace);
                 continue;
             }
 
@@ -91,13 +101,13 @@ public sealed class EggSpawnService
                 var kindCount = spawnedByKind.TryGetValue(job.EggKind, out var kc) ? kc : 0;
                 if (kindCount >= kindCap)
                 {
-                    _log.Log($"Spawn skipped: per-kind world cap hit ({job.EggKind}:{kindCount}/{kindCap}) (job={job.EggItemId} map={job.MapName})", LogLevel.Trace);
+                    LogScoped("spawning", $"Spawn skipped: per-kind world cap hit ({job.EggKind}:{kindCount}/{kindCap}) (job={job.EggItemId} map={job.MapName})", LogLevel.Trace);
                     break;
                 }
 
                 if (!mapCaps.CanSpawnInMap(job.MapName, job.EggKind, parameters, out var capReason))
                 {
-                    _log.Log($"Spawn skipped: {capReason} (job={job.EggItemId} map={job.MapName})", LogLevel.Trace);
+                    LogScoped("spawning", $"Spawn skipped: {capReason} (job={job.EggItemId} map={job.MapName})", LogLevel.Trace);
                     break;
                 }
 
@@ -109,7 +119,7 @@ public sealed class EggSpawnService
                 if (tile is null)
                 {
                     var top = _histogram.FormatTopRejections(job.MapName, job.EggItemId, topN: 3);
-                    _log.Log(
+                    LogScoped("spawning",
                         $"No valid tile (job={job.EggItemId} map={job.MapName}) " +
                         $"attempts={stats.Attempts} outOfBounds={stats.RejectedOutOfBounds} excluded={stats.RejectedExcludedRect} terrain={stats.RejectedTerrain} water={stats.RejectedWater} " +
                         $"occupied={stats.RejectedOccupied} impassable={stats.RejectedImpassable} top=[{top}]",
@@ -119,7 +129,7 @@ public sealed class EggSpawnService
 
                 if (!_placer.TryPlaceObject(location, tile.Value, job.EggItemId, 1))
                 {
-                    _log.Log($"Failed placing egg object (job={job.EggItemId} map={job.MapName} tile={tile})", LogLevel.Warn);
+                    LogScoped("spawning", $"Failed placing egg object (job={job.EggItemId} map={job.MapName} tile={tile})", LogLevel.Warn);
                     continue;
                 }
 
@@ -137,7 +147,7 @@ public sealed class EggSpawnService
             }
 
             if (spawnedInJob > 0)
-                _log.Log($"Spawned {spawnedInJob} eggs for {job.EggItemId} in {job.MapName} (pack={job.PackId}).", LogLevel.Debug);
+                LogScoped("spawning", $"Spawned {spawnedInJob} eggs for {job.EggItemId} in {job.MapName} (pack={job.PackId}).", LogLevel.Debug);
         }
     }
 
@@ -145,7 +155,7 @@ public sealed class EggSpawnService
     {
         var top = _histogram.FormatTopRejectionsAcrossFailures(topN: 3);
         if (!string.IsNullOrWhiteSpace(top))
-            _log.Log($"Tile search failures summary (end-of-day): top=[{top}]", LogLevel.Trace);
+            LogScoped("spawning", $"Tile search failures summary (end-of-day): top=[{top}]", LogLevel.Trace);
 
         _histogram.Reset();
     }

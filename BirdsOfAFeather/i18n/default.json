@@ -1,0 +1,14 @@
+{
+  "config.VerboseLogging.name": "Verbose logging",
+  "config.VerboseLogging.description": "Enable extra debug diagnostics for BOAF internals.",
+  "config.TestingLogging.name": "Testing logging",
+  "config.TestingLogging.description": "Enable test-focused logging output.",
+  "config.page.logging.boaf.name": "Logging: BOAF",
+  "config.page.logging.boaf.description": "BOAF log levels by category.",
+  "config.page.logging.roosteraddon.name": "Logging: RoosterAddon",
+  "config.page.logging.roosteraddon.description": "RoosterAddon log levels by category.",
+  "config.page.logging.we.name": "Logging: WE",
+  "config.page.logging.we.description": "WildEggsHatching log levels by category.",
+  "config.page.logging.lthte.name": "Logging: LTHTE",
+  "config.page.logging.lthte.description": "LetMeHatchThisEgg log levels by category."
+}

@@ -14,21 +14,25 @@ namespace Mikew.BirdsOfAFeather.Helpers
     {
         private readonly IMonitor _monitor;
         private readonly CoreModConfig _config;
+        private readonly string _defaultMod;
+        private readonly string _defaultCategory;
 
         // Constructor to initialize the logger
-        public Logger(IMonitor monitor, CoreModConfig config)
+        public Logger(
+            IMonitor monitor,
+            CoreModConfig config,
+            string defaultMod = ScopedLogCatalog.ModBoaf,
+            string defaultCategory = ScopedLogCatalog.CategoryGeneral)
         {
             _monitor = monitor;
             _config = config; // Assign the passed config to the instance field
+            _defaultMod = ScopedLogCatalog.NormalizeModTag(defaultMod);
+            _defaultCategory = ScopedLogCatalog.NormalizeCategory(defaultCategory);
         }
 
         public void Log(string text, LogLevel logLevel = LogLevel.Trace, bool enabled = true)
         {
-            var invalidLogging = !enabled;
-            if (!invalidLogging)
-            {
-                _monitor.Log(text, logLevel);
-            }
+            Emit(_defaultMod, _defaultCategory, text, logLevel, enabled);
         }
 
         public void VerboseLog(string text, LogLevel logLevel = LogLevel.Debug, bool enabled = true)
@@ -36,7 +40,7 @@ namespace Mikew.BirdsOfAFeather.Helpers
             var invalidLogging = !enabled || !_config.VerboseLogging;
             if (!invalidLogging)
             {
-                _monitor.Log(text, logLevel);
+                Emit(_defaultMod, _defaultCategory, text, logLevel, enabled: true);
             }
         }
 
@@ -45,17 +49,13 @@ namespace Mikew.BirdsOfAFeather.Helpers
     var invalidLogging = !enabled || !_config.TestingLogging;
     if (!invalidLogging)
     {
-        _monitor.Log(text, logLevel);
+        Emit(_defaultMod, _defaultCategory, text, logLevel, enabled: true);
     }
 }
 
 public void LogException(Exception exception, string message, LogLevel logLevel = LogLevel.Error, bool enabled = true)
 {
-    var invalidLogging = !enabled;
-    if (!invalidLogging)
-    {
-        _monitor.Log($"{message}\n{exception}", logLevel);
-    }
+    Emit(_defaultMod, _defaultCategory, $"{message}\n{exception}", logLevel, enabled);
 }
 
 // WildEggs
@@ -146,7 +146,35 @@ public void LogException(Exception exception, string message, LogLevel logLevel 
             animalStrings[chosenAnimal].Add("}}");
 
             var json = openingString + string.Join(", ", animalStrings[chosenAnimal]) + "}";
-            _monitor.Log(json, logLevel);
+            Emit(_defaultMod, "farmanimals", json, logLevel, enabled: true);
+        }
+
+        public void LogScoped(
+            string mod,
+            string category,
+            string message,
+            LogLevel logLevel = LogLevel.Trace,
+            bool enabled = true)
+        {
+            Emit(mod, category, message, logLevel, enabled);
+        }
+
+        private void Emit(string mod, string category, string message, LogLevel logLevel, bool enabled)
+        {
+            if (!enabled)
+                return;
+
+            _config.EnsureScopedLoggingDefaults();
+
+            var modTag = ScopedLogCatalog.NormalizeModTag(mod);
+            var categoryTag = ScopedLogCatalog.NormalizeCategory(category);
+            var modCfg = _config.ScopedLogging.GetByMod(modTag);
+            var effectiveLevel = modCfg.ResolveEffectiveLevel(categoryTag);
+            if (!ScopedLogCatalog.ShouldEmit(effectiveLevel, logLevel))
+                return;
+
+            var levelTag = ScopedLogCatalog.ToLevelToken(logLevel);
+            _monitor.Log($"[{modTag}][{categoryTag}][{levelTag}] {message}", logLevel);
         }
     }
 }

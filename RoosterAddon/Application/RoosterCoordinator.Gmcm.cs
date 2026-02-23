@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Mikew.BirdsOfAFeather.Integrations.Gmcm;
-using Mikew.BirdsOfAFeather.Framework;
 using RoosterAddon.Application.Hatching;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
 using RoosterAddon.Framework.Config;
-using RoosterAddon.Integrations;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -25,13 +23,9 @@ internal sealed partial class RoosterCoordinator
 
     public void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
-        ModEntry.ContentPatcher = Helper.ModRegistry.GetApi<IContentPatcherAPI>("Pathoschild.ContentPatcher");
-
         HatchApi =
             Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.lmh")
-            ?? LetMeHatchApiAdapter.Wrap(Helper.ModRegistry.GetApi<object>("Mikew.lmh"))
-            ?? Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.letmehatchthisegg.smapi")
-            ?? LetMeHatchApiAdapter.Wrap(Helper.ModRegistry.GetApi<object>("Mikew.letmehatchthisegg.smapi"));
+            ?? Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.letmehatchthisegg.smapi");
 
         if (!Helper.ModRegistry.IsLoaded("Mikew.birdsofafeather"))
             throw new InvalidOperationException("BirdsOfAFeather is required but was not found.");

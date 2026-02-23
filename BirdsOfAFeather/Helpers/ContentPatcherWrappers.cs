@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using StardewModdingAPI;
+using StardewModdingAPI.Utilities;
 
 namespace Mikew.BirdsOfAFeather.Helpers;
 
@@ -56,4 +59,109 @@ public sealed class ManagedTokenString
     }
 
     public string? Value => _value.GetValue(_inner) as string;
+}
+
+public static class ContentPatcherReflection
+{
+    public static bool TryParseConditions(
+        object? api,
+        IManifest manifest,
+        IDictionary<string, string?> rawConditions,
+        ISemanticVersion formatVersion,
+        out object? parsedConditions
+    )
+    {
+        parsedConditions = null;
+        if (api is null)
+            return false;
+
+        var methods = api.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
+        foreach (var method in methods)
+        {
+            if (!string.Equals(method.Name, "ParseConditions", StringComparison.Ordinal))
+                continue;
+
+            var parameters = method.GetParameters();
+            if (parameters.Length is < 3 or > 4)
+                continue;
+
+            if (!TryBuildParseConditionsArgs(parameters, manifest, rawConditions, formatVersion, out var args))
+                continue;
+
+            parsedConditions = method.Invoke(api, args);
+            return parsedConditions is not null;
+        }
+
+        return false;
+    }
+
+    private static bool TryBuildParseConditionsArgs(
+        ParameterInfo[] parameters,
+        IManifest manifest,
+        IDictionary<string, string?> rawConditions,
+        ISemanticVersion formatVersion,
+        out object?[] args
+    )
+    {
+        args = new object?[parameters.Length];
+        var usedManifest = false;
+        var usedConditions = false;
+        var usedFormat = false;
+
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            var type = parameters[i].ParameterType;
+
+            if (!usedManifest && type.IsAssignableFrom(manifest.GetType()))
+            {
+                args[i] = manifest;
+                usedManifest = true;
+                continue;
+            }
+
+            if (!usedFormat && type.IsAssignableFrom(formatVersion.GetType()))
+            {
+                args[i] = formatVersion;
+                usedFormat = true;
+                continue;
+            }
+
+            if (!usedConditions && IsStringDictionaryType(type))
+            {
+                args[i] = rawConditions;
+                usedConditions = true;
+                continue;
+            }
+
+            if (type == typeof(string[]))
+            {
+                args[i] = Array.Empty<string>();
+                continue;
+            }
+
+            if (type == typeof(object))
+            {
+                args[i] = rawConditions;
+                usedConditions = true;
+                continue;
+            }
+
+            return false;
+        }
+
+        return usedManifest && usedConditions && usedFormat;
+    }
+
+    private static bool IsStringDictionaryType(Type type)
+    {
+        if (!type.IsGenericType)
+            return false;
+
+        var genericType = type.GetGenericTypeDefinition();
+        if (genericType != typeof(IDictionary<,>) && genericType != typeof(IReadOnlyDictionary<,>))
+            return false;
+
+        var args = type.GetGenericArguments();
+        return args.Length == 2 && args[0] == typeof(string) && args[1] == typeof(string);
+    }
 }

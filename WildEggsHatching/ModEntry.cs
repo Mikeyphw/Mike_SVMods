@@ -282,7 +282,72 @@ public sealed class ModEntry : Mod
         var log = new SmapiLog(Monitor);
         var i18n = new I18TranslationHelper(helper);
         var saveData = new SmapiSaveDataStore(helper, Monitor);
+        var game = new GameStateReader();
+        var world = new WorldLocations();
+        var items = new GameItemRegistry();
+        var tileFinder = new GameTileFinder();
+        var placer = new GameObjectPlacer();
+        var histogram = new WildEggsHatching.Application.Spawning.Diagnostics.TileSearchHistogram();
+
+        var quests = new GameQuestService();
+        var mail = new GameMailService();
+        var recipes = new GameRecipeService();
+        var unlockFacts = new GameUnlockFactsProvider(game, mail, quests);
+
+        void InvalidateGameAssets()
+        {
+            helper.GameContent.InvalidateCache("Data/FarmAnimals");
+            helper.GameContent.InvalidateCache("Data/Objects");
+            helper.GameContent.InvalidateCache("Data/Machines");
+            helper.GameContent.InvalidateCache("Data/Mail");
+            helper.GameContent.InvalidateCache("Data/Quests");
+            helper.GameContent.InvalidateCache("Data/CraftingRecipes");
+            helper.GameContent.InvalidateCache("Data/SpecialOrders");
+        }
+
+        var progression = new WildEggsHatching.Application.Progression.ProgressionService(
+            store: saveData,
+            config: _config,
+            facts: unlockFacts,
+            quests: quests,
+            mail: mail,
+            recipes: recipes,
+            log: log,
+            invalidateAssets: InvalidateGameAssets);
+
         var dataLoader = new ModDataLoader(new SmapiJsonFileReader(helper), log);
+        var spawnWeather = new WildEggsHatching.Application.Spawning.SpawnWeatherHistory(saveData, log);
+        var conditions = new WildEggsHatching.Application.Spawning.DefaultAreaConditionsEvaluator(game, spawnWeather);
+        var planner = new WildEggsHatching.Application.Spawning.SpawnPlanner(
+            world,
+            new WildEggsHatching.Infrastructure.Mods.SmapiModAvailability(helper.ModRegistry),
+            conditions,
+            log);
+        var spawnService = new WildEggsHatching.Application.Spawning.EggSpawnService(world, placer, tileFinder, log, histogram);
+        var spawner = new WildEggsHatching.Application.Spawning.WildEggSpawnOrchestrator(dataLoader, game, planner, spawnService, log);
+
+        var animalNotes = new WildEggsHatching.Application.AnimalNotes.AnimalNotesOrchestrator(
+            store: saveData,
+            dataLoader: dataLoader,
+            game: game,
+            i18n: i18n,
+            debugMode: _config.Get().AnimalNotesDebugMode,
+            warnAfterDays: _config.Get().AnimalNotesWarnAfterDays,
+            placementRadius: _config.Get().AnimalNotesPlacementRadius,
+            mail: mail,
+            quests: quests,
+            placer: placer,
+            progression: progression,
+            log: log,
+            getStep: progression.GetCurrentStep,
+            isMainPlayer: () => Context.IsMainPlayer,
+            sendQueueMailMessage: null);
+
+        var animalNotesValidator = new WildEggsHatching.Application.AnimalNotes.AnimalNotesStartupValidator(
+            dataLoader,
+            log,
+            progression.GetCurrentStep);
+
         var verifier = new WeggVerifier(helper, saveData, _config, dataLoader, log);
 
         var facade = new ModFacade(
@@ -294,23 +359,18 @@ public sealed class ModEntry : Mod
             reloadAll: () =>
             {
                 _config.Reload();
-                helper.GameContent.InvalidateCache("Data/FarmAnimals");
-                helper.GameContent.InvalidateCache("Data/Objects");
-                helper.GameContent.InvalidateCache("Data/Machines");
-                helper.GameContent.InvalidateCache("Data/Mail");
-                helper.GameContent.InvalidateCache("Data/Quests");
-                helper.GameContent.InvalidateCache("Data/CraftingRecipes");
-                helper.GameContent.InvalidateCache("Data/SpecialOrders");
+                InvalidateGameAssets();
             },
-            progression: null,
-            spawner: null,
-            animalNotes: null,
-            animalNotesValidator: null,
-            world: new WorldLocations(),
-            items: new GameItemRegistry(),
-            game: new GameStateReader(),
-            tileFinder: new GameTileFinder(),
-            placer: new GameObjectPlacer(),
+            progression: progression,
+            spawner: spawner,
+            animalNotes: animalNotes,
+            animalNotesValidator: animalNotesValidator,
+            world: world,
+            items: items,
+            game: game,
+            tileFinder: tileFinder,
+            placer: placer,
+            histogram: histogram,
             verifier: verifier);
 
         var dispatcher = new WeggCommandDispatcher(facade, i18n);

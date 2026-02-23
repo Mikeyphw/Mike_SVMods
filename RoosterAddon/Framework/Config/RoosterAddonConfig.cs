@@ -8,8 +8,11 @@ namespace RoosterAddon.Framework.Config;
 /// <summary>
 /// The persisted configuration schema for RoosterAddon.
 /// </summary>
-public sealed class RoosterAddonConfig : Mikew.BirdsOfAFeather.Framework.CoreModConfig
+public sealed class RoosterAddonConfig
 {
+    public bool VerboseLogging;
+    public bool TestingLogging;
+
     public int SchemaVersion { get; set; } = ConfigSchema.CurrentVersion;
 
     public GeneralSettings General { get; set; } = new();

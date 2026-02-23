@@ -67,6 +67,7 @@ private sealed class FakeModDataLoader : IModDataLoader
         public FacadeResult DumpAnimalNotes(AnimalNotesDumpOptions options) => new(false, "no");
         public FacadeResult RepairAnimalNotes(bool requeueMail = true, bool reconcileNotes = true, bool force = false) => new(false, "no");
         public FacadeResult ValidateAnimalNotes() => new(false, "no");
+        public FacadeResult Verify(string[] args) => new(false, "no");
         public FacadeResult WipeSchemaData(bool confirmed) => new(false, "no");
     }
 }

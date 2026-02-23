@@ -6,6 +6,7 @@ using RoosterAddon.Application.Planning;
 using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
 using RoosterAddon.Enums;
+using Mikew.BirdsOfAFeather.Helpers.GameStateQueries;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -31,46 +32,7 @@ internal sealed partial class RoosterCoordinator
         DailyLuck = DailyLuckHelper.GetDailyLuck();
         RoosterHelper.DailyLuck = DailyLuck;
 
-        // Evaluate "stuck inside" using CP when available, otherwise fall back to vanilla state.
-        isStuckInside = false;
-        if (ModEntry.ContentPatcher is not null)
-        {
-            var rawStuckInsideSeason = new Dictionary<string, string?>
-            {
-                ["Season |contains=winter"] = "true",
-            };
-            var rawStuckInsideWeather = new Dictionary<string, string?>
-            {
-                ["Weather |contains=rain, storm, snow, greenrain"] = "true",
-            };
-
-            conditionStuckInsideSeason = new ManagedConditions(
-                ModEntry.ContentPatcher.ParseConditions(
-                    manifest: ModManifest,
-                    rawConditions: rawStuckInsideSeason,
-                    formatVersion: new SemanticVersion("2.0.0")
-                )
-            );
-            conditionStuckInsideWeather = new ManagedConditions(
-                ModEntry.ContentPatcher.ParseConditions(
-                    manifest: ModManifest,
-                    rawConditions: rawStuckInsideWeather,
-                    formatVersion: new SemanticVersion("2.0.0")
-                )
-            );
-
-            conditionStuckInsideSeason.UpdateContext();
-            conditionStuckInsideWeather.UpdateContext();
-            isStuckInside = conditionStuckInsideSeason.IsMatch || conditionStuckInsideWeather.IsMatch;
-        }
-        else
-        {
-            isStuckInside =
-                string.Equals(Game1.currentSeason, "winter", StringComparison.OrdinalIgnoreCase)
-                || Game1.isRaining
-                || Game1.isLightning
-                || Game1.isSnowing;
-        }
+        isStuckInside = EvaluateStuckInsideWithGsq();
 
         if (Config.General.UpdateRate == UpdateRateMode.OnDayStart)
         {
@@ -194,4 +156,29 @@ internal sealed partial class RoosterCoordinator
 private bool GetHatchApiCloneEggsOption()
         => HatchApi is not null
             && (HatchApi.GetClonedAnimalsInfo().Count > 0 || HatchApi.AnimalsWithClonedEggs.Count > 0);
+
+    private static bool EvaluateStuckInsideWithGsq()
+    {
+        var stuckInsideQuery = string.Join(
+            " OR ",
+            TimeCondition.Season("winter"),
+            WorldCondition.Weather(LocationType.Here, "rain"),
+            WorldCondition.Weather(LocationType.Here, "storm"),
+            WorldCondition.Weather(LocationType.Here, "snow"),
+            WorldCondition.Weather(LocationType.Here, "greenrain")
+        );
+
+        try
+        {
+            return GameStateQuery.CheckConditions(stuckInsideQuery);
+        }
+        catch
+        {
+            return
+                string.Equals(Game1.currentSeason, "winter", StringComparison.OrdinalIgnoreCase)
+                || Game1.isRaining
+                || Game1.isLightning
+                || Game1.isSnowing;
+        }
+    }
 }

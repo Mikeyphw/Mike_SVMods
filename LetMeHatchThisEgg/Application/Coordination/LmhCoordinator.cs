@@ -34,7 +34,6 @@ public sealed class LmhCoordinator
     private readonly LetMeHatchApi _api;
 
     private IRoosterHatchingAPI? _roosterHatching;
-    private object? _contentPatcher;
     private IWildEggsApi? _wildEggs;
 
     private GameAssetManager? _assetManager;
@@ -57,17 +56,6 @@ public sealed class LmhCoordinator
 
     public void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
-        _contentPatcher = _core.Helper.ModRegistry.GetApi<IContentPatcherAPI>(
-            "Pathoschild.ContentPatcher"
-        );
-
-        if (_contentPatcher is null)
-        {
-            throw new InvalidOperationException(
-                "LetMeHatchThisEgg requires Content Patcher (Pathoschild.ContentPatcher). Install/enable it and try again."
-            );
-        }
-
         InitializeApis();
 
         LmhGmcmMenu.TryRegister(
@@ -79,6 +67,11 @@ public sealed class LmhCoordinator
                 InvalidateGameContentCache();
             }
         );
+    }
+
+    public void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
+    {
+        RequestEarlyInit();
     }
 
     public void OnWarped(object? sender, WarpedEventArgs e)
@@ -112,25 +105,30 @@ public sealed class LmhCoordinator
 
     public void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
     {
-        if (e.Ticks < 5)
+        if (!_earlyInitRequested)
         {
             return;
         }
 
-        if (!_earlyInitRequested && _assetManager is not null)
+        if (!Context.IsWorldReady || e.Ticks < 5)
+        {
+            return;
+        }
+
+        if (_assetManager is not null)
         {
             _core.Helper.Events.GameLoop.UpdateTicked -= OnUpdateTicked;
+            _earlyInitRequested = false;
             return;
         }
 
         _core.Helper.Events.GameLoop.UpdateTicked -= OnUpdateTicked;
         _earlyInitRequested = false;
 
-        if (_contentPatcher is null || _wildEggs is null)
+        if (_wildEggs is null)
         {
-            throw new InvalidOperationException(
-                "Early initialization ran before required integrations were available. This should not happen; please report this."
-            );
+            _log.Log("Skipping early initialization because Wild Eggs API is unavailable.", LogLevel.Warn);
+            return;
         }
 
         InitializeAssetEditor();
@@ -186,6 +184,24 @@ public sealed class LmhCoordinator
         _log.Log("Invalidated caches for all registered content handlers.", LogLevel.Info);
     }
 
+    public void PrintStatus()
+    {
+        var lines = new List<string>
+        {
+            $"WorldReady={Context.IsWorldReady}",
+            $"MainPlayer={Context.IsMainPlayer}",
+            $"EarlyInitRequested={_earlyInitRequested}",
+            $"WildEggsApiReady={_wildEggs is not null}",
+            $"RoosterApiReady={_roosterHatching is not null}",
+            $"AssetManagerReady={_assetManager is not null}",
+            $"AssetPipelineReady={_assetPipeline is not null}",
+            $"ApplicationServicesReady={_app is not null}",
+        };
+
+        foreach (var line in lines)
+            _log.Log(line, LogLevel.Info);
+    }
+
     private void InitializeApis()
     {
         _roosterHatching = _core.Helper.ModRegistry.GetApi<IRoosterHatchingAPI>("Mikew.roostersaddon.smapi");
@@ -208,12 +224,12 @@ public sealed class LmhCoordinator
 
 private void InitializeAssetEditor()
 {
-    if (_contentPatcher is null || _wildEggs is null)
+    if (_wildEggs is null)
     {
         return;
     }
 
-    _assetManager = new GameAssetManager(_contentPatcher, _wildEggs);
+    _assetManager = new GameAssetManager(_wildEggs);
     ModEntry.CurrentAssetManager = _assetManager;
     _assetManager.TextureManager.SetUpModAssets();
 

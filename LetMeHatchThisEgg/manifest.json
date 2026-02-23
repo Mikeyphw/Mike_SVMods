@@ -16,7 +16,7 @@
       "UniqueID": "Mikew.birdsofafeather",
       "IsRequired": true
     },
-    { "UniqueID": "Pathoschild.ContentPatcher", "MinimumVersion": "2.3.0" }
+    { "UniqueID": "Pathoschild.ContentPatcher", "MinimumVersion": "2.3.0", "IsRequired": false }
   ],
   "EntryDll": "LetMeHatchThisEgg.dll"
 }

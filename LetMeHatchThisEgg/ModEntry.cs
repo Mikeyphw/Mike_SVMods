@@ -77,8 +77,8 @@ namespace LetMeHatchThisEgg
         {
             helper.Events.GameLoop.DayStarted += coordinator.OnDayStarted;
             helper.Events.GameLoop.DayEnding += coordinator.OnDayEnding;
-            helper.Events.GameLoop.UpdateTicked += coordinator.OnUpdateTicked;
             helper.Events.GameLoop.GameLaunched += coordinator.OnGameLaunched;
+            helper.Events.GameLoop.SaveLoaded += coordinator.OnSaveLoaded;
             helper.Events.Player.Warped += coordinator.OnWarped;
         }
     }

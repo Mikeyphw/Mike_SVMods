@@ -29,7 +29,6 @@ namespace LetMeHatchThisEgg.GameAssetManagement
     {
         #region Fields and Properties
         // Dependencies
-        private readonly object _contentPatcherAPI;
         private readonly IWildEggsApi _wildEggsAPI;
         public SavedItemsData SavedItemsData { get; private set; }
         public SavedColors SavedColors { get; private set; }
@@ -84,9 +83,8 @@ namespace LetMeHatchThisEgg.GameAssetManagement
 
         #region Constructor
 
-        public GameAssetManager(object contentPatcherAPI, IWildEggsApi wildEggsApi)
+        public GameAssetManager(IWildEggsApi wildEggsApi)
         {
-            _contentPatcherAPI = contentPatcherAPI;
             _wildEggsAPI = wildEggsApi;
 
             SavedColors = LoadData<SavedColors>();
@@ -124,7 +122,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
                 FertilizedEggsToAdd
             );
             AnimalCloner = new AnimalCloner(
-                new ContentPackStringEvaluator(_contentPatcherAPI, MonitorInstance),
+                new ContentPackStringEvaluator(MonitorInstance),
                 new CloneTextureBookkeeper()
             );
             FarmAnimalCloneBatchApplier = new FarmAnimalCloneBatchApplier(

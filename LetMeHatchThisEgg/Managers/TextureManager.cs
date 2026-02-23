@@ -828,12 +828,46 @@ namespace LetMeHatchThisEgg.GameAssetManagement
             List<(string message, LogLevel level)> log
         )
         {
-            var originalTexture = ModEntry.HelperInstance.GameContent.Load<Texture2D>(textureName);
-            if (originalTexture == null)
+            foreach (var candidateName in GetTextureLoadCandidates(textureName))
             {
-                LoggerHelper.VerboseLog($"Failed to load original texture: {textureName}", LogLevel.Error);
+                try
+                {
+                    var originalTexture = ModEntry.HelperInstance.GameContent.Load<Texture2D>(candidateName);
+                    if (originalTexture != null)
+                    {
+                        return originalTexture;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log.Add(($"Failed loading texture '{candidateName}': {ex.Message}", LogLevel.Trace));
+                }
             }
-            return originalTexture;
+
+            LoggerHelper.VerboseLog($"Failed to load original texture: {textureName}", LogLevel.Warn);
+            return null;
+        }
+
+        private static IEnumerable<string> GetTextureLoadCandidates(string textureName)
+        {
+            if (string.IsNullOrWhiteSpace(textureName))
+            {
+                yield break;
+            }
+
+            yield return textureName;
+
+            var slashIndex = textureName.IndexOf('/');
+            if (slashIndex <= 0 || char.IsUpper(textureName[0]))
+            {
+                yield break;
+            }
+
+            var normalized = char.ToUpperInvariant(textureName[0]) + textureName[1..];
+            if (!string.Equals(normalized, textureName, StringComparison.Ordinal))
+            {
+                yield return normalized;
+            }
         }
 
         private Texture2D CropOriginalTexture(

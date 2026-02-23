@@ -71,23 +71,70 @@ internal sealed class InMemorySaveDataStore : ISaveDataStore
     public bool ContainsKey(string key) => _data.ContainsKey(key);
 }
 
-internal sealed class FakeConfigProvider : SmapiConfigProvider<ModConfig>
+internal sealed class FakeConfigProvider
 {
-    public FakeConfigProvider(ModConfig config) => Config = config;
+    private readonly FakeConfigHelper _helper;
+    private readonly SmapiConfigProvider<ModConfig> _provider;
 
-    public ModConfig Config { get; private set; }
+    public FakeConfigProvider(ModConfig config)
+    {
+        _helper = new FakeConfigHelper(config);
+        _provider = new SmapiConfigProvider<ModConfig>(_helper, new FakeLog());
+    }
 
-    public event EventHandler<ConfigChangedEventArgs>? ConfigChanged;
+    public ModConfig Config => _provider.Get();
 
-    public void Reload() { }
+    public ModConfig Get() => _provider.Get();
 
-    public void Save() { }
+    public void Reload()
+        => _provider.Reload();
+
+    public void Save()
+        => _provider.Save();
 
     public void Update(Action<ModConfig> mutator, string reason)
     {
-        var oldConfig = Clone(Config);
-        mutator(Config);
-        ConfigChanged?.Invoke(this, new ConfigChangedEventArgs(oldConfig, Config, reason));
+        _provider.Update(mutator, save: false);
+    }
+
+    public static implicit operator SmapiConfigProvider<ModConfig>(FakeConfigProvider provider)
+        => provider._provider;
+
+    private sealed class FakeConfigHelper : StardewModdingAPI.IModHelper
+    {
+        private ModConfig _config;
+
+        public FakeConfigHelper(ModConfig config)
+        {
+            _config = Clone(config);
+        }
+
+        public T ReadConfig<T>() where T : new()
+            => (T)(object)Clone(_config);
+
+        public void WriteConfig<T>(T config) where T : class
+        {
+            if (config is ModConfig mc)
+                _config = Clone(mc);
+        }
+
+        public T ReadConfig<T>(string path) where T : new()
+            => ReadConfig<T>();
+
+        public void WriteConfig<T>(T config, string path) where T : class
+            => WriteConfig(config);
+
+        public StardewModdingAPI.IContentHelper Content => throw new NotImplementedException();
+        public StardewModdingAPI.IDataHelper Data => throw new NotImplementedException();
+        public StardewModdingAPI.IEventsHelper Events => throw new NotImplementedException();
+        public StardewModdingAPI.IInputHelper Input => throw new NotImplementedException();
+        public StardewModdingAPI.IModRegistry ModRegistry => throw new NotImplementedException();
+        public StardewModdingAPI.IMultiplayerHelper Multiplayer => throw new NotImplementedException();
+        public StardewModdingAPI.IReflectionHelper Reflection => throw new NotImplementedException();
+        public StardewModdingAPI.ISemanticVersioningApi SemanticVersioning => throw new NotImplementedException();
+        public StardewModdingAPI.ITranslationHelper Translation => throw new NotImplementedException();
+        public StardewModdingAPI.IModEvents ModEvents => throw new NotImplementedException();
+        public StardewModdingAPI.IModContentHelper ModContent => throw new NotImplementedException();
     }
 
     private static ModConfig Clone(ModConfig config)

@@ -15,6 +15,7 @@ using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.ModData;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
 using Mikew.BirdsOfAFeather.Helpers.Config;
+using SmapiLog = Mikew.BirdsOfAFeather.Helpers.Logging.SmapiLog;
 
 namespace WildEggsHatching.Application.Facade;
 
@@ -42,6 +43,15 @@ public sealed class ModFacade : IModFacade
     private readonly ITileFinder _tileFinder;
     private readonly IGameObjectPlacer _placer;
     private readonly ITileSearchHistogram _histogram;
+
+    /// <summary>Helper to emit scoped log messages, falling back to basic log if not a SmapiLog instance.</summary>
+    private void LogScoped(string category, string message, StardewModdingAPI.LogLevel level)
+    {
+        if (_log is SmapiLog slog)
+            slog.LogScoped(ScopedLogCatalog.ModWe, category, message, level);
+        else
+            _log.Log(message, level);
+    }
 
     public ModFacade(
         ISaveDataStore store,
@@ -97,12 +107,12 @@ public sealed class ModFacade : IModFacade
         try
         {
             _reloadAll.Invoke();
-            _log.Log("ReloadAll: config + ModData reloaded; assets invalidated.", StardewModdingAPI.LogLevel.Info);
+            LogScoped("general", "ReloadAll: config + ModData reloaded; assets invalidated.", StardewModdingAPI.LogLevel.Info);
             return new FacadeResult(true, "Reloaded config + ModData and invalidated assets.");
         }
         catch (Exception ex)
         {
-            _log.Log($"Reload failed: {ex}", StardewModdingAPI.LogLevel.Warn);
+            LogScoped("general", $"Reload failed: {ex}", StardewModdingAPI.LogLevel.Warn);
             return new FacadeResult(false, "Reload failed; see log.");
         }
     }
@@ -137,7 +147,7 @@ public sealed class ModFacade : IModFacade
             return new FacadeResult(false, "Host-only.");
 
         _spawner.OnDayStarted();
-        _log.Log("SpawnNow: executed spawn plan via console.", StardewModdingAPI.LogLevel.Info);
+        LogScoped("general", "SpawnNow: executed spawn plan via console.", StardewModdingAPI.LogLevel.Info);
         return new FacadeResult(true, "Executed spawn plan for today.");
     }
 
@@ -194,20 +204,20 @@ public sealed class ModFacade : IModFacade
             if (tile is null)
             {
                 var top = _histogram.FormatTopRejections(locationName, qualifiedItemId, topN: 3);
-                _log.Log($"Console place failed: no valid tile (map={locationName} item={qualifiedItemId}) attempts={stats.Attempts} top=[{top}]", StardewModdingAPI.LogLevel.Warn);
+                LogScoped("general", $"Console place failed: no valid tile (map={locationName} item={qualifiedItemId}) attempts={stats.Attempts} top=[{top}]", StardewModdingAPI.LogLevel.Warn);
                 return new FacadeResult(false, $"No valid tile found (attempts={stats.Attempts}). Top=[{top}]");
             }
 
             if (!_placer.TryPlaceObject(location, tile.Value, qualifiedItemId, 1))
             {
-                _log.Log($"Console place failed: unable to place object (map={locationName} item={qualifiedItemId} tile={tile})", StardewModdingAPI.LogLevel.Warn);
+                LogScoped("general", $"Console place failed: unable to place object (map={locationName} item={qualifiedItemId} tile={tile})", StardewModdingAPI.LogLevel.Warn);
                 return new FacadeResult(false, "Found a tile but couldn't place the object.");
             }
 
             placed++;
         }
 
-        _log.Log($"Console place: placed={placed} map={locationName} item={qualifiedItemId}", StardewModdingAPI.LogLevel.Info);
+        LogScoped("general", $"Console place: placed={placed} map={locationName} item={qualifiedItemId}", StardewModdingAPI.LogLevel.Info);
         return new FacadeResult(true, $"Placed {placed} object(s) ({qualifiedItemId}) in {locationName}.");
     }
 
@@ -329,12 +339,12 @@ public FacadeResult Verify(string[] args)
             _store.Delete(WildEggsHatching.Application.Progression.SaveKeys.Progression);
             _store.Delete(WildEggsHatching.Application.AnimalNotes.SaveKeys.AnimalNotes);
 
-            _log.Log("Schema wipe: deleted Progression + AnimalNotes save keys for this mod.", StardewModdingAPI.LogLevel.Warn);
+            LogScoped("general", "Schema wipe: deleted Progression + AnimalNotes save keys for this mod.", StardewModdingAPI.LogLevel.Warn);
             return new FacadeResult(true, "Deleted Progression + AnimalNotes save data for this mod. Reload the save to reinitialize.");
         }
         catch (Exception ex)
         {
-            _log.Log($"Schema wipe failed: {ex}", StardewModdingAPI.LogLevel.Error);
+            LogScoped("general", $"Schema wipe failed: {ex}", StardewModdingAPI.LogLevel.Error);
             return new FacadeResult(false, "Schema wipe failed; see log.");
         }
     }
