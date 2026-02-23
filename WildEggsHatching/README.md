@@ -1,6 +1,6 @@
-# WildEggsHatching Refactor
+# WildEggsHatching
 
-This directory contains the refactored architecture for WildEggsHatching.
+This directory contains the current architecture for WildEggsHatching.
 
 ## Architecture Overview
 

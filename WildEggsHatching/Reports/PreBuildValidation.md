@@ -21,7 +21,7 @@ Current literals detected in C#:
 ```bash
 dotnet --info
 dotnet build Mike_SVMods/WildEggsHatching/WildEggsHatching.csproj -c Release
-dotnet test Mike_SVMods/Tests/WildEggsHatching.Refactor.Tests/WildEggsHatching.Refactor.Tests.csproj -c Release
+dotnet test Mike_SVMods/Tests/WildEggsHatching.Tests/WildEggsHatching.Tests.csproj -c Release
 dotnet test Mike_SVMods/Tests/WildEggsHatching.AnimalNotes.Tests/WildEggsHatching.AnimalNotes.Tests.csproj -c Release
 ```
 

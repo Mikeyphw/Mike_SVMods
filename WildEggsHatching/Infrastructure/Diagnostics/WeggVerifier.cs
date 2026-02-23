@@ -384,7 +384,7 @@ public sealed class WeggVerifier
                 // Best-effort: ask Content Patcher for patch list (reflection; may fail depending on CP version).
                 try
                 {
-                    var cpApi = _helper.ModRegistry.GetApi<object>("Pathoschild.ContentPatcher");
+                    var cpApi = _helper.ModRegistry.GetApi<IContentPatcherAPI>("Pathoschild.ContentPatcher");
                     if (cpApi is not null)
                     {
                         var mi = cpApi.GetType().GetMethod("GetPatches", Type.EmptyTypes);

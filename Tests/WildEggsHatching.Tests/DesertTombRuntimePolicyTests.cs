@@ -4,7 +4,7 @@ using Xunit;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 using WildEggsHatching.Core.Assets;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class DesertTombRuntimePolicyTests
 {

@@ -5,7 +5,7 @@ using WildEggsHatching.Infrastructure.Config;
 using Xunit;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class ProgressionServiceTests
 {

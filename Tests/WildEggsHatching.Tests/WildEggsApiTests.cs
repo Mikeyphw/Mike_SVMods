@@ -8,7 +8,7 @@ using WildEggsHatching.Infrastructure.Config;
 using Xunit;
 using WildEggsHatching.Infrastructure.ModData;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class WildEggsApiTests
 {

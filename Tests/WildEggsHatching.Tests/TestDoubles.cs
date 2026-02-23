@@ -10,7 +10,7 @@ using WildEggsHatching.Infrastructure.Mods;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
 using Mikew.BirdsOfAFeather.Helpers.Config;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 internal sealed class FakeLog : ILog
 {

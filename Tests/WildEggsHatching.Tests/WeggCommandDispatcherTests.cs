@@ -7,7 +7,7 @@ using WildEggsHatching.Infrastructure.Commands;
 using WildEggsHatching.Infrastructure.Config;
 using Xunit;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class WeggCommandDispatcherTests
 {

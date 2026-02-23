@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 using Xunit;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class DesertTombPharaohTrackerMathTests
 {

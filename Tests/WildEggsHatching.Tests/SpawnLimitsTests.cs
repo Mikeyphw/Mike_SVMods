@@ -3,7 +3,7 @@ using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.ModData.Models;
 using Xunit;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class SpawnLimitsTests
 {

@@ -4,7 +4,7 @@ using StardewModdingAPI;
 
 namespace Mikew.BirdsOfAFeather.Framework;
 
-internal sealed class BirdsOfAFeatherApi : IBirdsOfAFeatherApi
+public sealed class BirdsOfAFeatherApi : IBirdsOfAFeatherApi
 {
     public int ApiVersion => 1;
 

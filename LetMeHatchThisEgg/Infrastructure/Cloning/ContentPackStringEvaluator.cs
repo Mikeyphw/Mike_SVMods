@@ -12,14 +12,14 @@ namespace LetMeHatchThisEgg.Infrastructure.Cloning;
 /// </summary>
 public sealed class ContentPackStringEvaluator : IContentStringEvaluator
 {
-    private readonly IContentPatcherAPI? _contentPatcher;
+    private readonly object? _contentPatcher;
     private readonly IMonitor _monitor;
 
     private MethodInfo? _parseTokenString;
     private bool _warnedMissingTokenParser;
     private bool _warnedTokenParserFailed;
 
-    public ContentPackStringEvaluator(IContentPatcherAPI? contentPatcher, IMonitor monitor)
+    public ContentPackStringEvaluator(object? contentPatcher, IMonitor monitor)
     {
         _contentPatcher = contentPatcher;
         _monitor = monitor;
@@ -50,7 +50,7 @@ public sealed class ContentPackStringEvaluator : IContentStringEvaluator
             {
                 _warnedMissingTokenParser = true;
                 _monitor.Log(
-                    "Content Patcher token parser method not found on IContentPatcherAPI; leaving token strings unchanged.",
+                    "Content Patcher token parser method not found on runtime API object; leaving token strings unchanged.",
                     LogLevel.Trace
                 );
             }
@@ -86,7 +86,7 @@ public sealed class ContentPackStringEvaluator : IContentStringEvaluator
         }
     }
 
-    private static MethodInfo? FindTokenParser(IContentPatcherAPI? api)
+    private static MethodInfo? FindTokenParser(object? api)
     {
         if (api == null)
         {

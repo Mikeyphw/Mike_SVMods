@@ -5,7 +5,7 @@ using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Game.TileRules;
 using Xunit;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class TileRulesTests
 {

@@ -6,7 +6,7 @@ using WildEggsHatching.DesertTomb.Core.Spawning;
 using Xunit;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class DesertTombSpawnPlannerTests
 {

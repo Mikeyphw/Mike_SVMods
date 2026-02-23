@@ -4,7 +4,7 @@ using WildEggsHatching.Application.DesertTomb.Spawning;
 using Xunit;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class TombAreaStateAndTilesTests
 {

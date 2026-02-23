@@ -25,13 +25,14 @@ namespace Mikew.BirdsOfAFeather.Helpers.SaveData
 
         public T? Read<T>(string key) where T : class
         {
+            var normalizedKey = NormalizeKey(key);
             try
             {
-                return _helper.Data.ReadSaveData<T>(key);
+                return _helper.Data.ReadSaveData<T>(normalizedKey);
             }
             catch (Exception ex)
             {
-                _log.Log($"Failed to read save data '{key}'.\n{ex}", LogLevel.Error);
+                _log.Log($"Failed to read save data '{key}' (normalized: '{normalizedKey}').\n{ex}", LogLevel.Error);
                 return null;
             }
         }
@@ -52,26 +53,46 @@ namespace Mikew.BirdsOfAFeather.Helpers.SaveData
 
         public void Write<T>(string key, T data) where T : class
         {
+            var normalizedKey = NormalizeKey(key);
             try
             {
-                _helper.Data.WriteSaveData(key, data);
+                _helper.Data.WriteSaveData(normalizedKey, data);
             }
             catch (Exception ex)
             {
-                _log.Log($"Failed to write save data '{key}'.\n{ex}", LogLevel.Error);
+                _log.Log($"Failed to write save data '{key}' (normalized: '{normalizedKey}').\n{ex}", LogLevel.Error);
             }
         }
 
         public void Delete(string key)
         {
+            var normalizedKey = NormalizeKey(key);
             try
             {
-                _helper.Data.WriteSaveData<object>(key, null);
+                _helper.Data.WriteSaveData<object>(normalizedKey, null);
             }
             catch (Exception ex)
             {
-                _log.Log($"Failed to delete save data '{key}'.\n{ex}", LogLevel.Error);
+                _log.Log($"Failed to delete save data '{key}' (normalized: '{normalizedKey}').\n{ex}", LogLevel.Error);
             }
+        }
+
+        private static string NormalizeKey(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return "_";
+
+            var chars = key.ToCharArray();
+            for (var i = 0; i < chars.Length; i++)
+            {
+                var c = chars[i];
+                if (char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '-')
+                    continue;
+
+                chars[i] = '.';
+            }
+
+            return new string(chars);
         }
     }
 }

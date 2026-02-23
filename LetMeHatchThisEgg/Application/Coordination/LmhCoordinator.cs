@@ -34,7 +34,7 @@ public sealed class LmhCoordinator
     private readonly LetMeHatchApi _api;
 
     private IRoosterHatchingAPI? _roosterHatching;
-    private IContentPatcherAPI? _contentPatcher;
+    private object? _contentPatcher;
     private IWildEggsApi? _wildEggs;
 
     private GameAssetManager? _assetManager;

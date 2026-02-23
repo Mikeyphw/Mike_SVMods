@@ -16,7 +16,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WildEggsHatching.AnimalNote
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WildEggsHatching.Phase7.Tests", "WildEggsHatching.Phase7.Tests\WildEggsHatching.Phase7.Tests.csproj", "{B92FCCCF-74BB-4E47-88D9-9C71518A2D38}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WildEggsHatching.Refactor.Tests", "WildEggsHatching.Refactor.Tests\WildEggsHatching.Refactor.Tests.csproj", "{FC6CBF56-4188-43D4-A71C-610AE8D925D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WildEggsHatching.Tests", "WildEggsHatching.Tests\WildEggsHatching.Tests.csproj", "{FC6CBF56-4188-43D4-A71C-610AE8D925D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -13,6 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\WildEggsHatching\WildEggsHatching.Refactor.csproj" />
+    <ProjectReference Include="..\..\WildEggsHatching\WildEggsHatching.csproj" />
   </ItemGroup>
 </Project>

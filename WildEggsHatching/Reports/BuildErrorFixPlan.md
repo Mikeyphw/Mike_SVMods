@@ -1,7 +1,7 @@
 # WildEggsHatching Build Error Fix Plan (Diff-Like)
 
 ## Scope and constraints
-- Compile surface restored in `WildEggsHatching/WildEggsHatching.Refactor.csproj` to:
+- Compile surface restored in `WildEggsHatching/WildEggsHatching.csproj` to:
   - `Application/**/*.cs`
   - `Core/**/*.cs`
   - `Infrastructure/**/*.cs`
@@ -12,7 +12,7 @@
 
 ## Build snapshot
 - Command used:
-  - `dotnet build WildEggsHatching/WildEggsHatching.Refactor.csproj -v minimal -p:EnableModDeploy=false -p:EnableModZip=false`
+  - `dotnet build WildEggsHatching/WildEggsHatching.csproj -v minimal -p:EnableModDeploy=false -p:EnableModZip=false`
 - Result:
   - `Build FAILED`
   - `94 Error(s)`

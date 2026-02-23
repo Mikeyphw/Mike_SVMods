@@ -7,7 +7,7 @@ using WildEggsHatching.Core.ShopAnchors;
 using WildEggsHatching.Core.Weighting;
 using Xunit;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class WeightingPhase4Tests
 {

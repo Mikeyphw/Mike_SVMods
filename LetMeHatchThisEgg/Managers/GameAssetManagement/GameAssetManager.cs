@@ -29,7 +29,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
     {
         #region Fields and Properties
         // Dependencies
-        private readonly IContentPatcherAPI _contentPatcherAPI;
+        private readonly object _contentPatcherAPI;
         private readonly IWildEggsApi _wildEggsAPI;
         public SavedItemsData SavedItemsData { get; private set; }
         public SavedColors SavedColors { get; private set; }
@@ -84,7 +84,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
 
         #region Constructor
 
-        public GameAssetManager(IContentPatcherAPI contentPatcherAPI, IWildEggsApi wildEggsApi)
+        public GameAssetManager(object contentPatcherAPI, IWildEggsApi wildEggsApi)
         {
             _contentPatcherAPI = contentPatcherAPI;
             _wildEggsAPI = wildEggsApi;

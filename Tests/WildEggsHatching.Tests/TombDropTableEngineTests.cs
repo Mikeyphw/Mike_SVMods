@@ -6,7 +6,7 @@ using WildEggsHatching.Infrastructure.DesertTomb.Loot.Definitions;
 using WildEggsHatching.Infrastructure.ModData;
 using Xunit;
 
-namespace WildEggsHatching.Refactor.Tests;
+namespace WildEggsHatching.Tests;
 
 public sealed class TombDropTableEngineTests
 {
