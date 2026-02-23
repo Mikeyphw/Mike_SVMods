@@ -42,6 +42,7 @@ internal static class DesertTombMineShaftPatches
             original: AccessTools.Method(typeof(MineShaft), nameof(MineShaft.monsterDrop)),
             postfix: new HarmonyMethod(typeof(DesertTombMineShaftPatches), nameof(AfterMonsterDrop))
         );
+        DesertTombBreakableLootPatches.Install(harmony);
     }
 
     private static void AfterLoadLevel(MineShaft __instance, int level)

@@ -33,6 +33,7 @@ public sealed class DesertTombRuntime
     private const string ProcessedKey = Constants.ModId + "/deserttomb/processed";
 
     public const string LadderSuppressedKey = Constants.ModId + "/deserttomb/ladderSuppressed";
+    public const string BreakableDropRateMultiplierKey = Constants.ModId + "/deserttomb/breakableDropRateMult";
 
     private readonly SmapiConfigProvider<ModConfig> _config;
     private readonly Func<ProgressionStep> _getStep;
@@ -314,6 +315,7 @@ public sealed class DesertTombRuntime
 
         var config = new SpawnConfiguration();
         config.DeepCopySpawnConfiguration(SpawnConfiguration.Default, MapDifficulty(cfg.TombDifficulty));
+        WriteActiveBreakableLootMultipliers(mineShaft, config.Multipliers);
 
         _generator.Generate(mineShaft);
 
@@ -404,6 +406,16 @@ public sealed class DesertTombRuntime
 
     private static void MarkProcessedToday(MineShaft mineShaft)
         => mineShaft.modData[ProcessedKey] = TodayMarker(mineShaft);
+
+    private static void WriteActiveBreakableLootMultipliers(MineShaft mineShaft, MonsterMultipliers multipliers)
+    {
+        if (mineShaft is null || multipliers is null)
+            return;
+
+        // Used by Harmony patches to scale breakable-container loot at break time.
+        mineShaft.modData[BreakableDropRateMultiplierKey] = multipliers.DropRateMultiplier.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
 
     private static string TodayMarker(MineShaft mineShaft)
         => $"{Game1.stats.DaysPlayed}:{mineShaft.mineLevel}";

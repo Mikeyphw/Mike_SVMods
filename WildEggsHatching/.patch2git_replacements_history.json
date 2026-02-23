@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-23T13:13:13-03:00",
+  "updated_at": "2026-02-23T13:13:17-03:00",
   "replacements": [
     {
       "id": "20260219T212821-0300-01",
@@ -196,6 +196,16 @@
       "id": "20260223T112520-0300-01",
       "title": "DesertTomb: TombDifficulty affects loot tables",
       "created_at": "2026-02-23T11:25:20-03:00"
+    },
+    {
+      "id": "20260223T113945-0300-01",
+      "title": "DesertTomb: TombDifficulty affects breakables (barrels/urns) loot via DropRateMultiplier",
+      "created_at": "2026-02-23T11:39:45-03:00"
+    },
+    {
+      "id": "20260223T114055-0300-01",
+      "title": "DesertTomb: TombDifficulty scales breakable loot (robust createItemDebris patch)",
+      "created_at": "2026-02-23T11:40:55-03:00"
     }
   ]
 }
