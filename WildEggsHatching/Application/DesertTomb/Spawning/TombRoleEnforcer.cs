@@ -55,7 +55,7 @@ public sealed class TombRoleEnforcer
         if (player is null)
             return;
 
-        var playerTile = player.getTileLocationPoint();
+        var playerTile = player.TilePoint;
 
         for (int i = 0; i < mineShaft.characters.Count; i++)
         {
@@ -75,7 +75,7 @@ public sealed class TombRoleEnforcer
             if (!TryParsePoint(monster.modData.TryGetValue(HomeTileKey, out var homeStr) ? homeStr : null, out var homeTile))
                 continue;
 
-            var tile = monster.getTileLocationPoint();
+            var tile = monster.TilePoint;
 
             if (TryParseRect(monster.modData.TryGetValue(LeashRectKey, out var rectStr) ? rectStr : null, out var leashRect)
                 && !leashRect.Contains(tile))

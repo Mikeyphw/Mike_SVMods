@@ -123,7 +123,10 @@ public static class FarmAnimalShopProgressionEdits
 
         anchors ??= ShopAnchorIndex.Empty;
 
-        var gated = ComputeGated(config, managedAnimalIds, farmAnimals, anchors);
+        var readOnlyFarmAnimals =
+            farmAnimals as IReadOnlyDictionary<string, FarmAnimalData>
+            ?? new Dictionary<string, FarmAnimalData>(farmAnimals, StringComparer.OrdinalIgnoreCase);
+        var gated = ComputeGated(config, managedAnimalIds, readOnlyFarmAnimals, anchors);
         if (gated.Count == 0)
             return;
 
@@ -161,7 +164,10 @@ public static class FarmAnimalShopProgressionEdits
 
         anchors ??= ShopAnchorIndex.Empty;
 
-        var gated = ComputeGated(config, managedAnimalIds, farmAnimals, anchors);
+        var readOnlyFarmAnimals =
+            farmAnimals as IReadOnlyDictionary<string, FarmAnimalData>
+            ?? new Dictionary<string, FarmAnimalData>(farmAnimals, StringComparer.OrdinalIgnoreCase);
+        var gated = ComputeGated(config, managedAnimalIds, readOnlyFarmAnimals, anchors);
         if (gated.Count == 0)
             return;
 
@@ -272,7 +278,7 @@ public static class FarmAnimalShopProgressionEdits
     private static HashSet<string> ComputeGated(
         ModConfig config,
         IReadOnlyCollection<string> managedAnimalIds,
-        IDictionary<string, FarmAnimalData> farmAnimals,
+        IReadOnlyDictionary<string, FarmAnimalData> farmAnimals,
         ShopAnchorIndex anchors)
     {
         var gated = new HashSet<string>(KeyComparer);
@@ -292,7 +298,7 @@ public static class FarmAnimalShopProgressionEdits
         return gated;
     }
 
-    private static class ShopFieldsAccessor
+    internal static class ShopFieldsAccessor
     {
         private static readonly BindingFlags Flags = BindingFlags.Instance | BindingFlags.Public;
 

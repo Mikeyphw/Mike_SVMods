@@ -60,6 +60,8 @@ public static class TombAreaStateBuilder
             );
         }
 
+        return states;
+    }
 
     private static TombMonsterRole PreferRole(TombMonsterRole existing, TombMonsterRole incoming)
     {
@@ -74,8 +76,5 @@ public static class TombAreaStateBuilder
         };
 
         return Rank(existing) >= Rank(incoming) ? existing : incoming;
-    }
-
-        return states;
     }
 }

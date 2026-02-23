@@ -435,7 +435,7 @@ internal sealed class ThePharaoh : Mummy
             if (!IsWithinTiles(mummy.Tile, Tile, RewrapRangeTiles))
                 continue;
 
-            var score = mummy.reviveTimer.Value > 0 ? 1000 : 0;
+            var score = mummy.reviveTimer.Value > 0 ? 1000d : 0d;
             score += 1.0 - (double)mummy.Health / Math.Max(1, mummy.MaxHealth);
 
             if (score > bestScore)
@@ -454,7 +454,7 @@ internal sealed class ThePharaoh : Mummy
             targetMummy.Health = Math.Min(targetMummy.MaxHealth, targetMummy.Health + (_enraged.Value ? 180 : 80));
 
         currentLocation.playSound("healSound");
-        Game1.multiplayer.broadcastSprites(
+        Game1.Multiplayer.broadcastSprites(
             currentLocation,
             new TemporaryAnimatedSprite(
                 "TileSheets\\animations",

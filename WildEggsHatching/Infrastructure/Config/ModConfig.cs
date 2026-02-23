@@ -35,7 +35,8 @@ public sealed class ModConfig
     public bool FruitInsteadOfSeed { get; set; } = false;
 
     public bool HatchDinoEggs { get; set; } = true;
-    public bool DinoEggsExclusiveHatch { get; set; } = false;
+    public bool DinoEggsExclusiveHatch { get; set; } = true;
+    public string BirthText { get; set; } = "Default";
 
     public string DinoPrice { get; set; } = "6000";
     public string VoidChickenPrice { get; set; } = "default";

@@ -59,6 +59,8 @@
   "config.desertTomb.tombDifficulty.values.Moderate": "Moderate",
   "config.general.progressionMode.description": "Enable progressive unlocking of animals and features.",
   "config.general.progressionMode.name": "Progression mode",
+  "config.general.birthText.description": "Birth text mode exposed through the mod API (for integrations like LetMeHatch).",
+  "config.general.birthText.name": "Birth text mode",
   "config.hatching.dinoExclusiveHatch.description": "When enabled, dinosaur eggs can only hatch into dinosaurs.",
   "config.hatching.dinoExclusiveHatch.name": "Dino eggs hatch exclusively",
   "config.hatching.hatchDinoEggs.description": "Allow dinosaur eggs to hatch.",

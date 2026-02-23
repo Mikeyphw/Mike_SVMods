@@ -16,7 +16,6 @@
   <ItemGroup>
     <Compile Remove="GMCMenu.cs" />
     <Compile Remove="Framework/ModConfig.cs" />
-    <Compile Remove="Framework/Config/LegacyConfigAdapter.cs" />
       <Compile Remove="Application/RoosterCoordinator.FertilizedEggs.cs" />
   </ItemGroup>
 </Project>

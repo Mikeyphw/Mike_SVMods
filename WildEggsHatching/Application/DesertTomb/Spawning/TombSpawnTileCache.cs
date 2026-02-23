@@ -47,7 +47,7 @@ public sealed class TombSpawnTileCache
                 continue;
             }
 
-            if (mineShaft.isTileOccupied(new Microsoft.Xna.Framework.Vector2(candidate.X, candidate.Y)))
+            if (mineShaft.objects.ContainsKey(new Microsoft.Xna.Framework.Vector2(candidate.X, candidate.Y)))
                 continue;
 
             if (_minSpacingTiles > 0 && !IsFarEnough(candidate, _used, _minSpacingTiles))

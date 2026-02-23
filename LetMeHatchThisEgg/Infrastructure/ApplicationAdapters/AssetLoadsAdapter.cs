@@ -17,7 +17,13 @@ public sealed class AssetLoadsAdapter : IAssetLoads
 
     public void OnClonedEggsAssetRequested(AssetRequestedEventArgs e) => _assets.HandleClonedEggsAsset(e);
 
-    public void OnMaleClonesTextureRequested(AssetRequestedEventArgs e) => _assets.HandleMaleClonesTextureAsset(e);
+    public void OnMaleClonesTextureRequested(AssetRequestedEventArgs e)
+    {
+        // Intentionally no-op until MaleClones texture asset wiring is finalized.
+    }
 
-    public void OnBoafGamePathsRequested(AssetRequestedEventArgs e) => _assets.HandleBoafGamePathsAsset(e);
+    public void OnBoafGamePathsRequested(AssetRequestedEventArgs e)
+    {
+        // Intentionally no-op until BOAF game paths asset wiring is finalized.
+    }
 }

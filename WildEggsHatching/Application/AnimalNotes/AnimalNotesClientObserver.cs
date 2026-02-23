@@ -72,7 +72,7 @@ public sealed class AnimalNotesClientObserver
         if (!_allowClientDiscoveries())
             return;
 
-        if (newLocation is not StardewValley.Locations.AnimalHouse)
+        if (!string.Equals(newLocation.GetType().Name, "AnimalHouse", StringComparison.OrdinalIgnoreCase))
             return;
 
         var locName = newLocation.NameOrUniqueName;

@@ -21,9 +21,9 @@ using StardewValley.GameData.FarmAnimals;
 using ILetMeHatchApi = Mikew.BirdsOfAFeather.Framework.ILetMeHatchApi;
 using LuckyTypes = Mikew.BirdsOfAFeather.EnumsAndStrings.Enums.LuckyTypes;
 using Mikew.BirdsOfAFeather.Helpers;
-using Mikew.BirdsOfAFeather.Models;
 using RoosterAddon.Infrastructure.Assets;
 using RoosterAddon.Application.FarmAnimals;
+using RoosterModAssetHandler = RoosterAddon.Infrastructure.Assets.ModAssetHandler;
 
 namespace RoosterAddon.Application;
 
@@ -62,7 +62,7 @@ internal ILetMeHatchApi? HatchApi;
 
     internal Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures = new();
 
-    internal ModAssetHandler AssetHandler = null!;
+    internal RoosterModAssetHandler AssetHandler = null!;
 
     private State.RoosterAddonSaveState _saveState = new();
 
@@ -76,7 +76,6 @@ private readonly FarmAnimalHatchingService _farmAnimalHatching = new();
 private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
     private readonly Queue<Action> _nextTickActions = new();
     private bool _nextTickHooked;
-    private bool _gmcmRegistered;
     private bool _femaleAssignmentsDirty;
     private bool _needsRoosterSetup = true;
     private int _lastRoosterSetupDay = -1;
@@ -86,8 +85,8 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
     private LuckyTypes DailyLuck = LuckyTypes.Neutral;
 
     // "Stuck inside" affects harvest type; maintained via CP conditions for parity.
-    private Mikew.BirdsOfAFeather.Framework.ManagedConditions? conditionStuckInsideSeason;
-    private Mikew.BirdsOfAFeather.Framework.ManagedConditions? conditionStuckInsideWeather;
+    private ManagedConditions? conditionStuckInsideSeason;
+    private ManagedConditions? conditionStuckInsideWeather;
     private bool isStuckInside;
 
     internal RoosterCoordinator(ModEntry host, ISaveDataStore saveData)
@@ -128,14 +127,14 @@ Helper.ConsoleCommands.Add(
     CatalogCommand
 );
 
-AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
+AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
         AssetHandler.AddAssets(
-            new List<AssetData>
+            new List<RoosterAddon.Infrastructure.Assets.AssetData>
             {
                 new(
                     enumAssetType: typeof(Textures),
                     enumAssetFolder: RoosterAddonAssetFolder.Textures,
-                    fileExt: ModAssetHandler.FileExtension.Png,
+                    fileExt: RoosterModAssetHandler.FileExtension.Png,
                     gamePath: $"Mods/{ModManifest.UniqueID}"
                 )
             }
@@ -158,8 +157,8 @@ AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
         {
             ModTextures[item] = new Dictionary<TextureDetails, string>
             {
-                { TextureDetails.GamePath, AssetHandler.GetAssetPath(item, ModAssetHandler.AssetPathType.GamePath) },
-                { TextureDetails.MoldFolderPath, AssetHandler.GetAssetPath(item, ModAssetHandler.AssetPathType.ModFolderPath) }
+                { TextureDetails.GamePath, AssetHandler.GetAssetPath(item, RoosterModAssetHandler.AssetPathType.GamePath) },
+                { TextureDetails.MoldFolderPath, AssetHandler.GetAssetPath(item, RoosterModAssetHandler.AssetPathType.ModFolderPath) }
             };
         }
 
@@ -238,7 +237,6 @@ AssetHandler = new ModAssetHandler(ModManifest.UniqueID, Monitor);
 
     public void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
-        _gmcmRegistered = false;
         InvalidateDailyPlanCache("returned to title");
         _pendingInvalidations.Clear();
         _nextTickActions.Clear();

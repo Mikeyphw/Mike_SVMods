@@ -68,8 +68,9 @@ internal sealed class NormalHatchingStrategy : IHatchingStrategy
         if (!egg.TryGetValue(RoosterItemDataEntries.Name, out var eggId) || string.IsNullOrWhiteSpace(eggId))
             return;
 
+        string? femaleEggId = null;
         ctx.RoosterHelper.FemaleEggs.TryGetValue(femaleKey, out var femaleEggs);
-        femaleEggs?.TryGetValue(eggType, out var femaleEggId);
+        femaleEggs?.TryGetValue(eggType, out femaleEggId);
 
         var decision = HatchingDecisionEngine.DecideEggChance(
             new EggChanceRule(

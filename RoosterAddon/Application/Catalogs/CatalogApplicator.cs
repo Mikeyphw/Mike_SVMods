@@ -6,10 +6,6 @@ using RoosterAddon.Framework.Config;
 
 namespace RoosterAddon.Application.Catalogs;
 
-/// <summary>
-/// Applies catalog settings into the typed configuration, following the configured apply mode.
-/// This is intentionally independent of SMAPI so it can be unit-tested without a game install.
-/// </summary>
 internal static class CatalogApplicator
 {
     internal enum CatalogLogLevel { Info, Warn, Error }
@@ -25,65 +21,30 @@ internal static class CatalogApplicator
         if (config is null) throw new ArgumentNullException(nameof(config));
         if (catalogs is null) throw new ArgumentNullException(nameof(catalogs));
 
-        var changed = false;
+        var changed = EnsureRequiredRoosters(config, catalogs, log);
 
-        if (isNewConfig)
+        if (isNewConfig || mode == CatalogApplyMode.Authoritative)
         {
-            changed |= EnsureRequiredRoosters(config, catalogs, log);
             changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
             changed |= ApplyProduceDefaults(config, catalogs.Produce);
-
-            if (changed)
-                log?.Invoke(CatalogLogLevel.Info, "Catalogs applied to newly created config.");
-
             return changed;
         }
 
-        switch (mode)
-        {
-            case CatalogApplyMode.SeedOnly:
-                break;
+        if (mode == CatalogApplyMode.MergeMissing)
+            changed |= MergeMissing(config, catalogs, log);
 
-            case CatalogApplyMode.RepairInvalid:
-                changed |= EnsureRequiredRoosters(config, catalogs, log);
-                changed |= FixInvalidGeneralSettings(config, catalogs.Hatching.General, log);
-                changed |= FixInvalidRoosterSettings(config, catalogs.Hatching, log);
-                changed |= FixInvalidProduceTables(config, catalogs.Produce, log);
-                break;
-
-            case CatalogApplyMode.MergeMissing:
-                changed |= EnsureRequiredRoosters(config, catalogs, log);
-                changed |= MergeMissing(config, catalogs, log);
-                changed |= FixInvalidGeneralSettings(config, catalogs.Hatching.General, log);
-                changed |= FixInvalidRoosterSettings(config, catalogs.Hatching, log);
-                changed |= FixInvalidProduceTables(config, catalogs.Produce, log);
-                break;
-
-            case CatalogApplyMode.Authoritative:
-                changed |= EnsureRequiredRoosters(config, catalogs, log);
-                changed |= ApplyHatchingDefaults(config, catalogs.Hatching);
-                changed |= ApplyProduceDefaults(config, catalogs.Produce);
-                break;
-
-            default:
-                changed |= EnsureRequiredRoosters(config, catalogs, log);
-                changed |= FixInvalidGeneralSettings(config, catalogs.Hatching.General, log);
-                changed |= FixInvalidRoosterSettings(config, catalogs.Hatching, log);
-                changed |= FixInvalidProduceTables(config, catalogs.Produce, log);
-                break;
-        }
-
+        changed |= FixInvalidGeneralSettings(config, log);
+        changed |= FixInvalidRoosterSettings(config, log);
+        changed |= FixInvalidProduceTables(config, catalogs.Produce, log);
         return changed;
     }
 
-private static bool EnsureRequiredRoosters(RoosterAddonConfig config, CatalogBundle catalogs, Action<CatalogLogLevel, string>? log)
+    private static bool EnsureRequiredRoosters(RoosterAddonConfig config, CatalogBundle catalogs, Action<CatalogLogLevel, string>? log)
     {
         var changed = false;
-
-        var required = catalogs?.Roosters?.Roosters ?? new Dictionary<string, RoosterCatalogEntry>();
-        foreach (var key in required.Keys)
+        foreach (var key in catalogs.Roosters.Roosters.Keys)
         {
-            if (!Enum.TryParse<RoosterType>(key ?? string.Empty, ignoreCase: true, out var roosterType))
+            if (!Enum.TryParse<RoosterType>(key ?? string.Empty, true, out var roosterType))
                 continue;
 
             if (config.Roosters.ContainsKey(roosterType))
@@ -94,87 +55,56 @@ private static bool EnsureRequiredRoosters(RoosterAddonConfig config, CatalogBun
         }
 
         if (changed)
-            log?.Invoke(CatalogCatalogLogLevel.Warn, "Catalogs: added missing RoosterSettings entries for required rooster types.");
-return changed;
-    }
-
-private static bool FixInvalidGeneralSettings(RoosterAddonConfig config, HatchingGeneralCatalog general, Action<CatalogLogLevel, string>? log)
-    {
-        if (config.General is null)
-            config.General = new GeneralSettings();
-
-        var changed = false;
-
-        changed |= ClampInt(ref config.General.ChosenPercentageDailyLuckBonus, 0, 100, nameof(config.General.ChosenPercentageDailyLuckBonus), log);
-        changed |= ClampInt(ref config.General.EggProbability, 0, 100, nameof(config.General.EggProbability), log);
-        changed |= ClampInt(ref config.General.LargeEggProbability, 0, 100, nameof(config.General.LargeEggProbability), log);
-        changed |= ClampInt(ref config.General.FertilizedEggProbability, 0, 100, nameof(config.General.FertilizedEggProbability), log);
-        changed |= ClampInt(ref config.General.RoosterToChickenRatio, 0, 100, nameof(config.General.RoosterToChickenRatio), log);
-
-        changed |= ClampFloat(ref config.General.BoostByRooster, 0f, 1000f, nameof(config.General.BoostByRooster), log);
+            log?.Invoke(CatalogLogLevel.Warn, "Catalogs: added missing RoosterSettings entries.");
 
         return changed;
     }
 
-private static bool FixInvalidRoosterSettings(RoosterAddonConfig config, HatchingCatalog hatching, Action<CatalogLogLevel, string>? log)
+    private static bool FixInvalidGeneralSettings(RoosterAddonConfig config, Action<CatalogLogLevel, string>? log)
     {
+        config.General ??= new GeneralSettings();
         var changed = false;
 
-        foreach (var (rt, settings) in config.Roosters)
+        changed |= ClampAndAssign(config.General.ChosenPercentageDailyLuckBonus, 0, 100, v => config.General.ChosenPercentageDailyLuckBonus = v);
+        changed |= ClampAndAssign(config.General.EggProbability, 0, 100, v => config.General.EggProbability = v);
+        changed |= ClampAndAssign(config.General.LargeEggProbability, 0, 100, v => config.General.LargeEggProbability = v);
+        changed |= ClampAndAssign(config.General.FertilizedEggProbability, 0, 100, v => config.General.FertilizedEggProbability = v);
+        changed |= ClampAndAssign(config.General.RoosterToChickenRatio, 0, 100, v => config.General.RoosterToChickenRatio = v);
+        changed |= ClampAndAssign(config.General.BoostByRooster, 0f, 1000f, v => config.General.BoostByRooster = v);
+
+        if (changed)
+            log?.Invoke(CatalogLogLevel.Warn, "Catalogs: clamped invalid general config values.");
+
+        return changed;
+    }
+
+    private static bool FixInvalidRoosterSettings(RoosterAddonConfig config, Action<CatalogLogLevel, string>? log)
+    {
+        var changed = false;
+        foreach (var (_, settings) in config.Roosters)
         {
             if (settings is null)
                 continue;
 
-            if (settings.Price < 0) { settings.Price = 0; changed = true; log?.Invoke(CatalogCatalogLogLevel.Warn, $"Config: repaired negative Price for {rt}.");
-}
-            if (settings.MatureDays < 0) { settings.MatureDays = 0; changed = true; log?.Invoke(CatalogCatalogLogLevel.Warn, $"Config: repaired negative MatureDays for {rt}.");
-}
-            if (settings.ProduceDays < 0) { settings.ProduceDays = 0; changed = true; log?.Invoke(CatalogCatalogLogLevel.Warn, $"Config: repaired negative ProduceDays for {rt}.");
-}
+            if (settings.Price < 0) { settings.Price = 0; changed = true; }
+            if (settings.MatureDays < 0) { settings.MatureDays = 0; changed = true; }
+            if (settings.ProduceDays < 0) { settings.ProduceDays = 0; changed = true; }
         }
 
+        if (changed)
+            log?.Invoke(CatalogLogLevel.Warn, "Catalogs: repaired invalid rooster scalar settings.");
+
         return changed;
     }
 
-private static bool ClampInt(ref int value, int min, int max, string name, Action<CatalogLogLevel, string>? log)
-    {
-        var clamped = Math.Clamp(value, min, max);
-        if (clamped == value)
-            return false;
-
-        value = clamped;
-        log?.Invoke(CatalogCatalogLogLevel.Warn, $"Config: clamped {name} to {value}.");
-return true;
-    }
-
-private static bool ClampFloat(ref float value, float min, float max, string name, Action<CatalogLogLevel, string>? log)
-    {
-        var clamped = Math.Clamp(value, min, max);
-        if (Math.Abs(clamped - value) < 0.0001f)
-            return false;
-
-        value = clamped;
-        log?.Invoke(CatalogCatalogLogLevel.Warn, $"Config: clamped {name} to {value}.");
-return true;
-    }
-
-private static bool ApplyProduceDefaults(RoosterAddonConfig config, ProduceCatalog produce)
+    private static bool ApplyProduceDefaults(RoosterAddonConfig config, ProduceCatalog produce)
     {
         var changed = false;
 
         foreach (var (rt, settings) in config.Roosters)
         {
-            if (settings is null)
+            if (!produce.Roosters.TryGetValue(rt.ToString(), out var entry) || entry is null || settings is null)
                 continue;
-
-            if (!produce.Roosters.TryGetValue(rt.ToString(), out var entry) || entry is null)
-                continue;
-
-            if (!string.IsNullOrWhiteSpace(entry.BlueEggChoice) && !string.Equals(settings.BlueEggChoice, entry.BlueEggChoice, StringComparison.Ordinal))
-            {
-                settings.BlueEggChoice = entry.BlueEggChoice!;
-                changed = true;
-            }
 
             if (entry.Produce is { Count: > 0 })
             {
@@ -187,89 +117,40 @@ private static bool ApplyProduceDefaults(RoosterAddonConfig config, ProduceCatal
                 settings.DeluxeProduceEntries = entry.Deluxe.Select(ToConfigEntry).ToList();
                 changed = true;
             }
+
+            if (!string.IsNullOrWhiteSpace(entry.BlueEggChoice))
+            {
+                settings.BlueEggChoice = entry.BlueEggChoice!;
+                changed = true;
+            }
         }
 
         return changed;
     }
 
-private static bool ApplyHatchingDefaults(RoosterAddonConfig config, HatchingCatalog hatching)
+    private static bool ApplyHatchingDefaults(RoosterAddonConfig config, HatchingCatalog hatching)
     {
         var changed = false;
-
-        if (config.General is null)
-            config.General = new GeneralSettings();
+        config.General ??= new GeneralSettings();
 
         var g = hatching?.General;
         if (g is not null)
         {
-            if (Enum.TryParse<UpdateRateMode>(g.UpdateRate ?? string.Empty, ignoreCase: true, out var updateRate))
+            if (Enum.TryParse<UpdateRateMode>(g.UpdateRate ?? string.Empty, true, out var updateRate))
             {
                 config.General.UpdateRate = updateRate;
                 changed = true;
             }
 
-            if (g.ChosenPercentageDailyLuckBonus is { } luck)
+            if (Enum.TryParse<HarvestType>(g.HarvestType ?? string.Empty, true, out var harvestType))
             {
-                config.General.ChosenPercentageDailyLuckBonus = Math.Clamp(luck, 0, 100);
+                config.General.HarvestType = harvestType;
                 changed = true;
             }
 
-            if (Enum.TryParse<HarvestType>(g.HarvestType ?? string.Empty, ignoreCase: true, out var harvest))
+            if (Enum.TryParse<HatchingMode>(g.HatchingMode ?? string.Empty, true, out var hatchingMode))
             {
-                config.General.HarvestType = harvest;
-                changed = true;
-            }
-
-            if (Enum.TryParse<HatchingMode>(g.HatchingMode ?? string.Empty, ignoreCase: true, out var hatchMode))
-            {
-                config.General.HatchingMode = hatchMode;
-                changed = true;
-            }
-
-            if (g.BetterTrufflesCompat.HasValue) { config.General.BetterTrufflesCompat = g.BetterTrufflesCompat.Value; changed = true; }
-            if (g.EnableStuckInside.HasValue) { config.General.EnableStuckInside = g.EnableStuckInside.Value; changed = true; }
-            if (g.EnableEggProbability.HasValue) { config.General.EnableEggProbability = g.EnableEggProbability.Value; changed = true; }
-            if (g.EnableLargeEggProbability.HasValue) { config.General.EnableLargeEggProbability = g.EnableLargeEggProbability.Value; changed = true; }
-            if (g.EnableDebug.HasValue) { config.General.EnableDebug = g.EnableDebug.Value; changed = true; }
-
-            if (g.EggProbability is { } eggP) { config.General.EggProbability = Math.Clamp(eggP, 0, 100); changed = true; }
-            if (g.LargeEggProbability is { } largeP) { config.General.LargeEggProbability = Math.Clamp(largeP, 0, 100); changed = true; }
-            if (g.FertilizedEggProbability is { } fertP) { config.General.FertilizedEggProbability = Math.Clamp(fertP, 0, 100); changed = true; }
-            if (g.RoosterToChickenRatio is { } ratio) { config.General.RoosterToChickenRatio = Math.Clamp(ratio, 0, 100); changed = true; }
-            if (g.BoostByRooster is { } boost) { config.General.BoostByRooster = Math.Clamp(boost, 0f, 1000f); changed = true; }
-        }
-
-        foreach (var (rt, settings) in config.Roosters)
-        {
-            if (settings is null)
-                continue;
-
-            if (hatching?.Roosters is null || !hatching.Roosters.TryGetValue(rt.ToString(), out var h) || h is null)
-                continue;
-
-            if (Enum.TryParse<RequiredBuilding>(h.BuildingRequired ?? string.Empty, ignoreCase: true, out var b))
-            {
-                settings.BuildingRequired = b;
-                changed = true;
-            }
-
-            if (h.Buyable.HasValue) { settings.Buyable = h.Buyable.Value; changed = true; }
-            if (h.Price.HasValue) { settings.Price = Math.Max(0, h.Price.Value); changed = true; }
-            if (h.EnableRoosterHatching.HasValue) { settings.EnableRoosterHatching = h.EnableRoosterHatching.Value; changed = true; }
-            if (h.EditAllFemales.HasValue) { settings.EditAllFemales = h.EditAllFemales.Value; changed = true; }
-            if (h.MatureDays.HasValue) { settings.MatureDays = Math.Max(0, h.MatureDays.Value); changed = true; }
-            if (h.ProduceDays.HasValue) { settings.ProduceDays = Math.Max(0, h.ProduceDays.Value); changed = true; }
-            if (h.BypassBlueConditions.HasValue) { settings.BypassBlueConditions = h.BypassBlueConditions.Value; changed = true; }
-
-            if (Enum.TryParse<ProduceMode>(h.ProduceOption ?? string.Empty, ignoreCase: true, out var p))
-            {
-                settings.ProduceOption = p;
-                changed = true;
-            }
-
-            if (Enum.TryParse<DeluxeProduceMode>(h.DeluxeProduceOption ?? string.Empty, ignoreCase: true, out var d))
-            {
-                settings.DeluxeProduceOption = d;
+                config.General.HatchingMode = hatchingMode;
                 changed = true;
             }
         }
@@ -277,48 +158,44 @@ private static bool ApplyHatchingDefaults(RoosterAddonConfig config, HatchingCat
         return changed;
     }
 
-private static bool FixInvalidProduceTables(RoosterAddonConfig config, ProduceCatalog produce, Action<CatalogLogLevel, string>? log)
+    private static bool FixInvalidProduceTables(RoosterAddonConfig config, ProduceCatalog produce, Action<CatalogLogLevel, string>? log)
     {
         var changed = false;
 
         foreach (var (rt, settings) in config.Roosters)
         {
-            if (!produce.Roosters.TryGetValue(rt.ToString(), out var entry))
+            if (settings is null || !produce.Roosters.TryGetValue(rt.ToString(), out var entry))
                 continue;
+
+            settings.ProduceEntries ??= new List<ProduceEntry>();
+            settings.DeluxeProduceEntries ??= new List<ProduceEntry>();
 
             if (settings.ProduceOption == ProduceMode.CustomizeBelow && !HasAnyUsable(settings.ProduceEntries))
             {
                 settings.ProduceEntries = entry.Produce.Select(ToConfigEntry).ToList();
                 changed = true;
-                log?.Invoke(CatalogCatalogLogLevel.Warn, $"Catalogs: repaired invalid ProduceEntries for {rt}.");
-}
+            }
 
             if (settings.DeluxeProduceOption == DeluxeProduceMode.CustomizeBelow && !HasAnyUsable(settings.DeluxeProduceEntries))
             {
                 settings.DeluxeProduceEntries = entry.Deluxe.Select(ToConfigEntry).ToList();
                 changed = true;
-                log?.Invoke(CatalogCatalogLogLevel.Warn, $"Catalogs: repaired invalid DeluxeProduceEntries for {rt}.");
-}
-
-            if (rt.ToString().Equals("Blue", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(entry.BlueEggChoice))
-                if (string.IsNullOrWhiteSpace(settings.BlueEggChoice))
-                {
-                    settings.BlueEggChoice = entry.BlueEggChoice;
-                    changed = true;
-                    log?.Invoke(CatalogCatalogLogLevel.Warn, $"Catalogs: repaired empty BlueEggChoice for {rt}.");
-}
+            }
         }
+
+        if (changed)
+            log?.Invoke(CatalogLogLevel.Warn, "Catalogs: repaired invalid produce table entries.");
 
         return changed;
     }
 
-private static bool MergeMissing(RoosterAddonConfig config, CatalogBundle catalogs, Action<CatalogLogLevel, string>? log)
+    private static bool MergeMissing(RoosterAddonConfig config, CatalogBundle catalogs, Action<CatalogLogLevel, string>? log)
     {
         var changed = false;
 
         foreach (var (rt, settings) in config.Roosters)
         {
-            if (!catalogs.Produce.Roosters.TryGetValue(rt.ToString(), out var produce))
+            if (settings is null || !catalogs.Produce.Roosters.TryGetValue(rt.ToString(), out var produce))
                 continue;
 
             if (settings.ProduceEntries is null || settings.ProduceEntries.Count == 0)
@@ -335,11 +212,32 @@ private static bool MergeMissing(RoosterAddonConfig config, CatalogBundle catalo
         }
 
         if (changed)
-            log?.Invoke(CatalogCatalogLogLevel.Info, "Catalogs merged missing entries into config.");
-return changed;
+            log?.Invoke(CatalogLogLevel.Info, "Catalogs: merged missing entries into config.");
+
+        return changed;
     }
 
-private static bool HasAnyUsable(List<ProduceEntry> entries)
+    private static bool ClampAndAssign(int value, int min, int max, Action<int> assign)
+    {
+        var clamped = Math.Clamp(value, min, max);
+        if (clamped == value)
+            return false;
+
+        assign(clamped);
+        return true;
+    }
+
+    private static bool ClampAndAssign(float value, float min, float max, Action<float> assign)
+    {
+        var clamped = Math.Clamp(value, min, max);
+        if (Math.Abs(clamped - value) < 0.0001f)
+            return false;
+
+        assign(clamped);
+        return true;
+    }
+
+    private static bool HasAnyUsable(List<ProduceEntry> entries)
     {
         entries ??= new List<ProduceEntry>();
         return entries.Any(e =>
@@ -355,12 +253,11 @@ private static bool HasAnyUsable(List<ProduceEntry> entries)
         });
     }
 
-private static ProduceEntry ToConfigEntry(ProduceEntryDto dto)
+    private static ProduceEntry ToConfigEntry(ProduceEntryDto dto)
         => new()
         {
             Choice = dto.Choice ?? string.Empty,
             CustomItemName = dto.CustomItemName ?? string.Empty,
             Probability = Math.Clamp(dto.Probability, 0, 100)
-        }
-
+        };
 }

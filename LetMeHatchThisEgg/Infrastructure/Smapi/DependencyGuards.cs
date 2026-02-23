@@ -51,7 +51,7 @@ public static class DependencyGuards
     {
         static bool IsIgnoredPath(string fullPath)
         {
-            var normalized = fullPath.Replace('\', '/');
+            var normalized = fullPath.Replace('\\', '/');
             return normalized.Contains("/bin/", StringComparison.OrdinalIgnoreCase)
                 || normalized.Contains("/obj/", StringComparison.OrdinalIgnoreCase)
                 || normalized.Contains("/.git/", StringComparison.OrdinalIgnoreCase);

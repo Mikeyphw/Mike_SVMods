@@ -17,8 +17,16 @@ public sealed class MachinesAssetEditsAdapter : IMachinesAssetEdits
         if (assets is null)
             throw new ArgumentNullException(nameof(assets));
 
-        _service = new MachinesAssetEditsService(data => assets.MachineManager.EditMachineData(data));
+        _service = new MachinesAssetEditsService((data, _onlyFertilizedEggs, cloneMachineRules) =>
+        {
+            if (!cloneMachineRules || assets.ItemsToAdd.Count < 1)
+                return false;
+
+            assets.MachineEditor.CloneMachineData(data);
+            return true;
+        });
     }
 
-    public bool TryApplyEdits(Dictionary<string, MachineData> data) => _service.TryApplyEdits(data);
+    public bool TryCloneMachineRules(Dictionary<string, MachineData> data, bool onlyFertilizedEggs, bool cloneMachineRules) =>
+        _service.TryCloneMachineRules(data, onlyFertilizedEggs, cloneMachineRules);
 }

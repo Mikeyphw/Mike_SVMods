@@ -10,7 +10,7 @@
 
 // using static LetMeHatchThisEgg.ModEntry;
 
-namespace LetMeHatchThisEgg.AssetManagement
+// namespace LetMeHatchThisEgg.AssetManagement
 // {
 //     public class BirthTextEditor
 //     {

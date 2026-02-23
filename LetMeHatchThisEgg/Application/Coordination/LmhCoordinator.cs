@@ -5,7 +5,6 @@ using LetMeHatchThisEgg.Infrastructure.Gateways;
 using LetMeHatchThisEgg.Infrastructure.ApplicationAdapters;
 using System.Collections.Generic;
 using System.Linq;
-using ContentPatcher;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.GameAssetManagement;
@@ -53,11 +52,12 @@ public sealed class LmhCoordinator
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _api = api ?? throw new ArgumentNullException(nameof(api));
+        _invalidation = invalidation ?? throw new ArgumentNullException(nameof(invalidation));
     }
 
     public void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
-        _contentPatcher = _core.Helper.ModRegistry.GetApi<ContentPatcher.IContentPatcherAPI>(
+        _contentPatcher = _core.Helper.ModRegistry.GetApi<IContentPatcherAPI>(
             "Pathoschild.ContentPatcher"
         );
 
@@ -140,8 +140,7 @@ public sealed class LmhCoordinator
         InvalidateGameContentCache();
         HandleBreedingData();
 
-        _core.Helper.Events.Content.AssetRequested -= OnAssetRequested;
-        _core.Helper.Events.Content.AssetRequested += OnAssetRequested;
+        _assetPipeline?.Attach();
         _api.SetFinishedEarlyStuff(true);
     }
 
@@ -158,7 +157,7 @@ public sealed class LmhCoordinator
         var jsonFile = _core.Helper.Data.ReadJsonFile<Dictionary<string, string>>("i18n/default.json") ?? new();
         _core.Helper.Data.WriteJsonFile("i18n/default.json.bak", jsonFile);
 
-        ModEntry.TranslationHelper.Checki18nKeys(_core.Monitor);
+        ModEntry.TranslationHelper.Checki18nKeys(_log);
     }
 
 
@@ -304,6 +303,5 @@ private void InitializeAssetEditor()
             _core.Helper.Data.WriteJsonFile("assetsRequested.json", _assetsRequested);
         }
 
-        _assetPipeline.HandleAssetRequested(e);
     }
 }

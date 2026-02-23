@@ -22,6 +22,10 @@
       "IsRequired": false
     },
     {
+      "UniqueID": "Mikew.letmehatchthisegg.smapi",
+      "IsRequired": false
+    },
+    {
       "UniqueID": "6480.blueegg",
       "IsRequired": false
     },

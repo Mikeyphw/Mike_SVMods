@@ -52,7 +52,7 @@ public sealed class IGMCMOptionsHelper
         => string.IsNullOrWhiteSpace(text) ? string.Empty : Regex.Replace(text, "<[^>]+>", string.Empty);
 
 private Func<string> GetName(string optionName)
-        => () => Translate(Key("config", optionName, "name"), optionName);
+        => () => TranslateOrFallback(Key("config", optionName, "name"), optionName);
 
     private Func<string> GetPageTitle(string pageId)
         => () =>
@@ -404,15 +404,7 @@ private Func<string> GetName(string optionName)
             return;
         }
 
-        _gmcm?.AddColorOption(
-            _manifest,
-            getValue,
-            setValue,
-            name: GetName(optionName),
-            tooltip: tooltip ? GetDescription(optionName) : null,
-            showAlpha: showAlpha,
-            fieldId: fieldId
-        );
+        // Base GMCM API doesn't provide color pickers; no-op when GMCM Options API isn't available.
     }
 
 
@@ -442,15 +434,7 @@ public void AddColorOption(
             return;
         }
 
-        _gmcm?.AddColorOption(
-            _manifest,
-            getValue,
-            setValue,
-            name,
-            tooltip,
-            showAlpha: showAlpha,
-            fieldId: fieldId
-        );
+        // Base GMCM API doesn't provide color pickers; no-op when GMCM Options API isn't available.
     }
 
 
@@ -486,16 +470,16 @@ public void AddImageOption(
             setValue,
             name: GetName(optionName),
             tooltip: tooltip ? GetDescription(optionName) : null,
-            getMaxValue,
-            maxImageHeight,
-            maxImageWidth,
-            drawImage,
-            label,
-            imageTooltipTitle,
-            imageTooltipText,
-            arrowLocation,
-            labelLocation,
-            fieldId
+            getMaxValue: getMaxValue,
+            maxImageHeight: maxImageHeight,
+            maxImageWidth: maxImageWidth,
+            drawImage: drawImage,
+            label: label,
+            imageTooltipTitle: imageTooltipTitle,
+            imageTooltipText: imageTooltipText,
+            arrowLocation: arrowLocation,
+            labelLocation: labelLocation,
+            fieldId: fieldId
         );
     }
 
@@ -519,18 +503,18 @@ public void AddImageOption(
             _manifest,
             getValue,
             setValue,
-            name,
-            tooltip,
-            getMaxValue,
-            maxImageHeight,
-            maxImageWidth,
-            drawImage,
-            label,
-            imageTooltipTitle,
-            imageTooltipText,
-            arrowLocation,
-            labelLocation,
-            fieldId
+            name: name,
+            getMaxValue: getMaxValue,
+            maxImageHeight: maxImageHeight,
+            maxImageWidth: maxImageWidth,
+            drawImage: drawImage,
+            tooltip: tooltip,
+            label: label,
+            imageTooltipTitle: imageTooltipTitle,
+            imageTooltipText: imageTooltipText,
+            arrowLocation: arrowLocation,
+            labelLocation: labelLocation,
+            fieldId: fieldId
         );
     }
 

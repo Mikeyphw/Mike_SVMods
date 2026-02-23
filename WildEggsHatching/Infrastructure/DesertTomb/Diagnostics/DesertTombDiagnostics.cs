@@ -41,7 +41,8 @@ public sealed class DesertTombDiagnostics
         var sb = new StringBuilder();
         sb.AppendLine("[DesertTomb] Activation diagnostics:");
         sb.AppendLine($"  MineLevel={mineShaft.mineLevel} Layout={layoutLevel} MapPath='{mapPath}'");
-        sb.AppendLine($"  PlannedTotal={plan.TotalPlanned} Spawned={spawned}");
+        var plannedTotal = plan.Areas.Sum(a => a.Spawns.Sum(s => s.Count));
+        sb.AppendLine($"  PlannedTotal={plannedTotal} Spawned={spawned}");
 
         var byType = plan.Areas
             .SelectMany(a => a.Spawns)

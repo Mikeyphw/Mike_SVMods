@@ -1,4 +1,5 @@
 using System;
+using RoosterAddon.Framework;
 using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
 using RoosterAddon.Enums;

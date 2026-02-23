@@ -44,7 +44,7 @@ public sealed class PharaohTrackerOverlay
         if (pharaoh is null)
             return;
 
-        var tile = pharaoh.getTileLocation();
+        var tile = pharaoh.Tile;
         var worldCenterPx = tile * 64f + new Vector2(32f, 32f);
 
         var viewportWorld = new Rectangle(Game1.viewport.X, Game1.viewport.Y, Game1.viewport.Width, Game1.viewport.Height);

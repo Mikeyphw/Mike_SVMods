@@ -15,7 +15,7 @@ public sealed class GameRandomProvider : IRandomProvider
 
     public int Next(int minInclusive, int maxExclusive) => Game1.random.Next(minInclusive, maxExclusive);
 
-    public bool NextBool() => Game1.random.NextBool();
+    public bool NextBool() => Game1.random.NextDouble() < 0.5;
 
     public T NextItem<T>(IList<T> collection)
     {

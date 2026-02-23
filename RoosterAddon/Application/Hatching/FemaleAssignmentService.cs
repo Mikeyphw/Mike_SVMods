@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RoosterAddon.Constants;
 using RoosterAddon.Enums;
+using RoosterAddon.Framework;
 using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
 using RoosterAddon.Infrastructure.SaveData;

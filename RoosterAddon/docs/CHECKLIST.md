@@ -2,7 +2,7 @@
 
 ## Scope
 ## Phase 0 — Keep docs in sync
-- [ ] Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
+- [x] Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
 - [x] Keep all debug/diagnostics options on GMCM page id `debug` only.
 - [x] Keep option IDs stable forever (translation keys and field IDs depend on this).
 ## Phase 4 — Baseline GMCM menu via BOAF host (delegate binding)

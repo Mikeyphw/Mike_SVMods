@@ -91,22 +91,30 @@ internal static class DesertTombBreakableLootPatches
         if (item is null)
             return true;
 
-        // Scale the final stack probabilistically so multipliers like 1.15 still have effect for stack=1.
-        var baseStack = Math.Max(1, item.Stack);
-        var target = baseStack * _dropRateMultiplier;
+        _reentryGuard = true;
+        try
+        {
+            // Scale the final stack probabilistically so multipliers like 1.15 still have effect for stack=1.
+            var baseStack = Math.Max(1, item.Stack);
+            var target = baseStack * _dropRateMultiplier;
 
-        var floored = (int)Math.Floor(target);
-        var frac = target - floored;
+            var floored = (int)Math.Floor(target);
+            var frac = target - floored;
 
-        var stack = floored;
-        if (frac > 0 && Game1.random.NextDouble() < frac)
-            stack += 1;
+            var stack = floored;
+            if (frac > 0 && Game1.random.NextDouble() < frac)
+                stack += 1;
 
-        // If multiplier < 1, this can go to 0; treat that as "no drop".
-        if (stack <= 0)
-            return false;
+            // If multiplier < 1, this can go to 0; treat that as "no drop".
+            if (stack <= 0)
+                return false;
 
-        item.Stack = stack;
-        return true;
+            item.Stack = stack;
+            return true;
+        }
+        finally
+        {
+            _reentryGuard = false;
+        }
     }
 }

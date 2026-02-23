@@ -16,7 +16,7 @@
 
 // using static LetMeHatchThisEgg.ModEntry;
 
-namespace LetMeHatchThisEgg.AssetManagement
+// namespace LetMeHatchThisEgg.AssetManagement
 // {
 //     public class TextureManager
 //     {
@@ -995,8 +995,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
 
         private void FinalizeProcessing(List<(string message, LogLevel level)> log)
         {
-            ModEntry.InvalidationBatcher.Request(
-            );
+            ModEntry.InvalidationBatcher.Request(Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.AssetNames.SpringObjects);
             ModEntry.HelperInstance.Data.WriteJsonFile(
                 "gray/log.json",
                 string.Join(Environment.NewLine, log)
@@ -1083,7 +1082,7 @@ namespace LetMeHatchThisEgg.GameAssetManagement
             {
                 editor.PatchImage(grayTexture, null, targetRectangle, PatchMode.Replace);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 LoggerHelper.VerboseLog($"tagetRec: ({targetRectangle.X},{targetRectangle.Y})");
             }

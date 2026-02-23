@@ -11,7 +11,7 @@ namespace LetMeHatchThisEgg.Core.Cloning;
 /// <summary>
 /// Centralizes clone → purchase mapping rules (alternate purchase targets, original purchase animal resolution).
 /// </summary>
-public sealed class CloneMappingService
+public sealed class CloneMappingService : ICloneMappingService
 {
     public void ApplyAlternatePurchaseRules(
         ClonedAnimalInfo clonedAnimalInfo,
@@ -35,7 +35,7 @@ public sealed class CloneMappingService
         {
             AddAlternatePurchaseType(
                 farmAnimalsData,
-                VanillaAnimals.WhiteChicken,
+                Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.VanillaAnimals.WhiteChicken,
                 maleKey,
                 femaleKey
             );
@@ -78,8 +78,8 @@ public sealed class CloneMappingService
         IDictionary<string, FarmAnimalData> farmAnimalsData
     )
     {
-        return femaleKey == VanillaAnimals.VoidChicken
-            && farmAnimalsData.TryGetValue(VanillaAnimals.VoidChicken, out var voidChicken)
+        return femaleKey == Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.VanillaAnimals.VoidChicken
+            && farmAnimalsData.TryGetValue(Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.VanillaAnimals.VoidChicken, out var voidChicken)
             && voidChicken.PurchasePrice == -1;
     }
 
@@ -128,6 +128,11 @@ public sealed class CloneMappingService
         string? femaleKey = null
     )
     {
+        if (string.IsNullOrWhiteSpace(femaleKey))
+        {
+            return farmAnimalsData[targetKey];
+        }
+
         var originalPurchaseAnimal = farmAnimalsData.GetOriginalPurchaseAnimal(femaleKey);
 
         return originalPurchaseAnimal != null && originalPurchaseAnimal.Value.Key != null

@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using Mikew.BirdsOfAFeather.Helpers;
 using RoosterAddon.Application.Hatching;
 using RoosterAddon.Application.Planning;
+using RoosterAddon.Framework.Config;
 using RoosterAddon.Helpers;
 using RoosterAddon.Enums;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.GameData.FarmAnimals;
 
 using LuckyTypes = Mikew.BirdsOfAFeather.EnumsAndStrings.Enums.LuckyTypes;
 
@@ -41,14 +44,14 @@ internal sealed partial class RoosterCoordinator
                 ["Weather |contains=rain, storm, snow, greenrain"] = "true",
             };
 
-            conditionStuckInsideSeason = new Mikew.BirdsOfAFeather.Framework.ManagedConditions(
+            conditionStuckInsideSeason = new ManagedConditions(
                 ModEntry.ContentPatcher.ParseConditions(
                     manifest: ModManifest,
                     rawConditions: rawStuckInsideSeason,
                     formatVersion: new SemanticVersion("2.0.0")
                 )
             );
-            conditionStuckInsideWeather = new Mikew.BirdsOfAFeather.Framework.ManagedConditions(
+            conditionStuckInsideWeather = new ManagedConditions(
                 ModEntry.ContentPatcher.ParseConditions(
                     manifest: ModManifest,
                     rawConditions: rawStuckInsideWeather,
@@ -189,5 +192,6 @@ internal sealed partial class RoosterCoordinator
     }
 
 private bool GetHatchApiCloneEggsOption()
-        => HatchApi is not null && HatchApi.GetClonedAnimalsInfo().Count > 0;
+        => HatchApi is not null
+            && (HatchApi.GetClonedAnimalsInfo().Count > 0 || HatchApi.AnimalsWithClonedEggs.Count > 0);
 }

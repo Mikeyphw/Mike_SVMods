@@ -1,12 +1,10 @@
 using System.Text.RegularExpressions;
-using BirdsOfAFeather.Helpers;
 using LetMeHatchThisEgg.GameAssetManagement;
 using LetMeHatchThisEgg.Breeding;
 using LetMeHatchThisEgg.Config;
 using LetMeHatchThisEgg.Framework;
 using LetMeHatchThisEgg.Helpers;
 using LetMeHatchThisEgg.Models;
-using LetMeHatchThisEgg.UI;
 using StardewModdingAPI;
 using Microsoft.Xna.Framework;
 using StardewValley;

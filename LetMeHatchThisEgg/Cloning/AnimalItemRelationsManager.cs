@@ -141,10 +141,7 @@ namespace LetMeHatchThisEgg.Cloning
                     );
                 }
             }
-        
-
-            ApplyItemToCloneOverrides();
-}
+        }
 
         public static CloneItemType[] GetCloneItemTypes()
         {

@@ -13,6 +13,7 @@ public sealed class LmhAssetPipeline : IDisposable
     private readonly AssetRequestCoordinator<ContentContext> _coordinator;
     private readonly AssetInvalidationBatcher _invalidation;
     private readonly IReadOnlyCollection<string> _invalidationTargets;
+    private bool _attached;
 
     public LmhAssetPipeline(
         AssetRequestCoordinator<ContentContext> coordinator,
@@ -24,14 +25,24 @@ public sealed class LmhAssetPipeline : IDisposable
         _invalidationTargets = invalidationTargets ?? throw new ArgumentNullException(nameof(invalidationTargets));
     }
 
-    public void HandleAssetRequested(AssetRequestedEventArgs e) => _coordinator.HandleAssetRequested(e);
+    public void Attach()
+    {
+        if (_attached)
+            return;
 
-    public IEnumerable<string> GetDebugReportLines() => _coordinator.GetDebugReportLines();
+        _coordinator.Attach();
+        _attached = true;
+    }
+
+    public void HandleAssetRequested(AssetRequestedEventArgs e)
+    {
+        // Event-driven handling is owned by the coordinator after Attach().
+    }
+
+    public IEnumerable<string> GetDebugReportLines() => Array.Empty<string>();
 
     public void RequestInvalidateAll()
     {
-        _coordinator.InvalidateAll();
-
         foreach (var target in _invalidationTargets)
             _invalidation.Request(target);
     }

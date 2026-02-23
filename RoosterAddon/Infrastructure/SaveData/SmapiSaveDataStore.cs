@@ -32,6 +32,6 @@ internal sealed class SmapiSaveDataStore : ISaveDataStore
 
     public void Delete(string key)
     {
-        _helper.Data.WriteSaveData<object?>(key, null);
+        _helper.Data.WriteSaveData<object>(key, null);
     }
 }

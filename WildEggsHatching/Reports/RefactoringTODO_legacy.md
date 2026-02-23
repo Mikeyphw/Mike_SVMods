@@ -18,9 +18,9 @@
 - [x] ✅ Add QuestCompletionDays tracking to PlayerWildState (was already done)
 - [x] ✅ Update IGameMailService to support string quest methods (was already done)
 - [x] Fix UnlockRuleEvaluator quest ID strings to match constants (COMPLETED)
-- [ ] Update TODOrefactor_PLAN.md with completion
+- [x] Update TODOrefactor_PLAN.md with completion
 
-## Phase 5: Asset/Content - IN PROGRESS
+## Phase 5: Asset/Content - COMPLETED
 
 Files to complete:
-- SmapiContentEditor - needs GameAssetManager logic ported
+- [x] SmapiContentEditor - GameAssetManager logic ported to refactor editors/pipeline.

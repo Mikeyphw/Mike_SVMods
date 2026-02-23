@@ -1,3 +1,4 @@
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley.GameData.Objects;
 using static LetMeHatchThisEgg.EnumsAndStrings.Strings;

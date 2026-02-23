@@ -19,6 +19,7 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
     private const string PrismaticValleyColorKey = "JollyLlama.PrismaticValleyFramework/Color";
     private const string PrismaticValleyPaletteKey = "JollyLlama.PrismaticValleyFramework/Palette";
     private const string PrismaticValleyCustomPalette = "Custom Palette";
+
     public override void Edit(IAssetData asset, ContentContext context)
     {
         var data = asset.AsDictionary<string, ObjectData>().Data;
@@ -33,7 +34,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
 
         foreach (var def in GetEggDefinitions(context))
         {
-            // Keep magic eggs progression-gated for cleaner validation/diagnosis.
             if (def.Kind.IsMagic() && context.Step < ProgressionStep.PartVI)
                 continue;
 
@@ -113,9 +113,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         };
     }
 
-        };
-    }
-
     private static string EggTypeNameForContextTag(EggKind kind)
     {
         if (kind.IsMagic() && kind.IsLarge())
@@ -138,12 +135,7 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         if (kind.IsLarge())
             return 150;
 
-        if (kind.IsMagic())
-            return 100;
-
         return 100;
-    }
-        };
     }
 
     private static ObjectData CreateOsirisScroll(ContentContext context)
@@ -168,9 +160,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             },
         };
 
-
-
-    
     private static ObjectData CreateJunimoNote(ContentContext context, string animalKey, string noteId)
         => new()
         {
@@ -201,9 +190,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             },
         };
 
-
-
-
     private static ObjectData CreateElixir(ContentContext context)
         => new()
         {
@@ -226,8 +212,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             },
         };
 
-
-
     private static int EggSpriteIndex(EggKind kind)
         => (kind.IsMagic() ? 2 : 0) + (kind.IsLarge() ? 1 : 0);
 
@@ -239,7 +223,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             ? eggItemId[prefix.Length..]
             : eggItemId;
 
-        // Expected suffixes: WEgg, LWEgg, MWEgg, LMWEgg
         foreach (var suffix in new[] { "LMWEgg", "LWEgg", "MWEgg", "WEgg" })
         {
             if (token.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
@@ -276,9 +259,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         return new string(chars.ToArray());
     }
 
-
-        return new string(chars.ToArray());
-    }
     private static IReadOnlyList<string> GetAnimalKeys(ContentContext context)
     {
         return context.ModData.WildAnimals.Keys
@@ -286,9 +266,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             .ToList();
     }
 
-
-
-    
     private static string ResolveFarmAnimalDisplayName(string animalId)
     {
         if (Game1.farmAnimalData is not null && Game1.farmAnimalData.TryGetValue(animalId, out var data))
@@ -296,7 +273,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             if (!string.IsNullOrWhiteSpace(data.DisplayName))
                 return data.DisplayName;
 
-            // Fallback: some entries only populate ShopDisplayName.
             if (!string.IsNullOrWhiteSpace(data.ShopDisplayName))
                 return data.ShopDisplayName;
         }
@@ -327,9 +303,6 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         return tokens.Length == 0 ? fallback : string.Format(fallback, tokens);
     }
 
-
-private static string TranslateOrFallback(ContentContext context, string key, string fallback)
-        => context.I18n.GetOrDefault(key, fallback);
     private static IReadOnlyList<EggDefinition> GetEggDefinitions(ContentContext context)
     {
         var ids = SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas);
@@ -342,7 +315,5 @@ private static string TranslateOrFallback(ContentContext context, string key, st
             .ToList();
     }
 
-
     private sealed record EggDefinition(string EggItemId, string LocationToken, EggKind Kind);
 }
-

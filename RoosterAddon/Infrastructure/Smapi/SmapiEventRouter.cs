@@ -32,7 +32,7 @@ internal sealed class SmapiEventRouter
         _helper.Events.GameLoop.Saving += _coordinator.OnSaving;
         _helper.Events.GameLoop.ReturnedToTitle += _coordinator.OnReturnedToTitle;
         _helper.Events.GameLoop.DayStarted += _coordinator.OnDayStarted;
-        _helper.Events.GameLoop.LocaleChanged += _coordinator.OnLocaleChanged;
+        _helper.Events.Content.LocaleChanged += _coordinator.OnLocaleChanged;
 
         _helper.Events.Player.Warped += _coordinator.OnWarped;
         _helper.Events.Content.AssetRequested += _coordinator.OnAssetRequested;
@@ -50,7 +50,7 @@ internal sealed class SmapiEventRouter
         _helper.Events.GameLoop.Saving -= _coordinator.OnSaving;
         _helper.Events.GameLoop.ReturnedToTitle -= _coordinator.OnReturnedToTitle;
         _helper.Events.GameLoop.DayStarted -= _coordinator.OnDayStarted;
-        _helper.Events.GameLoop.LocaleChanged -= _coordinator.OnLocaleChanged;
+        _helper.Events.Content.LocaleChanged -= _coordinator.OnLocaleChanged;
 
         _helper.Events.Player.Warped -= _coordinator.OnWarped;
         _helper.Events.Content.AssetRequested -= _coordinator.OnAssetRequested;

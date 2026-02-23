@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Mikew.BirdsOfAFeather.EnumsAndStrings;
 using StardewValley.GameData.FarmAnimals;
+using static Mikew.BirdsOfAFeather.EnumsAndStrings.Strings.ItemIds;
 
 namespace LetMeHatchThisEgg.Core.Cloning;
 
@@ -117,7 +117,7 @@ public sealed class FarmAnimalCloneTransformer
         }
 
         // BoAF string constants (avoid local duplicates).
-        if (Strings.AnimalProducts.VanillaEggs.Contains(itemId))
+        if (AnimalProducts.VanillaEggs.Contains(itemId))
         {
             return true;
         }

@@ -193,7 +193,7 @@ public sealed class RoosterControl
         return defaults.Roosters[roosterType.ToString()].Eggs;
     }
 
-    private static Dictionary<ProduceTypeEntries, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>> BuildProduces, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>> BuildProduces(RoosterSettings settings, IProduceResolver resolver)
+    private static Dictionary<ProduceTypeEntries, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>> BuildProduces(RoosterSettings settings, IProduceResolver resolver)
     {
         var produce = BuildProduceEntries(settings.ProduceEntries, resolver);
         var deluxe = BuildProduceEntries(settings.DeluxeProduceEntries, resolver);

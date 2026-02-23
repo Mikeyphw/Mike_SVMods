@@ -10,6 +10,7 @@ using Mikew.BirdsOfAFeather.Helpers;
 using Mikew.BirdsOfAFeather.Helpers.Config;
 using Mikew.BirdsOfAFeather.Helpers.Content;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
+using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
 namespace LetMeHatchThisEgg.Infrastructure.Content;
 
@@ -54,31 +55,27 @@ public static class LetMeHatchContentPipeline
         foreach (var editor in CreateEditors(app))
             targets.Add(editor.Editor.AssetName);
 
-        targets.Add(assetHandler.GetAssetPath(ModAssetHandler.Assets.Boaf.GamePaths, ModAssetHandler.AssetPathType.GamePath));
-        targets.Add(assetHandler.GetAssetPath(ModAssetHandler.Assets.Object.ClonedItems, ModAssetHandler.AssetPathType.GamePath));
-        targets.Add(assetHandler.GetAssetPath(ModAssetHandler.Assets.Texture.MaleClones, ModAssetHandler.AssetPathType.GamePath));
+        targets.Add(assetHandler.GetAssetPath(Assets.Object.ClonedItems, ModAssetHandler.AssetPathType.GamePath));
 
         return targets;
     }
 
     private static IEnumerable<IAssetLoader> CreateLoaders(ModAssetHandler assetHandler, LmhApplicationServices app)
     {
-        yield return new BoafGamePathsLoader(assetHandler, app.AssetLoads);
         yield return new ClonedEggsAssetLoader(assetHandler, app.AssetLoads);
-        yield return new MaleClonesTextureLoader(assetHandler, app.AssetLoads);
     }
 
     private static IEnumerable<EditorRegistration> CreateEditors(LmhApplicationServices app)
     {
-        yield return new EditorRegistration(new FarmAnimalsBreedingSystemEditor(), order: 10);
-        yield return new EditorRegistration(new FarmAnimalsEggListByNameEditor(), order: 20);
-        yield return new EditorRegistration(new FarmAnimalsClonesEditor(), order: 30);
-        yield return new EditorRegistration(new FarmAnimalsBirthTextEditor(), order: 40);
-        yield return new EditorRegistration(new FarmAnimalsClonePlaceholdersEditor(), order: 50);
-        yield return new EditorRegistration(new FarmAnimalsReplaceOriginalItemsEditor(), order: 60);
-        yield return new EditorRegistration(new ObjectsClonedEggsEditor(), order: 70);
-        yield return new EditorRegistration(new ObjectsFertilizedEggsEditor(), order: 80);
-        yield return new EditorRegistration(new MachinesRulesEditor(), order: 90);
+        yield return new EditorRegistration(new FarmAnimalsBreedingSystemEditor(), Order: 10);
+        yield return new EditorRegistration(new FarmAnimalsEggListByNameEditor(), Order: 20);
+        yield return new EditorRegistration(new FarmAnimalsClonesEditor(), Order: 30);
+        yield return new EditorRegistration(new FarmAnimalsBirthTextEditor(), Order: 40);
+        yield return new EditorRegistration(new FarmAnimalsClonePlaceholdersEditor(), Order: 50);
+        yield return new EditorRegistration(new FarmAnimalsReplaceOriginalItemsEditor(), Order: 60);
+        yield return new EditorRegistration(new ObjectsClonedEggsEditor(), Order: 70);
+        yield return new EditorRegistration(new ObjectsFertilizedEggsEditor(), Order: 80);
+        yield return new EditorRegistration(new MachinesRulesEditor(), Order: 90);
     }
 
     internal sealed record EditorRegistration(IAssetEditor<ContentContext> Editor, int Order);

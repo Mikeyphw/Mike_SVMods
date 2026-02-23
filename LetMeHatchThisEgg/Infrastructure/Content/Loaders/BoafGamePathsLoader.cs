@@ -1,7 +1,6 @@
 using LetMeHatchThisEgg.Application.UseCases;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI.Events;
-using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
 
 namespace LetMeHatchThisEgg.Infrastructure.Content.Loaders;
 
@@ -15,7 +14,7 @@ public sealed class BoafGamePathsLoader : AssetLoaderBase
         : base(AssetLoadPriority.Exclusive)
     {
         _loads = loads;
-        _boafGamePaths = assetHandler.GetAssetPath(Assets.Boaf.GamePaths, AssetPathType.GamePath);
+        _boafGamePaths = string.Empty;
     }
 
     public override string DebugHandles => "BoAF game path: Assets.Boaf.GamePaths";
@@ -23,7 +22,7 @@ public sealed class BoafGamePathsLoader : AssetLoaderBase
     public override string DebugGates => "assetNameLower equals boaf game paths.";
 
     public override bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
-        => assetNameLower == _boafGamePaths;
+        => !string.IsNullOrEmpty(_boafGamePaths) && assetNameLower == _boafGamePaths;
 
     public override void Load(string assetNameLower, AssetRequestedEventArgs e)
         => _loads.OnBoafGamePathsRequested(e);

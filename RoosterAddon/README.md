@@ -11,5 +11,5 @@
 
 This mod follows **BOAF-first** rules:
 - BOAF is mandatory; no local duplicates of BOAF infra.
-- No legacy compatibility.
+- Legacy config files are migrated to the typed schema on load.
 - Zip packaging uses `zip2git.json` + `Mike_SVMods/...` structure (see repo rules).

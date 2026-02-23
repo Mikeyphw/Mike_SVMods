@@ -6,7 +6,7 @@ namespace WildEggsHatching.Infrastructure.Harmony;
 
 internal static class AnimalNotesItemPatches
 {
-    public static void Install(Harmony harmony)
+    public static void Install(HarmonyLib.Harmony harmony)
     {
         harmony.Patch(
             original: AccessTools.Method(typeof(Item), nameof(Item.canBeTrashed)),

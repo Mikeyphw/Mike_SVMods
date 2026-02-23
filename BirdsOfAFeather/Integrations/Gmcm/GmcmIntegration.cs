@@ -116,7 +116,7 @@ public sealed class GmcmIntegration
         if (_localeHandlerAttached)
             return;
 
-        _helper.Events.GameLoop.LocaleChanged += OnLocaleChanged;
+        _helper.Events.Content.LocaleChanged += OnLocaleChanged;
         _localeHandlerAttached = true;
     }
 

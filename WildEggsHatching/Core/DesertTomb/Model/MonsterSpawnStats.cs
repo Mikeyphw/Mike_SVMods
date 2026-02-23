@@ -18,7 +18,9 @@ public sealed record MonsterSpawnStats(
     int PackMax,
     int DifficultyAdd,
     int SpeedAdd
-)
+);
+
+public static class MonsterSpawnStatsExtensions
 {
-    public MonsterSpawnStats Clone() => this with { };
+    public static MonsterSpawnStats Clone(this MonsterSpawnStats value) => value with { };
 }

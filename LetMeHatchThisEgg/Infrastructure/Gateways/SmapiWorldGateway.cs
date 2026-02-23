@@ -1,4 +1,5 @@
 using LetMeHatchThisEgg.Application.Gateways;
+using StardewModdingAPI;
 using StardewValley;
 
 namespace LetMeHatchThisEgg.Infrastructure.Gateways;

@@ -463,7 +463,7 @@ namespace LetMeHatchThisEgg.Helpers
 
         public static Texture2D ConvertToGrayscale(
             Texture2D texture,
-            IMonitor monitor,
+            IMonitor? monitor,
             float minLuminance,
             float maxLuminance
         )

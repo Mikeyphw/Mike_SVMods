@@ -6,6 +6,7 @@ using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Api;
 using WildEggsHatching.Infrastructure.Config;
 using Xunit;
+using WildEggsHatching.Infrastructure.ModData;
 
 namespace WildEggsHatching.Refactor.Tests;
 
@@ -21,16 +22,29 @@ public sealed class WildEggsApiTests
             Days = new Dictionary<string, int> { { "q1", 5 } }
         };
 
-        IWildEggsApi api = new WildEggsApi(facade);
+        IWildEggsApi api = new WildEggsApi(facade, new FakeModDataLoader());
 
         Assert.Equal(1, api.ApiVersion);
         Assert.Equal(ProgressionStep.PartII, api.GetProgressionStep());
         Assert.True(api.IsProgressionModeEnabled());
         Assert.False(api.IsDesertTombModuleEnabled());
 
+        Assert.NotNull(api.BirthTextMode);
+        Assert.NotNull(api.ValidAnimals);
+        api.SetBirthTextMode("Mysterious");
+        Assert.Equal("Mysterious", api.BirthTextMode);
+        api.SetChosenAnimal("Chicken", "Coop", isMagic: false);
+        Assert.Equal("Chicken", api.ChosenAnimal_Coop);
+        Assert.NotNull(api.WildEggsIDs);
+
         var days = api.GetQuestCompletionDays();
         Assert.Equal(5, days["q1"]);
     }
+
+private sealed class FakeModDataLoader : IModDataLoader
+{
+    public ModDataSnapshot Load() => ModDataSnapshot.Empty;
+}
 
     private sealed class FakeFacade : IModFacade
     {

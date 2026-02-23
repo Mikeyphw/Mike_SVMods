@@ -82,6 +82,10 @@ internal sealed class FertilizedOnlyHatchingStrategy : IHatchingStrategy
         eggId = string.Empty;
         if (!rooster.Eggs.TryGetValue(eggType, out var egg))
             return false;
-        return egg.TryGetValue(RoosterItemDataEntries.Name, out eggId) && !string.IsNullOrWhiteSpace(eggId);
+        if (!egg.TryGetValue(RoosterItemDataEntries.Name, out var rawEggId))
+            return false;
+
+        eggId = rawEggId ?? string.Empty;
+        return !string.IsNullOrWhiteSpace(eggId);
     }
 }

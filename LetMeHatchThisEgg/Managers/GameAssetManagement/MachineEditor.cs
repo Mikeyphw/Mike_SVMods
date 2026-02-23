@@ -4,6 +4,8 @@ using LetMeHatchThisEgg.Models;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewValley.Extensions;
 using StardewValley.GameData.Machines;
+using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
+using static LetMeHatchThisEgg.ModEntry;
 
 namespace LetMeHatchThisEgg.GameAssetManagement;
 
@@ -68,9 +70,9 @@ public sealed class MachineEditor
 
             var unqualifiedItemId = GetUnqualifiedItemId(outputItemRule.ItemId);
 
-            foreach (var outputItemToClone in _outputItemsToClone.Where(o => o.OutputItemId == unqualifiedItemId))
+            foreach (var outputItemToClone in _outputItemsToClone.Where(o => o.InputItemID == unqualifiedItemId))
             {
-                var clonedItemId = outputItemToClone.ClonedItemId;
+                var clonedItemId = outputItemToClone.InputItemClonedID;
                 var clonedOutputRule = outputRule.CloneOrDeepClone(true);
                 if (clonedOutputRule == null)
                 {

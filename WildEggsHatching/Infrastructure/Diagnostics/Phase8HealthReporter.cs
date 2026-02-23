@@ -16,7 +16,9 @@ namespace WildEggsHatching.Infrastructure.Diagnostics;
 /// <summary>Concise startup health report for Phase 8 refactor.</summary>
 public static class Phase8HealthReporter
 {
-    private static readonly Regex ImageSourceRegex = new("<image\s+source=\"(?<src>[^\"]+)\"", RegexOptions.Compiled);
+    private static readonly Regex ImageSourceRegex = new(
+        @"<image\s+source=""(?<src>[^""]+)""",
+        RegexOptions.Compiled);
 
     public static void LogPhase8HealthReport(IModHelper helper, ISaveDataStore store, SmapiConfigProvider<ModConfig> config, ILog log)
     {

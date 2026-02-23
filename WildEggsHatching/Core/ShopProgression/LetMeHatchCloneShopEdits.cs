@@ -58,11 +58,11 @@ public static class LetMeHatchCloneShopEdits
             if (!farmAnimals.TryGetValue(maleId, out var male) || male is null)
                 continue;
 
-            var existing = ShopFieldsAccessor.GetUnlockCondition(male);
+            var existing = FarmAnimalShopProgressionEdits.ShopFieldsAccessor.GetUnlockCondition(male);
             var cleaned = RemoveToken(existing, ConditionJoiner.MailReceivedByHost(AnimalNoteIds.NoteMailId(maleId)));
             var merged = ConditionJoiner.And(cleaned, femaleCond);
 
-            ShopFieldsAccessor.SetUnlockCondition(male, merged);
+            FarmAnimalShopProgressionEdits.ShopFieldsAccessor.SetUnlockCondition(male, merged);
         }
     }
 
@@ -112,9 +112,9 @@ public static class LetMeHatchCloneShopEdits
                     if (entry.AnimalIds.Count == 1)
                     {
                         // Male-only: just AND its Condition.
-                        var newCond = ConditionJoiner.And(entry.Condition, femaleCond);
-                        AlternatePurchaseTypesAccessor.SetCondition(entry, newCond);
-                        continue;
+                    var mergedCond = ConditionJoiner.And(entry.Condition, femaleCond);
+                    AlternatePurchaseTypesAccessor.SetCondition(entry, mergedCond);
+                    continue;
                     }
 
                     // Mixed: remove male from the random pool and add a dedicated male-only entry gated by female.
@@ -131,14 +131,14 @@ public static class LetMeHatchCloneShopEdits
                         continue;
 
                     var newId = (entry.Id ?? "wegg_alt") + $"__wegg_clone__{maleId}";
-                    var newCond = ConditionJoiner.And(entry.Condition, femaleCond);
+                    var splitEntryCond = ConditionJoiner.And(entry.Condition, femaleCond);
 
                     AlternatePurchaseTypesAccessor.TryInsertAfter(
                         parent!,
                         existing: entry,
                         animalIds: new[] { maleId },
                         id: newId,
-                        condition: newCond);
+                        condition: splitEntryCond);
                 }
             }
         }

@@ -22,6 +22,26 @@ public static class ConfigManager
             return created;
         }
 
+        if (LegacyConfigAdapter.TryMigrateFromFile(path, monitor, out var migratedLegacy))
+        {
+            var backupPath = Path.Combine(
+                helper.DirectoryPath,
+                $"config.legacy.{DateTimeOffset.Now:yyyyMMddHHmmss}.json"
+            );
+            try
+            {
+                File.Copy(path, backupPath, overwrite: true);
+            }
+            catch
+            {
+                // best-effort backup
+            }
+
+            helper.WriteConfig(Normalize(migratedLegacy));
+            monitor.Log($"RoosterAddon: wrote migrated config. Legacy backup: {backupPath}", LogLevel.Info);
+            return Normalize(migratedLegacy);
+        }
+
         try
         {
             var cfg = helper.ReadConfig<RoosterAddonConfig>();
@@ -57,8 +77,7 @@ public static class ConfigManager
             }
 
             monitor.Log(
-                $"RoosterAddon: failed to read config.json, writing defaults. Backup: {backupPath}
-{ex}",
+                $"RoosterAddon: failed to read config.json, writing defaults. Backup: {backupPath}\n{ex}",
                 LogLevel.Error
             );
 

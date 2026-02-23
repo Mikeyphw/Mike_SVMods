@@ -6,10 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <!-- Compile only the refactor code surface (exclude /tests and non-code assets). -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-
-    <!-- Keep assembly name stable for EntryDll -->
     <AssemblyName>WildEggsHatching</AssemblyName>
     <RootNamespace>WildEggsHatching</RootNamespace>
   </PropertyGroup>
@@ -31,7 +28,7 @@
 
   <ItemGroup>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
-    <PackageReference Include="HarmonyLib" Version="2.3.3" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.3" />
   </ItemGroup>
 
   <ItemGroup>

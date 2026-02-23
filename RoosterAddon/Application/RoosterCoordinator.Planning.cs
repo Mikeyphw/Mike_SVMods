@@ -51,7 +51,7 @@ internal sealed partial class RoosterCoordinator
             return null;
 
         var today = StardewModdingAPI.Utilities.SDate.Now().DaysSinceStart;
-        var farmId = Game1.uniqueIDForThisGame;
+        var farmId = unchecked((long)Game1.uniqueIDForThisGame);
 
         var fingerprint = _planService.ComputeFingerprint(
             config: Config,
@@ -461,7 +461,10 @@ internal sealed partial class RoosterCoordinator
             _ = EnsureDailyPlanForToday(data, forceRecompute: false, out _);
 
             var fileName = Infrastructure.StateDumps.StateDumpJson.BuildFileName("roosteraddon_daily_plan", DateTimeOffset.Now);
-            WriteStateDump(fileName, _dailyPlan ?? new { error = "plan not available" });
+            if (_dailyPlan is not null)
+                WriteStateDump(fileName, _dailyPlan);
+            else
+                WriteStateDump(fileName, new { error = "plan not available" });
             Monitor.Log($"Wrote plan dump: {fileName}", LogLevel.Info);
             return;
         }

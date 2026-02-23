@@ -7,19 +7,17 @@ namespace LetMeHatchThisEgg.Application.Services;
 
 /// <summary>
 /// Application-layer service for Data/Machines edits.
+/// Keeps branching/guard logic testable by injecting operations.
 /// </summary>
 public sealed class MachinesAssetEditsService : IMachinesAssetEdits
 {
-    private readonly Action<Dictionary<string, MachineData>> _applyEdits;
+    private readonly Func<Dictionary<string, MachineData>, bool, bool, bool> _cloneMachineRules;
 
-    public MachinesAssetEditsService(Action<Dictionary<string, MachineData>> applyEdits)
+    public MachinesAssetEditsService(Func<Dictionary<string, MachineData>, bool, bool, bool> cloneMachineRules)
     {
-        _applyEdits = applyEdits ?? throw new ArgumentNullException(nameof(applyEdits));
+        _cloneMachineRules = cloneMachineRules ?? throw new ArgumentNullException(nameof(cloneMachineRules));
     }
 
-    public bool TryApplyEdits(Dictionary<string, MachineData> data)
-    {
-        _applyEdits(data);
-        return true;
-    }
+    public bool TryCloneMachineRules(Dictionary<string, MachineData> data, bool onlyFertilizedEggs, bool cloneMachineRules) =>
+        _cloneMachineRules(data, onlyFertilizedEggs, cloneMachineRules);
 }

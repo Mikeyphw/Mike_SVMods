@@ -51,7 +51,7 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
 
         var baseType = ResolveBaseMonsterType(monsterType, definition.BaseMonsterKey);
 
-        var monster = baseType switch
+        object monsterObj = baseType switch
         {
             TombMonsterType.AssassinBug => new TombAssassinBug(multipliers, position, effectiveDifficulty, definition.TextureName, effectiveSpeed, customDropData),
             TombMonsterType.Bat => new TombBat(multipliers, position, effectiveDifficulty, definition.TextureName, effectiveSpeed, customDropData),
@@ -73,6 +73,8 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
 
             _ => new TombMummy(multipliers, position, effectiveDifficulty, "Mummy", effectiveSpeed, customDropData),
         };
+        var monster = monsterObj as Monster
+            ?? new TombMummy(multipliers, position, effectiveDifficulty, "Mummy", effectiveSpeed, customDropData);
 
         ApplyTemplate(monster, monsterType, definition);
         ApplyDropOverrides(monster, monsterType, definition, multipliers, customDropData);

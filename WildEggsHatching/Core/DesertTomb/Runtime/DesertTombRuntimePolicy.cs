@@ -1,6 +1,8 @@
 using System;
 using System.Text.RegularExpressions;
+using StardewValley;
 using WildEggsHatching.Core.Enums;
+using WildEggsHatching.Infrastructure.Config;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace WildEggsHatching.DesertTomb.Core.Runtime;
@@ -22,6 +24,25 @@ public static class DesertTombRuntimePolicy
 
     public static bool IsTombCandidate(int mineLevel)
         => mineLevel > 120;
+
+    public static bool RollTombChance(TombChance chance, int mineLevel)
+    {
+        if (mineLevel <= 120)
+            return false;
+
+        if (chance == TombChance.Always)
+            return true;
+
+        var probability = chance switch
+        {
+            TombChance.High => 0.75,
+            TombChance.Medium => 0.50,
+            TombChance.Low => 0.25,
+            _ => 0.50,
+        };
+
+        return Game1.random.NextDouble() <= probability;
+    }
 
     public static bool TryParseMineLevel(string? mapPath, out MineLevel mineLevel)
     {

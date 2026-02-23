@@ -1,4 +1,5 @@
 using StardewValley;
+using StardewValley.TokenizableStrings;
 
 namespace LetMeHatchThisEgg.Utilities;
 

@@ -125,17 +125,6 @@ public sealed class MachinesEditor : AssetEditorBase<ContentContext>, IPostPassA
                     InvalidCountMessage = "It needs 5 ferns.",
                 },
             },
-            ReadyTimeModifiers = new List<QuantityModifier>
-            {
-                new()
-                {
-                    Id = "Coopmaster",
-                    Condition = "PLAYER_HAS_PROFESSION Target 2",
-                    Modification = QuantityModifier.ModificationType.Multiply,
-                    Amount = 0.5f,
-                },
-            },
-            ReadyTimeModifierMode = QuantityModifier.QuantityModifierMode.Stack,
             InvalidItemMessage = "Only work with wild eggs.",
             InvalidItemMessageCondition = "ITEM_CATEGORY Input -5",
             LoadEffects = new List<MachineEffects>
@@ -162,21 +151,6 @@ public sealed class MachinesEditor : AssetEditorBase<ContentContext>, IPostPassA
                     },
                     Interval = 100,
                     ShakeDuration = -1,
-                    TemporarySprites = new List<TemporaryAnimatedSpriteDefinition>
-                    {
-                        new()
-                        {
-                            Id = "Default",
-                            Texture = "TileSheets\animations",
-                            SourceRect = new Rectangle(0, 704, 64, 64),
-                            Interval = 20f,
-                            Frames = 6,
-                            Loops = 999999,
-                            PositionOffset = new Vector2(0, -32),
-                            Scale = 0.25f,
-                            AlphaFade = 0.005f,
-                        },
-                    },
                 },
             },
             WorkingEffectChance = 0.33f,

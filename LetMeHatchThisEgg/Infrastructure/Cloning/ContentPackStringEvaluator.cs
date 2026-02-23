@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using ContentPatcher;
+using Mikew.BirdsOfAFeather.Framework;
 using StardewModdingAPI;
 
 namespace LetMeHatchThisEgg.Infrastructure.Cloning;

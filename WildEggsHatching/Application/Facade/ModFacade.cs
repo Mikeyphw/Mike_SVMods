@@ -223,6 +223,7 @@ public sealed class ModFacade : IModFacade
             NeedsFern = c.NeedsFern,
             HatchDinoEggs = c.HatchDinoEggs,
             DinoEggsExclusiveHatch = c.DinoEggsExclusiveHatch,
+            BirthText = c.BirthText,
             DinoPrice = c.DinoPrice,
             VoidChickenPrice = c.VoidChickenPrice,
             OstrichPrice = c.OstrichPrice,

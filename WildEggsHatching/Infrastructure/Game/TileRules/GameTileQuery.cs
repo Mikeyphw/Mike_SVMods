@@ -18,7 +18,7 @@ public sealed class GameTileQuery : ITileQuery
         => _location.isWaterTile(x, y);
 
     public bool IsTotallyClearAndPlaceable(Vector2 tile)
-        => _location.isTileLocationTotallyClearAndPlaceable(tile);
+        => !_location.objects.ContainsKey(tile) && _location.isTilePassable(tile);
 
     public bool IsTilePassable(Vector2 tile)
         => _location.isTilePassable(tile);

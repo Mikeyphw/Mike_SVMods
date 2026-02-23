@@ -66,7 +66,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.SaveData
         {
             try
             {
-                _helper.Data.WriteSaveData<object?>(key, null);
+                _helper.Data.WriteSaveData<object>(key, null);
             }
             catch (Exception ex)
             {

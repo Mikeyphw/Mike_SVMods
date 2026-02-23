@@ -31,7 +31,8 @@ internal sealed partial class RoosterCoordinator
                 roosterHelper: RoosterHelper,
                 getFertilizedNameSuffix: () => Helper.Translation.Get("egg.fertilized.name"),
                 getFertilizedDescription: () => Helper.Translation.Get("egg.fertilized.description"),
-                cloneEggsEnabled: GetHatchApiCloneEggsOption
+                cloneEggsEnabled: GetHatchApiCloneEggsOption,
+                includeMearasEggs: true
             );
             _fertilizedEggsEditor.Edit(e);
 

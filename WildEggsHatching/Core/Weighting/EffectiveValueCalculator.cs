@@ -140,7 +140,8 @@ public sealed class EffectiveValueCalculator
         if (!TryGetObjectSellPrice(baseProduceId, out var basePrice))
             return false;
 
-        var deluxeOk = !string.IsNullOrWhiteSpace(deluxeProduceId) && TryGetObjectSellPrice(deluxeProduceId!, out var deluxePrice);
+        var deluxePrice = 0;
+        var deluxeOk = !string.IsNullOrWhiteSpace(deluxeProduceId) && TryGetObjectSellPrice(deluxeProduceId!, out deluxePrice);
 
         var expectedPerProduce = deluxeOk
             ? basePrice * (1.0 - _pDeluxe) + deluxePrice * _pDeluxe

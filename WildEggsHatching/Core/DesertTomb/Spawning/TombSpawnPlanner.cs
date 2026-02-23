@@ -100,7 +100,8 @@ public sealed class TombSpawnPlanner
                 globalMaxByType: globalMaxByType,
                 type: guardType,
                 desiredCount: guardCount,
-                stats: statsByType[guardType]
+                stats: statsByType[guardType],
+                role: TombMonsterRole.Guard
             );
 
             if (remaining > 0)
@@ -123,14 +124,14 @@ public sealed class TombSpawnPlanner
 
                     if (wanderTypes.Count == 1)
                     {
-                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[0], remaining, statsByType[wanderTypes[0]]);
+                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[0], remaining, statsByType[wanderTypes[0]], TombMonsterRole.Wander);
                     }
                     else
                     {
                         var first = NextInclusive(1, remaining - 1);
                         var second = remaining - first;
-                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[0], first, statsByType[wanderTypes[0]]);
-                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[1], second, statsByType[wanderTypes[1]]);
+                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[0], first, statsByType[wanderTypes[0]], TombMonsterRole.Wander);
+                        AddWithCaps(specs, globalCounts, globalMaxByType, wanderTypes[1], second, statsByType[wanderTypes[1]], TombMonsterRole.Wander);
                     }
                 }
             }

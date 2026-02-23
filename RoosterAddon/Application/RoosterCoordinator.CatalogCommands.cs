@@ -413,6 +413,7 @@ internal sealed partial class RoosterCoordinator
     }
 
     private void WriteWithBackup<T>(string relativePath, T value, string backupRoot)
+        where T : class
     {
         if (value is null)
             return;

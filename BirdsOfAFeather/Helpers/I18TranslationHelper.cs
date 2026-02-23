@@ -143,8 +143,11 @@ namespace Mikew.BirdsOfAFeather.Helpers
 
             RecordKey(key);
             
-            if (_cache.TryGetValue(key, out result))
+            if (_cache.TryGetValue(key, out var cached) && cached is not null)
+            {
+                result = cached;
                 return true;
+            }
 
             var translation = _helper.Translation.Get(key);
             result = translation.ToString();

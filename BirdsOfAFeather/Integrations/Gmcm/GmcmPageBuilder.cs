@@ -336,11 +336,11 @@ public sealed class GmcmPageBuilder<TConfig>
         string? fieldId = null)
         where TEnum : struct, Enum
     {
-        var allowedValues = Enum.GetNames(typeof(TEnum));
+        var allowedValues = System.Enum.GetNames(typeof(TEnum));
 
         _menu.AddTextOption(
             getValue: () => getValue().ToString(),
-            setValue: v => setValue((TEnum)Enum.Parse(typeof(TEnum), v, ignoreCase: true)),
+            setValue: v => setValue((TEnum)System.Enum.Parse(typeof(TEnum), v, ignoreCase: true)),
             name: name,
             allowedValues: allowedValues,
             formatValue: formatAllowedValue,
@@ -411,7 +411,7 @@ public sealed class GmcmPageBuilder<TConfig>
             var memberPath = GetMemberPath(memberExpr);
 
             var getter = expr.Compile();
-            var setter = CompileSetter(expr.Parameters[0], memberExpr, typeof(T));
+            var setter = CompileSetter<T>(expr.Parameters[0], memberExpr);
 
             return new MemberBinding<T>(getter, setter, memberPath);
         }
@@ -439,11 +439,10 @@ public sealed class GmcmPageBuilder<TConfig>
 
         private static Action<TConfig, T> CompileSetter<T>(
             ParameterExpression originalParam,
-            MemberExpression memberExpr,
-            Type valueType)
+            MemberExpression memberExpr)
         {
             var cfgParam = Expression.Parameter(typeof(TConfig), "cfg");
-            var valParam = Expression.Parameter(valueType, "val");
+            var valParam = Expression.Parameter(typeof(T), "val");
 
             var replaced = new ReplaceParameterVisitor(originalParam, cfgParam).Visit(memberExpr)!;
             replaced = StripConvert(replaced);

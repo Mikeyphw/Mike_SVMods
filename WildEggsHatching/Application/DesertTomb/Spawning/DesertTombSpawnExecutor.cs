@@ -205,7 +205,7 @@ public sealed class DesertTombSpawnExecutor
         if (player is null)
             return true;
 
-        var playerTile = player.getTileLocationPoint();
+        var playerTile = player.TilePoint;
         var dx = tile.X - playerTile.X;
         var dy = tile.Y - playerTile.Y;
         return (dx * dx + dy * dy) >= (minDistanceTiles * minDistanceTiles);

@@ -113,42 +113,42 @@ namespace WildEggsHatching.DesertTomb.Core.Configuration;
                 {
                     [TombAreaType.MummyArea] = new Dictionary<TombMonsterType, MonsterSpawnStats>
                     {
-                        [TombMonsterType.TheTombPharaoh] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 2, speedAdd: 0),
+                        [TombMonsterType.TheTombPharaoh] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 2, SpeedAdd: 0),
                     },
                     [TombAreaType.MummyDefendArea] = new Dictionary<
                         TombMonsterType,
                         MonsterSpawnStats
                     >
                     {
-                        [TombMonsterType.Mummy] = new MonsterSpawnStats(weight: 3, minPerArea: 0, maxPerArea: 3, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.HauntedSkull] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.Ghost] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
-                        [TombMonsterType.RoyalSerpent] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
-                        [TombMonsterType.BruteMummy] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.Skeleton] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.SkeletonMage] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
+                        [TombMonsterType.Mummy] = new MonsterSpawnStats(Weight: 3, MinPerArea: 0, MaxPerArea: 3, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.HauntedSkull] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.Ghost] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 0, SpeedAdd: 0),
+                        [TombMonsterType.RoyalSerpent] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 0, SpeedAdd: 0),
+                        [TombMonsterType.BruteMummy] = new MonsterSpawnStats(Weight: 2, MinPerArea: 0, MaxPerArea: 2, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.Skeleton] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.SkeletonMage] = new MonsterSpawnStats(Weight: 2, MinPerArea: 0, MaxPerArea: 2, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
                     },
                     [TombAreaType.NormalArea] = new Dictionary<TombMonsterType, MonsterSpawnStats>
                     {
-                        [TombMonsterType.Mummy] = new MonsterSpawnStats(weight: 99, minPerArea: 0, maxPerArea: 99, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.HauntedSkull] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.Ghost] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
-                        [TombMonsterType.AssassinBug] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
-                        [TombMonsterType.Bat] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
-                        [TombMonsterType.RoyalSerpent] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
-                        [TombMonsterType.BruteMummy] = new MonsterSpawnStats(weight: 99, minPerArea: 0, maxPerArea: 99, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.Skeleton] = new MonsterSpawnStats(weight: 99, minPerArea: 0, maxPerArea: 99, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.SkeletonMage] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.Spider] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
+                        [TombMonsterType.Mummy] = new MonsterSpawnStats(Weight: 99, MinPerArea: 0, MaxPerArea: 99, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.HauntedSkull] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.Ghost] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 0, SpeedAdd: 0),
+                        [TombMonsterType.AssassinBug] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 0, SpeedAdd: 0),
+                        [TombMonsterType.Bat] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 0, SpeedAdd: 0),
+                        [TombMonsterType.RoyalSerpent] = new MonsterSpawnStats(Weight: 2, MinPerArea: 0, MaxPerArea: 2, PackMin: 1, PackMax: 1, DifficultyAdd: 0, SpeedAdd: 0),
+                        [TombMonsterType.BruteMummy] = new MonsterSpawnStats(Weight: 99, MinPerArea: 0, MaxPerArea: 99, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.Skeleton] = new MonsterSpawnStats(Weight: 99, MinPerArea: 0, MaxPerArea: 99, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.SkeletonMage] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.Spider] = new MonsterSpawnStats(Weight: 2, MinPerArea: 0, MaxPerArea: 2, PackMin: 1, PackMax: 1, DifficultyAdd: 0, SpeedAdd: 0),
                     },
                     [TombAreaType.SmallArea] = new Dictionary<TombMonsterType, MonsterSpawnStats>
                     {
-                        [TombMonsterType.Mummy] = new MonsterSpawnStats(weight: 2, minPerArea: 0, maxPerArea: 2, packMin: 1, packMax: 1, difficultyAdd: 1, speedAdd: 0),
-                        [TombMonsterType.AssassinBug] = new MonsterSpawnStats(weight: 1, minPerArea: 0, maxPerArea: 1, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
+                        [TombMonsterType.Mummy] = new MonsterSpawnStats(Weight: 2, MinPerArea: 0, MaxPerArea: 2, PackMin: 1, PackMax: 1, DifficultyAdd: 1, SpeedAdd: 0),
+                        [TombMonsterType.AssassinBug] = new MonsterSpawnStats(Weight: 1, MinPerArea: 0, MaxPerArea: 1, PackMin: 1, PackMax: 1, DifficultyAdd: 0, SpeedAdd: 0),
                     },
                     [TombAreaType.DuggyArea] = new Dictionary<TombMonsterType, MonsterSpawnStats>
                     {
-                        [TombMonsterType.Duggy] = new MonsterSpawnStats(weight: 4, minPerArea: 0, maxPerArea: 4, packMin: 1, packMax: 1, difficultyAdd: 0, speedAdd: 0),
+                        [TombMonsterType.Duggy] = new MonsterSpawnStats(Weight: 4, MinPerArea: 0, MaxPerArea: 4, PackMin: 1, PackMax: 1, DifficultyAdd: 0, SpeedAdd: 0),
                     },
                 },
             };

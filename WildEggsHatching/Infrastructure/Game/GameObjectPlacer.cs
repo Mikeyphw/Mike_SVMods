@@ -6,14 +6,18 @@ namespace WildEggsHatching.Infrastructure.Game;
 public sealed class GameObjectPlacer : IGameObjectPlacer
 {
     public bool IsTilePlaceable(GameLocation location, Vector2 tile)
-        => location.isTileLocationTotallyClearAndPlaceable(tile);
+        => !location.objects.ContainsKey(tile) && location.isTilePassable(tile);
 
     public bool TryPlaceObject(GameLocation location, Vector2 tile, int parentSheetIndex)
     {
         if (!IsTilePlaceable(location, tile))
             return false;
 
-        var obj = new StardewValley.Object(tile, parentSheetIndex, 1);
+        var obj = new StardewValley.Object(parentSheetIndex.ToString(), 1)
+        {
+            Location = location,
+            TileLocation = tile,
+        };
         location.objects[tile] = obj;
         return true;
     }

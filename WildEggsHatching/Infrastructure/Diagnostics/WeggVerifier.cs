@@ -11,9 +11,9 @@ using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.SpecialOrders;
 using WildEggsHatching.Application.AnimalNotes;
 using WildEggsHatching.Application.Progression;
+using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Infrastructure.Config;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
-using WildEggsHatching.Infrastructure.ModData;
 using Mikew.BirdsOfAFeather.Helpers.SaveData;
 using WildEggsHatching.Application.Animals;
 using WildEggsHatching.Infrastructure.ModData;
@@ -30,6 +30,8 @@ using WildEggsHatching.Core.ShopProgression;
 using StardewValley.GameData.Objects;
 using WildEggsHatching.Core.Weighting;
 using System.Collections;
+using AnimalNotesSaveKeys = WildEggsHatching.Application.AnimalNotes.SaveKeys;
+using ProgressionSaveKeys = WildEggsHatching.Application.Progression.SaveKeys;
 namespace WildEggsHatching.Infrastructure.Diagnostics;
 
 public sealed record WeggVerifyOptions(
@@ -216,14 +218,14 @@ public sealed class WeggVerifier
     {
         try
         {
-            var p = _store.ReadEnvelope<ProgressionSaveData>(SaveKeys.Progression);
+            var p = _store.ReadEnvelope<ProgressionSaveData>(ProgressionSaveKeys.Progression);
             if (p is null)
             {
                 report.Add("schema/progression", WeggVerifyStatus.Pass, "Progression schema: no save data yet.");
             }
-            else if (p.Version != SaveKeys.Version)
+            else if (p.Version != ProgressionSaveKeys.Version)
             {
-                report.Add("schema/progression", WeggVerifyStatus.Fail, $"Progression schema version {p.Version} != {SaveKeys.Version}.");
+                report.Add("schema/progression", WeggVerifyStatus.Fail, $"Progression schema version {p.Version} != {ProgressionSaveKeys.Version}.");
             }
             else
             {
@@ -285,9 +287,9 @@ public sealed class WeggVerifier
                 wildAnimalKeys: snapshot.WildAnimals.Keys,
                 farmAnimalKeys: Game1.farmAnimalData.Keys);
 
-            var objects = SafeLoad<Dictionary<string, StardewValley.GameData.Objects.ObjectData>>(Infrastructure.Content.Strings.AssetNames.Objects) ?? new();
-            var quests = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.Strings.AssetNames.Quests) ?? new();
-            var mail = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.Strings.AssetNames.Mail) ?? new();
+            var objects = SafeLoad<Dictionary<string, StardewValley.GameData.Objects.ObjectData>>(Strings.AssetNames.Objects) ?? new();
+            var quests = SafeLoad<Dictionary<string, string>>(Strings.AssetNames.Quests) ?? new();
+            var mail = SafeLoad<Dictionary<string, string>>(Strings.AssetNames.Mail) ?? new();
 
             var result = AnimalNotesValidationRules.Analyze(
                 expectedTokens: expectedTokens,
@@ -341,8 +343,8 @@ public sealed class WeggVerifier
 
         try
         {
-            var mail = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.Strings.AssetNames.Mail);
-            var quests = SafeLoad<Dictionary<string, string>>(Infrastructure.Content.Strings.AssetNames.Quests);
+            var mail = SafeLoad<Dictionary<string, string>>(Strings.AssetNames.Mail);
+            var quests = SafeLoad<Dictionary<string, string>>(Strings.AssetNames.Quests);
             var orders = SafeLoad<Dictionary<string, SpecialOrderData>>(Strings.AssetNames.SpecialOrders);
 
             var (pStatus, pMsg) = ProgressionIdsValidator.Validate(
@@ -627,7 +629,7 @@ try
                             var idsCount = e.AnimalIds.Count;
                             var cond = e.Condition ?? string.Empty;
 
-                            maleAltRefs.Add((parentId, i, e.Id ?? string.Empty, cond, e.AnimalIds));
+                            maleAltRefs.Add((parentId, i, e.Id ?? string.Empty, cond, (IReadOnlyList<string>)e.AnimalIds.ToList()));
 
                             found.Add($"{parentId}[{i}] ids={idsCount} id={e.Id ?? ""} cond='{Short(cond, 70)}'");
 
@@ -825,7 +827,9 @@ catch (Exception ex)
 
     private Func<string, bool> BuildUnlockedResolver()
     {
-        var mail = Game1.player?.mailReceived ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var mail = Game1.player?.mailReceived is null
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(Game1.player.mailReceived, StringComparer.OrdinalIgnoreCase);
         var registered = TryReadRegisteredAnimalTypes();
 
         return farmAnimalKey =>
@@ -842,7 +846,7 @@ catch (Exception ex)
     {
         try
         {
-            var env = _store.ReadEnvelope<AnimalNotesSaveData>(SaveKeys.AnimalNotes);
+            var env = _store.ReadEnvelope<AnimalNotesSaveData>(AnimalNotesSaveKeys.AnimalNotes);
             var data = env?.Data;
             if (data?.RegisteredAnimalTypes is null)
                 return new HashSet<string>(StringComparer.OrdinalIgnoreCase);

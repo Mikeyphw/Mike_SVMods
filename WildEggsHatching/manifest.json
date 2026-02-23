@@ -1,7 +1,7 @@
 {
   "Name": "Wild Eggs Hatching",
   "Author": "Mikew",
-  "Version": "0.0.0-phase8",
+  "Version": "0.0.1-beta",
   "Description": "Phase 8: BOAF dedupe + asset handler + hard cutover.",
   "UniqueID": "Mikew.wildeggshatching",
   "EntryDll": "WildEggsHatching.dll",

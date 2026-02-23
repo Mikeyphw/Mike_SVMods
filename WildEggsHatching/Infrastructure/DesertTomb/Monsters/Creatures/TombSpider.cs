@@ -5,7 +5,7 @@ using WildEggsHatching.Infrastructure.DesertTomb.Monsters.Base;
 
 namespace WildEggsHatching.Infrastructure.DesertTomb.Monsters.Creatures;
 
-internal sealed class TombSpider : Spider
+internal sealed class TombSpider : Leaper
 {
     internal TombSpider(
         MonsterMultipliers multipliers,
@@ -15,7 +15,7 @@ internal sealed class TombSpider : Spider
         int speedToAdd = 0,
         string? customDropData = null
     )
-        : base(position, true)
+        : base(position)
     {
         TombMonsterBuilder.SetupMonsterWithDoubleDrops(
             this,

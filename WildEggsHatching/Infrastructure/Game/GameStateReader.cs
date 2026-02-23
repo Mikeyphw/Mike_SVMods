@@ -6,10 +6,10 @@ namespace WildEggsHatching.Infrastructure.Game;
 public sealed class GameStateReader : IGameStateReader
 {
     public GameLocation GetLocation() => Game1.currentLocation;
-    public Rectangle GetViewport() => Game1.viewport;
+    public Rectangle GetViewport() => new(Game1.viewport.X, Game1.viewport.Y, Game1.viewport.Width, Game1.viewport.Height);
     public Farmer GetPlayer() => Game1.player;
 
-    public long GetSaveUniqueId() => Game1.uniqueIDForThisGame;
+    public long GetSaveUniqueId() => unchecked((long)Game1.uniqueIDForThisGame);
 
     public int GetDayNumber()
     {

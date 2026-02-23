@@ -1,3 +1,4 @@
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley.GameData.FarmAnimals;
 using static LetMeHatchThisEgg.EnumsAndStrings.Strings;

@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BirdsOfAFeather.Helpers;
-using ContentPatcher;
 using LetMeHatchThisEgg.Breeding;
 using LetMeHatchThisEgg.Cloning;
 using LetMeHatchThisEgg.Core.Cloning;

@@ -1066,6 +1066,154 @@ private void ProcessPending()
         return null;
     }
 
+    private static string? GetNoteBlockedReason(HatchedAnimalRecord p, bool noteExists)
+    {
+        if (p.NotePlaced)
+            return null;
+
+        if (noteExists)
+            return null;
+
+        if (p.ConsecutivePlacementFailureDays > 0)
+        {
+            if (!string.IsNullOrWhiteSpace(p.LastPlacementFailureReason))
+                return $"Placement failures={p.ConsecutivePlacementFailureDays}; last='{p.LastPlacementFailureReason}'.";
+
+            return $"Placement failures={p.ConsecutivePlacementFailureDays}.";
+        }
+
+        return "Note not placed yet.";
+    }
+
+    private static string? GetQuestBlockedReason(
+        HatchedAnimalRecord p,
+        Farmer farmer,
+        bool noteExists,
+        bool questActive,
+        bool questCompleted,
+        AnimalNotesFarmerState state)
+    {
+        if (questCompleted)
+            return null;
+
+        if (state.QuestGiven || questActive)
+            return null;
+
+        if (!noteExists)
+            return "Note not found in world.";
+
+        if (string.IsNullOrWhiteSpace(p.HomeNameOrUniqueName))
+            return "Home location unknown.";
+
+        if (!string.Equals(Game1.player?.currentLocation?.NameOrUniqueName, p.HomeNameOrUniqueName, StringComparison.OrdinalIgnoreCase))
+            return $"Farmer not in home '{p.HomeNameOrUniqueName}'.";
+
+        return null;
+    }
+
+    private static string? GetMailBlockedReason(
+        HatchedAnimalRecord p,
+        int day,
+        Farmer farmer,
+        bool mailTomorrow,
+        bool mailReceived,
+        AnimalNotesFarmerState state)
+    {
+        if (mailReceived || mailTomorrow || state.MailQueued)
+            return null;
+
+        if (state.DayQuestCompleted is null)
+            return "Quest not completed.";
+
+        if (!HasReceivedMail(farmer, ProgressionIds.Mail.SpecialOrderDoneII))
+            return $"Missing prerequisite mail '{ProgressionIds.Mail.SpecialOrderDoneII}'.";
+
+        if (!TryGetDaysToMature(p.FarmAnimalName, out var daysToMature))
+            return "Unknown animal maturity days.";
+
+        if (!AnimalNotesUnlockLogic.IsUnlockMailEligible(day, state.DayQuestCompleted.Value, daysToMature))
+        {
+            var remaining = AnimalNotesUnlockLogic.DaysUntilUnlockMailEligible(day, state.DayQuestCompleted.Value, daysToMature);
+            return remaining > 0 ? $"Maturity gate not met ({remaining} day(s) remaining)." : "Maturity gate not met.";
+        }
+
+        return null;
+    }
+
+    private static List<string> BuildCleanupBlockers(
+        IReadOnlyList<FarmerCleanupStatus> statuses,
+        IReadOnlyList<Farmer> farmers,
+        HatchedAnimalRecord p,
+        int day)
+    {
+        if (AnimalNotesUnlockLogic.ShouldCleanupBalanced(statuses))
+            return new List<string>();
+
+        var byId = farmers.ToDictionary(f => f.UniqueMultiplayerID, f => f.Name);
+        var blockers = new List<string>();
+
+        foreach (var s in statuses)
+        {
+            var name = byId.TryGetValue(s.FarmerId, out var n) ? n : s.FarmerId.ToString();
+
+            if (!s.QuestGiven)
+                blockers.Add($"{name}: quest not given");
+            else if (!s.QuestCompleted)
+                blockers.Add($"{name}: quest not completed");
+            else if (!s.MailReceived)
+                blockers.Add($"{name}: mail not received");
+        }
+
+        return blockers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static void ResetPlacementFailures(HatchedAnimalRecord p)
+    {
+        p.ConsecutivePlacementFailureDays = 0;
+        p.LastPlacementFailureReason = string.Empty;
+        p.LastPlacementAttemptDay = null;
+    }
+
+    private static void RecordPlacementFailure(HatchedAnimalRecord p, int day, string reason)
+    {
+        if (p.LastPlacementAttemptDay != day)
+            p.ConsecutivePlacementFailureDays++;
+
+        p.LastPlacementAttemptDay = day;
+        p.LastPlacementFailureReason = reason ?? string.Empty;
+    }
+
+    private bool TryFindPlacementTile(GameLocation home, out Vector2 tile, out string reason)
+    {
+        tile = Vector2.Zero;
+        reason = string.Empty;
+
+        var playerTile = _game.GetPlayer()?.TilePoint ?? Point.Zero;
+        var origin = new Point(
+            Math.Clamp(playerTile.X, 1, Math.Max(1, home.Map.DisplayWidth / 64 - 2)),
+            Math.Clamp(playerTile.Y, 1, Math.Max(1, home.Map.DisplayHeight / 64 - 2))
+        );
+
+        for (var r = 1; r <= _placementRadius; r++)
+        {
+            for (var dx = -r; dx <= r; dx++)
+            {
+                for (var dy = -r; dy <= r; dy++)
+                {
+                    var t = new Vector2(origin.X + dx, origin.Y + dy);
+                    if (_placer.IsTilePlaceable(home, t))
+                    {
+                        tile = t;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        reason = "No placeable tile found within placement radius.";
+        return false;
+    }
+
     private void HandleLocation(GameLocation location)
     {
         if (_data.Pending.Count == 0)

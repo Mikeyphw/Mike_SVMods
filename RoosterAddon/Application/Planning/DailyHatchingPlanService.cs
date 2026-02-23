@@ -165,8 +165,9 @@ internal sealed class DailyHatchingPlanService
         if (!egg.TryGetValue(RoosterItemDataEntries.Name, out var eggId) || string.IsNullOrWhiteSpace(eggId))
             return new EggChancePlan { Enabled = true, ChancePercent = chance, RolledSuccess = false };
 
-        femaleEggs.TryGetValue(femaleKey, out var femaleEggs);
-        femaleEggs?.TryGetValue(eggType, out var femaleEggIdToRemove);
+        string? femaleEggIdToRemove = null;
+        femaleEggs.TryGetValue(femaleKey, out var femaleEggMap);
+        femaleEggMap?.TryGetValue(eggType, out femaleEggIdToRemove);
 
         var rollKey = $"egg|{buildingKey}|{rooster.FarmAnimalName}|{femaleKey}|{eggType}|{nonce}";
         var rolled = RollPercentInt(farmId, day, rollKey, chance);
@@ -200,14 +201,16 @@ internal sealed class DailyHatchingPlanService
             fertilizedChance = 0;
         }
 
+        egg ??= new Dictionary<RoosterItemDataEntries, string>();
+
         if (!egg.TryGetValue(RoosterItemDataEntries.Name, out var roosterFertilizedEggId)
             || string.IsNullOrWhiteSpace(roosterFertilizedEggId))
         {
             return null;
         }
 
-        if (!femaleEggs.TryGetValue(femaleKey, out var femaleEggs)
-            || !femaleEggs.TryGetValue(EggTypeEntries.Fertilized, out var femaleFertilizedEggId)
+        if (!femaleEggs.TryGetValue(femaleKey, out var femaleEggMap)
+            || !femaleEggMap.TryGetValue(EggTypeEntries.Fertilized, out var femaleFertilizedEggId)
             || string.IsNullOrWhiteSpace(femaleFertilizedEggId))
         {
             return null;

@@ -1,6 +1,6 @@
 public class RoosterHatchingApi
 {
-    private static RoosterHatchingApi _instance;
+    private static RoosterHatchingApi? _instance;
 
     public static RoosterHatchingApi Instance
     {

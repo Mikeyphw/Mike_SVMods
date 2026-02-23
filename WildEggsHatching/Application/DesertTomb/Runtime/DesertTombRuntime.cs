@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using System.Linq;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Locations;
@@ -14,6 +15,7 @@ using WildEggsHatching.DesertTomb.Core.Runtime;
 using WildEggsHatching.DesertTomb.Core.Spawning;
 using WildEggsHatching.Infrastructure.Config;
 using ConfigTombDifficulty = WildEggsHatching.Infrastructure.Config.TombDifficulty;
+using RuntimeTombDifficulty = WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums.TombDifficulty;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
@@ -116,13 +118,13 @@ public sealed class DesertTombRuntime
 
         var step = _getStep();
 
-        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, step))
+        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.DesertTombModuleEnabled, step))
             return false;
 
         if (mineShaft.mineLevel <= 120)
             return false;
 
-        if (!RollTombChance(cfg.TombChance, mineShaft.mineLevel))
+        if (!DesertTombRuntimePolicy.RollTombChance(cfg.TombChance, mineShaft.mineLevel))
             return false;
 
         if (AlreadyProcessedToday(mineShaft))
@@ -149,7 +151,7 @@ public sealed class DesertTombRuntime
 
         var step = _getStep();
 
-        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, step))
+        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.DesertTombModuleEnabled, step))
             return;
 
         if (mineShaft.mineLevel <= 120 || mineShaft.mineLevel == 77377)
@@ -168,7 +170,7 @@ public sealed class DesertTombRuntime
             if (!_loggedTombLoadLevelVerifier)
             {
                 _loggedTombLoadLevelVerifier = true;
-                _log.Info($"[Verifier][DesertTomb] loadLevel override applied: mineLevel={mineShaft.mineLevel}, before={before}, after={chosen}");
+                _log.Log($"[Verifier][DesertTomb] loadLevel override applied: mineLevel={mineShaft.mineLevel}, before={before}, after={chosen}", LogLevel.Info);
             }
         }
 
@@ -194,14 +196,14 @@ public sealed class DesertTombRuntime
 
         var step = _getStep();
 
-        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, step))
+        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.DesertTombModuleEnabled, step))
             return;
 
         if (mineShaft.mineLevel <= 120 || mineShaft.mineLevel == 77377)
             return;
 
         // Only touch floors that are (or are about to become) tomb layouts.
-        if (!DesertTombRuntimePolicy.IsTombCandidate(mineShaft.mineLevel, mineShaft.mapPath.Value))
+        if (!DesertTombRuntimePolicy.IsTombCandidate(mineShaft.mineLevel))
             return;
 
         ResetVanillaSpecialFlagsForTomb(mineShaft);
@@ -231,7 +233,7 @@ public sealed class DesertTombRuntime
         if (!_loggedTombPopulateVerifier)
         {
             _loggedTombPopulateVerifier = true;
-            _log.Info($"[Verifier][DesertTomb] populateLevel fired: mineLevel={mineShaft.mineLevel}, mapPath={mineShaft.mapPath.Value}");
+            _log.Log($"[Verifier][DesertTomb] populateLevel fired: mineLevel={mineShaft.mineLevel}, mapPath={mineShaft.mapPath.Value}", LogLevel.Info);
         }
 
         ActivateCore(mineShaft);
@@ -284,9 +286,13 @@ public sealed class DesertTombRuntime
             if (!ReferenceEquals(Game1.currentLocation, _activeFloor.MineShaft))
             {
                 _activeFloor = null;
+                return;
+            }
 
+            _activeFloor.Population.UpdateTicked();
+        }
+    }
 
-    
     private void ActivateCoreIfEligible(MineShaft mineShaft)
     {
         if (!ShouldEdit(mineShaft))
@@ -306,7 +312,7 @@ public sealed class DesertTombRuntime
 
         if (!DefaultTombLayouts.ByLevel.TryGetValue(layoutLevel, out var layout))
         {
-            _log.Warn($"[DesertTomb] No layout registered for {layoutLevel}; skipping.");
+            _log.Log($"[DesertTomb] No layout registered for {layoutLevel}; skipping.", LogLevel.Warn);
             return;
         }
 
@@ -340,7 +346,7 @@ public sealed class DesertTombRuntime
 
         _activeFloor = new ActiveTombFloorState(
             mineShaft: mineShaft,
-            layoutLevel: layoutLevel,
+            layoutLevel: (int)layoutLevel,
             mapPath: mapPath,
             areas: areaStates,
             plan: plan,
@@ -350,11 +356,13 @@ public sealed class DesertTombRuntime
 
         MarkProcessedToday(mineShaft);
 
-        _diagnostics?.OnActivated(layoutLevel, mapPath, mineShaft, plan, spawnedInitial);
+        _diagnostics?.OnActivated((int)layoutLevel, mapPath, mineShaft, plan, spawnedInitial);
+
+        var plannedTotal = plan.Areas.Sum(a => a.Spawns.Sum(s => s.Count));
 
         _log.Log(
             $"[DesertTomb] Activated on MineLevel={mineShaft.mineLevel} MapPath='{mapPath}'. " +
-            $"Layout={layoutLevel} SpawnedInitial={spawnedInitial} (Planned={plan.TotalPlanned}).",
+            $"Layout={layoutLevel} SpawnedInitial={spawnedInitial} (Planned={plannedTotal}).",
             LogLevel.Info
         );
     }
@@ -420,13 +428,13 @@ public sealed class DesertTombRuntime
     private static string TodayMarker(MineShaft mineShaft)
         => $"{Game1.stats.DaysPlayed}:{mineShaft.mineLevel}";
 
-    private static TombDifficulty MapDifficulty(ConfigTombDifficulty difficulty)
+    private static RuntimeTombDifficulty MapDifficulty(ConfigTombDifficulty difficulty)
         => difficulty switch
         {
-            ConfigTombDifficulty.Easy => TombDifficulty.Easy,
-            ConfigTombDifficulty.Moderate => TombDifficulty.Moderate,
-            ConfigTombDifficulty.Hard => TombDifficulty.Hard,
-            _ => TombDifficulty.Moderate,
+            ConfigTombDifficulty.Easy => RuntimeTombDifficulty.Easy,
+            ConfigTombDifficulty.Moderate => RuntimeTombDifficulty.Moderate,
+            ConfigTombDifficulty.Hard => RuntimeTombDifficulty.Hard,
+            _ => RuntimeTombDifficulty.Moderate,
         };
 
 

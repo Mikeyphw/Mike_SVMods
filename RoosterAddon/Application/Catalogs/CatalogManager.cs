@@ -83,6 +83,7 @@ return CatalogApplicator.ApplyToConfig(
 );
 }
 
+#if false
     private static bool EnsureRequiredRoosters(RoosterAddonConfig config, CatalogBundle catalogs, IMonitor monitor)
     {
         var changed = false;
@@ -368,6 +369,7 @@ return CatalogApplicator.ApplyToConfig(
             CustomItemName = dto.CustomItemName ?? string.Empty,
             Probability = Math.Clamp(dto.Probability, 0, 100)
         };
+#endif
 
     private static T ReadOrCreate<T>(IModHelper helper, string relativePath, T defaults)
         where T : class, new()

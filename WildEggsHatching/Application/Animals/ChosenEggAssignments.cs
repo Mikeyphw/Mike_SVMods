@@ -7,6 +7,7 @@ using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Objects;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using Mikew.BirdsOfAFeather;
+using Mikew.BirdsOfAFeather.Framework;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.ShopAnchors;
 using WildEggsHatching.Core.Weighting;
@@ -234,7 +235,7 @@ public sealed class ChosenEggAssignments
         }
 
         // Fallback: deterministic uniform.
-        var rng = new Random(MixInt(seed, 0x91E10DA5));
+        var rng = new Random(MixInt(seed, unchecked((int)0x91E10DA5u)));
         farmAnimalKey = candidates[rng.Next(candidates.Count)];
         return true;
     }
@@ -323,12 +324,14 @@ public sealed class ChosenEggAssignments
             if (api is null)
                 return;
 
-            var pairs = api.GetClonedAnimalsInfo();
+            var pairs = api.GetClonedAnimalsInfo()?.ToList();
             if (pairs is null || pairs.Count == 0)
                 return;
 
-            foreach (var (female, male, _) in pairs)
+            foreach (var pair in pairs)
             {
+                var female = pair.FemaleKey;
+                var male = pair.MaleKey;
                 if (string.IsNullOrWhiteSpace(female) || string.IsNullOrWhiteSpace(male))
                     continue;
                 if (female.Equals(male, StringComparison.OrdinalIgnoreCase))

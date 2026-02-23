@@ -31,4 +31,11 @@ public sealed class HatchedAnimalRecord
     public bool NotePlaced { get; set; }
 
     public int? DayNotePlaced { get; set; }
+
+    // Backward-compat fields kept for legacy initializer sites; per-farmer state is authoritative.
+    public bool QuestGiven { get; set; }
+    public int? DayQuestGiven { get; set; }
+    public int? DayQuestCompleted { get; set; }
+    public bool MailQueued { get; set; }
+    public int? DayMailQueued { get; set; }
 }

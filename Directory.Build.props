@@ -4,5 +4,6 @@
     <LangVersion>11.0</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>$(NoWarn);CS9057</NoWarn>
   </PropertyGroup>
 </Project>

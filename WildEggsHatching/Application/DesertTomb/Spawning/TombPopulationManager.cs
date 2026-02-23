@@ -124,7 +124,7 @@ public sealed class TombPopulationManager
         }
         catch (Exception ex)
         {
-            _log.Error($"[DesertTomb] Population reconcile failed: {ex}");
+            _log.Log($"[DesertTomb] Population reconcile failed: {ex}", StardewModdingAPI.LogLevel.Error);
         }
     }
 
@@ -232,7 +232,7 @@ public sealed class TombPopulationManager
             if (!TombMonsterTypeResolver.TryGetTombMonsterType(m, out var type))
                 continue;
 
-            var tile = m.getTileLocationPoint();
+            var tile = m.TilePoint;
 
             for (int i = 0; i < areas.Count; i++)
             {

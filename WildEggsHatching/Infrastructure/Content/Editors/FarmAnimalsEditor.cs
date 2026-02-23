@@ -86,7 +86,7 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>, IPostPa
             if (api is null)
                 return;
 
-            var pairs = api.GetClonedAnimalsInfo();
+            var pairs = api.GetClonedAnimalsInfo()?.ToList();
             if (pairs is null || pairs.Count == 0)
                 return;
 

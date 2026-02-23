@@ -1,7 +1,7 @@
 using LetMeHatchThisEgg.Application.UseCases;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI.Events;
-using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
+using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
 
 namespace LetMeHatchThisEgg.Infrastructure.Content.Loaders;
 
@@ -15,7 +15,7 @@ public sealed class ClonedEggsAssetLoader : AssetLoaderBase
         : base(AssetLoadPriority.Exclusive)
     {
         _loads = loads;
-        _clonedItemsGamePath = assetHandler.GetAssetPath(Assets.Object.ClonedItems, AssetPathType.GamePath);
+        _clonedItemsGamePath = assetHandler.GetAssetPath(Assets.Object.ClonedItems, ModAssetHandler.AssetPathType.GamePath);
     }
 
     public override string DebugHandles => "BoAF game path: Assets.Object.ClonedItems";

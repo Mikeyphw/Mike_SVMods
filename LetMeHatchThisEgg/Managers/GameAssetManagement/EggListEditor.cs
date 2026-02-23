@@ -7,6 +7,7 @@ using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Objects;
 using static LetMeHatchThisEgg.EnumsAndStrings.Enums;
+using static LetMeHatchThisEgg.ModEntry;
 using Object = StardewValley.Object;
 
 namespace LetMeHatchThisEgg.GameAssetManagement;

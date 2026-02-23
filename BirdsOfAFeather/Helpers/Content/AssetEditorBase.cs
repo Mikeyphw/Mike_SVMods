@@ -1,3 +1,4 @@
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
 namespace Mikew.BirdsOfAFeather.Helpers.Content
@@ -8,7 +9,7 @@ namespace Mikew.BirdsOfAFeather.Helpers.Content
     public abstract class AssetEditorBase<TContext> : IAssetEditor<TContext>
     {
         public abstract string AssetName { get; }
-        public virtual AssetEditPriority Priority => AssetEditPriority.Normal;
+        public virtual AssetEditPriority Priority => AssetEditPriority.Default;
         public abstract void Edit(IAssetData asset, TContext context);
     }
 }

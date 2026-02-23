@@ -1,67 +1,42 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 using Mikew.BirdsOfAFeather.EnumsAndStrings;
 using Mikew.BirdsOfAFeather.Helpers.Content;
-using StardewValley.GameData.Monsters;
 
 namespace WildEggsHatching.Infrastructure.Content.Editors;
 
 /// <summary>
-/// Ensures custom <see cref="StardewValley.Monsters.Monster"/> subclasses have placeholder entries in Data/Monsters.
+/// Ensures custom monster keys required by DesertTomb runtime exist in Data/Monsters.
 /// </summary>
 public sealed class MonstersEditor : AssetEditorBase<ContentContext>
 {
     public override string AssetName => Strings.AssetNames.Monsters;
-
     public override AssetEditPriority Priority => AssetEditPriority.Early;
 
     public override void Edit(IAssetData asset, ContentContext context)
     {
-        var data = asset.AsDictionary<string, MonsterData>().Data;
+        var data = asset.AsDictionary<string, string>().Data;
 
-        var template = ResolveTemplate(data);
-        if (template is null)
-            return;
+        // Reuse known vanilla-compatible values for placeholders.
+        data["Spinner"] =
+            "30/5/0/0/false/1000/771 .9 771 .5 770 .5 382 .1 86 .005 72 .001/1/.01/3/2/.00/true/5/Spinner";
+        data["The Pharaoh"] =
+            "260/30/0/0/false/0/769 .75 769 .2 337 .002 336 .01 335 .02 334 .04 108 .003 -4 .1 98 .005 99 .001 74 .0005/2/.01/8/3/.0/true/15/The Pharaoh";
 
         foreach (var key in GetRequiredMonsterKeys())
         {
             if (data.ContainsKey(key))
                 continue;
 
-            data[key] = Clone(template);
+            data[key] = data["Spinner"];
         }
-    }
-
-    private static MonsterData? ResolveTemplate(IDictionary<string, MonsterData> data)
-    {
-        if (data.TryGetValue("Mummy", out var mummy))
-            return mummy;
-
-        if (data.TryGetValue("Spider", out var spider))
-            return spider;
-
-        if (data.Count > 0)
-            return data.Values.FirstOrDefault();
-
-        return null;
     }
 
     private static IReadOnlyList<string> GetRequiredMonsterKeys() => new[]
     {
-        // Custom Monster subclasses (direct or indirect). Placeholder entries are valid and may be replaced later.
         "Crawler",
         "Matango",
         "Hurricane",
         "Sandi",
         "The Pharaoh",
     };
-
-    private static MonsterData Clone(MonsterData template)
-    {
-        // MonsterData is a complex model; use JSON round-trip to avoid manual copy and future schema drift.
-        var json = JsonSerializer.Serialize(template);
-        return JsonSerializer.Deserialize<MonsterData>(json) ?? new MonsterData();
-    }
 }

@@ -6,7 +6,7 @@ namespace WildEggsHatching.Infrastructure.Game;
 
 public sealed class WorldLocations : IWorldLocations
 {
-    public IReadOnlyList<GameLocation> GetAll() => Game1.locations;
+    public IReadOnlyList<GameLocation> GetAll() => Game1.locations.ToList();
 
     public GameLocation? TryGetByName(string name)
         => Game1.locations.FirstOrDefault(l => l?.NameOrUniqueName == name || l?.Name == name);

@@ -1,7 +1,6 @@
 using LetMeHatchThisEgg.Application.UseCases;
 using Mikew.BirdsOfAFeather.Helpers;
 using StardewModdingAPI.Events;
-using static Mikew.BirdsOfAFeather.Helpers.ModAssetHandler;
 
 namespace LetMeHatchThisEgg.Infrastructure.Content.Loaders;
 
@@ -15,7 +14,7 @@ public sealed class MaleClonesTextureLoader : AssetLoaderBase
         : base(AssetLoadPriority.Exclusive)
     {
         _loads = loads;
-        _maleClonesGamePath = assetHandler.GetAssetPath(Assets.Animals.MaleClones, AssetPathType.GamePath);
+        _maleClonesGamePath = string.Empty;
     }
 
     public override string DebugHandles => "BoAF game path: Assets.Animals.MaleClones";
@@ -23,7 +22,7 @@ public sealed class MaleClonesTextureLoader : AssetLoaderBase
     public override string DebugGates => "assetNameLower equals male clones game path.";
 
     public override bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
-        => assetNameLower == _maleClonesGamePath;
+        => !string.IsNullOrEmpty(_maleClonesGamePath) && assetNameLower == _maleClonesGamePath;
 
     public override void Load(string assetNameLower, AssetRequestedEventArgs e)
         => _loads.OnMaleClonesTextureRequested(e);

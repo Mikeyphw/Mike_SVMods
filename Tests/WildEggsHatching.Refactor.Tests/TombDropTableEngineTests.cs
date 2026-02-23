@@ -83,13 +83,13 @@ public sealed class TombDropTableEngineTests
         var reader = new InMemoryJsonFileReader(new Dictionary<string, string>
         {
             ["assets/DesertTomb/DropTables.json"] = @"{
-              \"MyTable\": {
-                \"Mode\": \"IndependentChance\",
-                \"MaxItems\": 3,
-                \"LuckyBonusEnabled\": false,
-                \"Entries\": [
-                  { \"Item\": \"A\", \"Chance\": 1.0 },
-                  { \"Item\": \"B\", \"Chance\": 0.0 }
+              ""MyTable"": {
+                ""Mode"": ""IndependentChance"",
+                ""MaxItems"": 3,
+                ""LuckyBonusEnabled"": false,
+                ""Entries"": [
+                  { ""Item"": ""A"", ""Chance"": 1.0 },
+                  { ""Item"": ""B"", ""Chance"": 0.0 }
                 ]
               }
             }"
