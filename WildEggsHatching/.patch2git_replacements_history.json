@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-02-23T13:13:07-03:00",
+  "updated_at": "2026-02-23T13:13:13-03:00",
   "replacements": [
     {
       "id": "20260219T212821-0300-01",
@@ -186,6 +186,16 @@
       "id": "20260223T104023-0300-01",
       "title": "DesertTomb config exposure: KeepMineLevel + TombChance + TombDifficulty",
       "created_at": "2026-02-23T10:40:23-03:00"
+    },
+    {
+      "id": "20260223T111831-0300-01",
+      "title": "DesertTomb: TombDifficulty loot multipliers (chance + quantity + max items)",
+      "created_at": "2026-02-23T11:18:31-03:00"
+    },
+    {
+      "id": "20260223T112520-0300-01",
+      "title": "DesertTomb: TombDifficulty affects loot tables",
+      "created_at": "2026-02-23T11:25:20-03:00"
     }
   ]
 }

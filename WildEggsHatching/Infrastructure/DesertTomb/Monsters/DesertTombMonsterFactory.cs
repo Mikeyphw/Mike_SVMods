@@ -7,6 +7,7 @@ using WildEggsHatching.DesertTomb.Core.Model.Monsters;
 using WildEggsHatching.Infrastructure.DesertTomb.Monsters.Creatures;
 using WildEggsHatching.Infrastructure.DesertTomb.Monsters.Definitions;
 using WildEggsHatching.Infrastructure.DesertTomb.Loot;
+using static WildEggsHatching.Infrastructure.DesertTomb.Loot.TombDropRollMultipliers;
 using WildEggsHatching.Infrastructure.DesertTomb.Loot.Definitions;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
@@ -74,7 +75,7 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
         };
 
         ApplyTemplate(monster, monsterType, definition);
-        ApplyDropOverrides(monster, definition, multipliers, customDropData);
+        ApplyDropOverrides(monster, monsterType, definition, multipliers, customDropData);
 
         return monster;
     }
@@ -112,6 +113,7 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
     
     private void ApplyDropOverrides(
         Monster monster,
+        TombMonsterType requestedType,
         TombMonsterDefinition definition,
         MonsterMultipliers multipliers,
         string? customDropData
@@ -142,11 +144,21 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
         var rng = Game1.random;
         var luck = TombDropTableEngine.FromPlayer();
 
-        monster.objectsToDrop.AddRange(_dropEngine.RollToItemIds(table, rng, luck));
+        var chanceMult = requestedType == TombMonsterType.TheTombPharaoh
+            ? multipliers.DropItemChanceMultiplierTheTombPharaoh
+            : multipliers.DropItemChanceMultiplier;
+
+        var rollMultipliers = new TombDropRollMultipliers(
+            MaxItemsMultiplier: multipliers.DropRateMultiplier,
+            ChanceMultiplier: chanceMult,
+            QuantityMultiplier: multipliers.DropRateMultiplier
+        );
+
+        monster.objectsToDrop.AddRange(_dropEngine.RollToItemIds(table, rng, luck, rollMultipliers));
 
         if (rng.NextDouble() < multipliers.ChanceToDoubleDropItem)
-            monster.objectsToDrop.AddRange(_dropEngine.RollToItemIds(table, rng, luck));
-    }
+            monster.objectsToDrop.AddRange(_dropEngine.RollToItemIds(table, rng, luck, rollMultipliers));
+}
 
 
 private static void ApplyStatOverrides(Monster monster, TombMonsterStatProfile stats)

@@ -312,8 +312,8 @@ public sealed class DesertTombRuntime
         // Remove any vanilla mons.
         RemoveExistingMonsters(mineShaft);
 
-        var config = SpawnConfiguration.Default;
-        config.Difficulty = MapDifficulty(cfg.TombDifficulty);
+        var config = new SpawnConfiguration();
+        config.DeepCopySpawnConfiguration(SpawnConfiguration.Default, MapDifficulty(cfg.TombDifficulty));
 
         _generator.Generate(mineShaft);
 
