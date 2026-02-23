@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using StardewValley;
+using StardewValley.GameData.FarmAnimals;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using WildEggsHatching.Application.AnimalNotes;
@@ -36,7 +37,7 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
                 itemType: "quest",
                 itemId: ProgressionIds.Quests.WizardStudy,
                 autoAccept: true,
-                displayName: "Wild Egg Thanks"
+                displayName: T(context, "mail.MarnieThanks.title", "Wild Egg Thanks")
             );
         }
 
@@ -49,7 +50,7 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
                 itemType: "quest",
                 itemId: ProgressionIds.Quests.TheDesertScroll,
                 autoAccept: false,
-                displayName: "The Desert Scroll"
+                displayName: T(context, "mail.WizardThanks.title", "The Desert Scroll")
             );
         }
 
@@ -62,7 +63,7 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
                 itemType: "craftingRecipe",
                 itemId: "Elixir Of Revitalized Essence",
                 autoAccept: false,
-                displayName: "Wizard Findings"
+                displayName: T(context, "mail.WizardFindings.title", "Wizard Findings")
             );
         }
 
@@ -81,17 +82,32 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
     private static string CreateNoteMail(ContentContext context, string animalKey)
     {
         var variant = Game1.random.Next(4);
-        var bodyKey = $"mail.animalAvaliable{variant}";
-        var body = TranslateOrFallback(
+
+        var animalName = ResolveFarmAnimalDisplayName(animalKey);
+
+        var body = TAny(
             context,
-            bodyKey,
-            "Dear @,^^Thanks for the note! The animals are doing great and are now available in my shop.");
+            keys: new[]
+            {
+                $"mail.animalAvailable.body{variant}",
+                $"mail.animalAvaliable{variant}",
+            },
+            fallback: "Dear @,^^Thanks for the note! The animals are doing great and are now available in my shop.");
 
-        var banner = TranslateOrFallback(context, "mail.animalAvaliable.newAnimal", "**New Animal Avaliable:");
-        var displayName = $"{animalKey}";
+        var banner = TAny(
+            context,
+            keys: new[]
+            {
+                "mail.animalAvailable.banner",
+                "mail.animalAvaliable.newAnimal",
+            },
+            fallback: "**New Animal Available:**");
 
-        return $"{body} {banner} {displayName}**[#]{displayName} Avaliable";
+        var title = T(context, "mail.animalAvailable.title", "{0} Available", animalName);
+
+        return $"{body}^^{banner} {animalName}**[#]{title}";
     }
+
     private static IReadOnlyList<string> GetAnimalKeys(ContentContext context)
     {
         return context.ModData.WildAnimals.Keys
@@ -116,7 +132,61 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
         return $"{body} %item {itemType} {itemId}{(autoAccept ? " true" : "")} %% [#]{displayName}";
     }
 
-    private static string TranslateOrFallback(ContentContext context, string key, string fallback)
+    
+    private static string ResolveFarmAnimalDisplayName(string animalId)
+    {
+        if (Game1.farmAnimalData is not null && Game1.farmAnimalData.TryGetValue(animalId, out var data))
+        {
+            if (!string.IsNullOrWhiteSpace(data.DisplayName))
+                return data.DisplayName;
+
+            if (!string.IsNullOrWhiteSpace(data.ShopDisplayName))
+                return data.ShopDisplayName;
+        }
+
+        try
+        {
+            var dict = Game1.content.Load<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+            if (dict.TryGetValue(animalId, out var d) && !string.IsNullOrWhiteSpace(d.DisplayName))
+                return d.DisplayName;
+        }
+        catch
+        {
+            // Best-effort.
+        }
+
+        return animalId;
+    }
+
+    private static string T(ContentContext context, string key, string fallback, params object[] tokens)
+    {
+        var translated = tokens.Length == 0
+            ? context.I18n.GetString(key)
+            : context.I18n.GetString(key, tokens);
+
+        if (!string.IsNullOrWhiteSpace(translated) && !string.Equals(translated, key, StringComparison.OrdinalIgnoreCase))
+            return translated;
+
+        return tokens.Length == 0 ? fallback : string.Format(fallback, tokens);
+    }
+
+    private static string TAny(ContentContext context, IEnumerable<string> keys, string fallback, params object[] tokens)
+    {
+        foreach (var k in keys)
+        {
+            var translated = tokens.Length == 0
+                ? context.I18n.GetString(k)
+                : context.I18n.GetString(k, tokens);
+
+            if (!string.IsNullOrWhiteSpace(translated) && !string.Equals(translated, k, StringComparison.OrdinalIgnoreCase))
+                return translated;
+        }
+
+        return tokens.Length == 0 ? fallback : string.Format(fallback, tokens);
+    }
+
+
+private static string TranslateOrFallback(ContentContext context, string key, string fallback)
     {
         var translated = context.I18n.Get(key).ToString();
         return string.Equals(translated, key, System.StringComparison.OrdinalIgnoreCase) ? fallback : translated;

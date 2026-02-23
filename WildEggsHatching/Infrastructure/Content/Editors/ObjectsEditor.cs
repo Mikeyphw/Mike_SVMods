@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using StardewValley;
+using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Objects;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
@@ -58,9 +60,25 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
 
     private static ObjectData CreateEggObjectData(EggDefinition def, ContentContext context)
     {
-        var regionDisplay = HumanizeRegion(def.LocationToken);
-        var size = def.Kind.IsLarge() ? "Large " : "";
-        var magic = def.Kind.IsMagic() ? "Magic " : "";
+        var region = GetRegionDisplayName(context, def.LocationToken);
+        var largePrefix = def.Kind.IsLarge() ? T(context, "object.wildEgg.prefix.large", "Large ") : string.Empty;
+        var magicPrefix = def.Kind.IsMagic() ? T(context, "object.wildEgg.prefix.magic", "Magic ") : string.Empty;
+
+        var baseName = T(context, "object.wildEgg.baseName", "Wild Egg");
+        var displayName = T(
+            context,
+            "object.wildEgg.displayName",
+            "{0} {1}{2}{3}",
+            region,
+            largePrefix,
+            magicPrefix,
+            baseName).Trim();
+
+        var description = T(
+            context,
+            "object.wildEgg.description",
+            "A mysterious wild egg found in the {0}.",
+            region);
 
         var eggTypeName = EggTypeNameForContextTag(def.Kind);
         var colorTag = def.Kind.IsMagic() ? "color_purple" : "color_white";
@@ -68,12 +86,12 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         return new ObjectData
         {
             Name = def.EggItemId,
-            DisplayName = $"{regionDisplay} {size}{magic}Wild Egg".Trim(),
-            Description = $"A mysterious wild egg found in the {regionDisplay}.",
+            DisplayName = displayName,
+            Description = description,
             Type = "AnimalProduct",
             Category = -5,
             Price = EggPrice(def.Kind),
-            Texture = $"Mods/Mikew.wildeggshatching/objects/eggs",
+            Texture = $"Mods/{Constants.ModId}/objects/eggs",
             SpriteIndex = EggSpriteIndex(def.Kind),
             Edibility = 15,
             IsDrink = false,
@@ -88,10 +106,13 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
             },
             CustomFields = new Dictionary<string, string>
             {
-                ["WildEggs.Region"] = regionDisplay,
+                ["WildEggs.Region"] = def.LocationToken,
                 ["WildEggs.Kind"] = def.Kind.ToString(),
                 ["wildEggLocation"] = def.LocationToken,
             }
+        };
+    }
+
         };
     }
 
@@ -129,12 +150,12 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         => new()
         {
             Name = ModItemIds.OsirisScroll,
-            DisplayName = "Osiris Scroll",
-            Description = "An ancient scroll covered in strange symbols.",
+            DisplayName = T(context, "object.OsirisScroll.name", "Osiris Scroll"),
+            Description = T(context, "object.OsirisScroll.description", "An ancient scroll covered in strange symbols."),
             Type = "Basic",
             Category = 0,
             Price = 0,
-            Texture = $"Mods/Mikew.wildeggshatching/objects/scroll",
+            Texture = $"Mods/{Constants.ModId}/objects/scroll",
             SpriteIndex = 0,
             Edibility = 15,
             IsDrink = false,
@@ -145,20 +166,26 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
                 [PrismaticValleyColorKey] = PrismaticValleyCustomPalette,
                 [PrismaticValleyPaletteKey] = " #FFC080, #E67E73, #342B1F",
             },
-
         };
+
+
 
     
     private static ObjectData CreateJunimoNote(ContentContext context, string animalKey, string noteId)
         => new()
         {
             Name = noteId,
-            DisplayName = $"{TranslateOrFallback(context, "object.JunimoNote.name", "Leafwhisper Note")}: {animalKey}",
-            Description = TranslateOrFallback(context, "object.JunimoNote.description", "A worn parchment, penned by the Junimos."),
+            DisplayName = T(
+                context,
+                "object.JunimoNote.displayName",
+                "{0}: {1}",
+                T(context, "object.JunimoNote.name", "Leafwhisper Note"),
+                ResolveFarmAnimalDisplayName(animalKey)),
+            Description = T(context, "object.JunimoNote.description", "A worn parchment, penned by the Junimos."),
             Type = "Basic",
             Category = 0,
             Price = 0,
-            Texture = $"Mods/Mikew.wildeggshatching/objects/note",
+            Texture = $"Mods/{Constants.ModId}/objects/note",
             SpriteIndex = 0,
             Edibility = -300,
             IsDrink = false,
@@ -175,16 +202,18 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         };
 
 
+
+
     private static ObjectData CreateElixir(ContentContext context)
         => new()
         {
             Name = ModItemIds.ElixirOfRevitalizedEssence,
-            DisplayName = "Elixir Of Revitalized Essence",
-            Description = "A potent elixir that radiates revitalizing energy.",
+            DisplayName = T(context, "object.ElixirOfRevitalizedEssence.name", "Elixir Of Revitalized Essence"),
+            Description = T(context, "object.ElixirOfRevitalizedEssence.description", "A potent elixir that radiates revitalizing energy."),
             Type = "Basic",
             Category = 0,
             Price = 0,
-            Texture = $"Mods/Mikew.wildeggshatching/objects/elixir",
+            Texture = $"Mods/{Constants.ModId}/objects/elixir",
             SpriteIndex = 0,
             Edibility = 15,
             IsDrink = false,
@@ -195,8 +224,9 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
                 [PrismaticValleyColorKey] = PrismaticValleyCustomPalette,
                 [PrismaticValleyPaletteKey] = " #FFC080, #E67E73, #342B1F",
             },
-
         };
+
+
 
     private static int EggSpriteIndex(EggKind kind)
         => (kind.IsMagic() ? 2 : 0) + (kind.IsLarge() ? 1 : 0);
@@ -219,12 +249,18 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
         return token;
     }
 
-    private static string HumanizeRegion(string token)
+    private static string GetRegionDisplayName(ContentContext context, string token)
+    {
+        var normalized = string.IsNullOrWhiteSpace(token) ? "Unknown" : token.Trim();
+        var key = $"region.{normalized}.name";
+        return T(context, key, HumanizeCamelCase(normalized));
+    }
+
+    private static string HumanizeCamelCase(string token)
     {
         if (string.IsNullOrWhiteSpace(token))
             return "Unknown";
 
-        // Insert spaces for CamelCase tokens (IslandBeach -> Island Beach).
         var chars = new List<char>(token.Length + 8) { token[0] };
         for (var i = 1; i < token.Length; i++)
         {
@@ -239,6 +275,10 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
 
         return new string(chars.ToArray());
     }
+
+
+        return new string(chars.ToArray());
+    }
     private static IReadOnlyList<string> GetAnimalKeys(ContentContext context)
     {
         return context.ModData.WildAnimals.Keys
@@ -248,7 +288,47 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
 
 
 
-    private static string TranslateOrFallback(ContentContext context, string key, string fallback)
+    
+    private static string ResolveFarmAnimalDisplayName(string animalId)
+    {
+        if (Game1.farmAnimalData is not null && Game1.farmAnimalData.TryGetValue(animalId, out var data))
+        {
+            if (!string.IsNullOrWhiteSpace(data.DisplayName))
+                return data.DisplayName;
+
+            // Fallback: some entries only populate ShopDisplayName.
+            if (!string.IsNullOrWhiteSpace(data.ShopDisplayName))
+                return data.ShopDisplayName;
+        }
+
+        try
+        {
+            var dict = Game1.content.Load<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+            if (dict.TryGetValue(animalId, out var d) && !string.IsNullOrWhiteSpace(d.DisplayName))
+                return d.DisplayName;
+        }
+        catch
+        {
+            // Best-effort.
+        }
+
+        return animalId;
+    }
+
+    private static string T(ContentContext context, string key, string fallback, params object[] tokens)
+    {
+        var translated = tokens.Length == 0
+            ? context.I18n.GetString(key)
+            : context.I18n.GetString(key, tokens);
+
+        if (!string.IsNullOrWhiteSpace(translated) && !string.Equals(translated, key, StringComparison.OrdinalIgnoreCase))
+            return translated;
+
+        return tokens.Length == 0 ? fallback : string.Format(fallback, tokens);
+    }
+
+
+private static string TranslateOrFallback(ContentContext context, string key, string fallback)
         => context.I18n.GetOrDefault(key, fallback);
     private static IReadOnlyList<EggDefinition> GetEggDefinitions(ContentContext context)
     {

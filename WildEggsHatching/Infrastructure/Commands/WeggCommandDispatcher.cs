@@ -1,4 +1,5 @@
 using System;
+using Mikew.BirdsOfAFeather.Helpers;
 using WildEggsHatching.Application.Facade;
 using WildEggsHatching.Core.Enums;
 
@@ -7,8 +8,13 @@ namespace WildEggsHatching.Infrastructure.Commands;
 public sealed class WeggCommandDispatcher
 {
     private readonly IModFacade _facade;
+    private readonly I18TranslationHelper _i18n;
 
-    public WeggCommandDispatcher(IModFacade facade) => _facade = facade;
+    public WeggCommandDispatcher(IModFacade facade, I18TranslationHelper i18n)
+    {
+        _facade = facade;
+        _i18n = i18n;
+    }
 
     public CommandResult Execute(string[] args)
     {
@@ -27,31 +33,31 @@ public sealed class WeggCommandDispatcher
             "notes" => HandleNotes(args),
             "schema" => HandleSchema(args),
             "verify" => ToCommandResult(_facade.Verify(args)),
-            _ => new CommandResult(false, $"Unknown subcommand '{args[0]}'.\n\n{HelpText()}"),
+            _ => new CommandResult(false, $"{T(\"command.wegg.error.unknownSubcommand\", \"Unknown subcommand '{0}'.\", args[0])}\n\n{HelpText()}"),
         };
     }
 
     private CommandResult HandleStep(string[] args)
     {
         if (args.Length < 2)
-            return new CommandResult(false, $"Missing step subcommand.\n\n{HelpText()}");
+            return new CommandResult(false, $"{T(\"command.wegg.error.step.missing\", \"Missing step subcommand.\")}\n\n{HelpText()}");
 
         var sub = args[1].ToLowerInvariant();
         return sub switch
         {
-            "get" => new CommandResult(true, $"ProgressionStep={_facade.GetProgressionStep()}"),
+            "get" => new CommandResult(true, T("command.wegg.step.get", "ProgressionStep={0}", _facade.GetProgressionStep())),
             "set" => HandleStepSet(args),
-            _ => new CommandResult(false, $"Unknown step subcommand '{args[1]}'.\n\n{HelpText()}"),
+            _ => new CommandResult(false, $"{T(\"command.wegg.error.step.unknown\", \"Unknown step subcommand '{0}'.\", args[1])}\n\n{HelpText()}"),
         };
     }
 
     private CommandResult HandleStepSet(string[] args)
     {
         if (args.Length < 3)
-            return new CommandResult(false, $"Usage: wegg step set <PartI|PartII|...|PartVI> [--effects]\n\n{HelpText()}");
+            return new CommandResult(false, $"{T(\"command.wegg.usage.step.set\", \"Usage: wegg step set <PartI|PartII|...|PartVI> [--effects]\")}\n\n{HelpText()}");
 
         if (!Enum.TryParse<ProgressionStep>(args[2], ignoreCase: true, out var step))
-            return new CommandResult(false, $"Invalid step '{args[2]}'.\n\n{HelpText()}");
+            return new CommandResult(false, $"{T(\"command.wegg.error.step.invalid\", \"Invalid step '{0}'.\", args[2])}\n\n{HelpText()}");
 
         var applyEffects = Array.Exists(args, x => string.Equals(x, "--effects", StringComparison.OrdinalIgnoreCase));
         var res = _facade.TrySetProgressionStep(step, applyEffects, reason: "console command");
@@ -62,45 +68,45 @@ public sealed class WeggCommandDispatcher
     private CommandResult HandleProgression(string[] args)
     {
         if (args.Length < 2)
-            return new CommandResult(false, $"Missing progression subcommand.\n\n{HelpText()}");
+            return new CommandResult(false, $"{T(\"command.wegg.error.progression.missing\", \"Missing progression subcommand.\")}\n\n{HelpText()}");
 
         var sub = args[1].ToLowerInvariant();
         return sub switch
         {
-            "eval" => new CommandResult(true, $"ProgressionStep={_facade.GetProgressionStep()}"),
-            _ => new CommandResult(false, $"Unknown progression subcommand '{args[1]}'.\n\n{HelpText()}"),
+            "eval" => new CommandResult(true, T("command.wegg.step.get", "ProgressionStep={0}", _facade.GetProgressionStep())),
+            _ => new CommandResult(false, $"{T(\"command.wegg.error.progression.unknown\", \"Unknown progression subcommand '{0}'.\", args[1])}\n\n{HelpText()}"),
         };
     }
 
     private CommandResult HandleSpawn(string[] args)
     {
         if (args.Length < 2)
-            return new CommandResult(false, $"Missing spawn subcommand.\n\n{HelpText()}");
+            return new CommandResult(false, $"{T(\"command.wegg.error.spawn.missing\", \"Missing spawn subcommand.\")}\n\n{HelpText()}");
 
         var sub = args[1].ToLowerInvariant();
         return sub switch
         {
             "now" => ToCommandResult(_facade.TryRunSpawnPlanNow()),
             "place" => HandleSpawnPlace(args),
-            _ => new CommandResult(false, $"Unknown spawn subcommand '{args[1]}'.\n\n{HelpText()}"),
+            _ => new CommandResult(false, $"{T(\"command.wegg.error.spawn.unknown\", \"Unknown spawn subcommand '{0}'.\", args[1])}\n\n{HelpText()}"),
         };
     }
 
     private CommandResult HandleSpawnPlace(string[] args)
     {
         if (args.Length < 4)
-            return new CommandResult(false, $"Usage: wegg spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]\n\n{HelpText()}");
+            return new CommandResult(false, $"{T(\"command.wegg.usage.spawn.place\", \"Usage: wegg spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]\")}\n\n{HelpText()}");
 
         var location = args[2];
         var itemId = args[3];
 
         var count = 1;
         if (args.Length >= 5 && !int.TryParse(args[4], out count))
-            return new CommandResult(false, $"Invalid count '{args[4]}'.\n\n{HelpText()}");
+            return new CommandResult(false, $"{T(\"command.wegg.error.spawn.invalidCount\", \"Invalid count '{0}'.\", args[4])}\n\n{HelpText()}");
 
         var maxAttempts = 400;
         if (args.Length >= 6 && !int.TryParse(args[5], out maxAttempts))
-            return new CommandResult(false, $"Invalid maxAttempts '{args[5]}'.\n\n{HelpText()}");
+            return new CommandResult(false, $"{T(\"command.wegg.error.spawn.invalidMaxAttempts\", \"Invalid maxAttempts '{0}'.\", args[5])}\n\n{HelpText()}");
 
         return ToCommandResult(_facade.TryPlaceItem(location, itemId, count, maxAttempts));
     }
@@ -108,7 +114,7 @@ public sealed class WeggCommandDispatcher
     private CommandResult HandleNotes(string[] args)
     {
         if (args.Length < 2)
-            return new CommandResult(false, $"Missing notes subcommand.\n\n{HelpText()}");
+            return new CommandResult(false, $"{T(\"command.wegg.error.notes.missing\", \"Missing notes subcommand.\")}\n\n{HelpText()}");
 
         var sub = args[1].ToLowerInvariant();
         return sub switch
@@ -116,7 +122,7 @@ public sealed class WeggCommandDispatcher
             "dump" => HandleNotesDump(args),
             "validate" => ToCommandResult(_facade.ValidateAnimalNotes()),
             "repair" => HandleNotesRepair(args),
-            _ => new CommandResult(false, $"Unknown notes subcommand '{args[1]}'.\n\n{HelpText()}"),
+            _ => new CommandResult(false, $"{T(\"command.wegg.error.notes.unknown\", \"Unknown notes subcommand '{0}'.\", args[1])}\n\n{HelpText()}"),
         };
     }
 
@@ -129,7 +135,7 @@ public sealed class WeggCommandDispatcher
         if (farmerIdx >= 0)
         {
             if (farmerIdx + 1 >= args.Length || !long.TryParse(args[farmerIdx + 1], out var parsed))
-                return new CommandResult(false, "Usage: wegg notes dump [--json] [--farmer <id>] [--animal <token>]");
+                return new CommandResult(false, T("command.wegg.usage.notes.dump", "Usage: wegg notes dump [--json] [--farmer <id>] [--animal <token>]"));
 
             farmerId = parsed;
         }
@@ -139,7 +145,7 @@ public sealed class WeggCommandDispatcher
         if (tokenIdx >= 0)
         {
             if (tokenIdx + 1 >= args.Length)
-                return new CommandResult(false, "Usage: wegg notes dump [--json] [--farmer <id>] [--animal <token>]");
+                return new CommandResult(false, T("command.wegg.usage.notes.dump", "Usage: wegg notes dump [--json] [--farmer <id>] [--animal <token>]"));
 
             token = args[tokenIdx + 1];
         }
@@ -160,13 +166,23 @@ public sealed class WeggCommandDispatcher
         return ToCommandResult(_facade.RepairAnimalNotes(requeueMail, reconcile, force));
     }
 
-    private static bool IsHelp(string arg)
-        => arg is "-h" or "--help" or "help" or "?";
 
-    private static CommandResult ToCommandResult(FacadeResult res)
-        => new(res.Success, res.Message);
+    private string T(string key, string fallback, params object[] tokens)
+    {
+        var translated = tokens.Length == 0
+            ? _i18n.GetString(key)
+            : _i18n.GetString(key, tokens);
 
-    private static string HelpText()
+        if (!string.IsNullOrWhiteSpace(translated) && !string.Equals(translated, key, StringComparison.OrdinalIgnoreCase))
+            return translated;
+
+        return tokens.Length == 0 ? fallback : string.Format(fallback, tokens);
+    }
+
+    private string HelpText()
+        => _i18n.GetOrDefault("command.wegg.help", DefaultHelpText());
+
+    private static string DefaultHelpText()
         => string.Join(
             Environment.NewLine,
             "WildEggsHatching commands:",
@@ -192,4 +208,11 @@ public sealed class WeggCommandDispatcher
             "  - QualifiedItemId example: (O)390",
             "  - step set defaults to no side effects; use --effects to replay step mail effects."
         );
+
+
+    private static bool IsHelp(string arg)
+        => arg is "-h" or "--help" or "help" or "?";
+
+    private static CommandResult ToCommandResult(FacadeResult res)
+        => new(res.Success, res.Message);
 }

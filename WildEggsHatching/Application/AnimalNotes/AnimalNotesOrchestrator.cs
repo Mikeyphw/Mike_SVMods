@@ -1092,7 +1092,7 @@ private void ProcessPending()
 
             try
             {
-                var hud = new HUDMessage(_i18n.Get("hudmessage").ToString())
+                var hud = new HUDMessage(_i18n.GetString("hud.animalNotes.questIssued"))
                 {
                     timeLeft = 5000,
                     messageSubject = ItemRegistry.Create(p.NoteItemId),

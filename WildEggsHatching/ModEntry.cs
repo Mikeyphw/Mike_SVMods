@@ -405,8 +405,8 @@ public sealed class ModEntry : Mod
             verifier: verifier
         );
 
-        var dispatcher = new WeggCommandDispatcher(_facade);
-        _weggCommands = new WeggConsoleCommands(_log ?? new SmapiLog(Monitor), dispatcher);
+        var dispatcher = new WeggCommandDispatcher(_facade, _core.Translation);
+        _weggCommands = new WeggConsoleCommands(_log ?? new SmapiLog(Monitor), _core.Translation, dispatcher);
         _weggCommands.Register(helper);
     }
 

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using StardewValley;
+using StardewValley.GameData.FarmAnimals;
 using WildEggsHatching.Core.Enums;
 using WildEggsHatching.Core.Ids;
 using Mikew.BirdsOfAFeather.Helpers.Content;
@@ -77,9 +78,9 @@ public sealed class QuestEditor : AssetEditorBase<ContentContext>
 
                 quests[questId] = CreateQuestString(
                     type: "ItemDelivery",
-                    title: $"{baseTitle}: {animalKey}",
-                    details: $"{baseDetails}: {animalKey}.",
-                    hint: $"{baseHint}: {animalKey}.",
+                    title: T(context, "quest.NoteDelivery.titleWithAnimal", "{0}: {1}", baseTitle, ResolveFarmAnimalDisplayName(animalKey)),
+                    details: T(context, "quest.NoteDelivery.detailsWithAnimal", "{0}: {1}.", baseDetails, ResolveFarmAnimalDisplayName(animalKey)),
+                    hint: T(context, "quest.NoteDelivery.hintWithAnimal", "{0}: {1}.", baseHint, ResolveFarmAnimalDisplayName(animalKey)),
                     solution: $"Marnie {noteId}",
                     gold: 0,
                     cancellable: false,
@@ -149,9 +150,43 @@ private static string CreateQuestString(
         return data.ShopDescription;
     }
 
-    private static string TranslateOrFallback(ContentContext context, string key, string fallback)
+    private static string ResolveFarmAnimalDisplayName(string animalId)
     {
-        var translated = context.I18n.Get(key).ToString();
-        return string.Equals(translated, key, System.StringComparison.OrdinalIgnoreCase) ? fallback : translated;
+        if (Game1.farmAnimalData is not null && Game1.farmAnimalData.TryGetValue(animalId, out var data))
+        {
+            if (!string.IsNullOrWhiteSpace(data.DisplayName))
+                return data.DisplayName;
+
+            if (!string.IsNullOrWhiteSpace(data.ShopDisplayName))
+                return data.ShopDisplayName;
+        }
+
+        try
+        {
+            var dict = Game1.content.Load<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+            if (dict.TryGetValue(animalId, out var d) && !string.IsNullOrWhiteSpace(d.DisplayName))
+                return d.DisplayName;
+        }
+        catch
+        {
+            // Best-effort.
+        }
+
+        return animalId;
     }
+
+    private static string T(ContentContext context, string key, string fallback, params object[] tokens)
+    {
+        var translated = tokens.Length == 0
+            ? context.I18n.GetString(key)
+            : context.I18n.GetString(key, tokens);
+
+        if (!string.IsNullOrWhiteSpace(translated) && !string.Equals(translated, key, StringComparison.OrdinalIgnoreCase))
+            return translated;
+
+        return tokens.Length == 0 ? fallback : string.Format(fallback, tokens);
+    }
+
+    private static string TranslateOrFallback(ContentContext context, string key, string fallback)
+        => T(context, key, fallback);
 }

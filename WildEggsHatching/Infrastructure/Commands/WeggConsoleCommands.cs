@@ -1,4 +1,5 @@
 using System;
+using Mikew.BirdsOfAFeather.Helpers;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using StardewModdingAPI;
 
@@ -7,11 +8,13 @@ namespace WildEggsHatching.Infrastructure.Commands;
 public sealed class WeggConsoleCommands
 {
     private readonly ILog _log;
+    private readonly I18TranslationHelper _i18n;
     private readonly WeggCommandDispatcher _dispatcher;
 
-    public WeggConsoleCommands(ILog log, WeggCommandDispatcher dispatcher)
+    public WeggConsoleCommands(ILog log, I18TranslationHelper i18n, WeggCommandDispatcher dispatcher)
     {
         _log = log;
+        _i18n = i18n;
         _dispatcher = dispatcher;
     }
 
@@ -19,7 +22,7 @@ public sealed class WeggConsoleCommands
     {
         helper.ConsoleCommands.Add(
             name: "wegg",
-            documentation: "WildEggsHatching subcommands. Type `wegg help`.",
+            documentation: _i18n.GetOrDefault("command.wegg.documentation", "WildEggsHatching subcommands. Type `wegg help`."),
             callback: (_, args) =>
             {
                 _log.Log($"wegg args={string.Join(" ", args)}", LogLevel.Trace);
