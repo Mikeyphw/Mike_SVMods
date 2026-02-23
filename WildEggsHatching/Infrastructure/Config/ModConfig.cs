@@ -20,7 +20,15 @@ public sealed class ModConfig
     public bool DesertTombDebugLogging { get; set; } = false;
 
 
+    /// <summary>
+    /// If enabled, DesertTomb floors can still appear after the DesertTomb progression phase is complete.
+    /// This mirrors the original mod's "KeepMineLevel" behavior.
+    /// </summary>
+    public bool KeepMineLevel { get; set; } = false;
+
     public TombChance TombChance { get; set; } = TombChance.Medium;
+
+    public TombDifficulty TombDifficulty { get; set; } = TombDifficulty.Moderate;
 
     public bool AlternatePotionSprite { get; set; } = false;
     public bool NeedsFern { get; set; } = true;

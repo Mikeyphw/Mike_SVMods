@@ -21,13 +21,17 @@ public sealed class DesertTombRuntimePolicyTests
     }
 
     [Theory]
-    [InlineData(true, ProgressionStep.PartIII, false)]
-    [InlineData(true, ProgressionStep.PartIV, true)]
-    [InlineData(false, ProgressionStep.PartI, true)]
-    public void IsEligibleByProgression_RespectsProgressionMode(bool progressionMode, ProgressionStep step, bool expected)
+    [InlineData(true, false, ProgressionStep.PartIII, false)]
+    [InlineData(true, false, ProgressionStep.PartIV, true)]
+    [InlineData(true, false, ProgressionStep.PartV, false)]
+    [InlineData(true, true, ProgressionStep.PartIV, true)]
+    [InlineData(true, true, ProgressionStep.PartV, true)]
+    [InlineData(false, false, ProgressionStep.PartI, true)]
+    public void IsEligibleByProgression_RespectsProgressionModeAndKeepMineLevel(bool progressionMode, bool keepMineLevel, ProgressionStep step, bool expected)
     {
-        Assert.Equal(expected, DesertTombRuntimePolicy.IsEligibleByProgression(progressionMode, step));
+        Assert.Equal(expected, DesertTombRuntimePolicy.IsEligibleByProgression(progressionMode, keepMineLevel, step));
     }
+
 
     [Theory]
     [InlineData(121, true)]

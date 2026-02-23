@@ -13,6 +13,7 @@ using WildEggsHatching.DesertTomb.Core.Model;
 using WildEggsHatching.DesertTomb.Core.Runtime;
 using WildEggsHatching.DesertTomb.Core.Spawning;
 using WildEggsHatching.Infrastructure.Config;
+using ConfigTombDifficulty = WildEggsHatching.Infrastructure.Config.TombDifficulty;
 using Mikew.BirdsOfAFeather.Helpers.Logging;
 using WildEggsHatching.Infrastructure.DesertTomb.Diagnostics;
 using static WildEggsHatching.DesertTomb.Core.Enums.DesertTombEnums;
@@ -312,6 +313,7 @@ public sealed class DesertTombRuntime
         RemoveExistingMonsters(mineShaft);
 
         var config = SpawnConfiguration.Default;
+        config.Difficulty = MapDifficulty(cfg.TombDifficulty);
 
         _generator.Generate(mineShaft);
 
@@ -405,6 +407,16 @@ public sealed class DesertTombRuntime
 
     private static string TodayMarker(MineShaft mineShaft)
         => $"{Game1.stats.DaysPlayed}:{mineShaft.mineLevel}";
+
+    private static TombDifficulty MapDifficulty(ConfigTombDifficulty difficulty)
+        => difficulty switch
+        {
+            ConfigTombDifficulty.Easy => TombDifficulty.Easy,
+            ConfigTombDifficulty.Moderate => TombDifficulty.Moderate,
+            ConfigTombDifficulty.Hard => TombDifficulty.Hard,
+            _ => TombDifficulty.Moderate,
+        };
+
 
     private sealed class ActiveTombFloorState
     {

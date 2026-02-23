@@ -710,7 +710,9 @@ var catalog = new AnimalCatalogBuilder(modAvailability, log).Build(snapshot.Wild
 
             layout.Page("desertTomb", page =>
             {
+                page.Bool(cfg => cfg.KeepMineLevel, optionId: "desertTomb.keepMineLevel", tooltip: true);
                 page.Enum(cfg => cfg.TombChance, optionId: "desertTomb.tombChance", tooltip: true);
+                page.Enum(cfg => cfg.TombDifficulty, optionId: "desertTomb.tombDifficulty", tooltip: true);
             });
 
             layout.Page("items", page =>

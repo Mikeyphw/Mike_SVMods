@@ -16,8 +16,9 @@ public static class DesertTombRuntimePolicy
         options: RegexOptions.Compiled | RegexOptions.CultureInvariant
     );
 
-    public static bool IsEligibleByProgression(bool progressionModeEnabled, ProgressionStep step)
-        => !progressionModeEnabled || step >= ProgressionStep.PartIV;
+    public static bool IsEligibleByProgression(bool progressionModeEnabled, bool keepMineLevel, ProgressionStep step)
+        => !progressionModeEnabled
+           || (keepMineLevel ? step >= ProgressionStep.PartIV : step == ProgressionStep.PartIV);
 
     public static bool IsTombCandidate(int mineLevel)
         => mineLevel > 120;
