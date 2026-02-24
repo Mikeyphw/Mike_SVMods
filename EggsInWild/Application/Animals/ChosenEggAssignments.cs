@@ -13,7 +13,8 @@ using EggsInWild.Core.ShopAnchors;
 using EggsInWild.Core.Weighting;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.Infrastructure.ModData.Models;
-using SmapiLog = Mikew.NestCore.Helpers.Logging.SmapiLog;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.Animals;
 
@@ -30,15 +31,6 @@ public sealed class ChosenEggAssignments
     private readonly IModRegistry _registry;
     private readonly ILog _log;
     private readonly Func<string, bool> _isUnlocked;
-
-    /// <summary>Helper to emit scoped log messages, falling back to basic log if not a SmapiLog instance.</summary>
-    private void LogScoped(string category, string message, LogLevel level)
-    {
-        if (_log is SmapiLog slog)
-            slog.LogScoped(ScopedLogCatalog.ModWe, category, message, level);
-        else
-            _log.Log(message, level);
-    }
 
     private readonly Dictionary<string, string> _eggToAnimal = new(KeyComparer);
     private int? _lastSeed;
@@ -68,11 +60,11 @@ public sealed class ChosenEggAssignments
         var farmAnimals = SafeLoad<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
         if (farmAnimals is null || farmAnimals.Count == 0)
         {
-            LogScoped("spawning", "ChosenEggAssignments: Data/FarmAnimals unavailable; skipping recompute.", LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, "ChosenEggAssignments: Data/FarmAnimals unavailable; skipping recompute.", LogLevel.Trace);
             return;
         }
 
-        var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => LogScoped("spawning", msg, LogLevel.Trace));
+        var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, msg, LogLevel.Trace));
         RecomputeIfNeeded(step, farmAnimals, anchors);
     }
 
@@ -147,7 +139,7 @@ public sealed class ChosenEggAssignments
             if (missingFarmAnimalKeys.Count > 0)
             {
                 var orderedMissing = missingFarmAnimalKeys.OrderBy(k => k, KeyComparer).ToList();
-                LogScoped("spawning",
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning,
                     $"ChosenEggAssignments: egg={eggId} MissingFarmAnimalKeys=[{string.Join(", ", orderedMissing)}]",
                     LogLevel.Debug);
             }
@@ -180,7 +172,7 @@ public sealed class ChosenEggAssignments
         }
 
         _lastSeed = seed;
-        LogScoped("spawning", $"ChosenEggAssignments: mapped {_eggToAnimal.Count} eggs to farm animals for seed={seed}.", LogLevel.Debug);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, $"ChosenEggAssignments: mapped {_eggToAnimal.Count} eggs to farm animals for seed={seed}.", LogLevel.Debug);
     }
 
     private static bool IsEligible(WildAnimalJson wildAnimal, string regionToken, EggKind kind)
@@ -353,7 +345,7 @@ public sealed class ChosenEggAssignments
         }
         catch (Exception ex)
         {
-            LogScoped("spawning", $"ChosenEggAssignments: LetMeHatch clone injection skipped ({ex.GetType().Name}: {ex.Message}).", LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, $"ChosenEggAssignments: LetMeHatch clone injection skipped ({ex.GetType().Name}: {ex.Message}).", LogLevel.Trace);
         }
     }
 

@@ -35,23 +35,19 @@ namespace Mikew.NestCore.Helpers
             Emit(_defaultMod, _defaultCategory, text, logLevel, enabled);
         }
 
-        public void VerboseLog(string text, LogLevel logLevel = LogLevel.Debug, bool enabled = true)
+public void VerboseLog(string text, LogLevel logLevel = LogLevel.Debug, bool enabled = true)
         {
-            var invalidLogging = !enabled || !_config.VerboseLogging;
-            if (!invalidLogging)
-            {
-                Emit(_defaultMod, _defaultCategory, text, logLevel, enabled: true);
-            }
+            if (!enabled)
+                return;
+            Emit(_defaultMod, _defaultCategory, text, logLevel, enabled: true);
         }
 
         public void TestingLog(string text, LogLevel logLevel = LogLevel.Debug, bool enabled = true)
-{
-    var invalidLogging = !enabled || !_config.TestingLogging;
-    if (!invalidLogging)
-    {
-        Emit(_defaultMod, _defaultCategory, text, logLevel, enabled: true);
-    }
-}
+        {
+            if (!enabled)
+                return;
+            Emit(_defaultMod, _defaultCategory, text, logLevel, enabled: true);
+        }
 
 public void LogException(Exception exception, string message, LogLevel logLevel = LogLevel.Error, bool enabled = true)
 {
@@ -158,6 +154,34 @@ public void LogException(Exception exception, string message, LogLevel logLevel 
         {
             Emit(mod, category, message, logLevel, enabled);
         }
+
+        #region Enum-based LogScoped overloads
+
+        /// <summary>Log a message with a WE/ModWe category.</summary>
+        public void LogScoped(ScopedLogCatalog.ModWeCategory category, string message, LogLevel logLevel = LogLevel.Trace, bool enabled = true)
+        {
+            Emit(ScopedLogCatalog.ModWe, ScopedLogCatalog.ToString(category), message, logLevel, enabled);
+        }
+
+        /// <summary>Log a message with a RoosterControl category.</summary>
+        public void LogScoped(ScopedLogCatalog.ModRoosterControlCategory category, string message, LogLevel logLevel = LogLevel.Trace, bool enabled = true)
+        {
+            Emit(ScopedLogCatalog.ModRoosterControl, ScopedLogCatalog.ToString(category), message, logLevel, enabled);
+        }
+
+        /// <summary>Log a message with a LetMeHatch category.</summary>
+        public void LogScoped(ScopedLogCatalog.ModLthteCategory category, string message, LogLevel logLevel = LogLevel.Trace, bool enabled = true)
+        {
+            Emit(ScopedLogCatalog.ModLthte, ScopedLogCatalog.ToString(category), message, logLevel, enabled);
+        }
+
+        /// <summary>Log a message with a NestCore category.</summary>
+        public void LogScoped(ScopedLogCatalog.ModNestCoreCategory category, string message, LogLevel logLevel = LogLevel.Trace, bool enabled = true)
+        {
+            Emit(ScopedLogCatalog.ModNestCore, ScopedLogCatalog.ToString(category), message, logLevel, enabled);
+        }
+
+        #endregion
 
         private void Emit(string mod, string category, string message, LogLevel logLevel, bool enabled)
         {

@@ -6,6 +6,9 @@ using Mikew.NestCore.Helpers.Logging;
 using Mikew.NestCore.Integrations.Gmcm;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
+
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
 
 namespace Mikew.NestCore;
 
@@ -39,8 +42,6 @@ internal sealed class ModEntry : Mod
 
         _log = new SmapiLog(
             Monitor,
-            verboseEnabled: () => ModCfg.VerboseLogging,
-            testingEnabled: () => ModCfg.TestingLogging,
             configProvider: () => ModCfg,
             defaultMod: Helpers.Logging.ScopedLogCatalog.ModNestCore,
             defaultCategory: Helpers.Logging.ScopedLogCatalog.CategoryGeneral);
@@ -75,8 +76,6 @@ internal sealed class ModEntry : Mod
             getConfig: () => _configProvider.Get(),
             reset: () => _configProvider.Update(cfg =>
             {
-                cfg.VerboseLogging = false;
-                cfg.TestingLogging = false;
                 cfg.ScopedLogging = ScopedLoggingConfig.CreateDefault();
             }),
             save: () =>
@@ -89,9 +88,6 @@ internal sealed class ModEntry : Mod
             {
                 layout.Root(root =>
                 {
-                    root.Bool(cfg => cfg.VerboseLogging, tooltip: true);
-                    root.Bool(cfg => cfg.TestingLogging, tooltip: true);
-                    root.Separator(simple: true);
                     root.Link("logging.nestcore", tooltip: true);
                     root.Link("logging.roostercontrol", tooltip: true);
                     root.Link("logging.we", tooltip: true);
@@ -161,10 +157,12 @@ internal sealed class ModEntry : Mod
     private void PrintStatus()
     {
         var cfg = _configProvider?.Get() ?? ModCfg;
-        Monitor.Log($"WorldReady={StardewModdingAPI.Context.IsWorldReady}", LogLevel.Info);
-        Monitor.Log($"MainPlayer={StardewModdingAPI.Context.IsMainPlayer}", LogLevel.Info);
-        Monitor.Log($"VerboseLogging={cfg.VerboseLogging}", LogLevel.Info);
-        Monitor.Log($"TestingLogging={cfg.TestingLogging}", LogLevel.Info);
-        Monitor.Log($"GmcmRegistered={_gmcm is not null}", LogLevel.Info);
+        if (_log is not null)
+        {
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"WorldReady={StardewModdingAPI.Context.IsWorldReady}", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"MainPlayer={StardewModdingAPI.Context.IsMainPlayer}", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"GmcmRegistered={_gmcm is not null}", LogLevel.Info);
+        }
     }
 }
+

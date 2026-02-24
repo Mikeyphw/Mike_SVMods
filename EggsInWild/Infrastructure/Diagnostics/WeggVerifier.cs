@@ -26,6 +26,9 @@ using Mikew.NestCore.Framework;
 using EggsInWild.Core.Assets;
 using EggsInWild.Core.ShopAnchors;
 using EggsInWild.Core.ShopProgression;
+using SmapiLog = Mikew.NestCore.Helpers.Logging.SmapiLog;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 using StardewValley.GameData.Objects;
 using EggsInWild.Core.Weighting;
@@ -530,7 +533,7 @@ try
     }
     else
     {
-        var index = ShopAnchorIndex.Build(farmAnimals, warn: msg => _log.Log(msg, LogLevel.Warn));
+        var index = ShopAnchorIndex.Build(farmAnimals, warn: msg => LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Verify, msg, LogLevel.Warn));
         var samples = index.Sample(6).Select(kvp => $"{kvp.Key}={kvp.Value}g").ToList();
 
         report.Add(
@@ -558,7 +561,7 @@ try
     {
         var snapshot = _dataLoader.Load();
         var candidateIds = BuildVerifyCandidateIds(snapshot, farmAnimals);
-        var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => _log.Log(msg, LogLevel.Trace));
+        var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Verify, msg, LogLevel.Trace));
 
         var hidden = candidateIds
             .Where(id => farmAnimals.TryGetValue(id, out var a) && a is not null && a.PurchasePrice < 0)
@@ -606,7 +609,7 @@ try
         }
         else
         {
-            var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => _log.Log(msg, LogLevel.Trace));
+            var anchors = ShopAnchorIndex.Build(farmAnimals, warn: msg => LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Verify, msg, LogLevel.Trace));
             var valueCalc = new EffectiveValueCalculator(farmAnimals, anchors, objects);
             var values = valueCalc.ComputeForCandidates(candidateIds);
 

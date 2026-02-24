@@ -2,6 +2,9 @@ using System;
 using Mikew.NestCore.Helpers.Logging;
 using StardewModdingAPI;
 
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using ScopedLogCatalog = Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
+
 namespace Mikew.NestCore.Helpers.SaveData
 {
     /// <summary>
@@ -32,7 +35,7 @@ namespace Mikew.NestCore.Helpers.SaveData
             }
             catch (Exception ex)
             {
-                _log.Log($"Failed to read save data '{key}' (normalized: '{normalizedKey}').\n{ex}", LogLevel.Error);
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.SaveData, $"Failed to read save data '{key}' (normalized: '{normalizedKey}').\n{ex}", LogLevel.Error);
                 return null;
             }
         }
@@ -60,7 +63,7 @@ namespace Mikew.NestCore.Helpers.SaveData
             }
             catch (Exception ex)
             {
-                _log.Log($"Failed to write save data '{key}' (normalized: '{normalizedKey}').\n{ex}", LogLevel.Error);
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.SaveData, $"Failed to write save data '{key}' (normalized: '{normalizedKey}').\n{ex}", LogLevel.Error);
             }
         }
 
@@ -73,7 +76,7 @@ namespace Mikew.NestCore.Helpers.SaveData
             }
             catch (Exception ex)
             {
-                _log.Log($"Failed to delete save data '{key}' (normalized: '{normalizedKey}').\n{ex}", LogLevel.Error);
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.SaveData, $"Failed to delete save data '{key}' (normalized: '{normalizedKey}').\n{ex}", LogLevel.Error);
             }
         }
 
@@ -96,3 +99,4 @@ namespace Mikew.NestCore.Helpers.SaveData
         }
     }
 }
+

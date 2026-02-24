@@ -9,6 +9,8 @@ using StardewValley.Pathfinding;
 using EggsInWild.DesertTomb.Core.Spawning;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Creatures;
 using Mikew.NestCore.Helpers.Logging;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.DesertTomb.Spawning;
 
@@ -34,7 +36,7 @@ public sealed class TombRoleEnforcer
     private readonly int _aggroRangeTiles;
 
     private int _ticks;
-
+    
     public TombRoleEnforcer(ILog log, int intervalTicks = 10, int aggroRangeTiles = 7)
     {
         _log = log ?? throw new ArgumentNullException(nameof(log));
@@ -145,7 +147,7 @@ public sealed class TombRoleEnforcer
         }
         catch (Exception ex)
         {
-            _log.Log($"[DesertTomb] Patrol controller failed: {ex.Message}", LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] Patrol controller failed: {ex.Message}", LogLevel.Trace);
         }
     }
 

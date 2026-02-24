@@ -6,6 +6,8 @@ using EggsInWild.Core.Models;
 using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Mods;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Infrastructure.ModData;
 
@@ -80,7 +82,7 @@ public sealed class AnimalCatalogBuilder
         }
 
         if (same.Count == 0 && weighted.Count == 0)
-            _log.Log("Animal entry had no farm animal IDs for loaded mods; it will never spawn a farm animal.", StardewModdingAPI.LogLevel.Trace);
+LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.SaveData, "Animal entry had no farm animal IDs for loaded mods; it will never spawn a farm animal.", StardewModdingAPI.LogLevel.Trace);
 
         return (same, weighted);
     }

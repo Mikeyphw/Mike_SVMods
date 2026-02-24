@@ -9,6 +9,8 @@ using EggsInWild.Infrastructure.Content;
 using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData;
 using Mikew.NestCore;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.AnimalNotes;
 
@@ -58,11 +60,11 @@ public sealed class AnimalNotesStartupValidator
 
         if (missingNotes.Count == 0 && missingQuests.Count == 0 && missingMail.Count == 0 && extraNotes.Count == 0 && extraQuests.Count == 0 && extraMail.Count == 0)
         {
-            _log.Log($"AnimalNotes validation: OK (animals={expectedTokens.Count}).", StardewModdingAPI.LogLevel.Info);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes validation: OK (animals={expectedTokens.Count}).", LogLevel.Info);
             return;
         }
 
-        _log.Log($"AnimalNotes validation: animals={expectedTokens.Count} missing(notes={missingNotes.Count}, quests={missingQuests.Count}, mail={missingMail.Count}) extra(notes={extraNotes.Count}, quests={extraQuests.Count}, mail={extraMail.Count}).", StardewModdingAPI.LogLevel.Warn);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes validation: animals={expectedTokens.Count} missing(notes={missingNotes.Count}, quests={missingQuests.Count}, mail={missingMail.Count}) extra(notes={extraNotes.Count}, quests={extraQuests.Count}, mail={extraMail.Count}).", LogLevel.Warn);
 
         LogSample("Missing note IDs", missingNotes);
         LogSample("Missing quest IDs", missingQuests);
@@ -79,7 +81,7 @@ public sealed class AnimalNotesStartupValidator
             return;
 
         var sample = ids.Take(8);
-        _log.Log($"{label}: {string.Join(", ", sample)}{(ids.Count > 8 ? ", ..." : string.Empty)}", StardewModdingAPI.LogLevel.Warn);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"{label}: {string.Join(", ", sample)}{(ids.Count > 8 ? ", ..." : string.Empty)}", LogLevel.Warn);
     }
 
     private static T? SafeLoad<T>(string assetName) where T : class

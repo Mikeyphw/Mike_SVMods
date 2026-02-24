@@ -22,6 +22,8 @@ using StardewValley;
 using static LetMeHatch.EnumsAndStrings.Enums;
 using static LetMeHatch.EnumsAndStrings.Strings;
 using static Mikew.NestCore.EnumsAndStrings.Strings;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using ScopedLogCatalog = Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace LetMeHatch.Application.Coordination;
 
@@ -38,9 +40,8 @@ public sealed class LmhCoordinator
 
     private GameAssetManager? _assetManager;
     private LmhApplicationServices? _app;
-    private LmhAssetPipeline? _assetPipeline;
+    private AssetPipelineHost<ContentContext>? _assetPipeline;
 
-    private readonly List<string> _assetsRequested = new();
     private readonly HashSet<string> _addedTokens = new();
 
     private bool _earlyInitRequested;
@@ -127,7 +128,7 @@ public sealed class LmhCoordinator
 
         if (_wildEggs is null)
         {
-            _log.Log("Skipping early initialization because Wild Eggs API is unavailable.", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.Runtime, "Skipping early initialization because Wild Eggs API is unavailable.", LogLevel.Warn);
             return;
         }
 
@@ -163,25 +164,28 @@ public sealed class LmhCoordinator
     {
         if (_assetPipeline is null)
         {
-            _log.Log("Content pipeline is not initialized yet.", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.ContentPipeline, "Content pipeline is not initialized yet.", LogLevel.Warn);
             return;
         }
 
-        foreach (var line in _assetPipeline.GetDebugReportLines())
-            _log.Log(line, LogLevel.Info);
+        LogScopedHelper.Log(
+            _log,
+            ScopedLogCatalog.ModLthteCategory.ContentPipeline,
+            "NestCore asset pipeline host is initialized and attached on early init.",
+            LogLevel.Info);
     }
 
     public void InvalidateAllContent()
     {
         if (_assetPipeline is null)
         {
-            _log.Log("Content pipeline is not initialized yet.", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.ContentPipeline, "Content pipeline is not initialized yet.", LogLevel.Warn);
             return;
         }
 
         _assetPipeline.RequestInvalidateAll();
 
-        _log.Log("Invalidated caches for all registered content handlers.", LogLevel.Info);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.ContentPipeline, "Invalidated caches for all registered content handlers.", LogLevel.Info);
     }
 
     public void PrintStatus()
@@ -199,7 +203,7 @@ public sealed class LmhCoordinator
         };
 
         foreach (var line in lines)
-            _log.Log(line, LogLevel.Info);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.Runtime, line, LogLevel.Info);
     }
 
     private void InitializeApis()
@@ -255,7 +259,6 @@ private void InitializeAssetEditor()
         ModEntry.AssetHandler,
         _assetManager,
         _app
-        , _invalidation
     );
 }
 
@@ -304,20 +307,4 @@ private void InitializeAssetEditor()
         }
     }
 
-        private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
-    {
-        if (_assetManager is null || _assetPipeline is null)
-        {
-            return;
-        }
-
-        var assetName = e.NameWithoutLocale.BaseName.ToLowerInvariant();
-
-        if (!_assetsRequested.Contains(assetName))
-        {
-            _assetsRequested.Add(assetName);
-            _core.Helper.Data.WriteJsonFile("assetsRequested.json", _assetsRequested);
-        }
-
-    }
 }

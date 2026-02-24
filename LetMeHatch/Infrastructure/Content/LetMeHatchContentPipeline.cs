@@ -17,14 +17,13 @@ namespace LetMeHatch.Infrastructure.Content;
 /// <summary>Creates the LMH content pipeline (loaders + editors) in a single place.</summary>
 public static class LetMeHatchContentPipeline
 {
-    public static LmhAssetPipeline Create(
+    public static AssetPipelineHost<ContentContext> Create(
         CoreContext core,
         SmapiConfigProvider<ModConfig> configProvider,
         ILog log,
         ModAssetHandler assetHandler,
         GameAssetManager assets,
-        LmhApplicationServices app,
-        AssetInvalidationBatcher invalidation)
+        LmhApplicationServices app)
     {
         if (core is null) throw new ArgumentNullException(nameof(core));
         if (configProvider is null) throw new ArgumentNullException(nameof(configProvider));
@@ -32,20 +31,22 @@ public static class LetMeHatchContentPipeline
         if (assetHandler is null) throw new ArgumentNullException(nameof(assetHandler));
         if (assets is null) throw new ArgumentNullException(nameof(assets));
         if (app is null) throw new ArgumentNullException(nameof(app));
-        if (invalidation is null) throw new ArgumentNullException(nameof(invalidation));
 
-        var coordinator = new AssetRequestCoordinator<ContentContext>(
+        var pipeline = new AssetPipelineHost<ContentContext>(
             core.Helper,
             log,
             () => new ContentContext(core, configProvider, log, assetHandler, assets, app));
 
         foreach (var loader in CreateLoaders(assetHandler, app))
-            coordinator.Register(new LmhAssetLoaderHandler(loader));
+            pipeline.RegisterHandler(new LmhAssetLoaderHandler(loader));
 
         foreach (var reg in CreateEditors(app))
-            coordinator.RegisterEditor(reg.Editor, order: reg.Order);
+            pipeline.RegisterEditor(reg.Editor, order: reg.Order);
 
-        return new LmhAssetPipeline(coordinator, invalidation, CreateInvalidationTargets(assetHandler, app));
+        foreach (var target in CreateInvalidationTargets(assetHandler, app))
+            pipeline.AddInvalidationTarget(target);
+
+        return pipeline;
     }
 
     private static IReadOnlyCollection<string> CreateInvalidationTargets(ModAssetHandler assetHandler, LmhApplicationServices app)

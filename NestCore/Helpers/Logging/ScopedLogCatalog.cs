@@ -6,6 +6,7 @@ namespace Mikew.NestCore.Helpers.Logging;
 
 public static class ScopedLogCatalog
 {
+    // Mod identifiers (unchanged)
     public const string ModNestCore = "NestCore";
     public const string ModRoosterControl = "RoosterControl";
     public const string ModWe = "WE";
@@ -13,6 +14,7 @@ public static class ScopedLogCatalog
 
     public const string CategoryGeneral = "general";
 
+    // Level constants (unchanged)
     public const string LevelAll = "all";
     public const string LevelTrace = "trace";
     public const string LevelDebug = "debug";
@@ -20,6 +22,130 @@ public static class ScopedLogCatalog
     public const string LevelWarn = "warn";
     public const string LevelError = "error";
     public const string LevelNone = "none";
+
+    #region Category Enums
+
+    /// <summary>Categories for Wild Eggs (WE) / EggsInWild mod.</summary>
+    public enum ModWeCategory
+    {
+        General,
+        Progression,
+        Spawning,
+        AnimalNotes,
+        DesertTomb,
+        Content,
+        Verify,
+        Commands,
+        SaveData,
+        Integrations,
+    }
+
+    /// <summary>Categories for RoosterControl mod.</summary>
+    public enum ModRoosterControlCategory
+    {
+        General,
+        Catalogs,
+        Hatching,
+        Planning,
+        FarmAnimals,
+        Assets,
+        Gmcm,
+        Commands,
+        SaveData,
+        Integrations,
+    }
+
+    /// <summary>Categories for LetMeHatch (LTHTE) mod.</summary>
+    public enum ModLthteCategory
+    {
+        General,
+        Cloning,
+        Breeding,
+        Assets,
+        ContentPipeline,
+        Gmcm,
+        Commands,
+        Integrations,
+        Runtime,
+    }
+
+    /// <summary>Categories for NestCore mod.</summary>
+    public enum ModNestCoreCategory
+    {
+        General,
+        Gmcm,
+        Config,
+        Content,
+        SaveData,
+        Integrations,
+        Runtime,
+    }
+
+    #endregion
+
+    #region Enum to String Conversion
+
+    /// <summary>Converts a ModWeCategory enum value to its string representation.</summary>
+    public static string ToString(ModWeCategory category) => category switch
+    {
+        ModWeCategory.General => CategoryGeneral,
+        ModWeCategory.Progression => "progression",
+        ModWeCategory.Spawning => "spawning",
+        ModWeCategory.AnimalNotes => "animal-notes",
+        ModWeCategory.DesertTomb => "desert-tomb",
+        ModWeCategory.Content => "content",
+        ModWeCategory.Verify => "verify",
+        ModWeCategory.Commands => "commands",
+        ModWeCategory.SaveData => "save-data",
+        ModWeCategory.Integrations => "integrations",
+        _ => CategoryGeneral,
+    };
+
+    /// <summary>Converts a ModRoosterControlCategory enum value to its string representation.</summary>
+    public static string ToString(ModRoosterControlCategory category) => category switch
+    {
+        ModRoosterControlCategory.General => CategoryGeneral,
+        ModRoosterControlCategory.Catalogs => "catalogs",
+        ModRoosterControlCategory.Hatching => "hatching",
+        ModRoosterControlCategory.Planning => "planning",
+        ModRoosterControlCategory.FarmAnimals => "farmanimals",
+        ModRoosterControlCategory.Assets => "assets",
+        ModRoosterControlCategory.Gmcm => "gmcm",
+        ModRoosterControlCategory.Commands => "commands",
+        ModRoosterControlCategory.SaveData => "save-data",
+        ModRoosterControlCategory.Integrations => "integrations",
+        _ => CategoryGeneral,
+    };
+
+    /// <summary>Converts a ModLthteCategory enum value to its string representation.</summary>
+    public static string ToString(ModLthteCategory category) => category switch
+    {
+        ModLthteCategory.General => CategoryGeneral,
+        ModLthteCategory.Cloning => "cloning",
+        ModLthteCategory.Breeding => "breeding",
+        ModLthteCategory.Assets => "assets",
+        ModLthteCategory.ContentPipeline => "content-pipeline",
+        ModLthteCategory.Gmcm => "gmcm",
+        ModLthteCategory.Commands => "commands",
+        ModLthteCategory.Integrations => "integrations",
+        ModLthteCategory.Runtime => "runtime",
+        _ => CategoryGeneral,
+    };
+
+    /// <summary>Converts a ModNestCoreCategory enum value to its string representation.</summary>
+    public static string ToString(ModNestCoreCategory category) => category switch
+    {
+        ModNestCoreCategory.General => CategoryGeneral,
+        ModNestCoreCategory.Gmcm => "gmcm",
+        ModNestCoreCategory.Config => "config",
+        ModNestCoreCategory.Content => "content",
+        ModNestCoreCategory.SaveData => "save-data",
+        ModNestCoreCategory.Integrations => "integrations",
+        ModNestCoreCategory.Runtime => "runtime",
+        _ => CategoryGeneral,
+    };
+
+    #endregion
 
     public static readonly string[] AllowedLevels =
     {

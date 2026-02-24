@@ -3,6 +3,8 @@ using Mikew.NestCore.Helpers.Logging;
 using Mikew.NestCore.Helpers.SaveData;
 using Mikew.NestCore.Models;
 using EggsInWild.Infrastructure.Game;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.Spawning;
 
@@ -40,9 +42,7 @@ public sealed class SpawnWeatherHistory
 
         TryWrite(data);
 
-        _log.Log(
-            $"SpawnWeatherHistory updated (day={dayNumber} y={data.WeatherYesterday} t={data.WeatherToday} tm={data.WeatherTomorrow})",
-            StardewModdingAPI.LogLevel.Trace);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, $"SpawnWeatherHistory updated (day={dayNumber} y={data.WeatherYesterday} t={data.WeatherToday} tm={data.WeatherTomorrow})", LogLevel.Trace);
     }
 
     public SpawnWeatherSnapshot GetSnapshot()
@@ -77,7 +77,7 @@ public sealed class SpawnWeatherHistory
         }
         catch (Exception ex)
         {
-            _log.Log($"Failed writing SpawnWeatherHistory. {ex}", StardewModdingAPI.LogLevel.Warn);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, $"Failed writing SpawnWeatherHistory. {ex}", LogLevel.Warn);
         }
     }
 }

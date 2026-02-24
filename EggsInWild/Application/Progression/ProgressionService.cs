@@ -7,6 +7,8 @@ using EggsInWild.Infrastructure.Game;
 using Mikew.NestCore.Helpers.Logging;
 using Mikew.NestCore.Helpers.SaveData;
 using Mikew.NestCore.Helpers.Config;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.Progression;
 
@@ -154,7 +156,7 @@ public sealed class ProgressionService
         _invalidateAssets();
         StepChanged?.Invoke(step);
 
-        _log.Log($"Progression forced {from} -> {step}: {reason}", StardewModdingAPI.LogLevel.Info);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Progression, $"Progression forced {from} -> {step}: {reason}", LogLevel.Info);
 
         message = $"Progression {from} -> {step}. (rollback: wegg step set {from})";
         return true;
@@ -228,7 +230,7 @@ public void OnSaveLoaded()
         }
         else if (envelope.Version != SaveDataVersion)
         {
-            _log.Log($"Unsupported save data version {envelope.Version}; defaulting progression to PartI.", StardewModdingAPI.LogLevel.Warn);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Progression, $"Unsupported save data version {envelope.Version}; defaulting progression to PartI.", LogLevel.Warn);
             _data = new ProgressionSaveData();
         }
         else
@@ -357,7 +359,7 @@ public void OnSaveLoaded()
         _invalidateAssets();
         StepChanged?.Invoke(step);
 
-        _log.Log($"Progression {from} -> {step} ({trigger}): {reason}");
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Progression, $"Progression {from} -> {step} ({trigger}): {reason}", LogLevel.Trace);
     }
 
     private void NormalizeStateForConfig(ModConfig config)

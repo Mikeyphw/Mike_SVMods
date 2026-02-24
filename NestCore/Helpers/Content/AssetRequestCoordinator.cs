@@ -5,6 +5,9 @@ using Mikew.NestCore.Helpers.Logging;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using ScopedLogCatalog = Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
+
 namespace Mikew.NestCore.Helpers.Content
 {
     /// <summary>
@@ -85,7 +88,7 @@ namespace Mikew.NestCore.Helpers.Content
                 }
                 catch (Exception ex)
                 {
-                    _log.Log($"Asset match failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
+                    LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.Content, $"Asset match failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
                     continue;
                 }
 
@@ -101,7 +104,7 @@ namespace Mikew.NestCore.Helpers.Content
                     }
                     catch (Exception ex)
                     {
-                        _log.Log($"Asset context factory failed.\n{ex}", LogLevel.Error);
+                        LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.Content, $"Asset context factory failed.\n{ex}", LogLevel.Error);
                         return;
                     }
                 }
@@ -113,7 +116,7 @@ namespace Mikew.NestCore.Helpers.Content
                 }
                 catch (Exception ex)
                 {
-                    _log.Log($"Asset gating failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
+                    LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.Content, $"Asset gating failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
                     continue;
                 }
 
@@ -123,7 +126,7 @@ namespace Mikew.NestCore.Helpers.Content
                 }
                 catch (Exception ex)
                 {
-                    _log.Log($"Asset handler failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
+                    LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.Content, $"Asset handler failed ({reg.GetType().Name}).\n{ex}", LogLevel.Error);
                 }
 
                 if (reg.StopAfterHandle)
@@ -152,3 +155,4 @@ namespace Mikew.NestCore.Helpers.Content
         }
     }
 }
+

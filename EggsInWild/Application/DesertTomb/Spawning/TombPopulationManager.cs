@@ -9,6 +9,8 @@ using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.DesertTomb.Core.Model;
 using EggsInWild.DesertTomb.Core.Spawning;
 using Mikew.NestCore.Helpers.Logging;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 using static EggsInWild.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace EggsInWild.Application.DesertTomb.Spawning;
@@ -124,7 +126,7 @@ public sealed class TombPopulationManager
         }
         catch (Exception ex)
         {
-            _log.Log($"[DesertTomb] Population reconcile failed: {ex}", StardewModdingAPI.LogLevel.Error);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] Population reconcile failed: {ex}", StardewModdingAPI.LogLevel.Error);
         }
     }
 

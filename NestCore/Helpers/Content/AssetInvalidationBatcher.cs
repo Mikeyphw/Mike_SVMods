@@ -4,6 +4,9 @@ using Mikew.NestCore.Helpers.Logging;
 using Mikew.NestCore.Helpers.Timing;
 using StardewModdingAPI;
 
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using ScopedLogCatalog = Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
+
 namespace Mikew.NestCore.Helpers.Content
 {
     /// <summary>
@@ -66,7 +69,7 @@ namespace Mikew.NestCore.Helpers.Content
                 }
                 catch (Exception ex)
                 {
-                    _log.Log($"Failed to invalidate '{name}'.\n{ex}", LogLevel.Error);
+                    LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.Content, $"Failed to invalidate '{name}'.\n{ex}", LogLevel.Error);
                 }
             }
         }
@@ -78,3 +81,4 @@ namespace Mikew.NestCore.Helpers.Content
         }
     }
 }
+

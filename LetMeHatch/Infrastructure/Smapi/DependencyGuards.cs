@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using StardewModdingAPI;
+using Mikew.NestCore.Helpers.Logging;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace LetMeHatch.Infrastructure.Smapi;
 
@@ -21,7 +24,7 @@ public static class DependencyGuards
         }
     }
 
-    public static void AssertNoLocalNestCoreCopies(string modDirectoryPath, IMonitor monitor)
+    public static void AssertNoLocalNestCoreCopies(string modDirectoryPath, ILog log)
     {
         var offenders = FindLocalNestCoreCopies(modDirectoryPath);
 
@@ -30,7 +33,7 @@ public static class DependencyGuards
             return;
         }
 
-        monitor.Log(
+        LogScopedHelper.Log(log, ScopedLogCatalog.ModLthteCategory.Integrations,
             "Found local NestCore copies inside LetMeHatch. " +
             "NestCore must be installed as its own mod; remove embedded copies.",
             LogLevel.Error
@@ -38,7 +41,7 @@ public static class DependencyGuards
 
         foreach (var offender in offenders)
         {
-            monitor.Log($"  - {offender}", LogLevel.Error);
+            LogScopedHelper.Log(log, ScopedLogCatalog.ModLthteCategory.Integrations, $"  - {offender}", LogLevel.Error);
         }
 
         throw new InvalidOperationException(

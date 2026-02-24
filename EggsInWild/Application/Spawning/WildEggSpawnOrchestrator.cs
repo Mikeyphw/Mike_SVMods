@@ -1,6 +1,8 @@
 using EggsInWild.Infrastructure.Game;
 using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.Spawning;
 
@@ -37,7 +39,7 @@ public sealed class WildEggSpawnOrchestrator
 
         _service.SpawnForToday(plan, snapshot.SpawnParameters, saveId, dayNumber);
 
-        _log.Log($"Spawn plan executed: packs={plan.PackEggBudgets.Count}, jobs={plan.Jobs.Count}", StardewModdingAPI.LogLevel.Trace);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, $"Spawn plan executed: packs={plan.PackEggBudgets.Count}, jobs={plan.Jobs.Count}", LogLevel.Trace);
     }
 
     public void OnDayEnding()

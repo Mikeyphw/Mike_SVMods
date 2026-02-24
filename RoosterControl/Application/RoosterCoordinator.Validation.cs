@@ -5,6 +5,9 @@ using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
+using Mikew.NestCore.Helpers.Logging;
+
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace RoosterControl.Application;
 
@@ -84,17 +87,17 @@ internal sealed partial class RoosterCoordinator
 
         if (warnings.Count > 0)
         {
-            Monitor.Log("RoosterControl startup validation warnings:", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.General, "RoosterControl startup validation warnings:", LogLevel.Warn);
             foreach (var w in warnings)
-                Monitor.Log($"  - {w}", LogLevel.Warn);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"  - {w}", LogLevel.Warn);
         }
 
         if (errors.Count == 0)
             return;
 
-        Monitor.Log("RoosterControl startup validation errors (fatal):", LogLevel.Error);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, "RoosterControl startup validation errors (fatal):", LogLevel.Error);
         foreach (var err in errors)
-            Monitor.Log($"  - {err}", LogLevel.Error);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"  - {err}", LogLevel.Error);
 
         throw new InvalidOperationException("RoosterControl configuration/data is invalid. See SMAPI log for details.");
     }

@@ -8,6 +8,8 @@ using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Mods;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.Spawning;
 
@@ -74,8 +76,8 @@ public sealed class SpawnPlanner
 
                 var chance = chanceCalc.Calculate(kind, rule.UseBaseRandomChance, rule.RandomChance);
 
-                var includeRects = RectParsing.ParseMany(rule.IncludeCoordinates, msg => _log.Log(msg, StardewModdingAPI.LogLevel.Trace));
-                var excludeRects = RectParsing.ParseMany(rule.ExcludeCoordinates, msg => _log.Log(msg, StardewModdingAPI.LogLevel.Trace));
+                var includeRects = RectParsing.ParseMany(rule.IncludeCoordinates, msg => LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, msg, LogLevel.Trace));
+                var excludeRects = RectParsing.ParseMany(rule.ExcludeCoordinates, msg => LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, msg, LogLevel.Trace));
 
                 var orderRng = new SeededRandomProvider(DeterministicSeed.For(saveId, dayNumber, "job-order", eggItemId, rule.ModID, rule.MapName));
                 var key = chance + orderRng.NextDouble();
@@ -195,15 +197,13 @@ public sealed class SpawnPlanner
                 continue;
             }
 
-            _log.Log(
-                $"Spawn plan: excluded job due to random chance (job={job.EggItemId} map={job.MapName} chance={job.SpawnChance:0.###})",
-                StardewModdingAPI.LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Spawning, $"Spawn plan: excluded job due to random chance (job={job.EggItemId} map={job.MapName} chance={job.SpawnChance:0.###})", LogLevel.Trace);
         }
 
         return kept;
     }
 
-private static void MarkCertainJobs(List<SpawnJob> jobs, SpawnParametersJson parameters)
+    private static void MarkCertainJobs(List<SpawnJob> jobs, SpawnParametersJson parameters)
     {
         var remainingVanilla = Math.Max(0, parameters.Parameters_Vanilla.CertainEggs);
         var remainingPacks = Math.Max(0, parameters.Parameters_Packs.CertainEggs);

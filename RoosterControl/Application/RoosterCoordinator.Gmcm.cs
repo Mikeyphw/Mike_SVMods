@@ -11,8 +11,10 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
+using Mikew.NestCore.Helpers.Logging;
 
 using ILetMeHatchApi = Mikew.NestCore.Framework.ILetMeHatchApi;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace RoosterControl.Application;
 
@@ -178,7 +180,7 @@ internal sealed partial class RoosterCoordinator
         }
         catch (Exception ex)
         {
-            Monitor.Log($"Failed to load {FarmAnimalsAssetName} for GMCM females page: {ex}", LogLevel.Error);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"Failed to load {FarmAnimalsAssetName} for GMCM females page: {ex}", LogLevel.Error);
             b.Paragraph("females.error");
             return;
         }

@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Mikew.NestCore.Framework;
+using Mikew.NestCore.Helpers.Logging;
 using static LetMeHatch.EnumsAndStrings.Enums;
 
 using static LetMeHatch.ModEntry;
@@ -38,6 +39,30 @@ public class ModConfig : CoreModConfig
     public Dictionary<ItemType, float> EggChances { get; set; } = new();
     internal Dictionary<EditType, Dictionary<string, bool>> EditedAnimals { get; set; } = new();
     public bool ExclusiveRabbitWool { get; internal set; }
+
+    // Legacy GMCM toggles mapped to scoped logging levels.
+    public bool VerboseLogging
+    {
+        get => ScopedLogging?.LTHTE?.AllLevel is ScopedLogCatalog.LevelAll or ScopedLogCatalog.LevelDebug or ScopedLogCatalog.LevelTrace;
+        set => EnsureLthteLogging().AllLevel = value ? ScopedLogCatalog.LevelDebug : ScopedLogCatalog.LevelInfo;
+    }
+
+    public bool TestingLogging
+    {
+        get => string.Equals(ScopedLogging?.LTHTE?.AllLevel, ScopedLogCatalog.LevelTrace, StringComparison.OrdinalIgnoreCase);
+        set
+        {
+            var logging = EnsureLthteLogging();
+            if (value)
+            {
+                logging.AllLevel = ScopedLogCatalog.LevelTrace;
+                return;
+            }
+
+            if (string.Equals(logging.AllLevel, ScopedLogCatalog.LevelTrace, StringComparison.OrdinalIgnoreCase))
+                logging.AllLevel = ScopedLogCatalog.LevelInfo;
+        }
+    }
 
     public ModConfig()
     {
@@ -80,6 +105,13 @@ public class ModConfig : CoreModConfig
         EggColors = new();
         EggColors_ColorObject = new();
         DailyLuckBonus = 0.05f;
+    }
+
+    private ModScopedLoggingConfig EnsureLthteLogging()
+    {
+        ScopedLogging ??= ScopedLoggingConfig.CreateDefault();
+        ScopedLogging.LTHTE ??= ModScopedLoggingConfig.CreateDefault(ScopedLogCatalog.ModLthte);
+        return ScopedLogging.LTHTE;
     }
 }
 

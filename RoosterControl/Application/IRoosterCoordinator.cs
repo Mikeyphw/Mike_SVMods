@@ -14,5 +14,4 @@ internal interface IRoosterCoordinator
     void OnDayStarted(object? sender, DayStartedEventArgs e);
     void OnLocaleChanged(object? sender, LocaleChangedEventArgs e);
     void OnWarped(object? sender, WarpedEventArgs e);
-    void OnAssetRequested(object? sender, AssetRequestedEventArgs e);
 }

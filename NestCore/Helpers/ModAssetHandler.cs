@@ -6,6 +6,9 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using xTile;
 
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using ScopedLogCatalog = Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
+
 namespace Mikew.NestCore.Helpers
 {
     public partial class ModAssetHandler
@@ -74,10 +77,7 @@ namespace Mikew.NestCore.Helpers
             else
             {
                 // Log a message indicating why the path was not found
-                _log.Log(
-                    $"Path not found for asset '{assetName}' with path type '{pathType}'.",
-                    LogLevel.Warn
-                );
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.Content, $"Path not found for asset '{assetName}' with path type '{pathType}'.", LogLevel.Warn);
             }
 
             return pathType switch
@@ -170,3 +170,4 @@ namespace Mikew.NestCore.Helpers
         }
     }
 }
+

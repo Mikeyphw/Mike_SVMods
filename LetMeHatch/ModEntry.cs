@@ -42,7 +42,7 @@ namespace LetMeHatch
         public override void Entry(IModHelper helper)
         {
             DependencyGuards.AssertNestCorePresent(helper.ModRegistry);
-            DependencyGuards.AssertNoLocalNestCoreCopies(helper.DirectoryPath, Monitor);
+            DependencyGuards.AssertNoLocalNestCoreCopies(helper.DirectoryPath, LoggerHelper);
 
             _configProvider = new SmapiConfigProvider<ModConfig>(helper, Monitor);
 

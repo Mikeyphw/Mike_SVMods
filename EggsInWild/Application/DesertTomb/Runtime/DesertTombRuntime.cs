@@ -21,6 +21,8 @@ using EggsInWild.Infrastructure.DesertTomb.Diagnostics;
 using static EggsInWild.DesertTomb.Core.Enums.DesertTombEnums;
 using Mikew.NestCore.Helpers.Config;
 using EggsInWild.Core.Assets;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.DesertTomb.Runtime;
 
@@ -170,7 +172,7 @@ public sealed class DesertTombRuntime
             if (!_loggedTombLoadLevelVerifier)
             {
                 _loggedTombLoadLevelVerifier = true;
-                _log.Log($"[Verifier][DesertTomb] loadLevel override applied: mineLevel={mineShaft.mineLevel}, before={before}, after={chosen}", LogLevel.Info);
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[Verifier][DesertTomb] loadLevel override applied: mineLevel={mineShaft.mineLevel}, before={before}, after={chosen}", LogLevel.Info);
             }
         }
 
@@ -258,7 +260,7 @@ public sealed class DesertTombRuntime
         if (!_loggedTombPopulateVerifier)
         {
             _loggedTombPopulateVerifier = true;
-            _log.Log($"[Verifier][DesertTomb] populateLevel fired: mineLevel={mineShaft.mineLevel}, mapPath={mineShaft.mapPath.Value}", LogLevel.Info);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[Verifier][DesertTomb] populateLevel fired: mineLevel={mineShaft.mineLevel}, mapPath={mineShaft.mapPath.Value}", LogLevel.Info);
         }
 
         ActivateCore(mineShaft);
@@ -337,7 +339,7 @@ public sealed class DesertTombRuntime
 
         if (!DefaultTombLayouts.ByLevel.TryGetValue(layoutLevel, out var layout))
         {
-            _log.Log($"[DesertTomb] No layout registered for {layoutLevel}; skipping.", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] No layout registered for {layoutLevel}; skipping.", LogLevel.Warn);
             return;
         }
 
@@ -385,11 +387,8 @@ public sealed class DesertTombRuntime
 
         var plannedTotal = plan.Areas.Sum(a => a.Spawns.Sum(s => s.Count));
 
-        _log.Log(
-            $"[DesertTomb] Activated on MineLevel={mineShaft.mineLevel} MapPath='{mapPath}'. " +
-            $"Layout={layoutLevel} SpawnedInitial={spawnedInitial} (Planned={plannedTotal}).",
-            LogLevel.Info
-        );
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] Activated on MineLevel={mineShaft.mineLevel} MapPath='{mapPath}'. " +
+            $"Layout={layoutLevel} SpawnedInitial={spawnedInitial} (Planned={plannedTotal}).", LogLevel.Info);
     }
 
     

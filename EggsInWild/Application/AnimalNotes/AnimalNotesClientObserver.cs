@@ -7,7 +7,8 @@ using EggsInWild.Application.AnimalNotes.Messages;
 using EggsInWild.Core.Enums;
 using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData;
-using SmapiLog = Mikew.NestCore.Helpers.Logging.SmapiLog;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.AnimalNotes;
 
@@ -26,15 +27,6 @@ public sealed class AnimalNotesClientObserver
     private readonly HashSet<string> _sentQuestCompletionsToday = new(StringComparer.OrdinalIgnoreCase);
 
     private List<string>? _noteQuestIds;
-
-    /// <summary>Helper to emit scoped log messages, falling back to basic log if not a SmapiLog instance.</summary>
-    private void LogScoped(string category, string message, LogLevel level)
-    {
-        if (_log is SmapiLog slog)
-            slog.LogScoped(ScopedLogCatalog.ModWe, category, message, level);
-        else
-            _log.Log(message, level);
-    }
 
     public AnimalNotesClientObserver(
         IModHelper helper,
@@ -110,7 +102,7 @@ public sealed class AnimalNotesClientObserver
             };
 
             TrySend(payload, "WeggAnimalNoteFound");
-            LogScoped("animal-notes", $"AnimalNotes: client reported note '{noteId}' in '{locName}'.", LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: client reported note '{noteId}' in '{locName}'.", LogLevel.Trace);
         }
 
         // Also opportunistically report quest completions when moving around.
@@ -131,11 +123,11 @@ public sealed class AnimalNotesClientObserver
                 return;
 
             Game1.player.addQuest(message.QuestId);
-            LogScoped("animal-notes", $"AnimalNotes: client accepted quest '{message.QuestId}' from host.", LogLevel.Info);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: client accepted quest '{message.QuestId}' from host.", LogLevel.Info);
         }
         catch (Exception ex)
         {
-            LogScoped("animal-notes", $"AnimalNotes: client failed to add quest '{message.QuestId}': {ex}", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: client failed to add quest '{message.QuestId}': {ex}", LogLevel.Warn);
         }
     }
 
@@ -153,11 +145,11 @@ public sealed class AnimalNotesClientObserver
                 return;
 
             Game1.player.mailForTomorrow.Add(message.NoLetter ? message.MailId + "%&NL&%" : message.MailId);
-            LogScoped("animal-notes", $"AnimalNotes: client queued mail '{message.MailId}' from host.", LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: client queued mail '{message.MailId}' from host.", LogLevel.Trace);
         }
         catch (Exception ex)
         {
-            LogScoped("animal-notes", $"AnimalNotes: client failed to queue mail '{message.MailId}': {ex}", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: client failed to queue mail '{message.MailId}': {ex}", LogLevel.Warn);
         }
     }
 
@@ -198,7 +190,7 @@ public sealed class AnimalNotesClientObserver
             var payload = new AnimalNoteQuestCompletedMessage { QuestId = questId };
             TrySend(payload, "WeggAnimalNoteQuestCompleted");
 
-            LogScoped("animal-notes", $"AnimalNotes: client reported quest completion '{questId}'.", LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: client reported quest completion '{questId}'.", LogLevel.Trace);
         }
     }
 

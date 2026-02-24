@@ -5,15 +5,25 @@ using System.Linq;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using StardewModdingAPI;
+using Mikew.NestCore.Helpers.Logging;
+
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace RoosterControl.Application.Catalogs;
 
 internal sealed class CatalogManager
 {
+    private readonly ILog _log;
+
     private const string CatalogRoot = "catalogs";
     private const string RoostersFile = "catalogs/roosters.json";
     private const string ProduceFile = "catalogs/produce.json";
     private const string HatchingFile = "catalogs/hatching.json";
+
+    public CatalogManager(ILog log)
+    {
+        _log = log;
+    }
 
     public CatalogBundle LoadOrCreateAll(IModHelper helper, IMonitor monitor)
     {
@@ -41,9 +51,9 @@ internal sealed class CatalogManager
         var issues = CatalogValidator.Validate(bundle);
         if (issues.Count > 0)
         {
-            monitor.Log("Catalog validation errors (fatal):", LogLevel.Error);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Catalogs, "Catalog validation errors (fatal):", LogLevel.Error);
             foreach (var issue in issues)
-                monitor.Log($"  - {issue}", LogLevel.Error);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Catalogs, $"  - {issue}", LogLevel.Error);
 
             throw new InvalidOperationException("RoosterControl catalogs are invalid. See SMAPI log for details.");
         }

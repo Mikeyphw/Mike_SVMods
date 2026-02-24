@@ -16,7 +16,8 @@ using EggsInWild.Infrastructure.Game;
 using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData;
 using Mikew.NestCore.Helpers.SaveData;
-using SmapiLog = Mikew.NestCore.Helpers.Logging.SmapiLog;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Application.AnimalNotes;
 
@@ -43,14 +44,6 @@ public sealed class AnimalNotesOrchestrator
     private AnimalNotesSaveData _data = new();
     private bool _initialized;
 
-    /// <summary>Helper to emit scoped log messages, falling back to basic log if not a SmapiLog instance.</summary>
-    private void LogScoped(string category, string message, StardewModdingAPI.LogLevel level)
-    {
-        if (_log is SmapiLog slog)
-            slog.LogScoped(ScopedLogCatalog.ModWe, category, message, level);
-        else
-            _log.Log(message, level);
-    }
 
     public AnimalNotesOrchestrator(
         ISaveDataStore store,
@@ -451,7 +444,7 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
 
         if (!Utility.doesItemExistAnywhere(message.NoteItemId))
         {
-            LogScoped("animal-notes", $"AnimalNotes: client '{message.FoundByFarmerName}' reported note '{message.NoteItemId}', but it no longer exists.", StardewModdingAPI.LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: client '{message.FoundByFarmerName}' reported note '{message.NoteItemId}', but it no longer exists.", StardewModdingAPI.LogLevel.Trace);
             return false;
         }
 
@@ -593,7 +586,7 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
         }
         else if (envelope.Version != SaveDataVersion)
         {
-            LogScoped("animal-notes", $"AnimalNotes: save data version {envelope.Version} != {SaveDataVersion}; resetting AnimalNotes state.", StardewModdingAPI.LogLevel.Warn);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: save data version {envelope.Version} != {SaveDataVersion}; resetting AnimalNotes state.", StardewModdingAPI.LogLevel.Warn);
             _data = new AnimalNotesSaveData();
         }
         else
@@ -603,7 +596,7 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
 
         if (!ValidateSaveData(_data, out var reason))
         {
-            LogScoped("animal-notes", $"AnimalNotes: invalid save data ({reason}); resetting AnimalNotes state.", StardewModdingAPI.LogLevel.Error);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: invalid save data ({reason}); resetting AnimalNotes state.", StardewModdingAPI.LogLevel.Error);
             _data = new AnimalNotesSaveData();
         }
 
@@ -781,7 +774,7 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
                 _data.Pending.Add(rec);
                 addedAny = true;
 
-                LogScoped("animal-notes", $"AnimalNotes: detected new '{type}' (id={animalId}) home='{homeName}'.", StardewModdingAPI.LogLevel.Trace);
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: detected new '{type}' (id={animalId}) home='{homeName}'.", StardewModdingAPI.LogLevel.Trace);
             }
         }
 
@@ -1048,7 +1041,7 @@ private void ProcessPending()
                 p.NotePlaced = true;
                 p.DayNotePlaced ??= dayNumber;
                 ResetPlacementFailures(p);
-                LogScoped("animal-notes", $"AnimalNotes: placed note '{p.NoteItemId}' for '{p.FarmAnimalName}' at {tile}.", StardewModdingAPI.LogLevel.Trace);
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: placed note '{p.NoteItemId}' for '{p.FarmAnimalName}' at {tile}.", StardewModdingAPI.LogLevel.Trace);
             }
             else
             {
@@ -1266,7 +1259,7 @@ private void ProcessPending()
 
             state.QuestGiven = true;
             state.DayQuestGiven ??= day;
-            LogScoped("animal-notes", $"AnimalNotes: quest '{p.QuestId}' issued for '{p.FarmAnimalName}' (farmer={farmerId}).", StardewModdingAPI.LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: quest '{p.QuestId}' issued for '{p.FarmAnimalName}' (farmer={farmerId}).", StardewModdingAPI.LogLevel.Trace);
         }
 
         Save();
@@ -1315,11 +1308,11 @@ private void ProcessPending()
 
                 if (online.Contains(farmerId))
                 {
-                    try { _sendQueueMailMessage?.Invoke(farmerId, new AnimalNoteQueueMailMessage { MailId = p.MailId, NoLetter = false }); }
+                try { _sendQueueMailMessage?.Invoke(farmerId, new AnimalNoteQueueMailMessage { MailId = p.MailId, NoLetter = false }); }
                     catch { /* best-effort */ }
                 }
 
-                LogScoped("animal-notes", $"AnimalNotes: queued unlock mail '{p.MailId}' for '{p.FarmAnimalName}' (farmer={farmerId}).", StardewModdingAPI.LogLevel.Trace);
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.AnimalNotes, $"AnimalNotes: queued unlock mail '{p.MailId}' for '{p.FarmAnimalName}' (farmer={farmerId}).", StardewModdingAPI.LogLevel.Trace);
             }
         }
 

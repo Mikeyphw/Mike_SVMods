@@ -7,13 +7,18 @@ using System.Text.Json;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
 using StardewModdingAPI;
+using Mikew.NestCore.Helpers.Logging;
+
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace RoosterControl.Framework.Config;
 
 internal static class LegacyConfigAdapter
 {
+    private static ILog? _log;
     public static bool TryMigrateFromFile(string path, IMonitor monitor, out RoosterControlConfig migrated)
     {
+        _log = new SmapiLog(monitor);
         migrated = RoosterControlConfig.CreateDefault();
 
         if (!File.Exists(path))
@@ -36,12 +41,12 @@ internal static class LegacyConfigAdapter
             cfg.SchemaVersion = ConfigSchema.CurrentVersion;
 
             migrated = cfg;
-            monitor.Log("RoosterControl: migrated legacy dictionary-based config to typed schema.", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.SaveData, "RoosterControl: migrated legacy dictionary-based config to typed schema.", LogLevel.Info);
             return true;
         }
         catch (Exception ex)
         {
-            monitor.Log($"RoosterControl: failed to migrate legacy config: {ex}", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.SaveData, $"RoosterControl: failed to migrate legacy config: {ex}", LogLevel.Warn);
             return false;
         }
     }

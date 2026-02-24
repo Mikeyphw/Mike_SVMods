@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using Mikew.NestCore.Helpers;
+using Mikew.NestCore.Helpers.Content;
 using Mikew.NestCore.Helpers.Config;
 using Mikew.NestCore.Helpers.Logging;
 using Mikew.NestCore.Helpers.SaveData;
@@ -34,7 +35,7 @@ public sealed class ModEntry : Mod
     private WildEggsApi? _api;
     private Harmony? _harmony;
     private ModAssetHandler? _assetHandler;
-    private WeggAssetPipeline? _contentPipeline;
+    private AssetPipelineHost<ContentContext>? _contentPipeline;
     private ProgressionService? _contentProgression;
     private ILog? _contentLog;
     private IModDataLoader? _contentDataLoader;
@@ -51,7 +52,6 @@ public sealed class ModEntry : Mod
         helper.Events.GameLoop.DayStarted += OnDayStarted;
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
-        helper.Events.Content.AssetRequested += OnAssetRequested;
 
         InitializeModAssetHandler();
         InitializeContentPipeline();
@@ -198,7 +198,8 @@ public sealed class ModEntry : Mod
         }
         catch (Exception ex)
         {
-            Monitor.Log($"Failed to load Data/FarmAnimals for GMCM Animal Progression page: {ex}", LogLevel.Error);
+            var smapiLog = new SmapiLog(Monitor);
+            smapiLog.LogScoped(ScopedLogCatalog.ModWeCategory.Content, $"Failed to load Data/FarmAnimals for GMCM Animal Progression page: {ex}", LogLevel.Error);
             page.ParagraphDynamic(
                 () => Translate(i18n, "config.animalProgression.loadFailed.paragraph", "Couldn't load Data/FarmAnimals. Try again after loading a save, or check your SMAPI log."),
                 id: "animalProgression_loadFailed");
@@ -359,18 +360,20 @@ public sealed class ModEntry : Mod
             invalidateAssets: InvalidateGameAssets);
 
         var chosenEggAssignments = new ChosenEggAssignments(_contentDataLoader, Helper.ModRegistry, _contentLog);
-        _contentPipeline = new WeggAssetPipeline(Helper, Monitor, CreateContentContext);
+        _contentPipeline = new AssetPipelineHost<ContentContext>(Helper, Monitor, CreateContentContext);
+        if (_assetHandler is not null)
+            _contentPipeline.RegisterModAssets(_assetHandler, order: -100);
 
-        _contentPipeline.RegisterEditor(new MonstersEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 10);
-        _contentPipeline.RegisterEditor(new FarmAnimalsEditor(chosenEggAssignments), ProgressionStep.PartI, GetContentProgressionStep, order: 20);
-        _contentPipeline.RegisterEditor(new ObjectsEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 30);
-        _contentPipeline.RegisterEditor(new BigCraftablesEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 40);
-        _contentPipeline.RegisterEditor(new MachinesEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 50);
-        _contentPipeline.RegisterEditor(new CraftingRecipesEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 60);
-        _contentPipeline.RegisterEditor(new MailEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 70);
-        _contentPipeline.RegisterEditor(new QuestEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 80);
-        _contentPipeline.RegisterEditor(new SpecialOrdersEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 90);
-        _contentPipeline.RegisterEditor(new WildEggIncubatorTextureEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 100);
+        _contentPipeline.RegisterEditor(new MonstersEditor(), order: 10, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new FarmAnimalsEditor(chosenEggAssignments), order: 20, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new ObjectsEditor(), order: 30, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new BigCraftablesEditor(), order: 40, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new MachinesEditor(), order: 50, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new CraftingRecipesEditor(), order: 60, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new MailEditor(), order: 70, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new QuestEditor(), order: 80, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new SpecialOrdersEditor(), order: 90, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new WildEggIncubatorTextureEditor(), order: 100, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
         _contentPipeline.Attach();
     }
 
@@ -410,15 +413,6 @@ public sealed class ModEntry : Mod
         Helper.GameContent.InvalidateCache("Data/Quests");
         Helper.GameContent.InvalidateCache("Data/CraftingRecipes");
         Helper.GameContent.InvalidateCache("Data/SpecialOrders");
-    }
-
-    private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
-    {
-        if (_assetHandler is null)
-            return;
-
-        if (_assetHandler.HasGamePath(e.NameWithoutLocale.BaseName))
-            _assetHandler.LoadModAssets(e);
     }
 
     private void RegisterConsoleCommands(IModHelper helper)

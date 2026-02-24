@@ -7,6 +7,8 @@ using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.DesertTomb.Core.Spawning;
 using EggsInWild.Infrastructure.DesertTomb.Monsters;
 using Mikew.NestCore.Helpers.Logging;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 using static EggsInWild.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace EggsInWild.Application.DesertTomb.Spawning;
@@ -114,11 +116,8 @@ public sealed class DesertTombSpawnExecutor
                         out var tile
                     ))
                 {
-                    _log.Log(
-                        $"[DesertTomb] No valid spawn tile for {spec.Type} in area {areaState.Rect}. " +
-                        $"Requested={spec.Count}, RemainingTiles={areaState.SpawnTiles.Remaining}, MineLevel={mineShaft.mineLevel}",
-                        LogLevel.Trace
-                    );
+                    LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] No valid spawn tile for {spec.Type} in area {areaState.Rect}. " +
+                        $"Requested={spec.Count}, RemainingTiles={areaState.SpawnTiles.Remaining}, MineLevel={mineShaft.mineLevel}", LogLevel.Trace);
                     break;
                 }
 

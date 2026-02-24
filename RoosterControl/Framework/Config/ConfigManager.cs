@@ -2,17 +2,24 @@ using System;
 using System.IO;
 using RoosterControl.Enums;
 using StardewModdingAPI;
+using Mikew.NestCore.Helpers.Logging;
+
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace RoosterControl.Framework.Config;
 
 /// <summary>Loads and saves the typed RoosterControl configuration.</summary>
 public static class ConfigManager
 {
+    private static ILog? _log;
+
     /// <summary>
     /// Load the typed config. If it's missing or invalid, create a fresh default and keep a backup of the old file.
     /// </summary>
     public static RoosterControlConfig LoadOrCreate(IModHelper helper, IMonitor monitor)
     {
+        _log = new SmapiLog(monitor);
+
         var path = Path.Combine(helper.DirectoryPath, "config.json");
 
         if (!File.Exists(path))
@@ -38,7 +45,7 @@ public static class ConfigManager
             }
 
             helper.WriteConfig(Normalize(migratedLegacy));
-            monitor.Log($"RoosterControl: wrote migrated config. Legacy backup: {backupPath}", LogLevel.Info);
+            LogScopedHelper.Log(_log!, ModRoosterControlCategory.SaveData, $"RoosterControl: wrote migrated config. Legacy backup: {backupPath}", LogLevel.Info);
             return Normalize(migratedLegacy);
         }
 
@@ -76,7 +83,7 @@ public static class ConfigManager
                 // best-effort backup
             }
 
-            monitor.Log(
+            LogScopedHelper.Log(_log!, ModRoosterControlCategory.SaveData,
                 $"RoosterControl: failed to read config.json, writing defaults. Backup: {backupPath}\n{ex}",
                 LogLevel.Error
             );
@@ -114,7 +121,7 @@ public static class ConfigManager
 
         if (cfg.SchemaVersion < ConfigSchema.CurrentVersion)
         {
-            monitor.Log(
+            LogScopedHelper.Log(_log!, ModRoosterControlCategory.SaveData,
                 $"RoosterControl: upgrading config schema {cfg.SchemaVersion} -> {ConfigSchema.CurrentVersion}. Backup: {backupPath}",
                 LogLevel.Info
             );
@@ -125,7 +132,7 @@ public static class ConfigManager
             return cfg;
         }
 
-        monitor.Log(
+        LogScopedHelper.Log(_log!, ModRoosterControlCategory.SaveData,
             $"RoosterControl: config schema version {cfg.SchemaVersion} is newer than supported {ConfigSchema.CurrentVersion}. Backup: {backupPath}",
             LogLevel.Warn
         );
@@ -147,3 +154,4 @@ public static class ConfigManager
         return cfg;
     }
 }
+

@@ -5,6 +5,9 @@ using RoosterControl.Application.Planning;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
+using Mikew.NestCore.Helpers.Logging;
+
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace RoosterControl.Application;
 
@@ -85,7 +88,7 @@ internal sealed partial class RoosterCoordinator
                     out var invalidReason,
                     requireCompleteness: requireCompleteness))
             {
-                Monitor.Log($"Daily plan invalid/corrupt. {invalidReason}", LogLevel.Warn);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Daily plan invalid/corrupt. {invalidReason}", LogLevel.Warn);
 
                 if (Context.IsMainPlayer)
                     BackupAndDeleteCorruptPlan(loaded, invalidReason);
@@ -360,14 +363,14 @@ internal sealed partial class RoosterCoordinator
         }
         catch (Exception ex)
         {
-            Monitor.Log($"Failed to write daily plan backup: {ex}", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Failed to write daily plan backup: {ex}", LogLevel.Warn);
         }
 
         try
         {
             var fileName = Infrastructure.StateDumps.StateDumpJson.BuildFileName("roostercontrol_daily_plan_corrupt", DateTimeOffset.UtcNow);
             WriteStateDump(fileName, new { reason, plan });
-            Monitor.Log($"Wrote corrupt plan dump: {fileName}", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Wrote corrupt plan dump: {fileName}", LogLevel.Info);
         }
         catch
         {
@@ -380,7 +383,7 @@ internal sealed partial class RoosterCoordinator
         }
         catch (Exception ex)
         {
-            Monitor.Log($"Failed to delete corrupt daily plan save data: {ex}", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Failed to delete corrupt daily plan save data: {ex}", LogLevel.Warn);
         }
     }
 
@@ -428,7 +431,7 @@ internal sealed partial class RoosterCoordinator
 
         if (verb.Equals("help", StringComparison.OrdinalIgnoreCase) || verb.Equals("-h", StringComparison.OrdinalIgnoreCase))
         {
-            Monitor.Log(
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning,
                 "ra_plan usage:\n" +
                 "  ra_plan dump\n" +
                 "    - writes the current daily plan JSON to data/state-dumps (computes if missing).\n" +
@@ -441,7 +444,7 @@ internal sealed partial class RoosterCoordinator
 
         if (!Context.IsWorldReady)
         {
-            Monitor.Log("Save not loaded; daily plan requires a loaded save.", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, "Save not loaded; daily plan requires a loaded save.", LogLevel.Info);
             return;
         }
 
@@ -454,7 +457,7 @@ internal sealed partial class RoosterCoordinator
             }
             catch (Exception ex)
             {
-                Monitor.Log($"Failed to load {FarmAnimalsAssetName} for plan dump: {ex}", LogLevel.Error);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Failed to load {FarmAnimalsAssetName} for plan dump: {ex}", LogLevel.Error);
                 return;
             }
 
@@ -465,7 +468,7 @@ internal sealed partial class RoosterCoordinator
                 WriteStateDump(fileName, _dailyPlan);
             else
                 WriteStateDump(fileName, new { error = "plan not available" });
-            Monitor.Log($"Wrote plan dump: {fileName}", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Wrote plan dump: {fileName}", LogLevel.Info);
             return;
         }
 
@@ -473,13 +476,13 @@ internal sealed partial class RoosterCoordinator
         {
             if (!Config.General.EnableDebug)
             {
-                Monitor.Log("EnableDebug is false; recompute is dev-only.", LogLevel.Warn);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, "EnableDebug is false; recompute is dev-only.", LogLevel.Warn);
                 return;
             }
 
             if (!Context.IsMainPlayer)
             {
-                Monitor.Log("Only the host can recompute the plan.", LogLevel.Warn);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, "Only the host can recompute the plan.", LogLevel.Warn);
                 return;
             }
 
@@ -490,7 +493,7 @@ internal sealed partial class RoosterCoordinator
             }
             catch (Exception ex)
             {
-                Monitor.Log($"Failed to load {FarmAnimalsAssetName} for recompute: {ex}", LogLevel.Error);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Failed to load {FarmAnimalsAssetName} for recompute: {ex}", LogLevel.Error);
                 return;
             }
 
@@ -499,10 +502,10 @@ internal sealed partial class RoosterCoordinator
             RequestInvalidate(FarmAnimalsAssetName);
             RequestInvalidate(ObjectsAssetName);
 
-            Monitor.Log("Daily plan recomputed and assets invalidated.", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, "Daily plan recomputed and assets invalidated.", LogLevel.Info);
             return;
         }
 
-        Monitor.Log($"Unknown subcommand '{verb}'. Run: ra_plan help", LogLevel.Warn);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Unknown subcommand '{verb}'. Run: ra_plan help", LogLevel.Warn);
     }
 }

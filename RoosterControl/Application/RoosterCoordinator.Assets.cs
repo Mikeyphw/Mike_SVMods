@@ -1,7 +1,7 @@
 using RoosterControl.Application.Assets;
 using RoosterControl.Application.Objects;
+using Mikew.NestCore.Helpers.Content;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 
 namespace RoosterControl.Application;
 
@@ -13,53 +13,47 @@ internal sealed partial class RoosterCoordinator
 
     private BetterTrufflesContextTagService? _betterTrufflesTags;
 
-    public void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+    private void InitializeAssetPipeline()
     {
-        // Texture requests can happen before DayStarted (e.g., catalog/UI preload).
-        // Serve them regardless of gameplay initialization state.
-        if (IsModTextureAsset(e))
-        {
-            LoadModTexture(e);
-            return;
-        }
+        _assetPipeline = new AssetPipelineHost<RoosterCoordinator>(Helper, Monitor, () => this);
+        _assetPipeline.RegisterModAssets(AssetHandler, order: -100);
 
-        if (!HasDayStarted)
-            return;
+        _assetPipeline.RegisterHandler(
+            AssetRequestRegistration<RoosterCoordinator>.FromHandler(
+                debugName: nameof(FarmAnimalsAssetEditor),
+                order: 10,
+                isMatch: e => e.NameWithoutLocale.BaseName.Equals(FarmAnimalsAssetName, System.StringComparison.OrdinalIgnoreCase),
+                shouldApply: (ctx, _) => ctx.HasDayStarted,
+                handle: (ctx, e) =>
+                {
+                    ctx._farmAnimalsEditor ??= new FarmAnimalsAssetEditor(ctx.RoosterHelper, ctx.SetRoosterData);
+                    ctx._farmAnimalsEditor.Edit(e);
+                })
+        );
 
-        if (IsFarmAnimalsAsset(e))
-        {
-            _farmAnimalsEditor ??= new FarmAnimalsAssetEditor(RoosterHelper, SetRoosterData);
-            _farmAnimalsEditor.Edit(e);
-            return;
-        }
+        _assetPipeline.RegisterHandler(
+            AssetRequestRegistration<RoosterCoordinator>.FromHandler(
+                debugName: nameof(ObjectsAssetEditor),
+                order: 20,
+                isMatch: e => e.NameWithoutLocale.BaseName.Equals(ObjectsAssetName, System.StringComparison.OrdinalIgnoreCase),
+                shouldApply: (ctx, _) => ctx.HasDayStarted,
+                handle: (ctx, e) =>
+                {
+                    ctx._fertilizedEggsEditor ??= new FertilizedEggsAssetEditor(
+                        roosterHelper: ctx.RoosterHelper,
+                        getFertilizedNameSuffix: () => ctx.Helper.Translation.Get("egg.fertilized.name"),
+                        getFertilizedDescription: () => ctx.Helper.Translation.Get("egg.fertilized.description"),
+                        cloneEggsEnabled: ctx.GetHatchApiCloneEggsOption,
+                        includeMearasEggs: true
+                    );
+                    ctx._fertilizedEggsEditor.Edit(e);
 
-        if (IsObjectsAsset(e))
-        {
-            _fertilizedEggsEditor ??= new FertilizedEggsAssetEditor(
-                roosterHelper: RoosterHelper,
-                getFertilizedNameSuffix: () => Helper.Translation.Get("egg.fertilized.name"),
-                getFertilizedDescription: () => Helper.Translation.Get("egg.fertilized.description"),
-                cloneEggsEnabled: GetHatchApiCloneEggsOption,
-                includeMearasEggs: true
-            );
-            _fertilizedEggsEditor.Edit(e);
+                    ctx._betterTrufflesTags ??= new BetterTrufflesContextTagService();
+                    ctx._objectsEditor ??= new ObjectsAssetEditor(ctx.RoosterHelper, ctx._betterTrufflesTags);
+                    ctx._objectsEditor.Edit(e);
+                })
+        );
 
-            _betterTrufflesTags ??= new BetterTrufflesContextTagService();
-            _objectsEditor ??= new ObjectsAssetEditor(RoosterHelper, _betterTrufflesTags);
-            _objectsEditor.Edit(e);
-            return;
-        }
-
+        _assetPipeline.Attach();
     }
-
-    private static bool IsFarmAnimalsAsset(AssetRequestedEventArgs e) =>
-        e.NameWithoutLocale.IsEquivalentTo(FarmAnimalsAssetName);
-
-    private static bool IsObjectsAsset(AssetRequestedEventArgs e) =>
-        e.NameWithoutLocale.IsEquivalentTo(ObjectsAssetName);
-
-    private bool IsModTextureAsset(AssetRequestedEventArgs e) =>
-        e.NameWithoutLocale.BaseName.StartsWith($"Mods/{ModManifest.UniqueID}", System.StringComparison.OrdinalIgnoreCase);
-
-    private void LoadModTexture(AssetRequestedEventArgs e) => AssetHandler.LoadModAssets(e);
 }

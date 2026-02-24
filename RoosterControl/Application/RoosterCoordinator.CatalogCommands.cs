@@ -9,6 +9,9 @@ using RoosterControl.Application.Catalogs;
 using RoosterControl.Application.Catalogs.Console;
 using RoosterControl.Framework.Config;
 using StardewModdingAPI;
+using Mikew.NestCore.Helpers.Logging;
+
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace RoosterControl.Application;
 
@@ -30,7 +33,7 @@ internal sealed partial class RoosterCoordinator
 
         if (verb.Equals("help", StringComparison.OrdinalIgnoreCase) || verb.Equals("-h", StringComparison.OrdinalIgnoreCase))
         {
-            Monitor.Log(
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
                 "ra_catalog usage:\n" +
                 "  ra_catalog validate [--fix]\n" +
                 "    - validates catalogs with per-file OK/MIGRATED/ERROR output.\n" +
@@ -81,29 +84,29 @@ internal sealed partial class RoosterCoordinator
             return;
         }
 
-        Monitor.Log($"Unknown subcommand '{verb}'. Run: ra_catalog help", LogLevel.Warn);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"Unknown subcommand '{verb}'. Run: ra_catalog help", LogLevel.Warn);
     }
 
     private void HandleCatalogMode(string[] args)
     {
         if (args.Length == 0)
         {
-            Monitor.Log($"CatalogApplyMode = {Config.General.CatalogApplyMode}", LogLevel.Info);
-            Monitor.Log("Valid modes: SeedOnly, RepairInvalid, MergeMissing, Authoritative", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"CatalogApplyMode = {Config.General.CatalogApplyMode}", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, "Valid modes: SeedOnly, RepairInvalid, MergeMissing, Authoritative", LogLevel.Info);
             return;
         }
 
         var raw = args[0].Trim();
         if (!Enum.TryParse<CatalogApplyMode>(raw, ignoreCase: true, out var mode))
         {
-            Monitor.Log($"Unknown mode '{raw}'. Valid modes: SeedOnly, RepairInvalid, MergeMissing, Authoritative", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"Unknown mode '{raw}'. Valid modes: SeedOnly, RepairInvalid, MergeMissing, Authoritative", LogLevel.Warn);
             return;
         }
 
         Config.General.CatalogApplyMode = mode;
         Helper.WriteConfig(Config);
         InvalidateDailyPlanCache("catalog mode changed");
-        Monitor.Log($"CatalogApplyMode set to {mode}.", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"CatalogApplyMode set to {mode}.", LogLevel.Info);
     }
 
     private void HandleCatalogValidate(bool fix)
@@ -117,13 +120,13 @@ internal sealed partial class RoosterCoordinator
             return;
 
         if (!string.IsNullOrWhiteSpace(result.BackupRelativeDir))
-            Monitor.Log($"Wrote normalized catalogs. Backups: {result.BackupRelativeDir}/", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"Wrote normalized catalogs. Backups: {result.BackupRelativeDir}/", LogLevel.Info);
 
         if (result.PostFixIssues.Count > 0)
         {
-            Monitor.Log("Catalogs still have validation errors after --fix:", LogLevel.Error);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, "Catalogs still have validation errors after --fix:", LogLevel.Error);
             foreach (var issue in result.PostFixIssues)
-                Monitor.Log($"  - {issue}", LogLevel.Error);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"  - {issue}", LogLevel.Error);
         }
     }
 
@@ -149,14 +152,14 @@ internal sealed partial class RoosterCoordinator
 
             if (NormalizeLineEndings(oldText) == NormalizeLineEndings(newText))
             {
-                Monitor.Log($"diff {f.Name}: no changes", LogLevel.Info);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"diff {f.Name}: no changes", LogLevel.Info);
                 continue;
             }
 
             var diffText = BuildLineDiff(oldText, newText, label: f.Rel);
             var outPath = Path.Combine(diffDir, $"{timestamp}_{f.Name}.diff.txt");
             File.WriteAllText(outPath, diffText, Encoding.UTF8);
-            Monitor.Log($"diff {f.Name}: wrote data/catalogs/diffs/{Path.GetFileName(outPath)}", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"diff {f.Name}: wrote data/catalogs/diffs/{Path.GetFileName(outPath)}", LogLevel.Info);
         }
     }
 
@@ -171,7 +174,7 @@ internal sealed partial class RoosterCoordinator
             WriteToSnapshot(exportRoot, "produce.json", _catalogs.Produce);
             WriteToSnapshot(exportRoot, "hatching.json", _catalogs.Hatching);
 
-            Monitor.Log($"Wrote catalog snapshot: data/catalogs/exports/{timestamp}/", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"Wrote catalog snapshot: data/catalogs/exports/{timestamp}/", LogLevel.Info);
             return;
         }
 
@@ -180,20 +183,20 @@ internal sealed partial class RoosterCoordinator
         WriteWithBackup(ProduceCatalogPath, _catalogs.Produce, backupRoot);
         WriteWithBackup(HatchingCatalogPath, _catalogs.Hatching, backupRoot);
 
-        Monitor.Log($"Exported catalogs to data/catalogs/*. Backups: data/catalogs/backups/{timestamp}/", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"Exported catalogs to data/catalogs/*. Backups: data/catalogs/backups/{timestamp}/", LogLevel.Info);
     }
 
     private void HandleCatalogReload()
     {
         if (!Context.IsWorldReady)
         {
-            Monitor.Log("Save not loaded; reload requires a loaded save (so assets can be invalidated).", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, "Save not loaded; reload requires a loaded save (so assets can be invalidated).", LogLevel.Info);
             return;
         }
 
         if (!Context.IsMainPlayer)
         {
-            Monitor.Log("Only the host can reload catalogs.", LogLevel.Warn);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, "Only the host can reload catalogs.", LogLevel.Warn);
             return;
         }
 
@@ -208,9 +211,9 @@ internal sealed partial class RoosterCoordinator
             var issues = CatalogValidator.Validate(loaded);
             if (issues.Count > 0)
             {
-                Monitor.Log("Catalog validation errors (reload aborted):", LogLevel.Error);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, "Catalog validation errors (reload aborted):", LogLevel.Error);
                 foreach (var issue in issues)
-                    Monitor.Log($"  - {issue}", LogLevel.Error);
+                    LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"  - {issue}", LogLevel.Error);
                 return;
             }
 
@@ -218,7 +221,7 @@ internal sealed partial class RoosterCoordinator
         }
         catch (Exception ex)
         {
-            Monitor.Log($"Catalog reload failed: {ex}", LogLevel.Error);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"Catalog reload failed: {ex}", LogLevel.Error);
             return;
         }
 
@@ -241,7 +244,7 @@ internal sealed partial class RoosterCoordinator
         RequestInvalidate(FarmAnimalsAssetName);
         RequestInvalidate(ObjectsAssetName);
 
-        Monitor.Log("Catalogs reloaded; config updated (if needed) and assets invalidated.", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, "Catalogs reloaded; config updated (if needed) and assets invalidated.", LogLevel.Info);
     }
 
     private void ResetAssetEditorsForCatalogReload()
@@ -381,7 +384,7 @@ internal sealed partial class RoosterCoordinator
 
     private void LogCatalogReports(string title, IReadOnlyList<CatalogFileReport> reports)
     {
-        Monitor.Log($"{title}:", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"{title}:", LogLevel.Info);
 
         foreach (var r in reports)
         {
@@ -393,21 +396,21 @@ internal sealed partial class RoosterCoordinator
             };
 
             var change = r.WouldChange ? " (would change)" : string.Empty;
-            Monitor.Log($"  {r.Name}: {label}{change}", r.Status == CatalogFileStatus.Error ? LogLevel.Error : LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"  {r.Name}: {label}{change}", r.Status == CatalogFileStatus.Error ? LogLevel.Error : LogLevel.Info);
 
             if (r.Issues.Count > 0 && r.Status == CatalogFileStatus.Error)
             {
                 foreach (var issue in r.Issues.Take(25))
-                    Monitor.Log($"    - {issue}", LogLevel.Error);
+                    LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"    - {issue}", LogLevel.Error);
                 if (r.Issues.Count > 25)
-                    Monitor.Log($"    ... and {r.Issues.Count - 25} more", LogLevel.Error);
+                    LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"    ... and {r.Issues.Count - 25} more", LogLevel.Error);
             }
             else if (r.Issues.Count > 0 && r.Status == CatalogFileStatus.Migrated)
             {
                 foreach (var issue in r.Issues.Take(5))
-                    Monitor.Log($"    - {issue}", LogLevel.Info);
+                    LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"    - {issue}", LogLevel.Info);
                 if (r.Issues.Count > 5)
-                    Monitor.Log($"    ... and {r.Issues.Count - 5} more", LogLevel.Info);
+                    LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"    ... and {r.Issues.Count - 5} more", LogLevel.Info);
             }
         }
     }

@@ -21,9 +21,14 @@ using StardewValley.GameData.FarmAnimals;
 using ILetMeHatchApi = Mikew.NestCore.Framework.ILetMeHatchApi;
 using LuckyTypes = Mikew.NestCore.EnumsAndStrings.Enums.LuckyTypes;
 using Mikew.NestCore.Helpers;
+using Mikew.NestCore.Helpers.Content;
+using Mikew.NestCore.Helpers.Logging;
 using RoosterControl.Infrastructure.Assets;
 using RoosterControl.Application.FarmAnimals;
-using RoosterModAssetHandler = RoosterControl.Infrastructure.Assets.ModAssetHandler;
+using NestAssetData = Mikew.NestCore.Models.AssetData;
+using NestModAssetHandler = Mikew.NestCore.Helpers.ModAssetHandler;
+
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace RoosterControl.Application;
 
@@ -34,10 +39,11 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
 
     private readonly ModEntry _host;
     private readonly ISaveDataStore _saveData;
+    private readonly ILog _log;
 
     
 
-    private readonly CatalogManager _catalogManager = new();
+    private readonly CatalogManager _catalogManager;
     private CatalogBundle _catalogs = new();
 
     private IModHelper Helper => _host.Helper;
@@ -62,7 +68,8 @@ internal ILetMeHatchApi? HatchApi;
 
     internal Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures = new();
 
-    internal RoosterModAssetHandler AssetHandler = null!;
+    internal NestModAssetHandler AssetHandler = null!;
+    private AssetPipelineHost<RoosterCoordinator>? _assetPipeline;
 
     private State.RoosterControlSaveState _saveState = new();
 
@@ -91,6 +98,8 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
     {
         _host = host;
         _saveData = saveData;
+        _log = new SmapiLog(Monitor);
+        _catalogManager = new CatalogManager(_log);
     }
 
     internal void Initialize()
@@ -131,14 +140,14 @@ Helper.ConsoleCommands.Add(
     (_, _) => PrintStatus()
 );
 
-AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
+AssetHandler = new NestModAssetHandler(ModManifest.UniqueID, Monitor);
         AssetHandler.AddAssets(
-            new List<RoosterControl.Infrastructure.Assets.AssetData>
+            new List<NestAssetData>
             {
                 new(
                     enumAssetType: typeof(Textures),
                     enumAssetFolder: RoosterControlAssetFolder.Textures,
-                    fileExt: RoosterModAssetHandler.FileExtension.Png,
+                    fileExt: NestModAssetHandler.FileExtension.Png,
                     gamePath: $"Mods/{ModManifest.UniqueID}"
                 )
             }
@@ -161,12 +170,13 @@ AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
         {
             ModTextures[item] = new Dictionary<TextureDetails, string>
             {
-                { TextureDetails.GamePath, AssetHandler.GetAssetPath(item, RoosterModAssetHandler.AssetPathType.GamePath) },
-                { TextureDetails.MoldFolderPath, AssetHandler.GetAssetPath(item, RoosterModAssetHandler.AssetPathType.ModFolderPath) }
+                { TextureDetails.GamePath, AssetHandler.GetAssetPath(item, NestModAssetHandler.AssetPathType.GamePath) },
+                { TextureDetails.MoldFolderPath, AssetHandler.GetAssetPath(item, NestModAssetHandler.AssetPathType.ModFolderPath) }
             };
         }
 
         RoosterHelper = new RoosterHelper(Config, Helper, Monitor, _catalogs.Roosters, _catalogs.Produce);
+        InitializeAssetPipeline();
     }
 
     public bool HasModCheck(string modID) => Helper.ModRegistry.IsLoaded(modID);
@@ -241,6 +251,7 @@ AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
 
     public void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
+        HasDayStarted = false;
         InvalidateDailyPlanCache("returned to title");
         _pendingInvalidations.Clear();
         _nextTickActions.Clear();
@@ -268,14 +279,14 @@ AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
 
     private void PrintStatus()
     {
-        Monitor.Log($"WorldReady={Context.IsWorldReady}", LogLevel.Info);
-        Monitor.Log($"MainPlayer={Context.IsMainPlayer}", LogLevel.Info);
-        Monitor.Log($"LetMeHatchApiReady={HatchApi is not null}", LogLevel.Info);
-        Monitor.Log(
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WorldReady={Context.IsWorldReady}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"MainPlayer={Context.IsMainPlayer}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"LetMeHatchApiReady={HatchApi is not null}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General,
             $"Catalogs: roosters={_catalogs.Roosters.Roosters.Count}, produce={_catalogs.Produce.Roosters.Count}, hatching={_catalogs.Hatching.Roosters.Count}",
             LogLevel.Info);
-        Monitor.Log($"PendingInvalidations={_pendingInvalidations.Count}", LogLevel.Info);
-        Monitor.Log($"NeedsRoosterSetup={_needsRoosterSetup}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"PendingInvalidations={_pendingInvalidations.Count}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"NeedsRoosterSetup={_needsRoosterSetup}", LogLevel.Info);
     }
 
     private void FlushInvalidations()
@@ -307,7 +318,7 @@ AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
             }
             catch (Exception ex)
             {
-                Monitor.Log($"Deferred action failed: {ex}", LogLevel.Error);
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"Deferred action failed: {ex}", LogLevel.Error);
             }
         }
 
@@ -326,7 +337,7 @@ AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
     {
         if (!Context.IsWorldReady)
         {
-            Monitor.Log("Save not loaded; nothing to dump yet.", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.General, "Save not loaded; nothing to dump yet.", LogLevel.Info);
             return;
         }
 
@@ -337,7 +348,7 @@ AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
         var fileName = StateDumpJson.BuildFileName("roostercontrol_state", now);
         WriteStateDump(fileName, payload);
 
-        Monitor.Log($"Wrote state dump: {fileName}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"Wrote state dump: {fileName}", LogLevel.Info);
     }
 
     private object BuildStateDump(bool includeFarmAnimals)

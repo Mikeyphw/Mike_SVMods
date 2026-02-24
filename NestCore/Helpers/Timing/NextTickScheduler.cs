@@ -4,6 +4,9 @@ using Mikew.NestCore.Helpers.Logging;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using ScopedLogCatalog = Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
+
 namespace Mikew.NestCore.Helpers.Timing
 {
     /// <summary>
@@ -74,9 +77,10 @@ namespace Mikew.NestCore.Helpers.Timing
                 }
                 catch (Exception ex)
                 {
-                    _log.Log($"NextTick action failed.\n{ex}", LogLevel.Error);
+                    LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.Runtime, $"NextTick action failed.\n{ex}", LogLevel.Error);
                 }
             }
         }
     }
 }
+

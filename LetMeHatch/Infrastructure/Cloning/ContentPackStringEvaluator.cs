@@ -1,5 +1,8 @@
 using System;
 using StardewModdingAPI;
+using Mikew.NestCore.Helpers.Logging;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace LetMeHatch.Infrastructure.Cloning;
 
@@ -9,13 +12,13 @@ namespace LetMeHatch.Infrastructure.Cloning;
 /// </summary>
 public sealed class ContentPackStringEvaluator : IContentStringEvaluator
 {
-    private readonly IMonitor _monitor;
+    private readonly ILog _log;
 
     private bool _warnedTokenEvaluationDisabled;
 
-    public ContentPackStringEvaluator(IMonitor monitor)
+    public ContentPackStringEvaluator(ILog log)
     {
-        _monitor = monitor;
+        _log = log;
     }
 
     public string Translate(IContentPack contentPack, string i18nKey)
@@ -39,7 +42,7 @@ public sealed class ContentPackStringEvaluator : IContentStringEvaluator
         if (!_warnedTokenEvaluationDisabled)
         {
             _warnedTokenEvaluationDisabled = true;
-            _monitor.Log(
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.ContentPipeline,
                 "Content Patcher token evaluation is disabled in Let Me Hatch; leaving token strings unchanged.",
                 LogLevel.Trace
             );

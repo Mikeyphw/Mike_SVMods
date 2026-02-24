@@ -2,6 +2,9 @@ using System;
 using Mikew.NestCore.Helpers.Logging;
 using StardewModdingAPI;
 
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using ScopedLogCatalog = Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
+
 namespace Mikew.NestCore.Helpers.Config
 {
     /// <summary>
@@ -74,9 +77,10 @@ namespace Mikew.NestCore.Helpers.Config
             }
             catch (Exception ex)
             {
-                _log.Log($"Failed to read config. Using defaults.\n{ex}", LogLevel.Error);
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModNestCoreCategory.Config, $"Failed to read config. Using defaults.\n{ex}", LogLevel.Error);
                 return new TConfig();
             }
         }
     }
 }
+

@@ -6,14 +6,10 @@ namespace Mikew.NestCore.Framework
 {
     public class CoreModConfig
     {
-        public bool VerboseLogging;
-        public bool TestingLogging;
         public ScopedLoggingConfig ScopedLogging { get; set; }
 
         public CoreModConfig()
         {
-            VerboseLogging = false;
-            TestingLogging = false;
             ScopedLogging = ScopedLoggingConfig.CreateDefault();
         }
 

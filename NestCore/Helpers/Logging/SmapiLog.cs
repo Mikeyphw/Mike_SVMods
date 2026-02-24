@@ -64,6 +64,34 @@ namespace Mikew.NestCore.Helpers.Logging
             LogScoped(_defaultMod, _defaultCategory, $"{message}\n{exception}", level, enabled);
         }
 
+        #region Enum-based LogScoped overloads
+
+        /// <summary>Log a message with a WE/ModWe category.</summary>
+        public void LogScoped(ScopedLogCatalog.ModWeCategory category, string message, LogLevel level = LogLevel.Trace, bool enabled = true)
+        {
+            LogScoped(ScopedLogCatalog.ModWe, ScopedLogCatalog.ToString(category), message, level, enabled);
+        }
+
+        /// <summary>Log a message with a RoosterControl category.</summary>
+        public void LogScoped(ScopedLogCatalog.ModRoosterControlCategory category, string message, LogLevel level = LogLevel.Trace, bool enabled = true)
+        {
+            LogScoped(ScopedLogCatalog.ModRoosterControl, ScopedLogCatalog.ToString(category), message, level, enabled);
+        }
+
+        /// <summary>Log a message with a LetMeHatch category.</summary>
+        public void LogScoped(ScopedLogCatalog.ModLthteCategory category, string message, LogLevel level = LogLevel.Trace, bool enabled = true)
+        {
+            LogScoped(ScopedLogCatalog.ModLthte, ScopedLogCatalog.ToString(category), message, level, enabled);
+        }
+
+        /// <summary>Log a message with a NestCore category.</summary>
+        public void LogScoped(ScopedLogCatalog.ModNestCoreCategory category, string message, LogLevel level = LogLevel.Trace, bool enabled = true)
+        {
+            LogScoped(ScopedLogCatalog.ModNestCore, ScopedLogCatalog.ToString(category), message, level, enabled);
+        }
+
+        #endregion
+
         public void LogScoped(
             string mod,
             string category,
@@ -101,3 +129,4 @@ namespace Mikew.NestCore.Helpers.Logging
         }
     }
 }
+

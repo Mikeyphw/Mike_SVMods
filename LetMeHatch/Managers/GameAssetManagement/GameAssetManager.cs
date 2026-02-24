@@ -20,8 +20,8 @@ using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Machines;
 using StardewValley.GameData.Objects;
 using static LetMeHatch.EnumsAndStrings.Enums;
-
 using static LetMeHatch.ModEntry;
+using ILog = Mikew.NestCore.Helpers.Logging.ILog;
 
 namespace LetMeHatch.GameAssetManagement
 {
@@ -122,7 +122,7 @@ namespace LetMeHatch.GameAssetManagement
                 FertilizedEggsToAdd
             );
             AnimalCloner = new AnimalCloner(
-                new ContentPackStringEvaluator(MonitorInstance),
+                new ContentPackStringEvaluator(LoggerHelper),
                 new CloneTextureBookkeeper()
             );
             FarmAnimalCloneBatchApplier = new FarmAnimalCloneBatchApplier(

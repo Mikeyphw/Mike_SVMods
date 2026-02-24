@@ -10,8 +10,9 @@ using EggsInWild.Infrastructure.DesertTomb.Loot;
 using static EggsInWild.Infrastructure.DesertTomb.Loot.TombDropRollMultipliers;
 using EggsInWild.Infrastructure.DesertTomb.Loot.Definitions;
 using Mikew.NestCore.Helpers.Logging;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 using static EggsInWild.DesertTomb.Core.Enums.DesertTombEnums;
-using SmapiLog = Mikew.NestCore.Helpers.Logging.SmapiLog;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Monsters;
 
@@ -24,15 +25,6 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
     private readonly ITombDropTables _dropTables;
     private readonly TombDropTableEngine _dropEngine;
     private readonly ILog _log;
-
-    /// <summary>Helper to emit scoped log messages, falling back to basic log if not a SmapiLog instance.</summary>
-    private void LogScoped(string category, string message, LogLevel level)
-    {
-        if (_log is SmapiLog slog)
-            slog.LogScoped(ScopedLogCatalog.ModWe, category, message, level);
-        else
-            _log.Log(message, level);
-    }
 
     public DesertTombMonsterFactory(ITombMonsterDefinitions definitions, ITombDropTables dropTables, TombDropTableEngine dropEngine, ILog log)
     {
@@ -97,7 +89,7 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
         if (_definitions.TryGet(monsterType, out var d))
             return d;
 
-        LogScoped("desert-tomb", $"[DesertTomb] Missing monster definition for {monsterType}; using defaults.", LogLevel.Warn);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] Missing monster definition for {monsterType}; using defaults.", LogLevel.Warn);
         return TombMonsterDefinitionDefaults.Build()[monsterType];
     }
 
@@ -143,13 +135,13 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
 
         if (string.IsNullOrWhiteSpace(definition.DropTableId))
         {
-            LogScoped("desert-tomb", $"[DesertTomb] Monster '{definition.DefinitionId}' has no DropTableId; dropping nothing.", LogLevel.Error);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] Monster '{definition.DefinitionId}' has no DropTableId; dropping nothing.", LogLevel.Error);
             return;
         }
 
         if (!_dropTables.TryGet(definition.DropTableId!, out var table))
         {
-            LogScoped("desert-tomb", $"[DesertTomb] Missing drop table '{definition.DropTableId}' for monster '{definition.DefinitionId}'; dropping nothing.", LogLevel.Error);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] Missing drop table '{definition.DropTableId}' for monster '{definition.DefinitionId}'; dropping nothing.", LogLevel.Error);
             return;
         }
 

@@ -10,6 +10,8 @@ using EggsInWild.DesertTomb.Core.Spawning;
 using EggsInWild.Infrastructure.Config;
 using Mikew.NestCore.Helpers.Logging;
 using Mikew.NestCore.Helpers.Config;
+using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
+using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Diagnostics;
 
@@ -53,7 +55,7 @@ public sealed class DesertTombDiagnostics
         foreach (var row in byType)
             sb.AppendLine($"  - {row.Type}: {row.Count}");
 
-        _log.Log(sb.ToString().TrimEnd(), LogLevel.Trace);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, sb.ToString().TrimEnd(), LogLevel.Trace);
 
         LogMonsters(mineShaft);
     }
@@ -72,7 +74,7 @@ public sealed class DesertTombDiagnostics
 
         if (monsters.Count == 0)
         {
-            _log.Log("[DesertTomb] Monsters: (none)", LogLevel.Trace);
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, "[DesertTomb] Monsters: (none)", LogLevel.Trace);
             return;
         }
 
@@ -81,6 +83,6 @@ public sealed class DesertTombDiagnostics
         foreach (var m in monsters)
             sb.AppendLine($"  - {m.Name}: {m.Count}");
 
-        _log.Log(sb.ToString().TrimEnd(), LogLevel.Trace);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, sb.ToString().TrimEnd(), LogLevel.Trace);
     }
 }
