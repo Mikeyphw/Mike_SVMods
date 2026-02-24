@@ -149,7 +149,7 @@ internal sealed partial class RoosterCoordinator
 
     private static void ReloadCoopRoosters()
     {
-        foreach (var roosterFarmAnimal in RoosterControl.GetRoostersFromCoops())
+        foreach (var roosterFarmAnimal in Helpers.RoosterHelper.GetRoostersFromCoops())
             roosterFarmAnimal.reload(roosterFarmAnimal.home);
     }
 
@@ -160,7 +160,7 @@ private bool GetHatchApiCloneEggsOption()
     private static bool EvaluateStuckInsideWithGsq()
     {
         var stuckInsideQuery = string.Join(
-            " OR ",
+            ", ",
             TimeCondition.Season("winter"),
             WorldCondition.Weather(LocationType.Here, "rain"),
             WorldCondition.Weather(LocationType.Here, "storm"),

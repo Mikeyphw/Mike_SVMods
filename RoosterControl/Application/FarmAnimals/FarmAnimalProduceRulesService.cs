@@ -17,7 +17,7 @@ internal sealed class FarmAnimalProduceRulesService
         RoosterData rooster,
         IDictionary<string, FarmAnimalData> data,
         RoosterControlConfig config,
-        RoosterControl roosterHelper,
+        RoosterHelper roosterHelper,
         bool blueEggModInstalled
     )
     {
@@ -34,7 +34,7 @@ internal sealed class FarmAnimalProduceRulesService
         RoosterData rooster,
         IDictionary<string, FarmAnimalData> data,
         RoosterControlConfig config,
-        RoosterControl roosterHelper,
+        RoosterHelper roosterHelper,
         bool blueEggModInstalled
     )
     {

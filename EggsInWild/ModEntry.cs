@@ -18,6 +18,7 @@ using EggsInWild.Infrastructure.Config;
 using EggsInWild.Infrastructure.Diagnostics;
 using EggsInWild.Infrastructure.Game;
 using EggsInWild.Infrastructure.ModData;
+using EggsInWild.Infrastructure.Assets;
 
 namespace EggsInWild;
 
@@ -27,6 +28,7 @@ public sealed class ModEntry : Mod
     private GmcmConfigHost<ModConfig>? _gmcmHost;
     private WildEggsApi? _api;
     private Harmony? _harmony;
+    private ModAssetHandler? _assetHandler;
 
     public override void Entry(IModHelper helper)
     {
@@ -40,6 +42,9 @@ public sealed class ModEntry : Mod
         helper.Events.GameLoop.DayStarted += OnDayStarted;
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
+        helper.Events.Content.AssetRequested += OnAssetRequested;
+
+        InitializeModAssetHandler();
 
         InstallHarmonyBootstrap();
     }
@@ -272,6 +277,45 @@ public sealed class ModEntry : Mod
             return;
 
         _harmony = new Harmony($"{Constants.ModId}.harmony");
+    }
+
+    private void InitializeModAssetHandler()
+    {
+        _assetHandler = new ModAssetHandler(Constants.ModId, Monitor);
+        _assetHandler.AddAssets(
+            new()
+            {
+                new(
+                    enumAssetType: typeof(WeggObjectTexture),
+                    enumAssetFolder: WeggAssetFolder.objects,
+                    fileExt: ModAssetHandler.FileExtension.Png,
+                    gamePath: $"Mods/{Constants.ModId}/objects"
+                ),
+                new(
+                    enumAssetType: typeof(WeggBigCraftableTexture),
+                    enumAssetFolder: WeggAssetFolder.bigcraftables,
+                    fileExt: ModAssetHandler.FileExtension.Png,
+                    gamePath: $"Mods/{Constants.ModId}/bigcraftables"
+                ),
+                new(
+                    enumAssetType: typeof(WeggMiscTexture),
+                    enumAssetFolder: WeggAssetFolder.misc,
+                    fileExt: ModAssetHandler.FileExtension.Png,
+                    gamePath: $"Mods/{Constants.ModId}/misc"
+                )
+            }
+        );
+
+        _assetHandler.SetUpAssets();
+    }
+
+    private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+    {
+        if (_assetHandler is null)
+            return;
+
+        if (_assetHandler.HasGamePath(e.NameWithoutLocale.BaseName))
+            _assetHandler.LoadModAssets(e);
     }
 
     private void RegisterConsoleCommands(IModHelper helper)

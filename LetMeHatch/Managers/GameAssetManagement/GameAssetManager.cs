@@ -176,15 +176,16 @@ namespace LetMeHatch.GameAssetManagement
 
         public void HandleClonedEggsAsset(AssetRequestedEventArgs e)
         {
+            var clonedItemsModPath = AssetHandler.GetAssetPath(
+                Assets.Object.ClonedItems,
+                ModAssetHandler.AssetPathType.ModFolderPath
+            );
+
+            e.LoadFromModFile<Texture2D>(clonedItemsModPath, AssetLoadPriority.Exclusive);
+
             if (TextureManager.GrayTextures.Count > 0)
             {
-                e.LoadFromModFile<Texture2D>(
-                    "assets/Objects/clonedeggs.png",
-                    AssetLoadPriority.Exclusive
-                );
-
                 e.Edit(TextureManager.ProcessClonedItemsTextures, AssetEditPriority.Late);
-
             }
         }
         #endregion

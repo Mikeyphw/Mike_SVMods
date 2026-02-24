@@ -7,7 +7,7 @@ namespace RoosterControl.Application.Hatching.Decisions;
 /// </summary>
 internal sealed class RoosterPercentageRoller : IPercentageRoller
 {
-    public bool Roll(int chancePercent) => RoosterControl.UpdatePercentage(chancePercent);
+    public bool Roll(int chancePercent) => Helpers.RoosterHelper.UpdatePercentage(chancePercent);
 
-    public bool Roll(float chancePercent) => RoosterControl.UpdatePercentage(chancePercent);
+    public bool Roll(float chancePercent) => Helpers.RoosterHelper.UpdatePercentage(chancePercent);
 }

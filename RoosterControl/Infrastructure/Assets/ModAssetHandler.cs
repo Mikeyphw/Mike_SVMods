@@ -63,7 +63,13 @@ internal sealed class ModAssetHandler
             foreach (var name in Enum.GetNames(set.enumAssetType))
             {
                 var gamePath = $"{set.gamePath}/{folderName}/{name}";
-                var modFilePath = Path.Combine("assets", folderName, $"{name}.{ext}");
+                // Keep game asset keys as declared by enum names, but normalize mod file paths
+                // to lowercase to match this project's on-disk asset casing on Linux.
+                var modFilePath = Path.Combine(
+                    "assets",
+                    folderName.ToLowerInvariant(),
+                    $"{name}.{ext}".ToLowerInvariant()
+                );
 
                 _assetNameToFile[gamePath] = modFilePath;
                 _byEnum[(set.enumAssetType, name)] = (gamePath, modFilePath);

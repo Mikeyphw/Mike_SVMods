@@ -21,7 +21,7 @@ namespace RoosterControl.Helpers;
 /// <summary>
 /// Runtime rooster model builder and utilities.
 /// </summary>
-public sealed class RoosterControl
+public sealed class RoosterHelper
 {
     private static readonly Random Rnd = new();
     private readonly FarmAnimalRatioWeightingService _weighting = new();
@@ -42,7 +42,7 @@ public sealed class RoosterControl
 
     public IProduceResolver ProduceResolver => _produceResolver;
 
-    public RoosterControl(RoosterControlConfig config, IModHelper helper, IMonitor monitor, RoosterCatalog? roosterCatalog = null, ProduceCatalog? produceCatalog = null)
+    public RoosterHelper(RoosterControlConfig config, IModHelper helper, IMonitor monitor, RoosterCatalog? roosterCatalog = null, ProduceCatalog? produceCatalog = null)
     {
         Config = config ?? throw new ArgumentNullException(nameof(config));
         _helper = helper ?? throw new ArgumentNullException(nameof(helper));

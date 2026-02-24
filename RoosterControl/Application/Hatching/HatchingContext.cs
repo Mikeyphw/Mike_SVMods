@@ -16,14 +16,14 @@ namespace RoosterControl.Application.Hatching;
 internal sealed class HatchingContext
 {
     public RoosterControlConfig Config { get; }
-    public RoosterControl RoosterHelper { get; }
+    public RoosterHelper RoosterHelper { get; }
     public AnimalExclusion AnimalExclusions { get; }
     public ILetMeHatchApi? HatchApi { get; }
     public IPercentageRoller Roller { get; }
 
     public HatchingContext(
         RoosterControlConfig config,
-        RoosterControl roosterHelper,
+        RoosterHelper roosterHelper,
         AnimalExclusion animalExclusions,
         ILetMeHatchApi? hatchApi,
         IPercentageRoller? roller = null
@@ -43,7 +43,7 @@ internal sealed class HatchingContext
 
     public int RoosterToChickenRatio => Config.General.RoosterToChickenRatio;
 
-    public static bool RollPercentage(int chance) => RoosterControl.UpdatePercentage(chance);
+    public static bool RollPercentage(int chance) => Helpers.RoosterHelper.UpdatePercentage(chance);
 
-    public static bool RollPercentage(float chance) => RoosterControl.UpdatePercentage(chance);
+    public static bool RollPercentage(float chance) => Helpers.RoosterHelper.UpdatePercentage(chance);
 }

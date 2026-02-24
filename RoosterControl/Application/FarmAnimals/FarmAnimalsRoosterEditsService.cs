@@ -22,7 +22,7 @@ internal sealed class FarmAnimalsRoosterEditsService
         RoosterData rooster,
         IDictionary<string, FarmAnimalData> data,
         RoosterControlConfig config,
-        RoosterControl roosterHelper,
+        RoosterHelper roosterHelper,
         ITranslationHelper i18n,
         IDictionary<Textures, Dictionary<TextureDetails, string>> textures,
         bool enableStuckInside,

@@ -23,7 +23,7 @@ internal sealed partial class ModEntry : Mod
     }
 
     /// <summary>Coordinator-owned runtime helper (legacy services still depend on it).</summary>
-    internal RoosterControl RoosterHelper => EnsureCoordinator().RoosterHelper;
+    internal RoosterHelper RoosterHelper => EnsureCoordinator().RoosterHelper;
 
     public override object GetApi() => RoosterHatchingApi.Instance;
 

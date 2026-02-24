@@ -9,10 +9,10 @@ namespace RoosterControl.Application.Assets;
 /// <summary>Applies RoosterControl edits to <c>Data/Objects</c>.</summary>
 internal sealed class ObjectsAssetEditor
 {
-    private readonly RoosterControl _roosterHelper;
+    private readonly RoosterHelper _roosterHelper;
     private readonly BetterTrufflesContextTagService _betterTrufflesTags;
 
-    public ObjectsAssetEditor(RoosterControl roosterHelper, BetterTrufflesContextTagService betterTrufflesTags)
+    public ObjectsAssetEditor(RoosterHelper roosterHelper, BetterTrufflesContextTagService betterTrufflesTags)
     {
         _roosterHelper = roosterHelper ?? throw new ArgumentNullException(nameof(roosterHelper));
         _betterTrufflesTags = betterTrufflesTags ?? throw new ArgumentNullException(nameof(betterTrufflesTags));

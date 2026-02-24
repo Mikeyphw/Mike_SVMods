@@ -9,11 +9,11 @@ namespace RoosterControl.Application.Assets;
 /// <summary>Applies RoosterControl edits to <c>Data/FarmAnimals</c>.</summary>
 internal sealed class FarmAnimalsAssetEditor
 {
-    private readonly RoosterControl _roosterHelper;
+    private readonly RoosterHelper _roosterHelper;
     private readonly Action<RoosterData, IDictionary<string, FarmAnimalData>> _applyEdits;
 
     public FarmAnimalsAssetEditor(
-        RoosterControl roosterHelper,
+        RoosterHelper roosterHelper,
         Action<RoosterData, IDictionary<string, FarmAnimalData>> applyEdits
     )
     {

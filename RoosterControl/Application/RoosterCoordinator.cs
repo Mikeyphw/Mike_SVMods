@@ -44,7 +44,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
     private IMonitor Monitor => _host.Monitor;
     private IManifest ModManifest => _host.ModManifest;
 
-    private string SaveStateKey => $"{ModManifest.UniqueID}/save-state";
+    private string SaveStateKey => $"{ModManifest.UniqueID}-save-state";
 
     private RoosterControlConfig? _config;
 
@@ -57,7 +57,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
             RoosterHelper?.UpdateConfig(_config);
         }
     }
-    internal RoosterControl RoosterHelper = null!;
+    internal RoosterHelper RoosterHelper = null!;
 internal ILetMeHatchApi? HatchApi;
 
     internal Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures = new();
@@ -166,7 +166,7 @@ AssetHandler = new RoosterModAssetHandler(ModManifest.UniqueID, Monitor);
             };
         }
 
-        RoosterHelper = new RoosterControl(Config, Helper, Monitor, _catalogs.Roosters, _catalogs.Produce);
+        RoosterHelper = new RoosterHelper(Config, Helper, Monitor, _catalogs.Roosters, _catalogs.Produce);
     }
 
     public bool HasModCheck(string modID) => Helper.ModRegistry.IsLoaded(modID);

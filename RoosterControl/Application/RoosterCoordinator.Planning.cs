@@ -10,8 +10,8 @@ namespace RoosterControl.Application;
 
 internal sealed partial class RoosterCoordinator
 {
-    private string DailyPlanSaveKey => $"{ModManifest.UniqueID}/daily-hatching-plan-v1";
-    private string DailyPlanBackupSaveKey => $"{ModManifest.UniqueID}/daily-hatching-plan-v1.backup";
+    private string DailyPlanSaveKey => $"{ModManifest.UniqueID}-daily-hatching-plan-v1";
+    private string DailyPlanBackupSaveKey => $"{ModManifest.UniqueID}-daily-hatching-plan-v1-backup";
 
     private readonly DailyHatchingPlanService _planService = new();
     private readonly DailyHatchingPlanApplier _planApplier = new();

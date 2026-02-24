@@ -45,12 +45,20 @@ namespace Mikew.NestCore.Helpers.Content
 
         public void Flush()
         {
+            if (_pending.Count == 0)
+            {
+                _flushQueued = false;
+                return;
+            }
+
+            // Snapshot current work so nested Request calls during invalidation
+            // are deferred to a later tick instead of mutating this batch.
+            var batch = new string[_pending.Count];
+            _pending.CopyTo(batch);
+            _pending.Clear();
             _flushQueued = false;
 
-            if (_pending.Count == 0)
-                return;
-
-            foreach (var name in _pending)
+            foreach (var name in batch)
             {
                 try
                 {
@@ -61,8 +69,6 @@ namespace Mikew.NestCore.Helpers.Content
                     _log.Log($"Failed to invalidate '{name}'.\n{ex}", LogLevel.Error);
                 }
             }
-
-            _pending.Clear();
         }
 
         public void Dispose()

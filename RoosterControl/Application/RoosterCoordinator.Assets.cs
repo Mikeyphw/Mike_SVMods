@@ -15,6 +15,14 @@ internal sealed partial class RoosterCoordinator
 
     public void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
     {
+        // Texture requests can happen before DayStarted (e.g., catalog/UI preload).
+        // Serve them regardless of gameplay initialization state.
+        if (IsModTextureAsset(e))
+        {
+            LoadModTexture(e);
+            return;
+        }
+
         if (!HasDayStarted)
             return;
 
@@ -42,8 +50,6 @@ internal sealed partial class RoosterCoordinator
             return;
         }
 
-        if (IsModTextureAsset(e))
-            LoadModTexture(e);
     }
 
     private static bool IsFarmAnimalsAsset(AssetRequestedEventArgs e) =>

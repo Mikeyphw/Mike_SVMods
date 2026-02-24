@@ -13,7 +13,7 @@ namespace RoosterControl.Application.Assets;
 /// <summary>Applies fertilized egg variants to <c>Data/Objects</c>.</summary>
 internal sealed class FertilizedEggsAssetEditor
 {
-    private readonly RoosterControl _roosterHelper;
+    private readonly RoosterHelper _roosterHelper;
     private readonly Func<string> _getFertilizedNameSuffix;
     private readonly Func<string> _getFertilizedDescription;
     private readonly Func<bool> _cloneEggsEnabled;
@@ -22,7 +22,7 @@ internal sealed class FertilizedEggsAssetEditor
     private readonly FertilizedEggsObjectEditService _service = new();
 
     public FertilizedEggsAssetEditor(
-        RoosterControl roosterHelper,
+        RoosterHelper roosterHelper,
         Func<string> getFertilizedNameSuffix,
         Func<string> getFertilizedDescription,
         Func<bool> cloneEggsEnabled,

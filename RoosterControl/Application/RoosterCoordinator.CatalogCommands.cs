@@ -234,7 +234,7 @@ internal sealed partial class RoosterCoordinator
             Helper.WriteConfig(Config);
 
         _catalogs = bundle;
-        RoosterHelper = new Helpers.RoosterControl(Config, Helper, Monitor, _catalogs.Roosters, _catalogs.Produce);
+        RoosterHelper = new Helpers.RoosterHelper(Config, Helper, Monitor, _catalogs.Roosters, _catalogs.Produce);
 
         ResetAssetEditorsForCatalogReload();
         InvalidateDailyPlanCache("catalog reload");

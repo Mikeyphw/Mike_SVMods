@@ -43,7 +43,7 @@ internal static class FemaleAssignmentService
 {
     public static bool SyncFemaleAssignments(
     RoosterControlConfig config,
-    RoosterControl roosterHelper,
+    RoosterHelper roosterHelper,
     IDictionary<string, FarmAnimalData> animalData,
     Dictionary<RoosterType, RoosterData> roosters,
     AnimalExclusion animalExclusions,
@@ -191,7 +191,7 @@ public static FemaleAssignmentsPlanResult ComputeFemaleAssignmentsPlan(
 /// </summary>
 public static void ApplyFemaleAssignmentsPlan(
     RoosterControlConfig config,
-    RoosterControl roosterHelper,
+    RoosterHelper roosterHelper,
     FemaleAssignmentsPlanResult plan
 )
 {
