@@ -3,6 +3,7 @@ using HarmonyLib;
 using StardewValley;
 using StardewValley.Objects;
 using EggsInWild.Application.DesertTomb.Runtime;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Harmony;
 
@@ -70,7 +71,7 @@ internal static class DesertTombBreakableLootPatches
             return;
 
         // Clamp to avoid pathological values.
-        _dropRateMultiplier = Math.Clamp(mult, 0.0, 10.0);
+        _dropRateMultiplier = Math.Clamp(mult, 0.0, DebugKnobs.TombBreakableDropRateMultiplierMax);
         _inBreakableContext = true;
     }
 

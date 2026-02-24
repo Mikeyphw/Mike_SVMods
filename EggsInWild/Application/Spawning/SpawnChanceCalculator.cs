@@ -1,6 +1,7 @@
 using System;
 using EggsInWild.Core.Enums;
 using EggsInWild.Infrastructure.ModData.Models;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Application.Spawning;
 
@@ -18,9 +19,9 @@ public sealed class SpawnChanceCalculator
         var baseChance = useBaseChance ? _parameters.BaseRandomChance : ruleChance;
         var modifier = kind switch
         {
-            EggKind.LargeMagic => -0.13,
-            EggKind.LargeWild => -0.05,
-            EggKind.Magic => -0.10,
+            EggKind.LargeMagic => DebugKnobs.SpawnChanceModLargeMagic,
+            EggKind.LargeWild => DebugKnobs.SpawnChanceModLargeWild,
+            EggKind.Magic => DebugKnobs.SpawnChanceModMagic,
             _ => 0.0,
         };
 

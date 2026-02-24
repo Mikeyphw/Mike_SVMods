@@ -367,6 +367,13 @@ public sealed class DesertTombRuntime
             areas: areaStates,
             executor: _spawnExecutor,
             log: _log
+#if MIKE_DEVTOOLS
+            , initialWaveFraction: DebugKnobs.TombPopulationInitialWaveFraction
+            , reconcileIntervalTicks: DebugKnobs.TombPopulationReconcileIntervalTicks
+            , maxSpawnsPerTick: DebugKnobs.TombPopulationMaxSpawnsPerTick
+            , minDistanceToPlayerTiles: DebugKnobs.TombPopulationMinDistanceToPlayerTiles
+            , allowRespawnAfterInitialFill: DebugKnobs.TombPopulationAllowRespawnAfterInitialFill
+#endif
         );
 
         var spawnedInitial = population.SpawnInitialWave();

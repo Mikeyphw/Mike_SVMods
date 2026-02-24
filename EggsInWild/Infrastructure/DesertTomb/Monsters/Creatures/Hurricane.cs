@@ -5,6 +5,7 @@ using StardewValley;
 using StardewValley.Monsters;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Base;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Monsters.Creatures;
 
@@ -20,11 +21,11 @@ internal sealed class Hurricane : Monster
         Suck = 2,
     }
 
-    private const int AlignTiles = 10;
-    private const int SuckDistanceTiles = 2;
-    private const int SwirlSegmentMs = 600;
-    private const int ChargeMs = 900;
-    private const int SuckMs = 1600;
+    private static int AlignTiles => DebugKnobs.HurricaneAlignTiles;
+    private static int SuckDistanceTiles => DebugKnobs.HurricaneSuckDistanceTiles;
+    private static int SwirlSegmentMs => DebugKnobs.HurricaneSwirlSegmentMs;
+    private static int ChargeMs => DebugKnobs.HurricaneChargeMs;
+    private static int SuckMs => DebugKnobs.HurricaneSuckMs;
 
     private readonly NetInt _state = new((int)HurricaneState.Swirl);
     private readonly NetInt _stateTimerMs = new(SwirlSegmentMs);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using StardewValley;
 using EggsInWild.DesertTomb.Core.Model.Loot;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Loot;
 
@@ -202,10 +203,10 @@ public sealed class TombDropTableEngine
         Func<double, double> luckyBonus = currentLuck switch
         {
             LuckyTypes.SuperUnlucky => value => value * 0,
-            LuckyTypes.Unlucky => value => value - 0.001,
+            LuckyTypes.Unlucky => value => value + DebugKnobs.TombLuckDeltaUnlucky,
             LuckyTypes.Neutral => value => value,
-            LuckyTypes.Lucky => value => value + 0.001,
-            LuckyTypes.SuperLucky => value => value + 0.01,
+            LuckyTypes.Lucky => value => value + DebugKnobs.TombLuckDeltaLucky,
+            LuckyTypes.SuperLucky => value => value + DebugKnobs.TombLuckDeltaSuperLucky,
             _ => value => value * 0,
         };
 
@@ -213,16 +214,27 @@ public sealed class TombDropTableEngine
         return Math.Clamp(Math.Min(luckyBonus(originalValue), luckyBonus2), 0, 1);
     }
 
-    private static LuckyTypes GetLuckyType(double dailyLuck) =>
-        dailyLuck switch
-        {
-            < -0.07 => LuckyTypes.SuperUnlucky,
-            >= -0.07 and <= -0.02 => LuckyTypes.Unlucky,
-            > -0.02 and <= 0.02 => LuckyTypes.Neutral,
-            > 0.02 and <= 0.07 => LuckyTypes.Lucky,
-            > 0.07 => LuckyTypes.SuperLucky,
-            _ => LuckyTypes.Neutral,
-        };
+    private static LuckyTypes GetLuckyType(double dailyLuck)
+    {
+        var superUnluckyMax = DebugKnobs.TombLuckSuperUnluckyMax;
+        var unluckyMax = DebugKnobs.TombLuckUnluckyMax;
+        var neutralMax = DebugKnobs.TombLuckNeutralMax;
+        var luckyMax = DebugKnobs.TombLuckLuckyMax;
+
+        if (dailyLuck < superUnluckyMax)
+            return LuckyTypes.SuperUnlucky;
+
+        if (dailyLuck <= unluckyMax)
+            return LuckyTypes.Unlucky;
+
+        if (dailyLuck <= neutralMax)
+            return LuckyTypes.Neutral;
+
+        if (dailyLuck <= luckyMax)
+            return LuckyTypes.Lucky;
+
+        return LuckyTypes.SuperLucky;
+    }
 
     private enum LuckyTypes
     {

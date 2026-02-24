@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.DesertTomb.Core.Model;
+using DebugKnobs = EggsInWild.Infrastructure.Config.DebugKnobs;
 using static EggsInWild.DesertTomb.Core.Enums.DesertTombEnums;
 
 namespace EggsInWild.DesertTomb.Core.Spawning;
@@ -89,7 +90,7 @@ public sealed class TombSpawnPlanner
             }
 
             var guardType = ChooseWeighted(candidates, t => Math.Max(1, statsByType[t].Weight));
-            var guardCount = Math.Clamp((int)Math.Round(desiredCount * 0.7), 1, desiredCount);
+            var guardCount = Math.Clamp((int)Math.Round(desiredCount * DebugKnobs.TombGuardFraction), 1, desiredCount);
             var remaining = desiredCount - guardCount;
 
             var specs = new List<MonsterSpawnSpec>(capacity: 4);
@@ -119,7 +120,7 @@ public sealed class TombSpawnPlanner
                     };
                     wanderPool.Remove(wanderTypes[0]);
 
-                    if (wanderPool.Count > 0 && remaining >= 2 && _rng.NextDouble() < 0.6)
+                    if (wanderPool.Count > 0 && remaining >= 2 && _rng.NextDouble() < DebugKnobs.TombWanderPackChance)
                         wanderTypes.Add(ChooseWeighted(wanderPool, t => Math.Max(1, statsByType[t].Weight)));
 
                     if (wanderTypes.Count == 1)

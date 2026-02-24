@@ -8,6 +8,7 @@ using xTile.Layers;
 using EggsInWild;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Core.Assets;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Application.DesertTomb.Generation;
 
@@ -59,15 +60,15 @@ public sealed class DesertTombLevelGenerator
         if (mineShaft.getMineArea(mineLevel) == 80)
             mineShaft.lighting = new Color(100, 100, 50);
 
-        if (r.NextDouble() < 0.3 && mineLevel > 2)
+        if (r.NextDouble() < DebugKnobs.TombLightingDarkChance && mineLevel > 2)
         {
             mineShaft.isLightingDark.Value = true;
             mineShaft.lighting = new Color(120, 120, 40);
-            if (r.NextDouble() < 0.3)
+            if (r.NextDouble() < DebugKnobs.TombLightingDarkChance)
                 mineShaft.lighting = new Color(150, 150, 60);
         }
 
-        if (r.NextDouble() < 0.15 && mineLevel > 5 && mineLevel != 120)
+        if (r.NextDouble() < DebugKnobs.TombLightingSpecialDarkChance && mineLevel > 5 && mineLevel != 120)
         {
             mineShaft.isLightingDark.Value = true;
             switch (mineShaft.getMineArea(mineLevel))
@@ -107,10 +108,10 @@ public sealed class DesertTombLevelGenerator
 
         var backLayer = mineShaft.map.RequireLayer("Back");
 
-        int numBarrels = mineShaft.mineRandom.Next(5)
-            + (int)(Game1.player.team.AverageDailyLuck(mineShaft) * 20.0);
+        int numBarrels = mineShaft.mineRandom.Next(DebugKnobs.TombBreakablesBaseNextMaxExclusive)
+            + (int)(Game1.player.team.AverageDailyLuck(mineShaft) * DebugKnobs.TombBreakablesLuckScalar);
 
-        numBarrels += backLayer.LayerWidth * backLayer.LayerHeight / 40;
+        numBarrels += backLayer.LayerWidth * backLayer.LayerHeight / DebugKnobs.TombBreakablesMapAreaDivisor;
 
         // Preserve the prior "edge-to-interior scan" placement style for containers.
         for (int i = 0; i < numBarrels; i++)
@@ -118,7 +119,7 @@ public sealed class DesertTombLevelGenerator
             Point p;
             Point motion;
 
-            if (mineShaft.mineRandom.NextDouble() < 0.33)
+            if (mineShaft.mineRandom.NextDouble() < DebugKnobs.TombBreakablesEdgeTopChance)
             {
                 p = new Point(mineShaft.mineRandom.Next(backLayer.LayerWidth), 0);
                 motion = new Point(0, 1);
@@ -135,12 +136,12 @@ public sealed class DesertTombLevelGenerator
             }
 
             int guard = 0;
-            while (mineShaft.isTileOnMap(p.X, p.Y) && guard++ < 512)
+            while (mineShaft.isTileOnMap(p.X, p.Y) && guard++ < DebugKnobs.TombBreakablesPlacementGuardMax)
             {
                 p.X += motion.X;
                 p.Y += motion.Y;
 
-                if (!mineShaft.isTileClearForMineObjects(p.X, p.Y) || mineShaft.mineRandom.NextDouble() > 0.25)
+                if (!mineShaft.isTileClearForMineObjects(p.X, p.Y) || mineShaft.mineRandom.NextDouble() > DebugKnobs.TombBreakablesPlaceChance)
                     continue;
 
                 var tile = new Vector2(p.X, p.Y);
@@ -165,7 +166,7 @@ public sealed class DesertTombLevelGenerator
         var keys = new System.Collections.Generic.List<Vector2>(mineShaft.objects.Keys);
         foreach (var origin in keys)
         {
-            if (mineShaft.mineRandom.NextDouble() > 0.35)
+            if (mineShaft.mineRandom.NextDouble() > DebugKnobs.TombBreakablesClusterChance)
                 continue;
 
             for (int i = 0; i < 2; i++)
@@ -205,9 +206,9 @@ private static void ApplyTombAtmosphere(MineShaft mineShaft)
         var back = mineShaft.map.RequireLayer("Back");
         var buildings = mineShaft.map.GetLayer("Buildings");
 
-        int target = Math.Clamp(back.LayerWidth * back.LayerHeight / 220, 10, 40);
+        int target = Math.Clamp(back.LayerWidth * back.LayerHeight / DebugKnobs.TombLightsMapAreaDivisor, DebugKnobs.TombLightsTargetMin, DebugKnobs.TombLightsTargetMax);
         int placed = 0;
-        int attempts = target * 30;
+        int attempts = target * DebugKnobs.TombLightsAttemptsMultiplier;
 
         for (int i = 0; i < attempts && placed < target; i++)
         {

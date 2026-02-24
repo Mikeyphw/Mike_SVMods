@@ -5,6 +5,7 @@ using System.Reflection;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Objects;
 using EggsInWild.Core.ShopAnchors;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Core.Weighting;
 
@@ -25,14 +26,14 @@ public sealed class EffectiveValueCalculator
         IReadOnlyDictionary<string, FarmAnimalData> farmAnimals,
         ShopAnchorIndex anchors,
         IReadOnlyDictionary<string, ObjectData> objects,
-        int horizonDays = WeggWeightingDefaults.HorizonDays,
-        double deluxeProbability = WeggWeightingDefaults.DeluxeProbability)
+        int? horizonDays = null,
+        double? deluxeProbability = null)
     {
         _farmAnimals = farmAnimals ?? throw new ArgumentNullException(nameof(farmAnimals));
         _anchors = anchors ?? throw new ArgumentNullException(nameof(anchors));
         _objects = objects ?? throw new ArgumentNullException(nameof(objects));
-        _horizonDays = Math.Max(1, horizonDays);
-        _pDeluxe = Math.Clamp(deluxeProbability, 0.0, 1.0);
+        _horizonDays = Math.Max(1, horizonDays ?? DebugKnobs.WeightHorizonDays);
+        _pDeluxe = Math.Clamp(deluxeProbability ?? DebugKnobs.WeightDeluxeProbability, 0.0, 1.0);
     }
 
     /// <summary>

@@ -6,6 +6,7 @@ using StardewValley;
 using StardewValley.Monsters;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Base;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Monsters.Creatures;
 
@@ -20,15 +21,15 @@ internal sealed class Crawler : Monster
         Curled = 1,
     }
 
-    private const int CurlTriggerDistanceTiles = 3;
+    private static int CurlTriggerDistanceTiles => DebugKnobs.CrawlerCurlTriggerDistanceTiles;
 
     private const int CurlAnimStartFrame = 12;
     private const int CurlAnimFrames = 4;
     private const int CurlAnimIntervalMs = 100;
 
 
-    private const int CurlDurationMs = 1800;
-    private const int CurlCooldownMs = 3500;
+    private static int CurlDurationMs => DebugKnobs.CrawlerCurlDurationMs;
+    private static int CurlCooldownMs => DebugKnobs.CrawlerCurlCooldownMs;
 
     private readonly NetInt _state = new((int)CrawlerState.Crawling);
     private readonly NetInt _curlRemainingMs = new(0);

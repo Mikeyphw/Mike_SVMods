@@ -45,6 +45,8 @@ public sealed class ModEntry : Mod
         _config = new SmapiConfigProvider<ModConfig>(helper, Monitor);
         _config.ConfigUpdated += (_, __) => SyncApiBirthTextMode();
 
+        DebugKnobs.Initialize(() => _config.Get());
+
         EnsureNoLocalNestCoreDuplicates(helper);
         RegisterConsoleCommands(helper);
 
@@ -177,6 +179,148 @@ public sealed class ModEntry : Mod
                 page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
                 page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
                 page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
+#if MIKE_DEVTOOLS
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Desert Tomb Generation");
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightingDarkChance, optionId: "debug.tuning.desertTomb.gen.lightingDarkChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightingDarkAltChance, optionId: "debug.tuning.desertTomb.gen.lightingDarkAltChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightingSpecialDarkChance, optionId: "debug.tuning.desertTomb.gen.lightingSpecialDarkChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Generation.BreakablesBaseNextMaxExclusive, optionId: "debug.tuning.desertTomb.gen.breakablesBaseNextMaxExclusive", tooltip: true, min: 1, max: 50, interval: 1);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.BreakablesLuckScalar, optionId: "debug.tuning.desertTomb.gen.breakablesLuckScalar", tooltip: true, min: 0f, max: 100f, interval: 1f);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Generation.BreakablesMapAreaDivisor, optionId: "debug.tuning.desertTomb.gen.breakablesMapAreaDivisor", tooltip: true, min: 5, max: 400, interval: 1);
+
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.BreakablesEdgeTopChance, optionId: "debug.tuning.desertTomb.gen.breakablesEdgeTopChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Generation.BreakablesPlacementGuardMax, optionId: "debug.tuning.desertTomb.gen.breakablesPlacementGuardMax", tooltip: true, min: 50, max: 10000, interval: 10);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.BreakablesPlaceChance, optionId: "debug.tuning.desertTomb.gen.breakablesPlaceChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.BreakablesClusterChance, optionId: "debug.tuning.desertTomb.gen.breakablesClusterChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightsMapAreaDivisor, optionId: "debug.tuning.desertTomb.gen.lightsMapAreaDivisor", tooltip: true, min: 50, max: 2000, interval: 10);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightsTargetMin, optionId: "debug.tuning.desertTomb.gen.lightsTargetMin", tooltip: true, min: 0, max: 200, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightsTargetMax, optionId: "debug.tuning.desertTomb.gen.lightsTargetMax", tooltip: true, min: 0, max: 300, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightsAttemptsMultiplier, optionId: "debug.tuning.desertTomb.gen.lightsAttemptsMultiplier", tooltip: true, min: 1, max: 500, interval: 1);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Desert Tomb Spawning");
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Spawning.GuardFraction, optionId: "debug.tuning.desertTomb.spawn.guardFraction", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Spawning.WanderPackChance, optionId: "debug.tuning.desertTomb.spawn.wanderPackChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Spawning.LeashRadiusMin, optionId: "debug.tuning.desertTomb.spawn.leashRadiusMin", tooltip: true, min: 0, max: 80, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Spawning.LeashRadiusMax, optionId: "debug.tuning.desertTomb.spawn.leashRadiusMax", tooltip: true, min: 1, max: 120, interval: 1);
+
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Spawning.PatrolPointsMinInclusive, optionId: "debug.tuning.desertTomb.spawn.patrolPointsMinInclusive", tooltip: true, min: 1, max: 20, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Spawning.PatrolPointsMaxExclusive, optionId: "debug.tuning.desertTomb.spawn.patrolPointsMaxExclusive", tooltip: true, min: 2, max: 40, interval: 1);
+
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Spawning.PatrolMaxAttempts, optionId: "debug.tuning.desertTomb.spawn.patrolMaxAttempts", tooltip: true, min: 10, max: 5000, interval: 10);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Spawning.PatrolAttemptsPerCandidate, optionId: "debug.tuning.desertTomb.spawn.patrolAttemptsPerCandidate", tooltip: true, min: 1, max: 50, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Spawning.PatrolMinSpacingTiles, optionId: "debug.tuning.desertTomb.spawn.patrolMinSpacingTiles", tooltip: true, min: 0, max: 20, interval: 1);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Desert Tomb Population");
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Population.InitialWaveFraction, optionId: "debug.tuning.desertTomb.pop.initialWaveFraction", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Population.ReconcileIntervalTicks, optionId: "debug.tuning.desertTomb.pop.reconcileIntervalTicks", tooltip: true, min: 1, max: 600, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Population.MaxSpawnsPerTick, optionId: "debug.tuning.desertTomb.pop.maxSpawnsPerTick", tooltip: true, min: 0, max: 50, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.DesertTomb.Population.MinDistanceToPlayerTiles, optionId: "debug.tuning.desertTomb.pop.minDistanceToPlayerTiles", tooltip: true, min: 0, max: 30, interval: 1);
+                page.Bool(cfg => cfg.DebugKnobs.DesertTomb.Population.AllowRespawnAfterInitialFill, optionId: "debug.tuning.desertTomb.pop.allowRespawnAfterInitialFill", tooltip: true);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Desert Tomb Luck / Loot");
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.UnluckyDelta, optionId: "debug.tuning.desertTomb.luck.unluckyDelta", tooltip: true, min: -0.05f, max: 0f, interval: 0.0005f);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.LuckyDelta, optionId: "debug.tuning.desertTomb.luck.luckyDelta", tooltip: true, min: 0f, max: 0.05f, interval: 0.0005f);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.SuperLuckyDelta, optionId: "debug.tuning.desertTomb.luck.superLuckyDelta", tooltip: true, min: 0f, max: 0.5f, interval: 0.001f);
+
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.SuperUnluckyMax, optionId: "debug.tuning.desertTomb.luck.superUnluckyMax", tooltip: true, min: -0.2f, max: 0f, interval: 0.005f);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.UnluckyMax, optionId: "debug.tuning.desertTomb.luck.unluckyMax", tooltip: true, min: -0.2f, max: 0f, interval: 0.005f);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.NeutralMax, optionId: "debug.tuning.desertTomb.luck.neutralMax", tooltip: true, min: 0f, max: 0.2f, interval: 0.005f);
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.LuckyMax, optionId: "debug.tuning.desertTomb.luck.luckyMax", tooltip: true, min: 0f, max: 0.2f, interval: 0.005f);
+
+                page.Float(cfg => cfg.DebugKnobs.DesertTomb.Breakables.DropRateMultiplierMax, optionId: "debug.tuning.desertTomb.breakables.dropRateMultiplierMax", tooltip: true, min: 0f, max: 100f, interval: 0.5f);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Egg Spawn Chance");
+                page.Float(cfg => cfg.DebugKnobs.SpawningChanceModifiers.LargeMagic, optionId: "debug.tuning.spawnChance.largeMagic", tooltip: true, min: -1f, max: 1f, interval: 0.01f);
+                page.Float(cfg => cfg.DebugKnobs.SpawningChanceModifiers.LargeWild, optionId: "debug.tuning.spawnChance.largeWild", tooltip: true, min: -1f, max: 1f, interval: 0.01f);
+                page.Float(cfg => cfg.DebugKnobs.SpawningChanceModifiers.Magic, optionId: "debug.tuning.spawnChance.magic", tooltip: true, min: -1f, max: 1f, interval: 0.01f);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Economy Weighting");
+                page.Int(cfg => cfg.DebugKnobs.Weighting.HorizonDays, optionId: "debug.tuning.weighting.horizonDays", tooltip: true, min: 1, max: 60, interval: 1);
+                page.Float(cfg => cfg.DebugKnobs.Weighting.DeluxeProbability, optionId: "debug.tuning.weighting.deluxeProbability", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+
+                page.Float(cfg => cfg.DebugKnobs.Weighting.K, optionId: "debug.tuning.weighting.k", tooltip: true, min: 0f, max: 100000f, interval: 50f);
+                page.Float(cfg => cfg.DebugKnobs.Weighting.Alpha, optionId: "debug.tuning.weighting.alpha", tooltip: true, min: 0f, max: 2f, interval: 0.01f);
+
+                page.Float(cfg => cfg.DebugKnobs.Weighting.CapHigh, optionId: "debug.tuning.weighting.capHigh", tooltip: true, min: 0f, max: 100f, interval: 0.5f);
+                page.Float(cfg => cfg.DebugKnobs.Weighting.CapLow, optionId: "debug.tuning.weighting.capLow", tooltip: true, min: 0f, max: 200f, interval: 0.5f);
+
+                page.Float(cfg => cfg.DebugKnobs.Weighting.UnlockedFactor, optionId: "debug.tuning.weighting.unlockedFactor", tooltip: true, min: 0f, max: 2f, interval: 0.01f);
+                page.Float(cfg => cfg.DebugKnobs.Weighting.HiddenNoAnchorPenalty, optionId: "debug.tuning.weighting.hiddenNoAnchorPenalty", tooltip: true, min: 0f, max: 2f, interval: 0.01f);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Monsters (Pharaoh)");
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.VisionTiles, optionId: "debug.tuning.monsters.pharaoh.visionTiles", tooltip: true, min: 0, max: 30, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.CastRangeTiles, optionId: "debug.tuning.monsters.pharaoh.castRangeTiles", tooltip: true, min: 0, max: 30, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.RewrapRangeTiles, optionId: "debug.tuning.monsters.pharaoh.rewrapRangeTiles", tooltip: true, min: 0, max: 30, interval: 1);
+
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.BaseCastCooldownMs, optionId: "debug.tuning.monsters.pharaoh.baseCastCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.EnragedCastCooldownMs, optionId: "debug.tuning.monsters.pharaoh.enragedCastCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.CastWindupMs, optionId: "debug.tuning.monsters.pharaoh.castWindupMs", tooltip: true, min: 0, max: 10000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.RecoverMs, optionId: "debug.tuning.monsters.pharaoh.recoverMs", tooltip: true, min: 0, max: 10000, interval: 50);
+
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.MicroUnstuckAfterTicks, optionId: "debug.tuning.monsters.pharaoh.microUnstuckAfterTicks", tooltip: true, min: 0, max: 600, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.PathfindUnstuckAfterTicks, optionId: "debug.tuning.monsters.pharaoh.pathfindUnstuckAfterTicks", tooltip: true, min: 0, max: 600, interval: 1);
+
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.SandStepAfterTicks, optionId: "debug.tuning.monsters.pharaoh.sandStepAfterTicks", tooltip: true, min: 0, max: 600, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.SandStepCooldownMs, optionId: "debug.tuning.monsters.pharaoh.sandStepCooldownMs", tooltip: true, min: 0, max: 30000, interval: 100);
+
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.LeashRadiusTiles, optionId: "debug.tuning.monsters.pharaoh.leashRadiusTiles", tooltip: true, min: 0, max: 60, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.LeashTicksBeforeReturn, optionId: "debug.tuning.monsters.pharaoh.leashTicksBeforeReturn", tooltip: true, min: 0, max: 2000, interval: 5);
+
+                page.Float(cfg => cfg.DebugKnobs.Monsters.Pharaoh.RewrapChance, optionId: "debug.tuning.monsters.pharaoh.rewrapChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.EnrageCooldownCapMs, optionId: "debug.tuning.monsters.pharaoh.enrageCooldownCapMs", tooltip: true, min: 0, max: 5000, interval: 25);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.ReviveTimerMax, optionId: "debug.tuning.monsters.pharaoh.reviveTimerMax", tooltip: true, min: 0, max: 5000, interval: 25);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.HealEnraged, optionId: "debug.tuning.monsters.pharaoh.healEnraged", tooltip: true, min: 0, max: 1000, interval: 5);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.HealNormal, optionId: "debug.tuning.monsters.pharaoh.healNormal", tooltip: true, min: 0, max: 1000, interval: 5);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Monsters (Sandi)");
+                page.Float(cfg => cfg.DebugKnobs.Monsters.Sandi.DiveChanceOnHit, optionId: "debug.tuning.monsters.sandi.diveChanceOnHit", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Sandi.DiveDurationMs, optionId: "debug.tuning.monsters.sandi.diveDurationMs", tooltip: true, min: 0, max: 20000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Sandi.DiveCooldownMs, optionId: "debug.tuning.monsters.sandi.diveCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Monsters (Crawler)");
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Crawler.CurlTriggerDistanceTiles, optionId: "debug.tuning.monsters.crawler.curlTriggerDistanceTiles", tooltip: true, min: 0, max: 30, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Crawler.CurlDurationMs, optionId: "debug.tuning.monsters.crawler.curlDurationMs", tooltip: true, min: 0, max: 20000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Crawler.CurlCooldownMs, optionId: "debug.tuning.monsters.crawler.curlCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Monsters (Hurricane)");
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.AlignTiles, optionId: "debug.tuning.monsters.hurricane.alignTiles", tooltip: true, min: 0, max: 60, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.SuckDistanceTiles, optionId: "debug.tuning.monsters.hurricane.suckDistanceTiles", tooltip: true, min: 0, max: 30, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.SwirlSegmentMs, optionId: "debug.tuning.monsters.hurricane.swirlSegmentMs", tooltip: true, min: 0, max: 20000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.ChargeMs, optionId: "debug.tuning.monsters.hurricane.chargeMs", tooltip: true, min: 0, max: 20000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.SuckMs, optionId: "debug.tuning.monsters.hurricane.suckMs", tooltip: true, min: 0, max: 20000, interval: 50);
+
+                page.Separator(simple: true);
+
+                page.Section("Tuning – Monsters (Matango)");
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.VisionTiles, optionId: "debug.tuning.monsters.matango.visionTiles", tooltip: true, min: 0, max: 30, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.CastWindupMs, optionId: "debug.tuning.monsters.matango.castWindupMs", tooltip: true, min: 0, max: 10000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.RecoverMs, optionId: "debug.tuning.monsters.matango.recoverMs", tooltip: true, min: 0, max: 10000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.ShotCooldownMs, optionId: "debug.tuning.monsters.matango.shotCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
+#endif
+
             });
         }, force: force);
     }

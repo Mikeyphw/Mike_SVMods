@@ -88,4 +88,11 @@ public sealed class ModConfig
     /// False = never gated by AnimalNotes (always follow base game/mod shop behavior).
     /// </summary>
     public System.Collections.Generic.Dictionary<string, bool> AnimalProgressionMode { get; set; } = new(System.StringComparer.OrdinalIgnoreCase);
+
+#if MIKE_DEVTOOLS
+    /// <summary>
+    /// Centralized tuning knobs exposed only in debug builds (GMCM Debug page).
+    /// </summary>
+    public DebugKnobsConfig DebugKnobs { get; set; } = new();
+#endif
 }

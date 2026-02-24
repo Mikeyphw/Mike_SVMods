@@ -11,7 +11,11 @@
     <RootNamespace>EggsInWild</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>$(DefineConstants);MIKE_DEVTOOLS</DefineConstants>
+  </PropertyGroup>
+<ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Application/**/*.cs" />

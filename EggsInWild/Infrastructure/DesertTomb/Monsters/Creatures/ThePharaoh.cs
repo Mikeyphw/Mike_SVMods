@@ -10,6 +10,7 @@ using StardewValley.Pathfinding;
 using StardewValley.Projectiles;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Base;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Monsters.Creatures;
 
@@ -27,22 +28,22 @@ internal sealed class ThePharaoh : Mummy
         Recover = 3,
     }
 
-    private const int VisionTiles = 8;
-    private const int CastRangeTiles = 8;
-    private const int RewrapRangeTiles = 6;
+    private static int VisionTiles => DebugKnobs.PharaohVisionTiles;
+    private static int CastRangeTiles => DebugKnobs.PharaohCastRangeTiles;
+    private static int RewrapRangeTiles => DebugKnobs.PharaohRewrapRangeTiles;
 
-    private const int BaseCastCooldownMs = 2600;
-    private const int EnragedCastCooldownMs = 1700;
-    private const int CastWindupMs = 800;
-    private const int RecoverMs = 450;
+    private static int BaseCastCooldownMs => DebugKnobs.PharaohBaseCastCooldownMs;
+    private static int EnragedCastCooldownMs => DebugKnobs.PharaohEnragedCastCooldownMs;
+    private static int CastWindupMs => DebugKnobs.PharaohCastWindupMs;
+    private static int RecoverMs => DebugKnobs.PharaohRecoverMs;
 
-    private const int MicroUnstuckAfterTicks = 15;
-    private const int PathfindUnstuckAfterTicks = 35;
-    private const int SandStepAfterTicks = 65;
-    private const int SandStepCooldownMs = 6500;
+    private static int MicroUnstuckAfterTicks => DebugKnobs.PharaohMicroUnstuckAfterTicks;
+    private static int PathfindUnstuckAfterTicks => DebugKnobs.PharaohPathfindUnstuckAfterTicks;
+    private static int SandStepAfterTicks => DebugKnobs.PharaohSandStepAfterTicks;
+    private static int SandStepCooldownMs => DebugKnobs.PharaohSandStepCooldownMs;
 
-    private const int LeashRadiusTiles = 12;
-    private const int LeashTicksBeforeReturn = 180;
+    private static int LeashRadiusTiles => DebugKnobs.PharaohLeashRadiusTiles;
+    private static int LeashTicksBeforeReturn => DebugKnobs.PharaohLeashTicksBeforeReturn;
 
     private readonly NetBool _spotted = new(false);
     private readonly NetBool _casting = new(false);
@@ -319,7 +320,7 @@ internal sealed class ThePharaoh : Mummy
     private void TryEnterEnrage()
     {
         _enraged.Value = true;
-        _castCooldownMs.Value = Math.Min(_castCooldownMs.Value, 800);
+        _castCooldownMs.Value = Math.Min(_castCooldownMs.Value, DebugKnobs.PharaohEnrageCooldownCapMs);
         currentLocation?.playSound("furnace");
     }
 
@@ -421,7 +422,7 @@ internal sealed class ThePharaoh : Mummy
 
     private bool TryRoyalRewrap(Farmer target)
     {
-        if (Game1.random.NextDouble() > 0.45)
+        if (Game1.random.NextDouble() > DebugKnobs.PharaohRewrapChance)
             return false;
 
         Monster? best = null;
@@ -449,9 +450,9 @@ internal sealed class ThePharaoh : Mummy
             return false;
 
         if (targetMummy.reviveTimer.Value > 0)
-            targetMummy.reviveTimer.Value = Math.Min(targetMummy.reviveTimer.Value, 600);
+            targetMummy.reviveTimer.Value = Math.Min(targetMummy.reviveTimer.Value, DebugKnobs.PharaohReviveTimerMax);
         else
-            targetMummy.Health = Math.Min(targetMummy.MaxHealth, targetMummy.Health + (_enraged.Value ? 180 : 80));
+            targetMummy.Health = Math.Min(targetMummy.MaxHealth, targetMummy.Health + (_enraged.Value ? DebugKnobs.PharaohHealEnraged : DebugKnobs.PharaohHealNormal));
 
         currentLocation.playSound("healSound");
         Game1.Multiplayer.broadcastSprites(

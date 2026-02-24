@@ -4,6 +4,7 @@ using System.Linq;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Objects;
 using EggsInWild.Core.ShopAnchors;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Core.Weighting;
 
@@ -24,8 +25,8 @@ public sealed class WeggEconomyWeightCalculator
         ShopAnchorIndex anchors,
         IReadOnlyDictionary<string, ObjectData> objects,
         Func<string, bool>? isUnlocked = null,
-        int horizonDays = WeggWeightingDefaults.HorizonDays,
-        double deluxeProbability = WeggWeightingDefaults.DeluxeProbability)
+        int? horizonDays = null,
+        double? deluxeProbability = null)
     {
         _farmAnimals = farmAnimals ?? throw new ArgumentNullException(nameof(farmAnimals));
         _anchors = anchors ?? throw new ArgumentNullException(nameof(anchors));
@@ -60,8 +61,8 @@ public sealed class WeggEconomyWeightCalculator
         }
 
         var medianW = MedianMath.MedianOrDefault(baseList, defaultValue: 1.0);
-        var minW = medianW / Math.Max(1e-9, WeggWeightingDefaults.CapLow);
-        var maxW = medianW * Math.Max(1e-9, WeggWeightingDefaults.CapHigh);
+        var minW = medianW / Math.Max(1e-9, DebugKnobs.WeightCapLow);
+        var maxW = medianW * Math.Max(1e-9, DebugKnobs.WeightCapHigh);
 
         var finalWeights = new Dictionary<string, double>(KeyComparer);
         foreach (var id in ids)
@@ -70,10 +71,10 @@ public sealed class WeggEconomyWeightCalculator
             w = Clamp(w, minW, maxW);
 
             if (ShouldApplyHiddenNoAnchorPenalty(id))
-                w *= WeggWeightingDefaults.HiddenNoAnchorPenalty;
+                w *= DebugKnobs.WeightHiddenNoAnchorPenalty;
 
             if (_isUnlocked(id))
-                w *= WeggWeightingDefaults.UnlockedFactor;
+                w *= DebugKnobs.WeightUnlockedFactor;
 
             finalWeights[id] = Math.Max(0.0, w);
         }
@@ -84,7 +85,7 @@ public sealed class WeggEconomyWeightCalculator
     private static double WeightFromValue(double effectiveValue)
     {
         var v = Math.Max(0.0, effectiveValue);
-        var denom = Math.Pow(v + WeggWeightingDefaults.K, WeggWeightingDefaults.Alpha);
+        var denom = Math.Pow(v + DebugKnobs.WeightK, DebugKnobs.WeightAlpha);
         if (!double.IsFinite(denom) || denom <= 0)
             return 0;
 

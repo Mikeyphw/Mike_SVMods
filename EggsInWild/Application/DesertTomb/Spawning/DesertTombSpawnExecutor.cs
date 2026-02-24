@@ -6,6 +6,7 @@ using StardewValley.Locations;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.DesertTomb.Core.Spawning;
 using EggsInWild.Infrastructure.DesertTomb.Monsters;
+using EggsInWild.Infrastructure.Config;
 using Mikew.NestCore.Helpers.Logging;
 using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
 using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
@@ -163,13 +164,13 @@ public sealed class DesertTombSpawnExecutor
     {
         // Keep it simple: bigger areas leash wider. Clamp to a sane range.
         var r = Math.Max(rect.Width, rect.Height);
-        return Math.Clamp(r, 6, 20);
+        return Math.Clamp(r, DebugKnobs.TombLeashRadiusMin, DebugKnobs.TombLeashRadiusMax);
     }
 
     private static string BuildPatrolPoints(MineShaft mineShaft, TombAreaState areaState, Point homeTile)
     {
         // home + 1–3 additional points, spaced out a bit.
-        var desired = mineShaft.mineRandom.Next(2, 5);
+        var desired = mineShaft.mineRandom.Next(DebugKnobs.TombPatrolPointsMinInclusive, DebugKnobs.TombPatrolPointsMaxExclusive);
         var points = new List<Point>(capacity: desired) { homeTile };
 
         // Sample from valid tiles without consuming the area spawn cache.
@@ -177,14 +178,14 @@ public sealed class DesertTombSpawnExecutor
         if (candidates.Count == 0)
             return $"{homeTile.X},{homeTile.Y}";
 
-        var attempts = Math.Min(200, candidates.Count * 2);
+        var attempts = Math.Min(DebugKnobs.TombPatrolMaxAttempts, candidates.Count * DebugKnobs.TombPatrolAttemptsPerCandidate);
         for (int i = 0; i < attempts && points.Count < desired; i++)
         {
             var candidate = candidates[mineShaft.mineRandom.Next(candidates.Count)];
             if (candidate == homeTile)
                 continue;
 
-            if (!TombSpawnTileCache.IsFarEnough(candidate, points, minSpacingTiles: 2))
+            if (!TombSpawnTileCache.IsFarEnough(candidate, points, minSpacingTiles: DebugKnobs.TombPatrolMinSpacingTiles))
                 continue;
 
             points.Add(candidate);

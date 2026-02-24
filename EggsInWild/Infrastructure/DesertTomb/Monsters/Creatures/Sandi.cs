@@ -6,6 +6,7 @@ using StardewValley;
 using StardewValley.Monsters;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Base;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Monsters.Creatures;
 
@@ -20,9 +21,9 @@ internal sealed class Sandi : Monster
         Buried = 1,
     }
 
-    private const double DiveChanceOnHit = 0.18;
-    private const int DiveDurationMs = 2200;
-    private const int DiveCooldownMs = 4200;
+    private static double DiveChanceOnHit => DebugKnobs.SandiDiveChanceOnHit;
+    private static int DiveDurationMs => DebugKnobs.SandiDiveDurationMs;
+    private static int DiveCooldownMs => DebugKnobs.SandiDiveCooldownMs;
 
     private const int DiveAnimStartFrame = 12;
     private const int DiveAnimFrames = 4;

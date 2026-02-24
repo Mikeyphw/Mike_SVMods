@@ -6,6 +6,7 @@ using StardewValley.Monsters;
 using StardewValley.Projectiles;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Base;
+using EggsInWild.Infrastructure.Config;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Monsters.Creatures;
 
@@ -21,10 +22,10 @@ internal sealed class Matango : Monster
         Recover = 2,
     }
 
-    private const int VisionTiles = 8;
-    private const int CastWindupMs = 450;
-    private const int RecoverMs = 250;
-    private const int ShotCooldownMs = 2200;
+    private static int VisionTiles => DebugKnobs.MatangoVisionTiles;
+    private static int CastWindupMs => DebugKnobs.MatangoCastWindupMs;
+    private static int RecoverMs => DebugKnobs.MatangoRecoverMs;
+    private static int ShotCooldownMs => DebugKnobs.MatangoShotCooldownMs;
 
     private readonly NetInt _state = new((int)MatangoState.Walking);
     private readonly NetInt _stateTimerMs = new(0);
