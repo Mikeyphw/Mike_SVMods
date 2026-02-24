@@ -1,7 +1,0 @@
-# TODO — RoosterAddon
-
-- [x] Ensure GMCM option IDs are stable and documented.
-- [x] Verify all debug/diagnostic/logging toggles are only on the `debug` page.
-- [x] Add/verify i18n keys for all pages/options (`config.*`).
-- [x] Decide v1 scope for produce tables (minimal vs full 4-slot editor).
-- [x] Ensure dynamic female list is stable across rebuilds (consistent ordering).

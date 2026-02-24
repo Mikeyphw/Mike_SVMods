@@ -1,0 +1,11 @@
+{
+  "Name": "Nest Core",
+  "Author": "MikeW",
+  "Version": "1.0.1",
+  "Description": "A core mod for Mikew mods.",
+  "UniqueID": "Mikew.nestcore",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [],
+  "Dependencies": [],
+  "EntryDll": "NestCore.dll"
+}

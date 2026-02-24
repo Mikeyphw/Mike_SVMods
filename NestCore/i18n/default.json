@@ -1,0 +1,14 @@
+{
+  "config.VerboseLogging.name": "Verbose logging",
+  "config.VerboseLogging.description": "Enable extra debug diagnostics for NestCore internals.",
+  "config.TestingLogging.name": "Testing logging",
+  "config.TestingLogging.description": "Enable test-focused logging output.",
+  "config.page.logging.nestcore.name": "Logging: NestCore",
+  "config.page.logging.nestcore.description": "NestCore log levels by category.",
+  "config.page.logging.roostercontrol.name": "Logging: RoosterControl",
+  "config.page.logging.roostercontrol.description": "RoosterControl log levels by category.",
+  "config.page.logging.we.name": "Logging: WE",
+  "config.page.logging.we.description": "EggsInWild log levels by category.",
+  "config.page.logging.lthte.name": "Logging: LTHTE",
+  "config.page.logging.lthte.description": "LetMeHatch log levels by category."
+}

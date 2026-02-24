@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>EggsInWild</AssemblyName>
+    <RootNamespace>EggsInWild</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Constants.cs" />
+    <Compile Include="ModEntry.cs" />
+    <Compile Include="Application/**/*.cs" />
+    <Compile Include="Core/**/*.cs" />
+    <Compile Include="Infrastructure/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="manifest.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="i18n/**/*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="ModData/**/*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="assets/**/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NestCore\NestCore.csproj" Private="false" />
+  </ItemGroup>
+
+</Project>

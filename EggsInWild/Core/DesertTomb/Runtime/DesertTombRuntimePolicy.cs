@@ -1,0 +1,90 @@
+using System;
+using System.Text.RegularExpressions;
+using StardewValley;
+using EggsInWild.Core.Enums;
+using EggsInWild.Infrastructure.Config;
+using static EggsInWild.DesertTomb.Core.Enums.DesertTombEnums;
+
+namespace EggsInWild.DesertTomb.Core.Runtime;
+
+/// <summary>
+/// Pure helper policy for deciding whether DesertTomb should activate on a mine floor,
+/// and for mapping the current mine map path to a known tomb layout.
+/// </summary>
+public static class DesertTombRuntimePolicy
+{
+    private static readonly Regex LevelRegex = new(
+        pattern: @"(?i)(?:^|/|\\)(?:level)?(?<n>77377|39|28|19|14)(?:\D|$)",
+        options: RegexOptions.Compiled | RegexOptions.CultureInvariant
+    );
+
+    public static bool IsEligibleByProgression(bool progressionModeEnabled, bool keepMineLevel, ProgressionStep step)
+        => !progressionModeEnabled
+           || (keepMineLevel ? step >= ProgressionStep.PartIV : step == ProgressionStep.PartIV);
+
+    public static bool IsTombCandidate(int mineLevel)
+        => mineLevel > 120;
+
+    public static bool RollTombChance(TombChance chance, int mineLevel)
+    {
+        if (mineLevel <= 120)
+            return false;
+
+        if (chance == TombChance.Always)
+            return true;
+
+        var probability = chance switch
+        {
+            TombChance.High => 0.75,
+            TombChance.Medium => 0.50,
+            TombChance.Low => 0.25,
+            _ => 0.50,
+        };
+
+        return Game1.random.NextDouble() <= probability;
+    }
+
+    public static bool TryParseMineLevel(string? mapPath, out MineLevel mineLevel)
+    {
+        mineLevel = MineLevel.Level77377;
+
+        if (string.IsNullOrWhiteSpace(mapPath))
+            return false;
+
+        var normalized = mapPath.Replace('\\', '/');
+
+        var m = LevelRegex.Match(normalized);
+        if (!m.Success)
+            return false;
+
+        var n = m.Groups["n"].Value;
+        mineLevel = n switch
+        {
+            "77377" => MineLevel.Level77377,
+            "39" => MineLevel.Level39,
+            "28" => MineLevel.Level28,
+            "19" => MineLevel.Level19,
+            "14" => MineLevel.Level14,
+            _ => MineLevel.Level77377,
+        };
+
+        return true;
+    }
+
+    public static MineLevel GuessMineLevelOrDefault(string? mapPath)
+        => TryParseMineLevel(mapPath, out var level) ? level : MineLevel.Level77377;
+
+    public static int ParseLoadedMapNumber(string mapPath)
+    {
+        if (string.IsNullOrWhiteSpace(mapPath))
+            return 0;
+
+        var normalized = mapPath.Replace('\\', '/');
+
+        var m = LevelRegex.Match(normalized);
+        if (!m.Success)
+            return 0;
+
+        return int.TryParse(m.Groups["n"].Value, out var n) ? n : 0;
+    }
+}

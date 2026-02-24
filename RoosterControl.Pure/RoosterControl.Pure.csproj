@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\RoosterControl\Constants.cs" Link="Constants.cs" />
+    <Compile Include="..\RoosterControl\Enums.cs" Link="Enums.cs" />
+
+    <Compile Include="..\RoosterControl\Framework\Config\ConfigSchema.cs" Link="Framework\Config\ConfigSchema.cs" />
+    <Compile Include="..\RoosterControl\Framework\Config\RoosterControlConfig.cs" Link="Framework\Config\RoosterControlConfig.cs" />
+
+    <Compile Include="..\RoosterControl\Application\Catalogs\CatalogModels.cs" Link="Application\Catalogs\CatalogModels.cs" />
+    <Compile Include="..\RoosterControl\Application\Catalogs\CatalogDefaults.cs" Link="Application\Catalogs\CatalogDefaults.cs" />
+    <Compile Include="..\RoosterControl\Application\Catalogs\CatalogMigration.cs" Link="Application\Catalogs\CatalogMigration.cs" />
+    <Compile Include="..\RoosterControl\Application\Catalogs\CatalogValidation.cs" Link="Application\Catalogs\CatalogValidation.cs" />
+    <Compile Include="..\RoosterControl\Application\Catalogs\CatalogApplicator.cs" Link="Application\Catalogs\CatalogApplicator.cs" />
+
+    <Compile Include="..\RoosterControl\Application\Produces\RandomGroupProduceResolver.cs" Link="Application\Produces\RandomGroupProduceResolver.cs" />
+
+    <Compile Include="..\RoosterControl\Application\Catalogs\Console\CatalogCommandModels.cs" Link="Application\Catalogs\Console\CatalogCommandModels.cs" />
+    <Compile Include="..\RoosterControl\Application\Catalogs\Console\CatalogCommandService.cs" Link="Application\Catalogs\Console\CatalogCommandService.cs" />
+  </ItemGroup>
+</Project>

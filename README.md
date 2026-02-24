@@ -6,10 +6,10 @@ A collection of Stardew Valley mods focused on bird-related gameplay improvement
 
 This repository contains multiple mods that work together to enhance the bird/farming experience in Stardew Valley:
 
-### BirdsOfAFeather (Core Library)
+### NestCore (Core Library)
 A shared dependency library providing common functionality used by other mods.
 
-- **Mod ID**: `Mikew.birdsofafeather`
+- **Mod ID**: `Mikew.nestcore`
 - **Version**: 1.0.1
 - **Description**: A core mod for Mikew mods providing shared utilities, helpers, and game state queries.
 
@@ -22,21 +22,21 @@ A shared dependency library providing common functionality used by other mods.
 - Extension methods and utilities
 - Config management via Generic Mod Config Menu (GMCM)
 
-### LetMeHatchThisEgg
+### LetMeHatch
 Adds missing hatching data for animals that produce eggs but cannot be incubated.
 
 - **Mod ID**: `Mikew.lmh`
 - **Version**: 1.0.4
 - **Nexus Mods**: [25175](https://www.nexusmods.com/stardewvalley/mods/25175)
-- **Required Dependencies**: BirdsOfAFeather, ContentPatcher
-- **Optional Dependencies**: Prismatic Valley Framework, LetMeHatchThisEgg (self), Blue Egg
+- **Required Dependencies**: NestCore, ContentPatcher
+- **Optional Dependencies**: Prismatic Valley Framework, LetMeHatch (self), Blue Egg
 
 **Features**:
 - Adds hatching data for egg-producing animals
 - Configurable breeding options
-- Integration with RoosterAddon for rooster hatching
+- Integration with RoosterControl for rooster hatching
 
-### RoosterAddon
+### RoosterControl
 An addon for the Roosters mod that enables hatching and control of roosters.
 
 - **Mod ID**: `Mikew.roostersaddon.smapi`
@@ -49,7 +49,7 @@ An addon for the Roosters mod that enables hatching and control of roosters.
 - Rooster control options
 - Color variants (blue, brown, white, gold, void)
 
-### WildEggsHatching
+### EggsInWild
 Adds wild egg spawning throughout the game world with a progression system.
 
 - **Status**: Actively refactored
@@ -67,12 +67,12 @@ Adds wild egg spawning throughout the game world with a progression system.
 Mike_SVMods/
 ├── Directory.Build.props          # Shared build configuration
 ├── README.md                       # This file
-├── BirdsOfAFeather/               # Core shared library
+├── NestCore/               # Core shared library
 │   ├── Framework/                 # Config, APIs, interfaces
 │   ├── Helpers/                   # Utility classes and extensions
 │   ├── Models/                    # Data models
 │   └── Tests/                     # Unit tests
-├── LetMeHatchThisEgg/             # Hatching data mod
+├── LetMeHatch/             # Hatching data mod
 │   ├── Breeding/                  # Breeding system
 │   ├── Cloning/                   # Animal cloning
 │   ├── Config/                    # Configuration
@@ -81,11 +81,11 @@ Mike_SVMods/
 │   ├── Integrations/              # Third-party integrations
 │   ├── Managers/                  # Game asset management
 │   └── UI/                        # Menu interfaces
-├── RoosterAddon/                  # Rooster control addon
+├── RoosterControl/                  # Rooster control addon
 │   ├── Framework/                 # API interfaces
 │   ├── Helpers/                   # Utility classes
 │   └── assets/                    # Sprites and textures
-├── WildEggsHatching/              # Wild egg spawning
+├── EggsInWild/              # Wild egg spawning
 │   ├── refactor/                  # New clean architecture
 │   │   ├── Core/                  # Domain models, events, enums
 │   │   ├── Data/                  # Data loading
@@ -94,9 +94,9 @@ Mike_SVMods/
 │   │   ├── Spawning/              # Egg spawning
 │   │   ├── Tracking/              # Hatch detection
 │   │   └── Notes/                 # Note spawning
-│   └── WildEggsHatching_orig/    # Original implementation
+│   └── EggsInWild_orig/    # Original implementation
 └── Tests/
-    └── BirdsOfAFeather.Tests/    # Unit tests
+    └── NestCore.Tests/    # Unit tests
 ```
 
 ## Building
@@ -113,9 +113,9 @@ Mike_SVMods/
 dotnet build
 
 # Build specific mod
-dotnet build BirdsOfAFeather/BirdsOfAFeather.csproj
-dotnet build LetMeHatchThisEgg/LetMeHatchThisEgg.csproj
-dotnet build RoosterAddon/RoosterAddon.csproj
+dotnet build NestCore/NestCore.csproj
+dotnet build LetMeHatch/LetMeHatch.csproj
+dotnet build RoosterControl/RoosterControl.csproj
 
 # Run tests
 dotnet test
@@ -124,13 +124,13 @@ dotnet test
 ### Output
 
 Built mods are located in each mod's `bin/` directory:
-- `BirdsOfAFeather/bin/Debug/net8.0/BirdsOfAFeather.dll`
-- `LetMeHatchThisEgg/bin/Debug/net8.0/LetMeHatchThisEgg.dll`
-- `RoosterAddon/bin/Debug/net8.0/RoosterAddon.dll`
+- `NestCore/bin/Debug/net8.0/NestCore.dll`
+- `LetMeHatch/bin/Debug/net8.0/LetMeHatch.dll`
+- `RoosterControl/bin/Debug/net8.0/RoosterControl.dll`
 
 ## Shared Components
 
-### BirdsOfAFeather provides:
+### NestCore provides:
 
 | Component | Description |
 |-----------|-------------|
@@ -144,30 +144,30 @@ Built mods are located in each mod's `bin/` directory:
 
 ### Architecture Patterns
 
-- **Event-Driven** (WildEggsHatching refactor): Publish/Subscribe via EventBus
+- **Event-Driven** (EggsInWild refactor): Publish/Subscribe via EventBus
 - **Service-Oriented**: Separate services for spawning, progression, tracking
 - **Clean Architecture**: Clear separation between domain, data, and infrastructure layers
 
 ## Mod Dependencies
 
 ```
-RoosterAddon
+RoosterControl
     └── Meara.Roosters (required)
     └── Mikew.lmh (optional)
 
-LetMeHatchThisEgg
-    └── Mikew.birdsofafeather (required)
+LetMeHatch
+    └── Mikew.nestcore (required)
     └── ContentPatcher (required)
 
-WildEggsHatching
-    └── Mikew.birdsofafeather (recommended)
+EggsInWild
+    └── Mikew.nestcore (recommended)
 ```
 
 ## Configuration
 
 All mods support [Generic Mod Config Menu](https://www.nexusmods.com/stardewvalley/mods/5098) for in-game configuration.
 
-### BirdsOfAFeather Options
+### NestCore Options
 - **Extra Debug Info**: Enable verbose logging
 - **Testing**: Enable testing-specific logging
 

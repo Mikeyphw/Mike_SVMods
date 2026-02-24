@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# rename.sh - Safely replace string in filenames and directory names using fd
+
+set -euo pipefail
+
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 old_string new_string"
+  exit 1
+fi
+
+old="$1"
+new="$2"
+
+echo "Preview of renames (directories first, then files):"
+echo "--------------------------------------------------"
+
+# Preview directories (deepest first)
+fd "$old" -t d --exec-batch bash -c '
+for f; do
+  newname="${f//$0/$1}"
+  if [ "$f" != "$newname" ]; then
+    echo mv "$f" "$newname"
+  fi
+done
+' "$old" "$new" | tac
+
+# Preview files
+fd "$old" -t f --exec-batch bash -c '
+for f; do
+  newname="${f//$0/$1}"
+  if [ "$f" != "$newname" ]; then
+    echo mv "$f" "$newname"
+  fi
+done
+' "$old" "$new"
+
+echo "--------------------------------------------------"
+read -p "Apply these changes? (y/N): " confirm
+
+if [[ "$confirm" =~ ^[Yy]$ ]]; then
+  # Rename directories first (deepest first)
+  fd "$old" -t d --exec-batch bash -c '
+  for f; do
+    newname="${f//$0/$1}"
+    if [ "$f" != "$newname" ]; then
+      mv "$f" "$newname"
+    fi
+  done
+  ' "$old" "$new" | tac | while read -r cmd; do eval "$cmd"; done
+
+  # Rename files
+  fd "$old" -t f --exec-batch bash -c '
+  for f; do
+    newname="${f//$0/$1}"
+    if [ "$f" != "$newname" ]; then
+      mv "$f" "$newname"
+    fi
+  done
+  ' "$old" "$new"
+
+  echo "Renaming complete."
+else
+  echo "No changes applied."
+fi

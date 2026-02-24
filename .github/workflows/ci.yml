@@ -22,7 +22,7 @@ jobs:
           dotnet-version: 6.0.x
 
       - name: Restore
-        run: dotnet restore Mike_SVMods/Tests/RoosterAddon.PureTests/RoosterAddon.PureTests.csproj
+        run: dotnet restore Mike_SVMods/Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj
 
       - name: Test
-        run: dotnet test Mike_SVMods/Tests/RoosterAddon.PureTests/RoosterAddon.PureTests.csproj -c Release --no-restore
+        run: dotnet test Mike_SVMods/Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj -c Release --no-restore

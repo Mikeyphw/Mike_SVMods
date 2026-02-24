@@ -5,8 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TESTS_DIR="${ROOT_DIR}/Tests"
 
 echo "== Validate Core (LMH) =="
-if [[ -x "${ROOT_DIR}/LetMeHatchThisEgg/Tools/validate-core.sh" ]]; then
-  "${ROOT_DIR}/LetMeHatchThisEgg/Tools/validate-core.sh"
+if [[ -x "${ROOT_DIR}/LetMeHatch/Tools/validate-core.sh" ]]; then
+  "${ROOT_DIR}/LetMeHatch/Tools/validate-core.sh"
 else
   echo "WARN: validate-core.sh not found/executable; skipping."
 fi
