@@ -10,9 +10,14 @@ using Mikew.NestCore.Integrations.Gmcm;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley.GameData.FarmAnimals;
+using EggsInWild.Application.Animals;
 using EggsInWild.Application.Facade;
+using EggsInWild.Application.Progression;
+using EggsInWild.Core.Enums;
 using EggsInWild.Core.ShopProgression;
 using EggsInWild.Infrastructure.Api;
+using EggsInWild.Infrastructure.Content;
+using EggsInWild.Infrastructure.Content.Editors;
 using EggsInWild.Infrastructure.Commands;
 using EggsInWild.Infrastructure.Config;
 using EggsInWild.Infrastructure.Diagnostics;
@@ -29,6 +34,10 @@ public sealed class ModEntry : Mod
     private WildEggsApi? _api;
     private Harmony? _harmony;
     private ModAssetHandler? _assetHandler;
+    private WeggAssetPipeline? _contentPipeline;
+    private ProgressionService? _contentProgression;
+    private ILog? _contentLog;
+    private IModDataLoader? _contentDataLoader;
 
     public override void Entry(IModHelper helper)
     {
@@ -45,6 +54,7 @@ public sealed class ModEntry : Mod
         helper.Events.Content.AssetRequested += OnAssetRequested;
 
         InitializeModAssetHandler();
+        InitializeContentPipeline();
 
         InstallHarmonyBootstrap();
     }
@@ -75,11 +85,13 @@ public sealed class ModEntry : Mod
 
     private void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
+        _contentProgression?.OnDayStarted();
         SyncApiBirthTextMode();
     }
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
+        _contentProgression?.OnSaveLoaded();
         RebuildGmcmLayout(force: true);
     }
 
@@ -302,11 +314,102 @@ public sealed class ModEntry : Mod
                     enumAssetFolder: WeggAssetFolder.misc,
                     fileExt: ModAssetHandler.FileExtension.Png,
                     gamePath: $"Mods/{Constants.ModId}/misc"
+                ),
+                new(
+                    enumAssetType: typeof(WeggMineMap),
+                    enumAssetFolder: WeggAssetFolder.mines,
+                    fileExt: ModAssetHandler.FileExtension.Tmx,
+                    gamePath: "Maps/Mines"
+                ),
+                new(
+                    enumAssetType: typeof(WeggMineTexture),
+                    enumAssetFolder: WeggAssetFolder.mines,
+                    fileExt: ModAssetHandler.FileExtension.Png,
+                    gamePath: "Maps/Mines"
                 )
             }
         );
 
         _assetHandler.SetUpAssets();
+    }
+
+    private void InitializeContentPipeline()
+    {
+        if (_config is null)
+            return;
+
+        _contentLog = new SmapiLog(Monitor);
+        _contentDataLoader = new ModDataLoader(new SmapiJsonFileReader(Helper), _contentLog);
+
+        var saveData = new SmapiSaveDataStore(Helper, Monitor);
+        var game = new GameStateReader();
+        var quests = new GameQuestService();
+        var mail = new GameMailService();
+        var recipes = new GameRecipeService();
+        var unlockFacts = new GameUnlockFactsProvider(game, mail, quests);
+
+        _contentProgression = new ProgressionService(
+            store: saveData,
+            config: _config,
+            facts: unlockFacts,
+            quests: quests,
+            mail: mail,
+            recipes: recipes,
+            log: _contentLog,
+            invalidateAssets: InvalidateGameAssets);
+
+        var chosenEggAssignments = new ChosenEggAssignments(_contentDataLoader, Helper.ModRegistry, _contentLog);
+        _contentPipeline = new WeggAssetPipeline(Helper, Monitor, CreateContentContext);
+
+        _contentPipeline.RegisterEditor(new MonstersEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 10);
+        _contentPipeline.RegisterEditor(new FarmAnimalsEditor(chosenEggAssignments), ProgressionStep.PartI, GetContentProgressionStep, order: 20);
+        _contentPipeline.RegisterEditor(new ObjectsEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 30);
+        _contentPipeline.RegisterEditor(new BigCraftablesEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 40);
+        _contentPipeline.RegisterEditor(new MachinesEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 50);
+        _contentPipeline.RegisterEditor(new CraftingRecipesEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 60);
+        _contentPipeline.RegisterEditor(new MailEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 70);
+        _contentPipeline.RegisterEditor(new QuestEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 80);
+        _contentPipeline.RegisterEditor(new SpecialOrdersEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 90);
+        _contentPipeline.RegisterEditor(new WildEggIncubatorTextureEditor(), ProgressionStep.PartI, GetContentProgressionStep, order: 100);
+        _contentPipeline.Attach();
+    }
+
+    private ContentContext CreateContentContext()
+    {
+        var config = _config?.Get() ?? new ModConfig();
+        var log = _contentLog ?? new SmapiLog(Monitor);
+        var dataLoader = _contentDataLoader ?? new ModDataLoader(new SmapiJsonFileReader(Helper), log);
+        var i18n = new I18TranslationHelper(Helper);
+
+        return new ContentContext(
+            helper: Helper,
+            log: log,
+            i18n: i18n,
+            config: config,
+            step: GetContentProgressionStep(),
+            modData: dataLoader.Load());
+    }
+
+    private ProgressionStep GetContentProgressionStep()
+    {
+        if (_config is null)
+            return ProgressionStep.PartI;
+
+        if (_contentProgression is not null)
+            return _contentProgression.GetCurrentStep();
+
+        return _config.Get().ProgressionMode ? ProgressionStep.PartI : ProgressionRules.MaxStep;
+    }
+
+    private void InvalidateGameAssets()
+    {
+        Helper.GameContent.InvalidateCache("Data/FarmAnimals");
+        Helper.GameContent.InvalidateCache("Data/Objects");
+        Helper.GameContent.InvalidateCache("Data/Machines");
+        Helper.GameContent.InvalidateCache("Data/Mail");
+        Helper.GameContent.InvalidateCache("Data/Quests");
+        Helper.GameContent.InvalidateCache("Data/CraftingRecipes");
+        Helper.GameContent.InvalidateCache("Data/SpecialOrders");
     }
 
     private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
@@ -337,17 +440,6 @@ public sealed class ModEntry : Mod
         var mail = new GameMailService();
         var recipes = new GameRecipeService();
         var unlockFacts = new GameUnlockFactsProvider(game, mail, quests);
-
-        void InvalidateGameAssets()
-        {
-            helper.GameContent.InvalidateCache("Data/FarmAnimals");
-            helper.GameContent.InvalidateCache("Data/Objects");
-            helper.GameContent.InvalidateCache("Data/Machines");
-            helper.GameContent.InvalidateCache("Data/Mail");
-            helper.GameContent.InvalidateCache("Data/Quests");
-            helper.GameContent.InvalidateCache("Data/CraftingRecipes");
-            helper.GameContent.InvalidateCache("Data/SpecialOrders");
-        }
 
         var progression = new EggsInWild.Application.Progression.ProgressionService(
             store: saveData,

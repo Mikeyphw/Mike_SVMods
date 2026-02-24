@@ -26,6 +26,16 @@ public sealed class ModConfig
     /// </summary>
     public bool KeepMineLevel { get; set; } = false;
 
+    /// <summary>
+    /// If enabled, forces the DesertTomb layout selection at chooseLevelType time, preventing vanilla from drifting into another layout.
+    /// </summary>
+    public bool DesertTombForcePatch { get; set; } = false;
+
+    /// <summary>
+    /// If enabled alongside DesertTombForcePatch, bypasses progression gate checks when applying forced tomb layouts.
+    /// </summary>
+    public bool DesertTombIgnoreProgressionGate { get; set; } = false;
+
     public TombChance TombChance { get; set; } = TombChance.Medium;
 
     public TombDifficulty TombDifficulty { get; set; } = TombDifficulty.Moderate;

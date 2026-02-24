@@ -118,7 +118,7 @@ public sealed class DesertTombRuntime
 
         var step = _getStep();
 
-        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.DesertTombModuleEnabled, step))
+        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step))
             return false;
 
         if (mineShaft.mineLevel <= 120)
@@ -151,7 +151,7 @@ public sealed class DesertTombRuntime
 
         var step = _getStep();
 
-        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.DesertTombModuleEnabled, step))
+        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step))
             return;
 
         if (mineShaft.mineLevel <= 120 || mineShaft.mineLevel == 77377)
@@ -196,15 +196,40 @@ public sealed class DesertTombRuntime
 
         var step = _getStep();
 
-        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.DesertTombModuleEnabled, step))
+        var eligibleByProgression =
+            (cfg.DesertTombForcePatch && cfg.DesertTombIgnoreProgressionGate)
+            || DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step);
+
+        if (!eligibleByProgression)
             return;
 
         if (mineShaft.mineLevel <= 120 || mineShaft.mineLevel == 77377)
             return;
 
-        // Only touch floors that are (or are about to become) tomb layouts.
-        if (!DesertTombRuntimePolicy.IsTombCandidate(mineShaft.mineLevel))
-            return;
+        if (!cfg.DesertTombForcePatch)
+        {
+            // Only touch floors that are (or are about to become) tomb layouts.
+            if (!DesertTombRuntimePolicy.IsTombCandidate(mineShaft.mineLevel))
+                return;
+
+            if (!DesertTombRuntimePolicy.RollTombChance(cfg.TombChance, mineShaft.mineLevel))
+                return;
+
+            if (AlreadyProcessedToday(mineShaft))
+                return;
+        }
+        else
+        {
+            // Hard-force the layout selection at chooseLevelType time, so vanilla doesn't drift into another layout.
+            var chosen = WeggGameAssetNames.DesertTombMap;
+            var before = mineShaft.mapPath.Value;
+
+            if (!string.Equals(before, chosen, StringComparison.OrdinalIgnoreCase))
+            {
+                mineShaft.mapPath.Value = chosen;
+                mineShaft.loadedMapNumber = DesertTombRuntimePolicy.ParseLoadedMapNumber(chosen);
+            }
+        }
 
         ResetVanillaSpecialFlagsForTomb(mineShaft);
     }

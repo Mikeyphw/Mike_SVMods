@@ -68,6 +68,11 @@ public sealed class WeggVerifyReport
 
 public sealed class WeggVerifier
 {
+    private interface IContentPatcherApiProbe
+    {
+        IEnumerable<object>? GetPatches();
+    }
+
     private static readonly Regex ImageSourceRegex = new("<image\\s+source=\"(?<src>[^\"]+)\"", RegexOptions.Compiled);
 
     private readonly IModHelper _helper;
@@ -466,9 +471,11 @@ public sealed class WeggVerifier
             {
                 // Best-effort: verify at least one object is tagged as a WE egg.
                 var objects = SafeLoad<Dictionary<string, ObjectData>>(Strings.AssetNames.Objects);
-                var tagged = objects?.Values.Count(o => o.ContextTags?.Contains("wegg_item") == true) ?? 0;
+                var tagged = objects?.Values.Count(o =>
+                    o.ContextTags?.Contains("wildegg_item") == true
+                    || o.ContextTags?.Contains("wegg_item") == true) ?? 0;
                 report.Add("cp/objects", tagged > 0 ? WeggVerifyStatus.Pass : WeggVerifyStatus.Fail,
-                    tagged > 0 ? $"Found {tagged} wegg_item objects." : "No wegg_item objects found in Data/Objects (content edits not applied).");
+                    tagged > 0 ? $"Found {tagged} wildegg_item objects." : "No wildegg_item objects found in Data/Objects (content edits not applied).");
 
                 // Best-effort: verify incubator recipe exists (string match).
                 var recipes = SafeLoad<Dictionary<string, string>>(Strings.AssetNames.CraftingRecipes);
@@ -479,35 +486,27 @@ public sealed class WeggVerifier
                 // Best-effort: ask Content Patcher for patch list (reflection; may fail depending on CP version).
                 try
                 {
-                    var cpApi = _helper.ModRegistry.GetApi<object>("Pathoschild.ContentPatcher");
+                    var cpApi = _helper.ModRegistry.GetApi<IContentPatcherApiProbe>("Pathoschild.ContentPatcher");
                     if (cpApi is not null)
                     {
-                        var mi = cpApi.GetType().GetMethod("GetPatches", Type.EmptyTypes);
-                        if (mi is not null)
+                        var patches = cpApi.GetPatches();
+                        var found = false;
+                        if (patches is not null)
                         {
-                            var patches = mi.Invoke(cpApi, null) as System.Collections.IEnumerable;
-                            var found = false;
-                            if (patches is not null)
+                            foreach (var p in patches)
                             {
-                                foreach (var p in patches)
+                                var ownerProp = p.GetType().GetProperty("Owner") ?? p.GetType().GetProperty("ContentPack");
+                                var owner = ownerProp?.GetValue(p)?.ToString() ?? string.Empty;
+                                if (owner.Contains("yourdorkbrains.cp.wildeggsforage", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    var ownerProp = p.GetType().GetProperty("Owner") ?? p.GetType().GetProperty("ContentPack");
-                                    var owner = ownerProp?.GetValue(p)?.ToString() ?? string.Empty;
-                                    if (owner.Contains("yourdorkbrains.cp.wildeggsforage", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        found = true;
-                                        break;
-                                    }
+                                    found = true;
+                                    break;
                                 }
                             }
+                        }
 
-                            report.Add("cp/patches", found ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn,
-                                found ? "Content Patcher reports wildeggsforage patches present." : "Content Patcher did not report wildeggsforage patches (pack may be disabled/outdated).");
-                        }
-                        else
-                        {
-                            report.Add("cp/patches", WeggVerifyStatus.Warn, "Could not query Content Patcher patches (API method not found).");
-                        }
+                        report.Add("cp/patches", found ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn,
+                            found ? "Content Patcher reports wildeggsforage patches present." : "Content Patcher did not report wildeggsforage patches (pack may be disabled/outdated).");
                     }
                 }
                 catch (Exception ex)

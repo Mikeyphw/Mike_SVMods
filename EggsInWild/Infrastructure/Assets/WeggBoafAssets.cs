@@ -41,6 +41,7 @@ public enum WeggMineMap
 public enum WeggMineTexture
 {
     z_tombtilesheet,
+    tracker,
 }
 
 public enum WeggMonsterTexture
