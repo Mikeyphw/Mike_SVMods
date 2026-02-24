@@ -1,0 +1,1812 @@
+#!/usr/bin/env python3
+# tools/smapi_log_scout.py
+"""
+SMAPI Log Scout (Rich)
+
+Surfaces:
+  1) Your mods' logs (auto-detected via UniqueId prefixes like Mikew.* + known IDs/names).
+  2) game ERROR entries.
+  3) Any other entry that mentions your mods by name/UniqueId/namespace/scoped tags.
+
+Adds:
+  - since/until time filtering
+  - level include/exclude
+  - source include/exclude
+  - scoped tag/category filters
+  - highlighting
+  - clustering + occurrence selection (first/latest/all)
+  - rolling dedupe
+  - context (before/after) around matches
+  - session selection (last/all/N)
+  - HTML export
+  - notify hooks (bell / notify-send / osascript / powershell / cmd:...)
+  - dynamic mod discovery while streaming
+  - log rotation handling
+  - multi-file tail (extra logs, optional crash log)
+  - regex / not-regex
+  - game error classification (top)
+  - performance knobs (read last bytes)
+  - interactive controls in --live (pause, error-only, clear, grep, help)
+  - top dashboards
+  - ScopedLogCatalog awareness (optional validation)
+  - config file (TOML)
+  - pipe-friendly output (--plain)
+
+Examples:
+  python3 tools/smapi_log_scout.py
+  python3 tools/smapi_log_scout.py --session last --since 12:00:00 --level warn,error
+  python3 tools/smapi_log_scout.py --top sources --top exceptions
+  python3 tools/smapi_log_scout.py --cluster --occurrence latest
+  python3 tools/smapi_log_scout.py --follow --context 3 --notify bell
+  python3 tools/smapi_log_scout.py --live --interactive
+  python3 tools/smapi_log_scout.py --export-html /tmp/mikew-smapi.html
+"""
+
+from __future__ import annotations
+
+import argparse
+import dataclasses
+import html as html_mod
+import os
+import platform
+import queue
+import re
+import shlex
+import subprocess
+import sys
+import threading
+import time
+from collections import Counter, deque
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Deque, Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tuple
+
+from rich.console import Console, Group
+from rich.live import Live
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+
+# -----------------------------
+# Regexes / constants
+# -----------------------------
+
+HEADER_RE = re.compile(
+    r"^\[(?P<time>\d\d:\d\d:\d\d)\s+(?P<level>TRACE|DEBUG|INFO|WARN|ERROR|ALERT)\s+(?P<source>[^\]]+)\]\s?(?P<msg>.*)$"
+)
+SCOPED_RE = re.compile(r"^\[(?P<tag>[^\]]+)\]\[(?P<category>[^\]]+)\]\[(?P<token>[^\]]+)\]\s*(?P<rest>.*)$")
+LOAD_MOD_RE = re.compile(r"^\s*(?P<name>.+?)\s+\(from .+?,\s+ID:\s+(?P<uid>[^,\)]+)")
+LOADED_MOD_LINE_RE = re.compile(r"^\s*(?P<name>.+?)\s+\S+\s+by\s+(?P<author>.+?)\s+\|")
+
+LEVEL_ORDER = {"TRACE": 10, "DEBUG": 20, "INFO": 30, "WARN": 40, "ERROR": 50, "ALERT": 60}
+LEVEL_STYLES = {
+    "TRACE": "dim",
+    "DEBUG": "cyan",
+    "INFO": "green",
+    "WARN": "yellow",
+    "ERROR": "bold red",
+    "ALERT": "bold magenta",
+}
+
+DEFAULT_LOG_PATH = Path("~/.config/StardewValley/ErrorLogs/SMAPI-latest.txt").expanduser()
+DEFAULT_CRASH_PATH = Path("~/.config/StardewValley/ErrorLogs/SMAPI-crash.txt").expanduser()
+
+KNOWN_MY_IDS = {"Mikew.nestcore", "Mikew.eggsinwild", "Mikew.roostersaddon.smapi", "Mikew.lmh"}
+KNOWN_MY_NAMES = {"Nest Core", "Eggs In Wild", "Roosters Hatching and Control Addon", "Let Me Hatch"}
+KNOWN_MY_NAMESPACES = {"NestCore", "EggsInWild", "LetMeHatch", "RoosterControl"}
+KNOWN_SCOPED_TAGS = {"NestCore", "WE"}
+
+SESSION_START_HINTS = (
+    "SMAPI is launching",
+    "Running Stardew Valley",
+    "Starting game",
+    "Launching game",
+    "SMAPI has started",
+    "Game has started",
+)
+
+HILITE_PATTERNS = [
+    (r"\b(Exception|Error|Failed|Failure|Crash|Unhandled)\b", "bold red"),
+    (r"\b(InnerException|Stack trace|stack trace)\b", "bold yellow"),
+    (r"^\s*at\s+.+$", "dim"),
+    (r"\bNullReferenceException\b", "bold red"),
+    (r"\bIndexOutOfRangeException\b", "bold red"),
+    (r"\bArgumentException\b", "bold red"),
+    (r"\bFileNotFoundException\b", "bold red"),
+    (r"\bKeyNotFoundException\b", "bold red"),
+    (r"\bSystem\.[A-Za-z0-9_.]+\b", "cyan"),
+    (r"([A-Za-z]:\\[^\s]+|/[^ \n\t]+)", "magenta"),
+]
+
+GAME_ERROR_PATTERNS: List[Tuple[str, str]] = [
+    ("GalaxyAuth", r"Galaxy.*(authentication|auth).*failed|GalaxyService.*failed"),
+    ("SteamAuth", r"Steam.*(authentication|auth).*failed"),
+    ("ContentLoad", r"ContentLoadException|Failed to load|Content loading error"),
+    ("Harmony", r"Harmony.*(exception|error)|Patch.*failed"),
+    ("Json", r"JsonReaderException|JSON.*(error|exception)"),
+    ("Save", r"save.*(failed|error)|Failed to load save|SaveGame.*(error|exception)"),
+]
+
+# -----------------------------
+# TOML config loader
+# -----------------------------
+
+
+def load_toml(path: Path) -> dict:
+    if not path:
+        return {}
+    if not path.exists():
+        raise SystemExit(f"Config file not found: {path}")
+    data = path.read_bytes()
+    try:
+        import tomllib  # py3.11+
+
+        return tomllib.loads(data.decode("utf-8"))
+    except Exception:
+        try:
+            import tomli  # type: ignore
+
+            return tomli.loads(data.decode("utf-8"))
+        except Exception as e:
+            raise SystemExit(f"Failed to parse TOML config: {path}\n{e}") from e
+
+
+def deep_get(d: dict, keys: Sequence[str], default=None):
+    cur = d
+    for k in keys:
+        if not isinstance(cur, dict) or k not in cur:
+            return default
+        cur = cur[k]
+    return cur
+
+
+# -----------------------------
+# Data models
+# -----------------------------
+
+
+@dataclass(frozen=True)
+class ScopedInfo:
+    tag: str
+    category: str
+    token: str
+    message: str
+
+
+@dataclass
+class SmapiEntry:
+    index: int
+    time: str
+    level: str
+    source: str
+    lines: List[str]
+    file: str = "SMAPI-latest.txt"
+    scoped: Optional[ScopedInfo] = None
+    session: int = 1
+
+    def message(self) -> str:
+        return "\n".join(self.lines).rstrip("\n")
+
+    def full_text(self) -> str:
+        return f"{self.source}\n{self.message()}"
+
+    def full_text_lower(self) -> str:
+        return self.full_text().lower()
+
+
+@dataclass
+class CatalogInfo:
+    tags: Set[str]
+    categories: Set[str]
+
+
+@dataclass
+class FilterConfig:
+    mention_mode: str = "loose"  # loose|strict
+    since: Optional[str] = None  # HH:MM:SS
+    until: Optional[str] = None  # HH:MM:SS
+    levels_include: Optional[Set[str]] = None  # set of LEVEL names
+    levels_exclude: Optional[Set[str]] = None
+    sources_include: Optional[Set[str]] = None
+    sources_exclude: Optional[Set[str]] = None
+    tags_include: Optional[Set[str]] = None  # scoped tags
+    categories_include: Optional[Set[str]] = None  # scoped categories
+    regex: Optional[re.Pattern] = None
+    not_regex: Optional[re.Pattern] = None
+    grep: Optional[str] = None  # substring, case-insensitive
+
+
+@dataclass
+class RuntimeState:
+    my_ids: Set[str]
+    my_names: Set[str]
+    tokens: Set[str]
+    token_patterns: List[re.Pattern]
+    catalog: Optional[CatalogInfo] = None
+
+
+@dataclass
+class OutputConfig:
+    plain: bool = False
+    show_index: bool = True
+    max_print: int = 400
+    context: int = 0
+    dedupe: int = 0
+    cluster: bool = False
+    cluster_by: str = "exception"  # exception|message
+    occurrence: str = "all"  # all|first|latest
+    export_html: Optional[Path] = None
+    top: List[str] = None  # sources|exceptions|scoped|messages|game
+    summary_only: bool = False
+
+
+@dataclass
+class StreamConfig:
+    follow: bool = False
+    live: bool = False
+    interactive: bool = False
+    from_start: bool = False
+    window: int = 60
+    watch_mods: bool = True
+
+
+@dataclass
+class NotifyConfig:
+    mode: str = "none"  # none|bell|notify-send|osascript|powershell|cmd:...
+    levels: Set[str] = None  # e.g. {"ERROR","ALERT"}
+
+    def __post_init__(self):
+        if self.levels is None:
+            self.levels = {"ERROR", "ALERT"}
+
+
+# -----------------------------
+# Parsing / sessions
+# -----------------------------
+
+
+def parse_entries(lines: Sequence[str], *, file_label: str) -> List[SmapiEntry]:
+    entries: List[SmapiEntry] = []
+    current: Optional[SmapiEntry] = None
+
+    def flush() -> None:
+        nonlocal current
+        if current is None:
+            return
+        if current.lines:
+            m = SCOPED_RE.match(current.lines[0])
+            if m:
+                current.scoped = ScopedInfo(
+                    tag=m.group("tag"),
+                    category=m.group("category"),
+                    token=m.group("token"),
+                    message=(m.group("rest") + ("\n" + "\n".join(current.lines[1:]) if len(current.lines) > 1 else "")).rstrip(
+                        "\n"
+                    ),
+                )
+        entries.append(current)
+        current = None
+
+    idx = 0
+    for raw in lines:
+        raw = raw.rstrip("\n")
+        m = HEADER_RE.match(raw)
+        if m:
+            flush()
+            idx += 1
+            current = SmapiEntry(
+                index=idx,
+                time=m.group("time"),
+                level=m.group("level"),
+                source=m.group("source").strip(),
+                lines=[m.group("msg")] if m.group("msg") else [],
+                file=file_label,
+            )
+            continue
+
+        if current is None:
+            idx += 1
+            current = SmapiEntry(index=idx, time="??:??:??", level="INFO", source="(preamble)", lines=[raw], file=file_label)
+        else:
+            current.lines.append(raw)
+
+    flush()
+    return entries
+
+
+def is_session_start(entry: SmapiEntry) -> bool:
+    if entry.source.strip() != "SMAPI":
+        return False
+    msg0 = entry.lines[0] if entry.lines else ""
+    hay = msg0.lower()
+    for hint in SESSION_START_HINTS:
+        if hint.lower() in hay:
+            return True
+    return False
+
+
+def assign_sessions(entries: List[SmapiEntry]) -> List[List[SmapiEntry]]:
+    sessions: List[List[SmapiEntry]] = []
+    current: List[SmapiEntry] = []
+    session_id = 1
+
+    for e in entries:
+        if current and is_session_start(e):
+            sessions.append(current)
+            current = []
+            session_id += 1
+        e.session = session_id
+        current.append(e)
+
+    if current:
+        sessions.append(current)
+    return sessions
+
+
+def select_sessions(sessions: List[List[SmapiEntry]], selector: str) -> List[SmapiEntry]:
+    if not sessions:
+        return []
+    s = selector.strip().lower()
+    if s == "all":
+        return [e for sess in sessions for e in sess]
+    if s == "last":
+        return list(sessions[-1])
+    if s.isdigit():
+        n = int(s)
+        if 1 <= n <= len(sessions):
+            return list(sessions[n - 1])
+        return []
+    if s.startswith("last"):
+        # last2, last3...
+        m = re.match(r"last(\d+)$", s)
+        if m:
+            k = int(m.group(1))
+            return [e for sess in sessions[-k:] for e in sess]
+    return [e for sess in sessions for e in sess]
+
+
+# -----------------------------
+# Mod discovery / tokens
+# -----------------------------
+
+
+def discover_mods_from_lines(lines: Sequence[str]) -> Tuple[Dict[str, str], Dict[str, str]]:
+    mod_name_to_uid: Dict[str, str] = {}
+    uid_to_mod_name: Dict[str, str] = {}
+    for line in lines:
+        m = HEADER_RE.match(line.rstrip("\n"))
+        if not m:
+            continue
+        if m.group("source").strip() != "SMAPI":
+            continue
+        msg = m.group("msg")
+        if not msg.startswith("   "):
+            continue
+        mm = LOAD_MOD_RE.match(msg)
+        if mm:
+            name = mm.group("name").strip().rstrip(".")
+            uid = mm.group("uid").strip().rstrip(".")
+            mod_name_to_uid[name] = uid
+            uid_to_mod_name[uid] = name
+    return mod_name_to_uid, uid_to_mod_name
+
+
+def discover_my_mods(
+    lines: Sequence[str],
+    *,
+    my_ids_cli: Sequence[str],
+    my_names_cli: Sequence[str],
+    my_prefixes: Sequence[str],
+) -> Tuple[Set[str], Set[str]]:
+    mod_name_to_uid, uid_to_mod_name = discover_mods_from_lines(lines)
+
+    my_ids: Set[str] = set(KNOWN_MY_IDS) | set(my_ids_cli)
+    my_names: Set[str] = set(KNOWN_MY_NAMES) | set(my_names_cli)
+
+    for name, uid in mod_name_to_uid.items():
+        if any(uid.startswith(p) for p in my_prefixes):
+            my_ids.add(uid)
+            my_names.add(name)
+
+    for line in lines:
+        m = HEADER_RE.match(line.rstrip("\n"))
+        if not m:
+            continue
+        if m.group("source").strip() != "SMAPI" or m.group("level") != "INFO":
+            continue
+        msg = m.group("msg").strip()
+        mm = LOADED_MOD_LINE_RE.match(msg)
+        if mm and ("mikew" in mm.group("author").lower() or "mike" in mm.group("author").lower()):
+            name = mm.group("name").strip()
+            my_names.add(name)
+            uid = mod_name_to_uid.get(name)
+            if uid:
+                my_ids.add(uid)
+
+    for uid in list(my_ids):
+        name = uid_to_mod_name.get(uid)
+        if name:
+            my_names.add(name)
+
+    return my_ids, my_names
+
+
+def build_match_tokens(my_ids: Set[str], my_names: Set[str], extra_tokens: Optional[Iterable[str]] = None) -> Set[str]:
+    tokens: Set[str] = set()
+
+    def add(s: str) -> None:
+        s = (s or "").strip()
+        if s:
+            tokens.add(s)
+
+    for uid in my_ids:
+        add(uid)
+        if "." in uid:
+            add(uid.split(".")[-1])
+
+    for name in my_names:
+        add(name)
+        add(name.replace(" ", ""))
+        add(name.replace(" ", "_"))
+
+    for ns in KNOWN_MY_NAMESPACES:
+        add(ns)
+
+    for tag in KNOWN_SCOPED_TAGS:
+        add(f"[{tag}]")
+        add(tag)
+
+    add("Mikew.")
+    if extra_tokens:
+        for t in extra_tokens:
+            add(t)
+
+    return tokens
+
+
+def compile_token_patterns(tokens: Set[str], mention_mode: str) -> List[re.Pattern]:
+    patterns: List[re.Pattern] = []
+    strict = mention_mode.lower() == "strict"
+    for tok in sorted(tokens, key=len, reverse=True):
+        esc = re.escape(tok)
+        if not strict:
+            patterns.append(re.compile(esc, re.IGNORECASE))
+            continue
+
+        # strict-ish boundaries for mostly word-like tokens
+        if re.match(r"^[A-Za-z0-9_]+$", tok):
+            patterns.append(re.compile(rf"(?<!\w){esc}(?!\w)", re.IGNORECASE))
+        elif re.match(r"^[A-Za-z0-9_.]+$", tok):
+            patterns.append(re.compile(rf"(?<![A-Za-z0-9_]){esc}(?![A-Za-z0-9_])", re.IGNORECASE))
+        else:
+            patterns.append(re.compile(esc, re.IGNORECASE))
+    return patterns
+
+
+# -----------------------------
+# ScopedLogCatalog awareness (optional)
+# -----------------------------
+
+
+def try_load_scoped_catalog(repo_root: Path, explicit: Optional[Path] = None) -> Optional[CatalogInfo]:
+    cand = explicit
+    if cand is None:
+        cand = repo_root / "NestCore" / "Helpers" / "Logging" / "ScopedLogCatalog.cs"
+    if not cand.exists():
+        return None
+
+    text = cand.read_text(encoding="utf-8", errors="replace")
+
+    tags = set(KNOWN_SCOPED_TAGS)
+    categories: Set[str] = set()
+
+    # capture enums: public enum ModWeCategory { General, ... }
+    for m in re.finditer(r"enum\s+(?P<name>\w+)\s*\{(?P<body>[^}]+)\}", text, flags=re.DOTALL):
+        body = m.group("body")
+        for item in re.split(r"[,\s]+", body):
+            item = item.strip()
+            if not item or item.startswith("//"):
+                continue
+            if re.match(r"^[A-Za-z_]\w*$", item):
+                categories.add(item)
+
+    # capture const strings: public const string General = "general";
+    for m in re.finditer(r"const\s+string\s+(?P<name>\w+)\s*=\s*\"(?P<val>[^\"]+)\"", text):
+        categories.add(m.group("val"))
+        categories.add(m.group("name"))
+
+    return CatalogInfo(tags=tags, categories=categories)
+
+
+# -----------------------------
+# Filtering
+# -----------------------------
+
+
+def parse_hms(s: Optional[str]) -> Optional[int]:
+    if not s:
+        return None
+    m = re.match(r"^(\d\d):(\d\d):(\d\d)$", s.strip())
+    if not m:
+        raise ValueError(f"Invalid time: {s} (expected HH:MM:SS)")
+    hh, mm, ss = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    return hh * 3600 + mm * 60 + ss
+
+
+def entry_time_seconds(entry: SmapiEntry) -> Optional[int]:
+    try:
+        return parse_hms(entry.time)
+    except Exception:
+        return None
+
+
+def contains_my_mention(entry: SmapiEntry, state: RuntimeState) -> bool:
+    hay = entry.full_text()
+    for pat in state.token_patterns:
+        if pat.search(hay):
+            return True
+    return False
+
+
+def matches_base_rules(entry: SmapiEntry, state: RuntimeState) -> bool:
+    if entry.source.strip().lower() == "game" and entry.level == "ERROR":
+        return True
+    if entry.source in state.my_names:
+        return True
+    if entry.scoped and entry.scoped.tag in KNOWN_SCOPED_TAGS:
+        return True
+    return contains_my_mention(entry, state)
+
+
+def matches_filters(entry: SmapiEntry, f: FilterConfig, state: RuntimeState) -> bool:
+    if f.levels_include and entry.level not in f.levels_include:
+        return False
+    if f.levels_exclude and entry.level in f.levels_exclude:
+        return False
+
+    if f.sources_include and entry.source not in f.sources_include:
+        return False
+    if f.sources_exclude and entry.source in f.sources_exclude:
+        return False
+
+    if f.tags_include:
+        if not entry.scoped or entry.scoped.tag not in f.tags_include:
+            return False
+
+    if f.categories_include:
+        if not entry.scoped:
+            return False
+        cat = entry.scoped.category
+        if cat not in f.categories_include and cat.lower() not in {c.lower() for c in f.categories_include}:
+            return False
+
+    if f.since or f.until:
+        t = entry_time_seconds(entry)
+        if t is not None:
+            since = parse_hms(f.since) if f.since else None
+            until = parse_hms(f.until) if f.until else None
+            if since is not None and t < since:
+                return False
+            if until is not None and t > until:
+                return False
+
+    if f.regex and not f.regex.search(entry.full_text()):
+        return False
+    if f.not_regex and f.not_regex.search(entry.full_text()):
+        return False
+
+    if f.grep and f.grep.lower() not in entry.full_text_lower():
+        return False
+
+    if state.catalog and entry.scoped:
+        if entry.scoped.tag not in state.catalog.tags:
+            return False
+        if state.catalog.categories and entry.scoped.category not in state.catalog.categories and entry.scoped.category.lower() not in {
+            c.lower() for c in state.catalog.categories
+        }:
+            # don't hard fail; only filter when categories_include is set
+            pass
+
+    return True
+
+
+def should_include(entry: SmapiEntry, state: RuntimeState, f: FilterConfig) -> bool:
+    if not matches_base_rules(entry, state):
+        return False
+    return matches_filters(entry, f, state)
+
+
+# -----------------------------
+# Signatures / clustering / dedupe
+# -----------------------------
+
+
+def classify_game_error(entry: SmapiEntry) -> Optional[str]:
+    if entry.source.strip().lower() != "game" or entry.level != "ERROR":
+        return None
+    text = entry.message()
+    for label, pat in GAME_ERROR_PATTERNS:
+        if re.search(pat, text, flags=re.IGNORECASE):
+            return label
+    return "GameError"
+
+
+def extract_exception_signature(entry: SmapiEntry) -> Optional[str]:
+    msg = entry.message()
+    lines = msg.splitlines()
+    exc_line = None
+    for ln in lines:
+        if "exception" in ln.lower() or "error" in ln.lower():
+            exc_line = ln.strip()
+            break
+    frames = [ln.strip() for ln in lines if ln.lstrip().startswith("at ")][:4]
+    if exc_line or frames:
+        base = exc_line or ""
+        return " | ".join([base] + frames).strip()
+    return None
+
+
+def normalize_message_signature(entry: SmapiEntry) -> str:
+    first = entry.message().splitlines()[0] if entry.lines else ""
+    first = re.sub(r"\b\d+\b", "N", first)
+    first = re.sub(r"\b0x[0-9a-fA-F]+\b", "0xHEX", first)
+    return first.strip()
+
+
+def signature(entry: SmapiEntry, cluster_by: str) -> str:
+    if cluster_by == "message":
+        return normalize_message_signature(entry)
+    sig = extract_exception_signature(entry)
+    return sig or normalize_message_signature(entry)
+
+
+# -----------------------------
+# Output rendering
+# -----------------------------
+
+
+def style_message_text(text: Text) -> Text:
+    for pat, style in HILITE_PATTERNS:
+        try:
+            text.highlight_regex(pat, style=style)
+        except re.error:
+            continue
+    return text
+
+
+def render_entry_panel(entry: SmapiEntry, *, show_index: bool) -> Panel:
+    level_style = LEVEL_STYLES.get(entry.level, "")
+    title = Text()
+    if show_index:
+        title.append(f"#{entry.index} ", style="dim")
+    title.append(f"[{entry.time}] ", style="dim")
+    title.append(entry.level, style=level_style)
+    title.append(" ")
+    title.append(entry.source, style="bold")
+    title.append(" ")
+    title.append(f"({entry.file}", style="dim")
+    title.append(f" s{entry.session})", style="dim")
+
+    body = entry.message()
+    if entry.scoped:
+        scoped_hdr = f"[{entry.scoped.tag}][{entry.scoped.category}][{entry.scoped.token}] "
+        body = scoped_hdr + entry.scoped.message
+
+    t = style_message_text(Text(body))
+    return Panel(t, title=title, border_style=level_style or "dim")
+
+
+def render_plain(entry: SmapiEntry) -> str:
+    msg = entry.message()
+    first = msg.splitlines()[0] if msg else ""
+    extra = len(msg.splitlines()) - 1 if msg else 0
+    if extra > 0:
+        first = f"{first} (+{extra} lines)"
+    return f"[{entry.time} {entry.level} {entry.source} {entry.file} s{entry.session}] {first}"
+
+
+def summary_table(entries: Sequence[SmapiEntry]) -> Table:
+    counts = Counter((e.level for e in entries))
+    by_source = Counter((e.source for e in entries))
+    by_scoped_category = Counter((e.scoped.category for e in entries if e.scoped))
+
+    table = Table(title="Filtered entries summary", show_lines=False)
+    table.add_column("Metric", style="bold")
+    table.add_column("Value")
+
+    table.add_row("Entries", str(len(entries)))
+
+    levels_text = Text()
+    for lvl in ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "ALERT"]:
+        if counts[lvl]:
+            levels_text.append(f"{lvl}={counts[lvl]}  ", style=LEVEL_STYLES.get(lvl, ""))
+    table.add_row("By level", levels_text if levels_text else "-")
+
+    sources_text = Text()
+    for src, n in by_source.most_common(8):
+        sources_text.append(f"{src}={n}  ", style="dim")
+    table.add_row("Top sources", sources_text if sources_text else "-")
+
+    cats_text = Text()
+    for cat, n in by_scoped_category.most_common(8):
+        cats_text.append(f"{cat}={n}  ", style="dim")
+    table.add_row("Top scoped categories", cats_text if cats_text else "-")
+
+    return table
+
+
+def top_table_sources(entries: Sequence[SmapiEntry], limit: int = 15) -> Table:
+    c = Counter(e.source for e in entries)
+    t = Table(title="Top sources")
+    t.add_column("Source", style="bold")
+    t.add_column("Count", justify="right")
+    for src, n in c.most_common(limit):
+        t.add_row(src, str(n))
+    return t
+
+
+def top_table_scoped(entries: Sequence[SmapiEntry], limit: int = 15) -> Table:
+    c = Counter(f"{e.scoped.tag}/{e.scoped.category}" for e in entries if e.scoped)
+    t = Table(title="Top scoped tag/category")
+    t.add_column("Tag/Category", style="bold")
+    t.add_column("Count", justify="right")
+    for k, n in c.most_common(limit):
+        t.add_row(k, str(n))
+    return t
+
+
+def top_table_exceptions(entries: Sequence[SmapiEntry], limit: int = 15) -> Table:
+    c = Counter(signature(e, "exception") for e in entries if e.level in {"ERROR", "ALERT", "WARN"})
+    t = Table(title="Top exception signatures")
+    t.add_column("Signature", style="bold")
+    t.add_column("Count", justify="right")
+    for sig, n in c.most_common(limit):
+        t.add_row(sig[:120] + ("…" if len(sig) > 120 else ""), str(n))
+    return t
+
+
+def top_table_messages(entries: Sequence[SmapiEntry], limit: int = 15) -> Table:
+    c = Counter(normalize_message_signature(e) for e in entries)
+    t = Table(title="Top message signatures")
+    t.add_column("Signature", style="bold")
+    t.add_column("Count", justify="right")
+    for sig, n in c.most_common(limit):
+        t.add_row(sig[:120] + ("…" if len(sig) > 120 else ""), str(n))
+    return t
+
+
+def top_table_game(entries: Sequence[SmapiEntry], limit: int = 10) -> Table:
+    c = Counter(classify_game_error(e) for e in entries if classify_game_error(e))
+    t = Table(title="Game ERROR classification")
+    t.add_column("Class", style="bold")
+    t.add_column("Count", justify="right")
+    for k, n in c.most_common(limit):
+        t.add_row(k, str(n))
+    return t
+
+
+# -----------------------------
+# HTML export
+# -----------------------------
+
+
+def export_html(entries: Sequence[SmapiEntry], out_path: Path) -> None:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def esc(s: str) -> str:
+        return html_mod.escape(s or "")
+
+    rows = []
+    for e in entries:
+        title = f"{e.time} {e.level} {e.source} ({e.file} s{e.session})"
+        msg = e.message()
+        if e.scoped:
+            msg = f"[{e.scoped.tag}][{e.scoped.category}][{e.scoped.token}] {e.scoped.message}"
+        rows.append(
+            f"""
+            <details class="entry level-{e.level.lower()}">
+              <summary><span class="title">{esc(title)}</span></summary>
+              <pre>{esc(msg)}</pre>
+            </details>
+            """
+        )
+
+    css = """
+    body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:20px; background:#0b0d10; color:#e6edf3;}
+    h1{font-size:18px;margin:0 0 12px 0;}
+    .meta{color:#9aa4ad;margin-bottom:14px;}
+    details{border:1px solid #2a2f36;border-radius:10px;padding:10px;margin:10px 0;background:#0f1318;}
+    summary{cursor:pointer;list-style:none;}
+    summary::-webkit-details-marker{display:none;}
+    .title{font-weight:600}
+    pre{white-space:pre-wrap;word-break:break-word;margin:10px 0 0 0;color:#d1d9e0;}
+    .level-error{border-color:#7a1f1f;}
+    .level-alert{border-color:#8b2bbd;}
+    .level-warn{border-color:#7a5a1f;}
+    .level-info{border-color:#1f4a7a;}
+    .level-debug{border-color:#1f7a6b;}
+    .level-trace{border-color:#2a2f36; opacity:0.95;}
+    """
+    html = f"""<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>SMAPI Log Scout Export</title><style>{css}</style></head>
+<body>
+  <h1>SMAPI Log Scout Export</h1>
+  <div class="meta">entries: {len(entries)} | generated: {time.strftime("%Y-%m-%d %H:%M:%S")}</div>
+  {''.join(rows)}
+</body>
+</html>
+"""
+    out_path.write_text(html, encoding="utf-8")
+
+
+# -----------------------------
+# Context / dedupe / clustering expansion
+# -----------------------------
+
+
+def expand_with_context(entries: List[SmapiEntry], matched_indices: Set[int], context: int) -> List[Tuple[SmapiEntry, bool]]:
+    if context <= 0:
+        return [(e, True) for e in entries if e.index in matched_indices]
+    idx_to_pos = {e.index: i for i, e in enumerate(entries)}
+    include: Set[int] = set()
+    for idx in matched_indices:
+        if idx not in idx_to_pos:
+            continue
+        p = idx_to_pos[idx]
+        for q in range(max(0, p - context), min(len(entries), p + context + 1)):
+            include.add(entries[q].index)
+    out = []
+    for e in entries:
+        if e.index in include:
+            out.append((e, e.index in matched_indices))
+    return out
+
+
+def apply_dedupe(
+    entries: Iterable[SmapiEntry], *, dedupe: int, cluster_by: str
+) -> List[SmapiEntry]:
+    if dedupe <= 0:
+        return list(entries)
+    seen: Deque[str] = deque(maxlen=dedupe)
+    out: List[SmapiEntry] = []
+    for e in entries:
+        sig = signature(e, cluster_by)
+        if sig in seen:
+            continue
+        seen.append(sig)
+        out.append(e)
+    return out
+
+
+def apply_clustering(
+    entries: List[SmapiEntry], *, cluster_by: str, occurrence: str
+) -> Tuple[List[SmapiEntry], Table]:
+    groups: Dict[str, List[SmapiEntry]] = {}
+    for e in entries:
+        groups.setdefault(signature(e, cluster_by), []).append(e)
+
+    t = Table(title=f"Clusters ({cluster_by})")
+    t.add_column("Count", justify="right")
+    t.add_column("Representative", style="bold")
+
+    reps: List[SmapiEntry] = []
+    for sig, items in sorted(groups.items(), key=lambda kv: len(kv[1]), reverse=True):
+        rep = items[0] if occurrence == "first" else items[-1] if occurrence == "latest" else None
+        if occurrence == "all":
+            reps.extend(items)
+        else:
+            reps.append(rep)
+        t.add_row(str(len(items)), sig[:140] + ("…" if len(sig) > 140 else ""))
+
+    return reps, t
+
+
+# -----------------------------
+# Notify
+# -----------------------------
+
+
+def _notify_run_cmd(cmd: str, title: str, body: str) -> None:
+    cmd = cmd.replace("{title}", title).replace("{body}", body)
+    args = shlex.split(cmd)
+    subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # noqa: S603,S607
+
+
+def notify(entry: SmapiEntry, cfg: NotifyConfig) -> None:
+    if cfg.mode == "none":
+        return
+    if entry.level not in cfg.levels:
+        return
+
+    title = f"SMAPI {entry.level} - {entry.source}"
+    body = entry.message().splitlines()[0] if entry.lines else ""
+    mode = cfg.mode
+
+    try:
+        if mode == "bell":
+            sys.stdout.write("\a")
+            sys.stdout.flush()
+            return
+
+        if mode == "notify-send":
+            _notify_run_cmd(f'notify-send "{title}" "{body}"', title, body)
+            return
+
+        if mode == "osascript":
+            # macOS notification (best-effort)
+            script = f'display notification "{body}" with title "{title}"'
+            _notify_run_cmd(f"osascript -e {shlex.quote(script)}", title, body)
+            return
+
+        if mode == "powershell":
+            # best-effort Windows toast via PowerShell (won't always work depending on environment)
+            ps = (
+                "powershell -NoProfile -ExecutionPolicy Bypass -Command "
+                + shlex.quote(
+                    f'[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null;'
+                    f'$template = [Windows.UI.Notifications.ToastTemplateType]::ToastText02;'
+                    f'$xml = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent($template);'
+                    f'$text = $xml.GetElementsByTagName("text");'
+                    f'$text.Item(0).AppendChild($xml.CreateTextNode("{title}")) > $null;'
+                    f'$text.Item(1).AppendChild($xml.CreateTextNode("{body}")) > $null;'
+                    f'$toast = [Windows.UI.Notifications.ToastNotification]::new($xml);'
+                    f'[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("SMAPILogScout").Show($toast);'
+                )
+            )
+            _notify_run_cmd(ps, title, body)
+            return
+
+        if mode.startswith("cmd:"):
+            _notify_run_cmd(mode[len("cmd:") :].strip(), title, body)
+            return
+    except Exception:
+        return
+
+
+# -----------------------------
+# File reading (perf knobs)
+# -----------------------------
+
+
+def read_file_lines(path: Path, *, read_last_bytes: int = 0) -> List[str]:
+    if not path.exists():
+        raise SystemExit(f"Log file not found: {path}")
+    if read_last_bytes and read_last_bytes > 0:
+        with path.open("rb") as f:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            f.seek(max(0, size - read_last_bytes), os.SEEK_SET)
+            data = f.read().decode("utf-8", errors="replace")
+            if size > read_last_bytes:
+                nl = data.find("\n")
+                if nl != -1:
+                    data = data[nl + 1 :]
+            return [ln + "\n" for ln in data.splitlines()]
+    return path.read_text(encoding="utf-8", errors="replace").splitlines(True)
+
+
+# -----------------------------
+# Multi-tail + rotation
+# -----------------------------
+
+
+@dataclass
+class TailEvent:
+    file_label: str
+    line: str
+
+
+class Tailer(threading.Thread):
+    def __init__(
+        self,
+        path: Path,
+        file_label: str,
+        out_q: "queue.Queue[TailEvent]",
+        stop_evt: threading.Event,
+        *,
+        from_start: bool,
+        poll: float = 0.25,
+    ):
+        super().__init__(daemon=True)
+        self.path = path
+        self.file_label = file_label
+        self.out_q = out_q
+        self.stop_evt = stop_evt
+        self.from_start = from_start
+        self.poll = poll
+
+    def run(self) -> None:
+        fp = None
+        inode = None
+        pos = 0
+
+        while not self.stop_evt.is_set():
+            try:
+                st = self.path.stat()
+            except FileNotFoundError:
+                time.sleep(self.poll)
+                continue
+
+            rotated = inode is not None and getattr(st, "st_ino", None) != inode
+            truncated = st.st_size < pos
+
+            if fp is None or rotated or truncated:
+                try:
+                    if fp:
+                        fp.close()
+                except Exception:
+                    pass
+
+                try:
+                    fp = self.path.open("r", encoding="utf-8", errors="replace")
+                except Exception:
+                    time.sleep(self.poll)
+                    continue
+
+                inode = getattr(st, "st_ino", None)
+                if self.from_start or truncated:
+                    fp.seek(0, os.SEEK_SET)
+                else:
+                    fp.seek(0, os.SEEK_END)
+                pos = fp.tell()
+
+            try:
+                line = fp.readline()
+                if line:
+                    pos = fp.tell()
+                    self.out_q.put(TailEvent(file_label=self.file_label, line=line))
+                else:
+                    time.sleep(self.poll)
+            except Exception:
+                time.sleep(self.poll)
+
+
+# -----------------------------
+# Interactive key reader (live)
+# -----------------------------
+
+
+class KeyReader(threading.Thread):
+    def __init__(self, out_q: "queue.Queue[str]", stop_evt: threading.Event):
+        super().__init__(daemon=True)
+        self.out_q = out_q
+        self.stop_evt = stop_evt
+
+    def run(self) -> None:
+        if os.name == "nt":
+            self._run_windows()
+        else:
+            self._run_posix()
+
+    def _run_windows(self) -> None:
+        import msvcrt  # type: ignore
+
+        while not self.stop_evt.is_set():
+            if msvcrt.kbhit():
+                ch = msvcrt.getwch()
+                self.out_q.put(ch)
+            else:
+                time.sleep(0.05)
+
+    def _run_posix(self) -> None:
+        import select
+        import termios
+        import tty
+
+        fd = sys.stdin.fileno()
+        old = termios.tcgetattr(fd)
+        try:
+            tty.setcbreak(fd)
+            while not self.stop_evt.is_set():
+                r, _, _ = select.select([sys.stdin], [], [], 0.05)
+                if r:
+                    ch = sys.stdin.read(1)
+                    self.out_q.put(ch)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+
+# -----------------------------
+# Live dashboard
+# -----------------------------
+
+
+@dataclass
+class LiveFlags:
+    paused: bool = False
+    error_only: bool = False
+    grep: str = ""
+    typing_search: bool = False
+    search_buf: str = ""
+
+
+def live_view(
+    matched: Deque[SmapiEntry],
+    *,
+    state: RuntimeState,
+    counts: Counter[str],
+    sources: Counter[str],
+    scoped_categories: Counter[str],
+    window: int,
+    flags: LiveFlags,
+) -> Group:
+    header = Text.assemble(
+        ("SMAPI Log Scout", "bold"),
+        ("  |  ", "dim"),
+        (f"window={window}", "dim"),
+        ("  |  ", "dim"),
+        (f"my_ids={len(state.my_ids)}", "dim"),
+        ("  ", "dim"),
+        (f"my_names={len(state.my_names)}", "dim"),
+    )
+    status = Text()
+    status.append("paused " if flags.paused else "live ", style="yellow" if flags.paused else "green")
+    if flags.error_only:
+        status.append("| ERROR-only ", style="bold red")
+    if flags.grep:
+        status.append("| grep=", style="dim")
+        status.append(flags.grep, style="bold")
+    if flags.typing_search:
+        status.append("  /", style="dim")
+        status.append(flags.search_buf, style="bold")
+
+    summary = Table(show_header=False, box=None, pad_edge=False)
+    summary.add_column("k", style="bold")
+    summary.add_column("v")
+
+    lvl_line = Text()
+    for lvl in ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "ALERT"]:
+        if counts[lvl]:
+            lvl_line.append(f"{lvl}={counts[lvl]}  ", style=LEVEL_STYLES.get(lvl, ""))
+
+    summary.add_row("Matched", str(sum(counts.values())))
+    summary.add_row("Levels", lvl_line if lvl_line else "-")
+
+    src_line = Text()
+    for src, n in sources.most_common(6):
+        src_line.append(f"{src}={n}  ", style="dim")
+    summary.add_row("Sources", src_line if src_line else "-")
+
+    cat_line = Text()
+    for cat, n in scoped_categories.most_common(6):
+        cat_line.append(f"{cat}={n}  ", style="dim")
+    summary.add_row("Scoped cats", cat_line if cat_line else "-")
+
+    entries_table = Table(title="Latest matched entries", show_lines=False)
+    entries_table.add_column("Time", style="dim", width=8, no_wrap=True)
+    entries_table.add_column("Lvl", width=5, no_wrap=True)
+    entries_table.add_column("Source", style="bold", no_wrap=True)
+    entries_table.add_column("File", style="dim", no_wrap=True)
+    entries_table.add_column("Msg (preview)")
+
+    for e in list(matched)[-window:]:
+        preview = e.message().splitlines()[0] if e.lines else ""
+        extra = (len(e.message().splitlines()) - 1) if e.lines else 0
+        if extra > 0:
+            preview = f"{preview}  (+{extra} lines)"
+        if e.scoped:
+            preview = f"[{e.scoped.tag}][{e.scoped.category}][{e.scoped.token}] {preview}"
+        entries_table.add_row(
+            e.time,
+            Text(e.level, style=LEVEL_STYLES.get(e.level, "")),
+            e.source,
+            e.file,
+            preview,
+        )
+
+    help_line = Text("keys: q quit | p pause | e ERROR-only | c clear | / search | Enter apply | Esc cancel | h help", style="dim")
+    return Group(Panel(Group(header, status, summary), border_style="dim"), entries_table, help_line)
+
+
+def live_help_panel() -> Panel:
+    msg = (
+        "Interactive keys\n"
+        "  q: quit\n"
+        "  p: pause/resume\n"
+        "  e: toggle ERROR-only\n"
+        "  c: clear window + counters\n"
+        "  /: type a search (grep) filter, Enter to apply, Esc to cancel\n"
+        "  h: show this help\n"
+    )
+    return Panel(msg, title="Help", border_style="dim")
+
+
+# -----------------------------
+# Main
+# -----------------------------
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    parser = argparse.ArgumentParser(prog="smapi_log_scout", add_help=True)
+
+    parser.add_argument("--config", type=Path, default=None, help="TOML config file")
+
+    parser.add_argument("--log", type=Path, default=None, help="Primary log path (default: SMAPI-latest.txt)")
+    parser.add_argument("--extra-log", action="append", default=[], help="Additional log path to include (repeatable)")
+    parser.add_argument("--with-crash", action="store_true", help="Also include SMAPI-crash.txt if it exists")
+
+    parser.add_argument("--session", default=None, help="Session selector: all|last|N|last2|last3...")
+
+    parser.add_argument("--since", type=str, default=None, help="Only include entries at/after HH:MM:SS")
+    parser.add_argument("--until", type=str, default=None, help="Only include entries at/before HH:MM:SS")
+
+    parser.add_argument("--level", type=str, default=None, help="Include only these levels (comma): trace,debug,info,warn,error,alert")
+    parser.add_argument("--exclude-level", type=str, default=None, help="Exclude these levels (comma)")
+
+    parser.add_argument("--source", type=str, default=None, help="Include only these sources (comma)")
+    parser.add_argument("--exclude-source", type=str, default=None, help="Exclude these sources (comma)")
+
+    parser.add_argument("--tag", type=str, default=None, help="Include only scoped tags (comma), e.g. WE,NestCore")
+    parser.add_argument("--category", type=str, default=None, help="Include only scoped categories (comma)")
+
+    parser.add_argument("--regex", type=str, default=None, help="Regex that must match")
+    parser.add_argument("--not-regex", type=str, default=None, help="Regex that must NOT match")
+    parser.add_argument("--grep", type=str, default=None, help="Substring filter (case-insensitive)")
+
+    parser.add_argument("--mention-mode", choices=["loose", "strict"], default=None, help="Token mention matching mode")
+
+    parser.add_argument("--my-id", action="append", default=[], help="Add a UniqueId to treat as 'yours' (repeatable)")
+    parser.add_argument("--my-name", action="append", default=[], help="Add a display name to treat as 'yours' (repeatable)")
+    parser.add_argument("--my-prefix", action="append", default=None, help="Treat loaded mod UniqueId with this prefix as 'yours' (repeatable)")
+
+    parser.add_argument("--read-last-bytes", type=int, default=0, help="Only parse the last N bytes of each file (perf)")
+
+    parser.add_argument("--plain", action="store_true", help="Pipe-friendly output (no panels)")
+    parser.add_argument("--no-index", action="store_true", help="Don't show entry index numbers")
+    parser.add_argument("--max", type=int, default=None, help="Max entries to print (0 = unlimited)")
+    parser.add_argument("--summary", action="store_true", help="Summary only")
+
+    parser.add_argument("--context", type=int, default=None, help="Include N entries before/after each match")
+    parser.add_argument("--dedupe", type=int, default=None, help="Rolling dedupe window (by signature)")
+
+    parser.add_argument("--cluster", action="store_true", help="Cluster by signature")
+    parser.add_argument("--cluster-by", choices=["exception", "message"], default=None, help="Cluster signature basis")
+    parser.add_argument("--occurrence", choices=["all", "first", "latest"], default=None, help="When clustering, which representative to show")
+
+    parser.add_argument("--top", action="append", default=[], help="Dashboards: sources|exceptions|scoped|messages|game (repeatable)")
+
+    parser.add_argument("--export-html", type=Path, default=None, help="Export filtered entries to HTML")
+
+    parser.add_argument("--notify", type=str, default=None, help="none|bell|notify-send|osascript|powershell|cmd:...")
+
+    parser.add_argument("--follow", action="store_true", help="Tail logs and print matches")
+    parser.add_argument("--live", action="store_true", help="Tail logs with live dashboard")
+    parser.add_argument("--interactive", action="store_true", help="Enable interactive keys in --live")
+    parser.add_argument("--window", type=int, default=None, help="Live dashboard window size")
+    parser.add_argument("--from-start", action="store_true", help="With --follow/--live, start at beginning of file")
+    parser.add_argument("--no-watch-mods", action="store_true", help="Disable dynamic mod discovery while streaming")
+
+    parser.add_argument("--catalog", type=Path, default=None, help="Explicit ScopedLogCatalog.cs path for validation (optional)")
+
+    args = parser.parse_args(argv)
+    console = Console()
+
+    cfg = load_toml(args.config) if args.config else {}
+
+    # ---- merge config defaults ----
+    log_path = args.log or Path(deep_get(cfg, ["general", "log"], str(DEFAULT_LOG_PATH))).expanduser()
+    extra_logs = [Path(p).expanduser() for p in (deep_get(cfg, ["general", "extra_logs"], []) or [])]
+    extra_logs += [Path(p).expanduser() for p in args.extra_log]
+    if args.with_crash or deep_get(cfg, ["general", "with_crash"], False):
+        if DEFAULT_CRASH_PATH.exists():
+            extra_logs.append(DEFAULT_CRASH_PATH)
+
+    session_selector = args.session or deep_get(cfg, ["general", "session"], "all")
+
+    my_prefixes = args.my_prefix or deep_get(cfg, ["my", "prefixes"], ["Mikew."])
+    my_ids_cli = (deep_get(cfg, ["my", "ids"], []) or []) + args.my_id
+    my_names_cli = (deep_get(cfg, ["my", "names"], []) or []) + args.my_name
+
+    mention_mode = args.mention_mode or deep_get(cfg, ["filters", "mention_mode"], "loose")
+
+    fcfg = FilterConfig(
+        mention_mode=mention_mode,
+        since=args.since or deep_get(cfg, ["filters", "since"], None),
+        until=args.until or deep_get(cfg, ["filters", "until"], None),
+        grep=args.grep or deep_get(cfg, ["filters", "grep"], None),
+    )
+
+    # levels include/exclude
+    def _parse_levels(s: Optional[str]) -> Optional[Set[str]]:
+        if not s:
+            return None
+        parts = [p.strip().upper() for p in s.split(",") if p.strip()]
+        mapped = set()
+        for p in parts:
+            p2 = p.upper()
+            if p2 == "WARNING":
+                p2 = "WARN"
+            if p2 not in LEVEL_ORDER:
+                raise SystemExit(f"Unknown level: {p}")
+            mapped.add(p2)
+        return mapped or None
+
+    lvl_inc = args.level or deep_get(cfg, ["filters", "levels_include"], None)
+    lvl_exc = args.exclude_level or deep_get(cfg, ["filters", "levels_exclude"], None)
+    if isinstance(lvl_inc, list):
+        lvl_inc = ",".join(str(x) for x in lvl_inc)
+    if isinstance(lvl_exc, list):
+        lvl_exc = ",".join(str(x) for x in lvl_exc)
+    fcfg.levels_include = _parse_levels(lvl_inc)
+    fcfg.levels_exclude = _parse_levels(lvl_exc)
+
+    # sources include/exclude
+    def _parse_csv_set(s: Optional[str]) -> Optional[Set[str]]:
+        if not s:
+            return None
+        return {p.strip() for p in str(s).split(",") if p.strip()} or None
+
+    src_inc = args.source or deep_get(cfg, ["filters", "sources_include"], None)
+    src_exc = args.exclude_source or deep_get(cfg, ["filters", "sources_exclude"], None)
+    if isinstance(src_inc, list):
+        src_inc = ",".join(str(x) for x in src_inc)
+    if isinstance(src_exc, list):
+        src_exc = ",".join(str(x) for x in src_exc)
+    fcfg.sources_include = _parse_csv_set(src_inc)
+    fcfg.sources_exclude = _parse_csv_set(src_exc)
+
+    # scoped tag/category include
+    tag_inc = args.tag or deep_get(cfg, ["filters", "tags_include"], None)
+    cat_inc = args.category or deep_get(cfg, ["filters", "categories_include"], None)
+    if isinstance(tag_inc, list):
+        tag_inc = ",".join(str(x) for x in tag_inc)
+    if isinstance(cat_inc, list):
+        cat_inc = ",".join(str(x) for x in cat_inc)
+    fcfg.tags_include = _parse_csv_set(tag_inc)
+    fcfg.categories_include = _parse_csv_set(cat_inc)
+
+    # regex / not-regex
+    rx = args.regex or deep_get(cfg, ["filters", "regex"], None)
+    nrx = args.not_regex or deep_get(cfg, ["filters", "not_regex"], None)
+    if rx:
+        fcfg.regex = re.compile(str(rx), re.IGNORECASE | re.MULTILINE)
+    if nrx:
+        fcfg.not_regex = re.compile(str(nrx), re.IGNORECASE | re.MULTILINE)
+
+    out_cfg = OutputConfig(
+        plain=bool(args.plain or deep_get(cfg, ["ui", "plain"], False)),
+        show_index=not bool(args.no_index or deep_get(cfg, ["ui", "no_index"], False)),
+        max_print=args.max if args.max is not None else int(deep_get(cfg, ["ui", "max"], 400)),
+        summary_only=bool(args.summary or deep_get(cfg, ["ui", "summary_only"], False)),
+        context=args.context if args.context is not None else int(deep_get(cfg, ["ui", "context"], 0)),
+        dedupe=args.dedupe if args.dedupe is not None else int(deep_get(cfg, ["ui", "dedupe"], 0)),
+        cluster=bool(args.cluster or deep_get(cfg, ["ui", "cluster"], False)),
+        cluster_by=args.cluster_by or deep_get(cfg, ["ui", "cluster_by"], "exception"),
+        occurrence=args.occurrence or deep_get(cfg, ["ui", "occurrence"], "all"),
+        export_html=args.export_html or (Path(deep_get(cfg, ["export", "html"], "")).expanduser() if deep_get(cfg, ["export", "html"], "") else None),
+        top=(deep_get(cfg, ["ui", "top"], []) or []) + (args.top or []),
+    )
+
+    stream_cfg = StreamConfig(
+        follow=bool(args.follow or args.live),
+        live=bool(args.live),
+        interactive=bool(args.interactive or deep_get(cfg, ["ui", "interactive"], False)),
+        from_start=bool(args.from_start or deep_get(cfg, ["stream", "from_start"], False)),
+        window=args.window if args.window is not None else int(deep_get(cfg, ["ui", "window"], 60)),
+        watch_mods=not bool(args.no_watch_mods or deep_get(cfg, ["stream", "no_watch_mods"], False)),
+    )
+
+    notify_mode = args.notify or deep_get(cfg, ["notify", "mode"], "none")
+    notify_levels_raw = deep_get(cfg, ["notify", "levels"], ["ERROR", "ALERT"])
+    notify_levels = {str(x).upper() for x in notify_levels_raw} if notify_levels_raw else {"ERROR", "ALERT"}
+    ncfg = NotifyConfig(mode=str(notify_mode), levels=notify_levels)
+
+    # catalog awareness
+    repo_root = Path.cwd()
+    catalog = try_load_scoped_catalog(repo_root, explicit=args.catalog)
+
+    # ---- non-stream path ----
+    all_paths = [log_path] + extra_logs
+    all_labels = [p.name for p in all_paths]
+
+    if not stream_cfg.follow:
+        all_entries: List[SmapiEntry] = []
+        # baseline discovery from primary log only (fast + stable)
+        base_lines = read_file_lines(log_path, read_last_bytes=args.read_last_bytes)
+        my_ids, my_names = discover_my_mods(base_lines, my_ids_cli=my_ids_cli, my_names_cli=my_names_cli, my_prefixes=my_prefixes)
+        tokens = build_match_tokens(my_ids, my_names)
+        state = RuntimeState(my_ids=my_ids, my_names=my_names, tokens=tokens, token_patterns=compile_token_patterns(tokens, mention_mode), catalog=catalog)
+
+        # parse sessions per file and merge (keeps per-file session numbering independent)
+        for p, lbl in zip(all_paths, all_labels):
+            lines = read_file_lines(p, read_last_bytes=args.read_last_bytes)
+            entries = parse_entries(lines, file_label=lbl)
+            sessions = assign_sessions(entries)
+            selected = select_sessions(sessions, session_selector)
+            all_entries.extend(selected)
+
+        matched = [e for e in all_entries if should_include(e, state, fcfg)]
+
+        # context expansion (per-file ordering already in all_entries; good enough)
+        matched_idx = {e.index for e in matched}
+        expanded = expand_with_context(all_entries, matched_idx, out_cfg.context)
+
+        # extract just entries while keeping "is_match" marker
+        expanded_entries = [e for e, _is_match in expanded]
+        expanded_entries = apply_dedupe(expanded_entries, dedupe=out_cfg.dedupe, cluster_by=out_cfg.cluster_by)
+
+        cluster_table = None
+        if out_cfg.cluster:
+            expanded_entries, cluster_table = apply_clustering(expanded_entries, cluster_by=out_cfg.cluster_by, occurrence=out_cfg.occurrence)
+
+        if out_cfg.export_html:
+            export_html(expanded_entries, out_cfg.export_html)
+
+        if out_cfg.plain:
+            if not out_cfg.summary_only:
+                printed = 0
+                for e in expanded_entries:
+                    if out_cfg.max_print and printed >= out_cfg.max_print:
+                        break
+                    console.print(render_plain(e))
+                    printed += 1
+            return 0
+
+        console.print(summary_table(expanded_entries))
+
+        if out_cfg.top:
+            for what in out_cfg.top:
+                w = what.strip().lower()
+                if w == "sources":
+                    console.print(top_table_sources(expanded_entries))
+                elif w == "exceptions":
+                    console.print(top_table_exceptions(expanded_entries))
+                elif w == "scoped":
+                    console.print(top_table_scoped(expanded_entries))
+                elif w == "messages":
+                    console.print(top_table_messages(expanded_entries))
+                elif w == "game":
+                    console.print(top_table_game(expanded_entries))
+
+        if cluster_table:
+            console.print(cluster_table)
+
+        if out_cfg.summary_only:
+            return 0
+
+        printed = 0
+        for e in expanded_entries:
+            if out_cfg.max_print and printed >= out_cfg.max_print:
+                console.print(f"[dim]... truncated (printed {printed} of {len(expanded_entries)}). Use --max 0 for unlimited.[/dim]")
+                break
+            console.print(render_entry_panel(e, show_index=out_cfg.show_index))
+            printed += 1
+
+        if out_cfg.export_html:
+            console.print(f"[green]Exported HTML[/green] -> {out_cfg.export_html}")
+
+        return 0
+
+    # ---- streaming (follow/live) ----
+    q_lines: "queue.Queue[TailEvent]" = queue.Queue()
+    stop_evt = threading.Event()
+
+    paths = []
+    labels = []
+    for p in all_paths:
+        if p.exists():
+            paths.append(p)
+            labels.append(p.name)
+
+    if not paths:
+        raise SystemExit("No log files found to follow.")
+
+    # discovery snapshot from primary log
+    discovery_lines = read_file_lines(log_path, read_last_bytes=args.read_last_bytes)
+    my_ids, my_names = discover_my_mods(discovery_lines, my_ids_cli=my_ids_cli, my_names_cli=my_names_cli, my_prefixes=my_prefixes)
+    tokens = build_match_tokens(my_ids, my_names)
+    state = RuntimeState(my_ids=my_ids, my_names=my_names, tokens=tokens, token_patterns=compile_token_patterns(tokens, mention_mode), catalog=catalog)
+
+    tailers = []
+    for p, lbl in zip(paths, labels):
+        t = Tailer(p, lbl, q_lines, stop_evt, from_start=stream_cfg.from_start)
+        tailers.append(t)
+        t.start()
+
+    # buffers per file for multiline grouping
+    buffers: Dict[str, List[str]] = {lbl: [] for lbl in labels}
+    last_index: Dict[str, int] = {lbl: 0 for lbl in labels}
+    session_id: Dict[str, int] = {lbl: 1 for lbl in labels}
+    recent_before: Dict[str, Deque[SmapiEntry]] = {lbl: deque(maxlen=max(out_cfg.context, 0)) for lbl in labels}
+    after_remaining: Dict[str, int] = {lbl: 0 for lbl in labels}
+    dedupe_seen: Deque[str] = deque(maxlen=max(out_cfg.dedupe, 0))
+    matched_window: Deque[SmapiEntry] = deque(maxlen=max(stream_cfg.window, 200))
+
+    # live stats
+    counts = Counter()
+    sources = Counter()
+    scoped_categories = Counter()
+
+    key_q: "queue.Queue[str]" = queue.Queue()
+    key_reader = None
+    flags = LiveFlags()
+
+    def rebuild_patterns() -> None:
+        state.token_patterns = compile_token_patterns(state.tokens, fcfg.mention_mode)
+
+    def try_dynamic_mod_discovery(entry: SmapiEntry) -> None:
+        if not stream_cfg.watch_mods:
+            return
+        if entry.source.strip() != "SMAPI":
+            return
+        if not entry.lines:
+            return
+        line = entry.lines[0]
+        mm = LOAD_MOD_RE.match(line.strip())
+        if mm:
+            uid = mm.group("uid").strip().rstrip(".")
+            name = mm.group("name").strip().rstrip(".")
+            if any(uid.startswith(p) for p in my_prefixes) and uid not in state.my_ids:
+                state.my_ids.add(uid)
+                state.my_names.add(name)
+                state.tokens = build_match_tokens(state.my_ids, state.my_names)
+                rebuild_patterns()
+
+    def build_entry_from_buffer(file_label: str, buf: List[str]) -> SmapiEntry:
+        last_index[file_label] += 1
+        idx = last_index[file_label]
+        head = buf[0].rstrip("\n")
+        m = HEADER_RE.match(head)
+        if not m:
+            e = SmapiEntry(index=idx, time="??:??:??", level="INFO", source="(stream)", lines=[ln.rstrip("\n") for ln in buf], file=file_label)
+        else:
+            e = SmapiEntry(
+                index=idx,
+                time=m.group("time"),
+                level=m.group("level"),
+                source=m.group("source").strip(),
+                lines=[m.group("msg")] + [ln.rstrip("\n") for ln in buf[1:]],
+                file=file_label,
+            )
+        if e.lines:
+            sm = SCOPED_RE.match(e.lines[0])
+            if sm:
+                e.scoped = ScopedInfo(
+                    tag=sm.group("tag"),
+                    category=sm.group("category"),
+                    token=sm.group("token"),
+                    message=(sm.group("rest") + ("\n" + "\n".join(e.lines[1:]) if len(e.lines) > 1 else "")).rstrip("\n"),
+                )
+        if is_session_start(e):
+            session_id[file_label] += 1
+        e.session = session_id[file_label]
+        return e
+
+    def passes_live_filters(e: SmapiEntry) -> bool:
+        if flags.error_only and e.level not in {"ERROR", "ALERT"}:
+            return False
+        if flags.grep and flags.grep.lower() not in e.full_text_lower():
+            return False
+        return should_include(e, state, fcfg)
+
+    def maybe_print_entry(e: SmapiEntry, is_match: bool, *, live: bool) -> None:
+        if out_cfg.plain:
+            console.print(render_plain(e))
+            return
+        if live:
+            # live mode updates dashboard; printing panels is noisy.
+            return
+        panel = render_entry_panel(e, show_index=out_cfg.show_index)
+        if not is_match:
+            panel.border_style = "dim"
+        console.print(panel)
+
+    def handle_context_and_output(file_label: str, e: SmapiEntry, is_match: bool, *, live: bool) -> None:
+        if out_cfg.context <= 0:
+            maybe_print_entry(e, is_match, live=live)
+            return
+
+        if is_match:
+            # print before context
+            for prev in list(recent_before[file_label]):
+                maybe_print_entry(prev, False, live=live)
+            recent_before[file_label].clear()
+            maybe_print_entry(e, True, live=live)
+            after_remaining[file_label] = out_cfg.context
+            return
+
+        if after_remaining[file_label] > 0:
+            maybe_print_entry(e, False, live=live)
+            after_remaining[file_label] -= 1
+            return
+
+        recent_before[file_label].append(e)
+
+    def update_live_stats(e: SmapiEntry) -> None:
+        counts[e.level] += 1
+        sources[e.source] += 1
+        if e.scoped:
+            scoped_categories[e.scoped.category] += 1
+
+    def apply_stream_dedupe(e: SmapiEntry) -> bool:
+        if out_cfg.dedupe <= 0:
+            return True
+        sig = signature(e, out_cfg.cluster_by)
+        if sig in dedupe_seen:
+            return False
+        dedupe_seen.append(sig)
+        return True
+
+    def process_entry(file_label: str, e: SmapiEntry) -> None:
+        try_dynamic_mod_discovery(e)
+
+        if not passes_live_filters(e):
+            handle_context_and_output(file_label, e, False, live=stream_cfg.live)
+            return
+
+        if not apply_stream_dedupe(e):
+            return
+
+        notify(e, ncfg)
+
+        if stream_cfg.live:
+            matched_window.append(e)
+            update_live_stats(e)
+        else:
+            handle_context_and_output(file_label, e, True, live=False)
+
+    if stream_cfg.live and stream_cfg.interactive:
+        key_reader = KeyReader(key_q, stop_evt)
+        key_reader.start()
+
+    if not stream_cfg.live:
+        console.print(f"[dim]Tailing {', '.join(str(p) for p in paths)} ... (Ctrl+C to stop)[/dim]")
+    else:
+        console.print(f"[dim]Live view: {', '.join(str(p) for p in paths)}[/dim]")
+
+    def flush_all_buffers() -> None:
+        for lbl in labels:
+            buf = buffers[lbl]
+            if buf:
+                e = build_entry_from_buffer(lbl, buf)
+                buffers[lbl] = []
+                process_entry(lbl, e)
+
+    if stream_cfg.live:
+        help_shown_at = 0.0
+        with Live(
+            live_view(
+                matched_window,
+                state=state,
+                counts=counts,
+                sources=sources,
+                scoped_categories=scoped_categories,
+                window=max(5, stream_cfg.window),
+                flags=flags,
+            ),
+            console=console,
+            refresh_per_second=8,
+            screen=True,
+        ) as live:
+            try:
+                while True:
+                    # handle keys
+                    if stream_cfg.interactive:
+                        try:
+                            ch = key_q.get_nowait()
+                        except queue.Empty:
+                            ch = None
+                        if ch is not None:
+                            if flags.typing_search:
+                                if ch in ("\r", "\n"):
+                                    flags.grep = flags.search_buf.strip()
+                                    flags.typing_search = False
+                                    flags.search_buf = ""
+                                elif ch == "\x1b":  # ESC
+                                    flags.typing_search = False
+                                    flags.search_buf = ""
+                                elif ch in ("\x7f", "\b"):  # backspace
+                                    flags.search_buf = flags.search_buf[:-1]
+                                else:
+                                    if ch.isprintable():
+                                        flags.search_buf += ch
+                            else:
+                                if ch.lower() == "q":
+                                    raise KeyboardInterrupt
+                                if ch.lower() == "p":
+                                    flags.paused = not flags.paused
+                                if ch.lower() == "e":
+                                    flags.error_only = not flags.error_only
+                                if ch.lower() == "c":
+                                    matched_window.clear()
+                                    counts.clear()
+                                    sources.clear()
+                                    scoped_categories.clear()
+                                if ch == "/":
+                                    flags.typing_search = True
+                                    flags.search_buf = ""
+                                if ch.lower() == "h":
+                                    help_shown_at = time.time()
+
+                    # refresh view
+                    if help_shown_at and time.time() - help_shown_at < 2.5:
+                        live.update(Group(live_help_panel(), live_view(matched_window, state=state, counts=counts, sources=sources,
+                                                                     scoped_categories=scoped_categories, window=max(5, stream_cfg.window), flags=flags)))
+                    else:
+                        live.update(
+                            live_view(
+                                matched_window,
+                                state=state,
+                                counts=counts,
+                                sources=sources,
+                                scoped_categories=scoped_categories,
+                                window=max(5, stream_cfg.window),
+                                flags=flags,
+                            )
+                        )
+
+                    if flags.paused:
+                        time.sleep(0.05)
+                        continue
+
+                    try:
+                        ev = q_lines.get(timeout=0.05)
+                    except queue.Empty:
+                        continue
+
+                    line = ev.line
+                    lbl = ev.file_label
+
+                    if HEADER_RE.match(line.rstrip("\n")):
+                        if buffers[lbl]:
+                            e = build_entry_from_buffer(lbl, buffers[lbl])
+                            buffers[lbl] = []
+                            process_entry(lbl, e)
+                        buffers[lbl] = [line]
+                    else:
+                        buffers[lbl].append(line)
+
+            except KeyboardInterrupt:
+                stop_evt.set()
+                flush_all_buffers()
+                return 0
+
+    # follow (non-live) loop
+    try:
+        while True:
+            try:
+                ev = q_lines.get(timeout=0.25)
+            except queue.Empty:
+                continue
+            line = ev.line
+            lbl = ev.file_label
+            if HEADER_RE.match(line.rstrip("\n")):
+                if buffers[lbl]:
+                    e = build_entry_from_buffer(lbl, buffers[lbl])
+                    buffers[lbl] = []
+                    process_entry(lbl, e)
+                buffers[lbl] = [line]
+            else:
+                buffers[lbl].append(line)
+    except KeyboardInterrupt:
+        stop_evt.set()
+        flush_all_buffers()
+
+        # optional dashboards at end
+        if not out_cfg.plain:
+            console.print(summary_table(list(matched_window)))
+            if out_cfg.top:
+                for what in out_cfg.top:
+                    w = what.strip().lower()
+                    if w == "sources":
+                        console.print(top_table_sources(list(matched_window)))
+                    elif w == "exceptions":
+                        console.print(top_table_exceptions(list(matched_window)))
+                    elif w == "scoped":
+                        console.print(top_table_scoped(list(matched_window)))
+                    elif w == "messages":
+                        console.print(top_table_messages(list(matched_window)))
+                    elif w == "game":
+                        console.print(top_table_game(list(matched_window)))
+
+        if out_cfg.export_html:
+            export_html(list(matched_window), out_cfg.export_html)
+            if not out_cfg.plain:
+                console.print(f"[green]Exported HTML[/green] -> {out_cfg.export_html}")
+
+        return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
