@@ -56,8 +56,8 @@ public sealed class GmcmPageBuilder<TConfig>
     {
         ParagraphDynamic(
             text: () => _menu.SupportsExtraOptions
-                ? "<b>GMCM Options detected.</b> Enhanced widgets enabled."
-                : "GMCM Options not installed. Enhanced widgets disabled.",
+                ? "config.paragraph.gmcmoptions_status.enabled.text"
+                : "config.paragraph.gmcmoptions_status.disabled.text",
             styled: true,
             id: "gmcmoptions_status"
         );

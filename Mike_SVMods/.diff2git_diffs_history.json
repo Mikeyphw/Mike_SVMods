@@ -2,18 +2,18 @@
   "schema_version": "1",
   "diffs": [
     {
-      "id": "20260225T153724-0300-01",
-      "file": "Core_20260225T153724-0300-01_i18n-audit-tool.patch",
-      "title": "I18n audit tool",
-      "title_with_id": "I18n audit tool [20260225T153724-0300-01]",
-      "created_at": "2026-02-25T15:38:52-03:00",
-      "applied_at": "2026-02-25T15:47:10-03:00",
+      "id": "20260225T153724-0300-02",
+      "file": "NestCore_20260225T153724-0300-02_i18n-gmcm-status-and-ptbr.patch",
+      "title": "I18n gmcm status and ptbr",
+      "title_with_id": "I18n gmcm status and ptbr [20260225T153724-0300-02]",
+      "created_at": "2026-02-25T15:39:01-03:00",
+      "applied_at": "2026-02-25T15:48:25-03:00",
       "apply": {
         "method": "git",
-        "p": 0,
+        "p": 1,
         "dir": ""
       }
     }
   ],
-  "updated_at": "2026-02-25T15:47:10-03:00"
+  "updated_at": "2026-02-25T15:48:25-03:00"
 }\n
