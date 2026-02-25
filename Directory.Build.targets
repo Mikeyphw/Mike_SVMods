@@ -1,0 +1,35 @@
+<Project>
+<!-- LetMeHatch: embed shipped JSON in non-Dev builds and don't copy data/ to output.
+     Dev builds ship data/ as editable files. -->
+<ItemGroup Condition="'$(MSBuildProjectName)'=='LetMeHatch' and '$(Configuration)'!='Dev'">
+  <None Remove="data/**/*" />
+  <MikeEmbedText Include="data/**/*.json" />
+</ItemGroup>
+
+  <!-- Shared build target to embed arbitrary text files as generated C# code.
+       Projects opt-in by declaring @(MikeEmbedText) items.
+       Runs for non-Dev configs so they can compile without on-disk JSON. -->
+  <Target Name="GenerateEmbeddedTextFiles"
+          BeforeTargets="BeforeCompile"
+          Condition="'$(Configuration)'!='Dev' and '@(MikeEmbedText)'!=''">
+
+    <PropertyGroup>
+      <_MikeGenDir>$(IntermediateOutputPath)Generated\</_MikeGenDir>
+      <_MikeFileList>$(_MikeGenDir)embedded_files.txt</_MikeFileList>
+      <_MikeOutCs>$(_MikeGenDir)EmbeddedTextFiles.g.cs</_MikeOutCs>
+      <_MikeNs>$(RootNamespace).Generated</_MikeNs>
+      <_MikeToolProject>$(MSBuildThisFileDirectory)tools/EmbedTextAsCode/EmbedTextAsCode.csproj</_MikeToolProject>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(_MikeGenDir)" />
+    <WriteLinesToFile File="$(_MikeFileList)"
+                      Lines="@(MikeEmbedText->'%(Identity)')"
+                      Overwrite="true" />
+
+    <Exec Command="dotnet run --project &quot;$(_MikeToolProject)&quot; -- --projectDir &quot;$(MSBuildProjectDirectory)&quot; --fileList &quot;$(_MikeFileList)&quot; --out &quot;$(_MikeOutCs)&quot; --ns &quot;$(_MikeNs)&quot; --class EmbeddedTextFiles" />
+
+    <ItemGroup>
+      <Compile Include="$(_MikeOutCs)" />
+    </ItemGroup>
+  </Target>
+</Project>
