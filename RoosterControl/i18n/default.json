@@ -870,5 +870,14 @@
   "shop.gold.description": "Buy Gold Rooster!",
   "shop.gold.displayname": "Gold Rooster",
   "shop.void.description": "Buy Void Roosters!",
-  "shop.void.displayname": "Void Rooster"
+  "shop.void.displayname": "Void Rooster",
+  "config.section.debug.tuning.luck.text": "Debug Tuning: Luck",
+  "config.debug.tuning.bonusCalculation.name": "Bonus Calculation",
+  "config.debug.tuning.bonusCalculation.description": "Affects the bonus calculation in the game mechanics based on the player's luck and other factors.",
+  "config.debug.tuning.superUnluckyBonus.name": "Super Unlucky Bonus",
+  "config.debug.tuning.superUnluckyBonus.description": "Multiplies the bonus for super unlucky luck type. Lower values make it rarer.",
+  "config.debug.tuning.superLuckyBonus.name": "Super Lucky Bonus",
+  "config.debug.tuning.superLuckyBonus.description": "Multiplies the bonus for super lucky luck type. Higher values increase the chances for positive luck outcomes.",
+  "config.debug.tuning.luckAdjustment.name": "Luck Adjustment",
+  "config.debug.tuning.luckAdjustment.description": "Adjusts the overall luck effect by modifying the original percentage, with the final value clamped between 0 and 100."
 }

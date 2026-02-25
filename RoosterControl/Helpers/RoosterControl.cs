@@ -334,19 +334,36 @@ public sealed class RoosterHelper
         if (originalPercentage == 0)
             return 0;
 
-        var bonus = Math.Clamp(Config.General.ChosenPercentageDailyLuckBonus, 0, 100);
+        var baseBonus = Math.Clamp(Config.General.ChosenPercentageDailyLuckBonus, 0, 100);
+
+#if MIKE_DEVTOOLS
+        var bonusMult = Math.Clamp(Config.DebugKnobs.BonusCalculationMultiplier, 0.0f, 10.0f);
+        var bonus = Math.Clamp((int)Math.Round(baseBonus * bonusMult, MidpointRounding.AwayFromZero), 0, 100);
+        var superUnluckyMult = Config.DebugKnobs.SuperUnluckyBonusMultiplier;
+        var superLuckyMult = Config.DebugKnobs.SuperLuckyBonusMultiplier;
+        var offset = Config.DebugKnobs.LuckAdjustmentOffset;
+#else
+        var bonus = baseBonus;
+        const float superUnluckyMult = -2.0f;
+        const float superLuckyMult = 1.5f;
+        const float offset = 0.0f;
+#endif
 
         var adjustment = DailyLuck switch
         {
-            LuckyTypes.SuperUnlucky => -2 * bonus,
+            LuckyTypes.SuperUnlucky => (int)Math.Round(superUnluckyMult * bonus, MidpointRounding.AwayFromZero),
             LuckyTypes.Unlucky => -bonus,
             LuckyTypes.Neutral => 0,
             LuckyTypes.Lucky => bonus,
-            LuckyTypes.SuperLucky => (int)Math.Round(1.5 * bonus, MidpointRounding.AwayFromZero),
+            LuckyTypes.SuperLucky => (int)Math.Round(superLuckyMult * bonus, MidpointRounding.AwayFromZero),
             _ => 0,
         };
 
-        return Math.Clamp(originalPercentage + adjustment, 0, 100);
+        var adjusted = originalPercentage + adjustment;
+        if (Math.Abs(offset) > float.Epsilon)
+            adjusted = (int)Math.Round(adjusted + offset, MidpointRounding.AwayFromZero);
+
+        return Math.Clamp(adjusted, 0, 100);
     }
     public void UpdateFemaleEggs(RoosterData rooster, IDictionary<string, FarmAnimalData> animalData)
     {

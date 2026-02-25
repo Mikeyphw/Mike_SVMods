@@ -17,6 +17,10 @@ public sealed class RoosterControlConfig
 
     public GeneralSettings General { get; set; } = new();
 
+#if MIKE_DEVTOOLS
+    public DebugKnobsConfig DebugKnobs { get; set; } = new();
+#endif
+
     /// <summary>Per-rooster settings. Only base rooster types are used by the mod today.</summary>
     public Dictionary<RoosterType, RoosterSettings> Roosters { get; set; } = CreateDefaultRoosters();
 
@@ -189,3 +193,20 @@ public enum FemaleRoosterAssignment
     Void,
     Gold
 }
+
+#if MIKE_DEVTOOLS
+public sealed class DebugKnobsConfig
+{
+    /// <summary>Multiplier applied to <see cref="GeneralSettings.ChosenPercentageDailyLuckBonus"/> when computing luck adjustments.</summary>
+    public float BonusCalculationMultiplier { get; set; } = 1.0f;
+
+    /// <summary>Multiplier applied to the bonus amount when <c>DailyLuck</c> is <c>SuperUnlucky</c>.</summary>
+    public float SuperUnluckyBonusMultiplier { get; set; } = -2.0f;
+
+    /// <summary>Multiplier applied to the bonus amount when <c>DailyLuck</c> is <c>SuperLucky</c>.</summary>
+    public float SuperLuckyBonusMultiplier { get; set; } = 1.5f;
+
+    /// <summary>Additional offset applied to the final adjusted percentage before clamping (0-100).</summary>
+    public float LuckAdjustmentOffset { get; set; } = 0.0f;
+}
+#endif
