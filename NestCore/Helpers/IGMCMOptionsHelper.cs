@@ -319,7 +319,7 @@ private Func<string> GetName(string optionName)
     {
         _gmcm?.AddPage(_manifest, pageTitle, GetPageTitle(pageTitle));
         if (printID)
-            _gmcm?.AddParagraph(_manifest, () => $"Page ID: {pageTitle}");
+            _gmcm?.AddParagraph(_manifest, () => string.Format(_i18n.GetString("config.paragraph.page_id.text"), pageTitle));
     }
 
     public void AddPage(string pageId, Func<string>? pageTitle = null, bool printID = false)

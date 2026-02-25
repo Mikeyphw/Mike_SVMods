@@ -1,0 +1,19 @@
+{
+  "schema_version": "1",
+  "diffs": [
+    {
+      "id": "20260225T174027-0300-02",
+      "file": "NestCore_20260225T174027-0300-02_i18n-pageid-ptbr.patch",
+      "title": "NestCore I18n pageid ptbr",
+      "title_with_id": "NestCore I18n pageid ptbr [20260225T174027-0300-02]",
+      "created_at": "2026-02-25T18:01:27-03:00",
+      "applied_at": "2026-02-25T18:16:44-03:00",
+      "apply": {
+        "method": "git",
+        "p": 1,
+        "dir": ""
+      }
+    }
+  ],
+  "updated_at": "2026-02-25T18:16:44-03:00"
+}\n
