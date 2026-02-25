@@ -23,7 +23,9 @@ using EggsInWild.Infrastructure.Commands;
 using EggsInWild.Infrastructure.Config;
 using EggsInWild.Infrastructure.Diagnostics;
 using EggsInWild.Infrastructure.Game;
+using EggsInWild.Infrastructure.DesertTomb.Monsters.Definitions;
 using EggsInWild.Infrastructure.ModData;
+using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Assets;
 
 namespace EggsInWild;
@@ -39,6 +41,56 @@ public sealed class ModEntry : Mod
     private ProgressionService? _contentProgression;
     private ILog? _contentLog;
     private IModDataLoader? _contentDataLoader;
+
+#if WEGG_DEV
+    private SpawnParametersJson? _devSpawnParametersJson;
+    private Dictionary<string, TombMonsterDefinitionJson>? _devMonsterDefinitionsJson;
+
+    private SpawnParametersJson DevSpawnParameters
+    {
+        get
+        {
+            if (_devSpawnParametersJson is not null)
+                return _devSpawnParametersJson;
+
+            var reader = new SmapiJsonFileReader(Helper);
+            _devSpawnParametersJson = reader.ReadJsonFile<SpawnParametersJson>(ModDataPaths.SpawnParameters) ?? new SpawnParametersJson();
+            return _devSpawnParametersJson;
+        }
+    }
+
+    private void MutateDevSpawnParameters(Action<SpawnParametersJson> mutate)
+    {
+        mutate(DevSpawnParameters);
+        Helper.Data.WriteJsonFile(ModDataPaths.SpawnParameters, DevSpawnParameters);
+    }
+
+
+    private Dictionary<string, TombMonsterDefinitionJson> DevMonsterDefinitions
+    {
+        get
+        {
+            if (_devMonsterDefinitionsJson is not null)
+                return _devMonsterDefinitionsJson;
+
+            var reader = new SmapiJsonFileReader(Helper);
+            _devMonsterDefinitionsJson = reader.ReadJsonFile<Dictionary<string, TombMonsterDefinitionJson>>(DesertTombDefinitionPaths.MonsterDefinitions)
+                ?? new Dictionary<string, TombMonsterDefinitionJson>(StringComparer.OrdinalIgnoreCase);
+
+            return _devMonsterDefinitionsJson;
+        }
+    }
+
+    private void MutateDevMonsterDefinitions(Action mutate)
+    {
+        mutate();
+        Helper.Data.WriteJsonFile(DesertTombDefinitionPaths.MonsterDefinitions, DevMonsterDefinitions);
+    }
+
+    private static string NormalizeDevJsonKey(string raw)
+        => string.IsNullOrWhiteSpace(raw) ? "empty" : new string(raw.Select(ch => char.IsLetterOrDigit(ch) ? ch : '_').ToArray());
+#endif
+
 
     public override void Entry(IModHelper helper)
     {
@@ -314,11 +366,226 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.Section("Tuning – Monsters (Matango)");
+                
+                page.Separator(simple: true);
+
+                page.Section("JSON – MonsterDefinitions (Dev)");
+                page.ParagraphDynamic(
+                    text: () => "Dev-only: edits assets/DesertTomb/MonsterDefinitions.json directly. Stats/Flags are written immediately. (Tip: restart or reload Tomb content to see changes.)",
+                    id: "json_monsters_notice"
+                );
+                page.ParagraphDynamic(
+                    text: () => "Fields: DifficultyAdd and SpeedAdd are additive adjustments; MaxHealthMultiplier/Add adjust max HP; DamageToFarmer sets base damage; ResilienceAdd adjusts resilience; IsBoss and HostAuthoritative are behavior flags.",
+                    id: "json_monsters_fields"
+                );
+
+                foreach (var key in DevMonsterDefinitions.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
+                {
+                    var monsterKey = key;
+                    var def = DevMonsterDefinitions[monsterKey] ?? new TombMonsterDefinitionJson();
+                    def.Stats ??= new TombMonsterStatProfileJson();
+                    def.Flags ??= new TombMonsterBehaviorFlagsJson();
+                    DevMonsterDefinitions[monsterKey] = def;
+
+                    page.Separator(simple: true, fieldId: $"json_monsters_sep_{NormalizeDevJsonKey(monsterKey)}");
+                    page.SectionLabel(() => monsterKey);
+
+                    page.Int(
+                        optionId: $"JSON {monsterKey}: DifficultyAdd",
+                        getValue: () => def.Stats!.DifficultyAdd ?? 0,
+                        setValue: v => MutateDevMonsterDefinitions(() => def.Stats!.DifficultyAdd = v),
+                        tooltip: false,
+                        min: -10,
+                        max: 50,
+                        interval: 1,
+                        fieldId: $"json_monsters_{NormalizeDevJsonKey(monsterKey)}_difficultyAdd"
+                    );
+
+                    page.Int(
+                        optionId: $"JSON {monsterKey}: SpeedAdd",
+                        getValue: () => def.Stats!.SpeedAdd ?? 0,
+                        setValue: v => MutateDevMonsterDefinitions(() => def.Stats!.SpeedAdd = v),
+                        tooltip: false,
+                        min: -10,
+                        max: 20,
+                        interval: 1,
+                        fieldId: $"json_monsters_{NormalizeDevJsonKey(monsterKey)}_speedAdd"
+                    );
+
+                    page.Float(
+                        optionId: $"JSON {monsterKey}: MaxHealthMultiplier",
+                        getValue: () => def.Stats!.MaxHealthMultiplier ?? 1f,
+                        setValue: v => MutateDevMonsterDefinitions(() => def.Stats!.MaxHealthMultiplier = Math.Max(0f, v)),
+                        tooltip: false,
+                        min: 0f,
+                        max: 10f,
+                        interval: 0.05f,
+                        fieldId: $"json_monsters_{NormalizeDevJsonKey(monsterKey)}_maxHealthMultiplier"
+                    );
+
+                    page.Int(
+                        optionId: $"JSON {monsterKey}: MaxHealthAdd",
+                        getValue: () => def.Stats!.MaxHealthAdd ?? 0,
+                        setValue: v => MutateDevMonsterDefinitions(() => def.Stats!.MaxHealthAdd = v),
+                        tooltip: false,
+                        min: -500,
+                        max: 5000,
+                        interval: 10,
+                        fieldId: $"json_monsters_{NormalizeDevJsonKey(monsterKey)}_maxHealthAdd"
+                    );
+
+                    page.Int(
+                        optionId: $"JSON {monsterKey}: DamageToFarmer",
+                        getValue: () => def.Stats!.DamageToFarmer ?? 0,
+                        setValue: v => MutateDevMonsterDefinitions(() => def.Stats!.DamageToFarmer = Math.Max(0, v)),
+                        tooltip: false,
+                        min: 0,
+                        max: 500,
+                        interval: 1,
+                        fieldId: $"json_monsters_{NormalizeDevJsonKey(monsterKey)}_damageToFarmer"
+                    );
+
+                    page.Int(
+                        optionId: $"JSON {monsterKey}: ResilienceAdd",
+                        getValue: () => def.Stats!.ResilienceAdd ?? 0,
+                        setValue: v => MutateDevMonsterDefinitions(() => def.Stats!.ResilienceAdd = v),
+                        tooltip: false,
+                        min: -50,
+                        max: 100,
+                        interval: 1,
+                        fieldId: $"json_monsters_{NormalizeDevJsonKey(monsterKey)}_resilienceAdd"
+                    );
+
+                    page.Bool(
+                        optionId: $"JSON {monsterKey}: IsBoss",
+                        getValue: () => def.Flags!.IsBoss ?? false,
+                        setValue: v => MutateDevMonsterDefinitions(() => def.Flags!.IsBoss = v),
+                        tooltip: false,
+                        fieldId: $"json_monsters_{NormalizeDevJsonKey(monsterKey)}_isBoss"
+                    );
+
+                    page.Bool(
+                        optionId: $"JSON {monsterKey}: HostAuthoritative",
+                        getValue: () => def.Flags!.HostAuthoritative ?? true,
+                        setValue: v => MutateDevMonsterDefinitions(() => def.Flags!.HostAuthoritative = v),
+                        tooltip: false,
+                        fieldId: $"json_monsters_{NormalizeDevJsonKey(monsterKey)}_hostAuthoritative"
+                    );
+                }
+
+page.Section("Tuning – Monsters (Matango)");
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.VisionTiles, optionId: "debug.tuning.monsters.matango.visionTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.CastWindupMs, optionId: "debug.tuning.monsters.matango.castWindupMs", tooltip: true, min: 0, max: 10000, interval: 50);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.RecoverMs, optionId: "debug.tuning.monsters.matango.recoverMs", tooltip: true, min: 0, max: 10000, interval: 50);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.ShotCooldownMs, optionId: "debug.tuning.monsters.matango.shotCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
+
+                page.Separator(simple: true);
+
+                page.Section("JSON – SpawnParameters (Dev)");
+                page.ParagraphDynamic(
+                    text: () => "Dev-only: these options edit ModData/SpawnParameters.json directly and write changes immediately. You may need to reload (e.g. wegg reload) or restart.",
+                    id: "json_spawn_notice"
+                );
+
+                page.Int("debug.json.spawn.maxSpawningTries",
+                    getValue: () => DevSpawnParameters.MaxSpawningTries,
+                    setValue: v => MutateDevSpawnParameters(p => p.MaxSpawningTries = Math.Max(0, v)),
+                    tooltip: true,
+                    min: 0,
+                    max: 10000,
+                    interval: 10);
+
+                page.Int("debug.json.spawn.maxEggPerMapAny",
+                    getValue: () => DevSpawnParameters.MaxEggPerMap_Any,
+                    setValue: v => MutateDevSpawnParameters(p => p.MaxEggPerMap_Any = Math.Max(0, v)),
+                    tooltip: true,
+                    min: 0,
+                    max: 50,
+                    interval: 1);
+
+                page.Int("debug.json.spawn.maxEggPerMapMagic",
+                    getValue: () => DevSpawnParameters.MaxEggPerMap_Magic,
+                    setValue: v => MutateDevSpawnParameters(p => p.MaxEggPerMap_Magic = Math.Max(0, v)),
+                    tooltip: true,
+                    min: 0,
+                    max: 50,
+                    interval: 1);
+
+                page.Int("debug.json.spawn.maxEggPerMapLarge",
+                    getValue: () => DevSpawnParameters.MaxEggPerMap_Large,
+                    setValue: v => MutateDevSpawnParameters(p => p.MaxEggPerMap_Large = Math.Max(0, v)),
+                    tooltip: true,
+                    min: 0,
+                    max: 50,
+                    interval: 1);
+
+                page.Float("debug.json.spawn.baseRandomChance",
+                    getValue: () => (float)DevSpawnParameters.BaseRandomChance,
+                    setValue: v => MutateDevSpawnParameters(p => p.BaseRandomChance = Math.Clamp((double)v, 0.0, 1.0)),
+                    tooltip: true,
+                    min: 0f,
+                    max: 1f,
+                    interval: 0.01f);
+
+                page.Separator(simple: true);
+                page.Section("SpawnParameters – Parameters_Packs");
+
+                page.Int("debug.json.spawn.packs.minEggArea", () => DevSpawnParameters.Parameters_Packs.MinEggArea,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MinEggArea = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Int("debug.json.spawn.packs.maxEggArea", () => DevSpawnParameters.Parameters_Packs.MaxEggArea,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MaxEggArea = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Int("debug.json.spawn.packs.maxEggPack", () => DevSpawnParameters.Parameters_Packs.MaxEggPack,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MaxEggPack = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Int("debug.json.spawn.packs.certainEggs", () => DevSpawnParameters.Parameters_Packs.CertainEggs,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.CertainEggs = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Bool("debug.json.spawn.packs.useJsonValues", () => DevSpawnParameters.Parameters_Packs.UseJsonValues,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.UseJsonValues = v), tooltip: true);
+                page.Int("debug.json.spawn.packs.maxEggsAll", () => DevSpawnParameters.Parameters_Packs.MaxEggs_All,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MaxEggs_All = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Int("debug.json.spawn.packs.minEggs", () => DevSpawnParameters.Parameters_Packs.MinEggs,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MinEggs = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+
+                page.Separator(simple: true);
+                page.Section("SpawnParameters – Parameters_Vanilla");
+
+                page.Int("debug.json.spawn.vanilla.minEggArea", () => DevSpawnParameters.Parameters_Vanilla.MinEggArea,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MinEggArea = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Int("debug.json.spawn.vanilla.maxEggArea", () => DevSpawnParameters.Parameters_Vanilla.MaxEggArea,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MaxEggArea = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Int("debug.json.spawn.vanilla.maxEggPack", () => DevSpawnParameters.Parameters_Vanilla.MaxEggPack,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MaxEggPack = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Int("debug.json.spawn.vanilla.certainEggs", () => DevSpawnParameters.Parameters_Vanilla.CertainEggs,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.CertainEggs = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Bool("debug.json.spawn.vanilla.useJsonValues", () => DevSpawnParameters.Parameters_Vanilla.UseJsonValues,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.UseJsonValues = v), tooltip: true);
+                page.Int("debug.json.spawn.vanilla.maxEggsAll", () => DevSpawnParameters.Parameters_Vanilla.MaxEggs_All,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MaxEggs_All = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+                page.Int("debug.json.spawn.vanilla.minEggs", () => DevSpawnParameters.Parameters_Vanilla.MinEggs,
+                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MinEggs = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
+
+                if (DevSpawnParameters.MaxWorldEggs is { Count: > 0 })
+                {
+                    page.Separator(simple: true);
+                    page.Section("SpawnParameters – MaxWorldEggs (existing keys)");
+
+                    foreach (var key in DevSpawnParameters.MaxWorldEggs.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
+                    {
+                        var localKey = key;
+                        page.Int(
+                            optionId: $"debug.json.spawn.maxWorldEggs.{localKey}",
+                            getValue: () => DevSpawnParameters.MaxWorldEggs.TryGetValue(localKey, out var value) ? value : 0,
+                            setValue: v => MutateDevSpawnParameters(p => p.MaxWorldEggs[localKey] = Math.Max(0, v)),
+                            tooltip: false,
+                            min: 0,
+                            max: 999,
+                            interval: 1,
+                            fieldId: $"debug.json.spawn.maxWorldEggs.{NormalizeDevJsonKey(localKey)}"
+                        );
+                    }
+
+                    page.ParagraphDynamic(() => "Note: MaxWorldEggs keys are dynamic; labels use raw keys. Edits write to JSON.", id: "json_spawn_maxWorldEggs_note");
+                }
+
 #endif
 
             });
