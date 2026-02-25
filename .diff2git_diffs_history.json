@@ -1,0 +1,19 @@
+{
+  "schema_version": "1",
+  "diffs": [
+    {
+      "id": "20260225T174027-0300-01",
+      "file": "Core_20260225T174027-0300-01_i18n-audit-hardened.patch",
+      "title": "I18n audit hardened",
+      "title_with_id": "I18n audit hardened [20260225T174027-0300-01]",
+      "created_at": "2026-02-25T18:01:23-03:00",
+      "applied_at": "2026-02-25T18:16:11-03:00",
+      "apply": {
+        "method": "git",
+        "p": 1,
+        "dir": "b"
+      }
+    }
+  ],
+  "updated_at": "2026-02-25T18:16:11-03:00"
+}\n

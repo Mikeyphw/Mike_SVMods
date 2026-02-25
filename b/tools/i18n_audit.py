@@ -1,121 +1,188 @@
 #!/usr/bin/env python3
-"""i18n audit for Mike_SVMods (in-game UI keys).
+"""i18n audit for Mike_SVMods (in-game UI strings).
 
-This audits *translation key usage* in C# sources:
-- Extracts string-literal keys passed to I18TranslationHelper.GetString/TryGet.
-- Reports keys missing from i18n/default.json per mod.
+This tool catches two classes of problems:
+1) Missing translation keys referenced in code (GetString/TryGet/Translation.Get).
+2) Hardcoded player-facing string literals in GMCM/UI hotspots.
 
-It intentionally ignores console/log strings and does not attempt to detect every possible UI literal.
+It writes a markdown report to Reports/i18n_audit.md and exits non-zero if issues found.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-ROOT = Path(__file__).resolve().parents[1]
-REPORTS_DIR = ROOT / "Reports"
-REPORT_PATH = REPORTS_DIR / "i18n_audit.md"
 
+KEY_CALL_PATTERNS = [
+    # NestCore helper
+    re.compile(r'\.GetString\(\s*"(?P<key>[^"]+)"', re.MULTILINE),
+    re.compile(r'\.TryGet\(\s*"(?P<key>[^"]+)"', re.MULTILINE),
+    # SMAPI Translation helper in GMCM-heavy mods
+    re.compile(r'\.Translation\.Get\(\s*"(?P<key>[^"]+)"', re.MULTILINE),
+]
 
-KEY_CALL_RE = re.compile(
-    r"""(?x)
-    \b(?:GetString|TryGet)\(
-        \s*
-        \"(?P<key>[^\"]+)\"
-    """
+# Heuristic: GMCM/UI methods where a raw string literal is likely user-facing.
+UI_CALL_HINT = re.compile(
+    r'\.(Section|SectionLabel|SectionLabelDynamic|Paragraph|ParagraphDynamic|AddParagraph|AddSectionTitle|AddTextOption|AddBoolOption|AddNumberOption|AddKeybind|AddPageLink|AddParagraphLink|Link|Page)\s*\('
 )
+
+# Captures string literals (simple; good enough for audit).
+STRING_LITERAL = re.compile(r'"(?P<lit>(?:[^"\\]|\\.)*)"')
+
+# Detect legacy fallback patterns: Translate(i18n, "key", "fallback")
+FALLBACK_CALL = re.compile(r'\b(Translate|T)\s*\([^\)]*,\s*"[^"]+"\s*,\s*"(?P<fallback>[^"]+)"', re.MULTILINE)
+
 
 @dataclass(frozen=True)
 class Finding:
-    mod: str
-    key: str
-    file: str
+    kind: str
+    file: Path
     line: int
+    detail: str
 
 
-def iter_mod_dirs(root: Path) -> Iterable[Path]:
-    for child in root.iterdir():
-        if not child.is_dir():
+def iter_cs_files(root: Path) -> Iterable[Path]:
+    for p in root.rglob("*.cs"):
+        # Skip generated/obj/bin if present
+        parts = {x.lower() for x in p.parts}
+        if {"bin", "obj", ".git"} & parts:
             continue
-        if (child / "manifest.json").exists():
-            yield child
+        yield p
 
 
-def load_default_keys(mod_dir: Path) -> set[str]:
-    default_path = mod_dir / "i18n" / "default.json"
-    if not default_path.exists():
+def load_default_keys(mod_root: Path) -> set[str]:
+    default_json = mod_root / "i18n" / "default.json"
+    if not default_json.exists():
         return set()
     try:
-        data = json.loads(default_path.read_text(encoding="utf-8"))
-        return {str(k) for k in data.keys()}
+        data = json.loads(default_json.read_text(encoding="utf-8"))
+        return set(data.keys())
     except Exception:
         return set()
 
 
-def scan_cs_files(mod_dir: Path, default_keys: set[str]) -> list[Finding]:
+def guess_mod_root(file: Path) -> Path | None:
+    # mod root is immediate child of repo root (NestCore, EggsInWild, etc)
+    for parent in [file] + list(file.parents):
+        if (parent / "i18n" / "default.json").exists():
+            return parent
+    return None
+
+
+def collect_key_usages(text: str) -> set[str]:
+    keys: set[str] = set()
+    for pat in KEY_CALL_PATTERNS:
+        for m in pat.finditer(text):
+            keys.add(m.group("key"))
+    return keys
+
+
+def find_hardcoded_ui_literals(file: Path, lines: list[str]) -> list[Finding]:
     findings: list[Finding] = []
-    for cs in mod_dir.rglob("*.cs"):
-        text = cs.read_text(encoding="utf-8", errors="ignore")
-        for match in KEY_CALL_RE.finditer(text):
-            key = match.group("key")
-            if key not in default_keys:
-                # compute line number
-                line = text.count("\n", 0, match.start()) + 1
+    is_ui_hotspot = any(
+        token in str(file).lower()
+        for token in ["gmcm", "integrations/gmcm", ".gmcm."]
+    )
+
+    for idx, line in enumerate(lines, start=1):
+        if not is_ui_hotspot and not UI_CALL_HINT.search(line):
+            continue
+
+        # flag fallback patterns immediately
+        fb = FALLBACK_CALL.search(line)
+        if fb and fb.group("fallback").strip():
+            findings.append(
+                Finding(
+                    kind="fallback-literal",
+                    file=file,
+                    line=idx,
+                    detail=f"Fallback literal detected: \"{fb.group('fallback')}\"",
+                )
+            )
+
+        if not UI_CALL_HINT.search(line):
+            continue
+
+        for m in STRING_LITERAL.finditer(line):
+            lit = m.group("lit")
+            if not lit:
+                continue
+
+            # ignore keys, asset names, IDs
+            if "." in lit and " " not in lit:
+                continue
+
+            # user-facing heuristic: has letters and spaces
+            if re.search(r"[A-Za-z]", lit) and (" " in lit or ":" in lit):
                 findings.append(
                     Finding(
-                        mod=mod_dir.name,
-                        key=key,
-                        file=str(cs.relative_to(ROOT)),
-                        line=line,
+                        kind="hardcoded-ui-literal",
+                        file=file,
+                        line=idx,
+                        detail=f"Literal: \"{lit}\"",
                     )
                 )
+
     return findings
 
 
-def write_report(findings: list[Finding]) -> None:
-    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-
-    by_mod: dict[str, list[Finding]] = {}
-    for f in findings:
-        by_mod.setdefault(f.mod, []).append(f)
-
-    lines: list[str] = []
-    lines.append("# i18n audit (key usage)")
-    lines.append("")
-    lines.append("This report lists *string-literal* translation keys used in C# which are missing from `i18n/default.json`.")
-    lines.append("")
-    if not findings:
-        lines.append("✅ No missing keys found.")
-        lines.append("")
-        REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
-        return
-
-    for mod, items in sorted(by_mod.items()):
-        lines.append(f"## {mod}")
-        lines.append("")
-        for f in sorted(items, key=lambda x: (x.key, x.file, x.line)):
-            lines.append(f"- `{f.key}` at `{f.file}:{f.line}`")
-        lines.append("")
-
-    REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
-
-
 def main() -> int:
-    all_findings: list[Finding] = []
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--root", type=Path, default=Path.cwd(), help="repo root")
+    ap.add_argument("--report", type=Path, default=None, help="report path (default: Reports/i18n_audit.md)")
+    args = ap.parse_args()
 
-    for mod_dir in iter_mod_dirs(ROOT):
-        default_keys = load_default_keys(mod_dir)
-        if not default_keys:
-            continue
-        all_findings.extend(scan_cs_files(mod_dir, default_keys))
+    root: Path = args.root.resolve()
+    report_path = args.report or (root / "Reports" / "i18n_audit.md")
+    report_path.parent.mkdir(parents=True, exist_ok=True)
 
-    write_report(all_findings)
-    print(f"Wrote: {REPORT_PATH.relative_to(ROOT)}")
-    return 0
+    findings: list[Finding] = []
+    missing_keys: list[str] = []
+
+    # Cache mod key sets
+    mod_keys: dict[Path, set[str]] = {}
+
+    for cs in iter_cs_files(root):
+        text = cs.read_text(encoding="utf-8", errors="replace")
+        lines = text.splitlines()
+
+        mod_root = guess_mod_root(cs)
+        if mod_root and mod_root not in mod_keys:
+            mod_keys[mod_root] = load_default_keys(mod_root)
+
+        used_keys = collect_key_usages(text)
+        if mod_root:
+            known = mod_keys.get(mod_root, set())
+            for k in sorted(used_keys):
+                # ignore non-i18n keys (rare) but keep config/specialOrder etc
+                if k.startswith(("config.", "specialOrder.", "object.", "mail.", "quest.", "hud.", "message.")):
+                    if k not in known:
+                        findings.append(Finding("missing-key", cs, 1, k))
+
+        findings.extend(find_hardcoded_ui_literals(cs, lines))
+
+    # Write report
+    by_kind: dict[str, list[Finding]] = {}
+    for f in findings:
+        by_kind.setdefault(f.kind, []).append(f)
+
+    md = []
+    md.append(f"# i18n Audit Report\n\nRoot: `{root}`\n")
+    for kind in sorted(by_kind.keys()):
+        md.append(f"## {kind}\n")
+        for f in sorted(by_kind[kind], key=lambda x: (str(x.file), x.line, x.detail)):
+            rel = f.file.relative_to(root)
+            md.append(f"- `{rel}:{f.line}` — {f.detail}")
+        md.append("")
+
+    report_path.write_text("\n".join(md).rstrip() + "\n", encoding="utf-8")
+
+    return 1 if findings else 0
 
 
 if __name__ == "__main__":
