@@ -46,6 +46,7 @@ public sealed class ModDataLoader : IModDataLoader
 
     private T ReadOrDefault<T>(string path, Func<T> fallback) where T : class
     {
+#if WEGG_DEV
         try
         {
             var model = _reader.ReadJsonFile<T>(path);
@@ -60,9 +61,22 @@ public sealed class ModDataLoader : IModDataLoader
             LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.SaveData, $"Failed reading mod data: {path}. Using defaults. {ex}", StardewModdingAPI.LogLevel.Error);
             return fallback();
         }
-    }
+#else
+        try
+        {
+            var model = _reader.ReadJsonFile<T>(path);
+            if (model is null)
+                throw new InvalidOperationException($"Required mod data missing: {path}. Release builds embed JSON; check @(MikeEmbedText) and build targets.");
 
-    private void Validate(
+            return model;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed reading required mod data: {path}. Release builds embed JSON.", ex);
+        }
+#endif
+    }
+private void Validate(
         IDictionary<string, WildAnimalJson> wildAnimals,
         IDictionary<string, List<SpawnAreaRuleJson>> spawnAreas,
         SpawnParametersJson spawnParameters,

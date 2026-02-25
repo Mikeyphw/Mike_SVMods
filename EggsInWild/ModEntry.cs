@@ -179,7 +179,7 @@ public sealed class ModEntry : Mod
                 page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
                 page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
                 page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
-#if MIKE_DEVTOOLS
+#if WEGG_DEV
                 page.Separator(simple: true);
 
                 page.Section("Tuning – Desert Tomb Generation");
@@ -484,7 +484,7 @@ public sealed class ModEntry : Mod
             return;
 
         _contentLog = new SmapiLog(Monitor);
-        _contentDataLoader = new ModDataLoader(new SmapiJsonFileReader(Helper), _contentLog);
+        _contentDataLoader = new ModDataLoader(JsonFileReaderFactory.Create(Helper), _contentLog);
 
         var saveData = new SmapiSaveDataStore(Helper, Monitor);
         var game = new GameStateReader();
@@ -525,7 +525,7 @@ public sealed class ModEntry : Mod
     {
         var config = _config?.Get() ?? new ModConfig();
         var log = _contentLog ?? new SmapiLog(Monitor);
-        var dataLoader = _contentDataLoader ?? new ModDataLoader(new SmapiJsonFileReader(Helper), log);
+        var dataLoader = _contentDataLoader ?? new ModDataLoader(JsonFileReaderFactory.Create(Helper), log);
         var i18n = new I18TranslationHelper(Helper);
 
         return new ContentContext(
@@ -589,7 +589,7 @@ public sealed class ModEntry : Mod
             log: log,
             invalidateAssets: InvalidateGameAssets);
 
-        var dataLoader = new ModDataLoader(new SmapiJsonFileReader(helper), log);
+        var dataLoader = new ModDataLoader(JsonFileReaderFactory.Create(helper), log);
         var spawnWeather = new EggsInWild.Application.Spawning.SpawnWeatherHistory(saveData, log);
         var conditions = new EggsInWild.Application.Spawning.DefaultAreaConditionsEvaluator(game, spawnWeather);
         var planner = new EggsInWild.Application.Spawning.SpawnPlanner(

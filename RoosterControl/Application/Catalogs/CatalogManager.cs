@@ -2,18 +2,33 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using StardewModdingAPI;
+using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Helpers.Logging;
 
 using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
+
+#if !MIKE_DEV
+using RoosterControl.Generated;
+#endif
 
 namespace RoosterControl.Application.Catalogs;
 
 internal sealed class CatalogManager
 {
     private readonly ILog _log;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        AllowTrailingCommas = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        Converters = { new JsonStringEnumConverter() },
+    };
 
     private const string CatalogRoot = "catalogs";
     private const string RoostersFile = "catalogs/roosters.json";
@@ -31,7 +46,9 @@ internal sealed class CatalogManager
         if (monitor is null) throw new ArgumentNullException(nameof(monitor));
 
         var defaults = CatalogDefaults.CreateDefaults();
+#if MIKE_DEV
         EnsureFolderExists(Path.Combine(helper.DirectoryPath, "data", CatalogRoot));
+#endif
 
         var bundle = new CatalogBundle
         {
@@ -43,10 +60,12 @@ internal sealed class CatalogManager
         CatalogMigrator.MergeMissing(bundle, defaults);
         CatalogSanitizer.Sanitize(bundle);
 
+#if MIKE_DEV
         // Normalize on disk so users have stable formatting and clamped probability values.
         helper.Data.WriteJsonFile(RoostersFile, bundle.Roosters);
         helper.Data.WriteJsonFile(ProduceFile, bundle.Produce);
         helper.Data.WriteJsonFile(HatchingFile, bundle.Hatching);
+#endif
 
         var issues = CatalogValidator.Validate(bundle);
         if (issues.Count > 0)
@@ -384,6 +403,7 @@ return CatalogApplicator.ApplyToConfig(
     private static T ReadOrCreate<T>(IModHelper helper, string relativePath, T defaults)
         where T : class, new()
     {
+#if MIKE_DEV
         var loaded = helper.Data.ReadJsonFile<T>(relativePath);
         if (loaded is null)
         {
@@ -392,6 +412,18 @@ return CatalogApplicator.ApplyToConfig(
         }
 
         return loaded;
+#else
+        var embeddedKey = $"data/{relativePath}";
+        var json = EmbeddedTextStore.GetOrThrow(EmbeddedTextFiles.Files, embeddedKey, context: "RoosterControl catalogs");
+        if (string.IsNullOrWhiteSpace(json))
+            throw new InvalidOperationException($"Embedded catalog is empty: {embeddedKey}");
+
+        var loaded = JsonSerializer.Deserialize<T>(json, JsonOptions);
+        if (loaded is null)
+            throw new InvalidOperationException($"Failed to deserialize embedded catalog: {embeddedKey}");
+
+        return loaded;
+#endif
     }
 
     private static void EnsureFolderExists(string path)

@@ -92,7 +92,9 @@ public sealed class LmhCoordinator
             _assetManager.ItemManager.CloneItemsFromGame();
         }
 
+#if MIKE_DEV
         _core.Helper.Data.WriteJsonFile("data/gray.json", _assetManager.TextureManager.GrayTextures.Keys);
+#endif
 
         _invalidation.Request(AssetNames.FarmAnimals);
         _invalidation.Request(AssetNames.Objects);

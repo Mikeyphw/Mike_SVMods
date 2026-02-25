@@ -158,7 +158,7 @@ internal sealed partial class RoosterCoordinator
 
             b.Paragraph("debug.note");
 
-#if MIKE_DEVTOOLS
+#if MIKE_DEV
             b.Separator(simple: true);
             b.Section("debug.tuning.luck");
             b.Float(cfg => cfg.DebugKnobs.BonusCalculationMultiplier, optionId: "debug.tuning.bonusCalculation", tooltip: true, min: 0, max: 10, interval: 0.05f);

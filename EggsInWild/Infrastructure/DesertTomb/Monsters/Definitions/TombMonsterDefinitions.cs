@@ -33,8 +33,12 @@ public sealed class TombMonsterDefinitions : ITombMonsterDefinitions
         var raw = reader.ReadJsonFile<Dictionary<string, TombMonsterDefinitionJson>>(DesertTombDefinitionPaths.MonsterDefinitions);
         if (raw is null || raw.Count == 0)
         {
+#if WEGG_DEV
             log.Log($"[DesertTomb] Missing or empty {DesertTombDefinitionPaths.MonsterDefinitions}; using defaults.", LogLevel.Warn);
             return TombMonsterDefinitionDefaults.Build();
+#else
+            throw new InvalidOperationException($"[DesertTomb] Required {DesertTombDefinitionPaths.MonsterDefinitions} missing/empty. Release builds embed JSON; ensure it is included in @(MikeEmbedText). ");
+#endif
         }
 
         var result = new Dictionary<TombMonsterType, TombMonsterDefinition>();

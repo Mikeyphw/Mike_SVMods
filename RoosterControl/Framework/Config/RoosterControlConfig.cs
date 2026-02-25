@@ -17,7 +17,7 @@ public sealed class RoosterControlConfig
 
     public GeneralSettings General { get; set; } = new();
 
-#if MIKE_DEVTOOLS
+#if MIKE_DEV
     public DebugKnobsConfig DebugKnobs { get; set; } = new();
 #endif
 
@@ -194,7 +194,7 @@ public enum FemaleRoosterAssignment
     Gold
 }
 
-#if MIKE_DEVTOOLS
+#if MIKE_DEV
 public sealed class DebugKnobsConfig
 {
     /// <summary>Multiplier applied to <see cref="GeneralSettings.ChosenPercentageDailyLuckBonus"/> when computing luck adjustments.</summary>

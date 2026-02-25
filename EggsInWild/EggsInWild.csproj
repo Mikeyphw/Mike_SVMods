@@ -11,11 +11,12 @@
     <RootNamespace>EggsInWild</RootNamespace>
   </PropertyGroup>
 
-  
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DefineConstants>$(DefineConstants);MIKE_DEVTOOLS</DefineConstants>
+  <!-- Dev config only: enables WEGG_DEV (no Debug build define). -->
+  <PropertyGroup Condition="'$(Configuration)'=='Dev'">
+    <DefineConstants>$(DefineConstants);WEGG_DEV</DefineConstants>
   </PropertyGroup>
-<ItemGroup>
+
+  <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Application/**/*.cs" />
@@ -26,8 +27,20 @@
   <ItemGroup>
     <None Include="manifest.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="i18n/**/*" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="ModData/**/*" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="assets/**/*" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- Dev: JSON on disk (source of truth). -->
+    <None Include="ModData/**/*" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)'=='Dev'" />
+    <None Include="assets/**/*" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)'=='Dev'" />
+
+    <!-- Non-Dev: ship non-JSON assets only (JSON is embedded). -->
+    <None Include="assets/**/*" CopyToOutputDirectory="PreserveNewest" Condition="'$(Configuration)'!='Dev'" />
+    <None Remove="assets/**/*.json" Condition="'$(Configuration)'!='Dev'" />
+  </ItemGroup>
+
+  <!-- Non-Dev: embed mod JSON as generated code; do not ship it. -->
+  <ItemGroup Condition="'$(Configuration)'!='Dev'">
+    <MikeEmbedText Include="ModData/**/*.json" />
+    <MikeEmbedText Include="assets/**/*.json" />
   </ItemGroup>
 
   <ItemGroup>

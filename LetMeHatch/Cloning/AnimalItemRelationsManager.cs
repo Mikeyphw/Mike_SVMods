@@ -10,6 +10,7 @@ using static Mikew.NestCore.EnumsAndStrings.Strings.ItemIds;
 using Object = StardewValley.Object;
 
 using static LetMeHatch.ModEntry;
+using LetMeHatch.Infrastructure.Smapi;
 
 namespace LetMeHatch.Cloning
 {
@@ -549,12 +550,19 @@ namespace LetMeHatch.Cloning
                 }
                 return AnimalExclusions;
             }
+#if MIKE_DEV
             var exclusions = ModEntry.HelperInstance.Data.ReadJsonFile<EditExclusion>("data/exclusions.json");
-            if (exclusions == null)
+            if (exclusions is null)
             {
                 ModEntry.HelperInstance.Data.WriteJsonFile("data/exclusions.json", new EditExclusion());
                 exclusions = ModEntry.HelperInstance.Data.ReadJsonFile<EditExclusion>("data/exclusions.json");
             }
+#else
+            var exclusions = EmbeddedJson.ReadOrThrow<EditExclusion>(
+                ModEntry.HelperInstance,
+                "data/exclusions.json"
+            );
+#endif
             var Exclusions = exclusions;
             var finalExclusions = new EditExclusion();
             finalExclusions.EditExclusions[EditType.BirthText] = BuildExclusionList(

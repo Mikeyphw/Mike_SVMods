@@ -89,7 +89,7 @@ public sealed class ModConfig
     /// </summary>
     public System.Collections.Generic.Dictionary<string, bool> AnimalProgressionMode { get; set; } = new(System.StringComparer.OrdinalIgnoreCase);
 
-#if MIKE_DEVTOOLS
+#if WEGG_DEV
     /// <summary>
     /// Centralized tuning knobs exposed only in debug builds (GMCM Debug page).
     /// </summary>

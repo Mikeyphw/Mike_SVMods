@@ -44,6 +44,8 @@ namespace LetMeHatch
             DependencyGuards.AssertNestCorePresent(helper.ModRegistry);
             DependencyGuards.AssertNoLocalNestCoreCopies(helper.DirectoryPath, LoggerHelper);
 
+            Directory.CreateDirectory(Path.Combine(helper.DirectoryPath, "data"));
+
             _configProvider = new SmapiConfigProvider<ModConfig>(helper, Monitor);
 
             InitializeStaticFields(Monitor, helper, ModManifest, _configProvider.Get());

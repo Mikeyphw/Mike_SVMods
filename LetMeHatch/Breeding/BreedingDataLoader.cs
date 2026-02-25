@@ -5,6 +5,7 @@ using Mikew.NestCore.Framework;
 using LetMeHatch.Helpers;
 using LetMeHatch.Integrations;
 using LetMeHatch.Models;
+using LetMeHatch.Infrastructure.Smapi;
 using LetMeHatch.Core.Random;
 using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Framework.Random;
@@ -100,16 +101,40 @@ namespace LetMeHatch.Breeding
             var integration = new Integration(integrationName);
             LoggerHelper.VerboseLog($"Creating CP for {integrationName} Integration.");
             return ModEntry.HelperInstance.ContentPacks.CreateTemporary(
-                directoryPath: Path.Combine(
-                    ModEntry.HelperInstance.DirectoryPath,
-                    $"data/Integrations/{contentPackName}"
-                ),
+                directoryPath: EnsureIntegrationDirectory(contentPackName),
                 id: contentPackID,
                 name: contentPackName,
                 description: "...",
                 author: "...",
                 version: new SemanticVersion(1, 0, 0)
             );
+        }
+
+        private static string EnsureIntegrationDirectory(string contentPackName)
+        {
+#if MIKE_DEV
+            return Path.Combine(ModEntry.HelperInstance.DirectoryPath, $"data/Integrations/{contentPackName}");
+#else
+            var dir = Path.Combine(ModEntry.HelperInstance.DirectoryPath, "temp", "Integrations", contentPackName);
+            Directory.CreateDirectory(dir);
+
+            // materialize embedded files for SMAPI's content-pack reader
+            var contentJson = EmbeddedJson.GetTextOrThrow(
+                $"data/Integrations/{contentPackName}/content.json",
+                context: "LetMeHatch integration content.json"
+            );
+            File.WriteAllText(Path.Combine(dir, "content.json"), contentJson);
+
+            var i18nRel = $"data/Integrations/{contentPackName}/i18n/default.json";
+            if (EmbeddedTextStore.TryGet(LetMeHatch.Generated.EmbeddedTextFiles.Files, i18nRel, out var i18nJson))
+            {
+                var i18nDir = Path.Combine(dir, "i18n");
+                Directory.CreateDirectory(i18nDir);
+                File.WriteAllText(Path.Combine(i18nDir, "default.json"), i18nJson);
+            }
+
+            return dir;
+#endif
         }
 
         private void LoadBreedingDataFromContentPack(IContentPack contentPack)

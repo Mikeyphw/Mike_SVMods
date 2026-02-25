@@ -2,6 +2,7 @@ using LetMeHatch.Models;
 using static LetMeHatch.EnumsAndStrings.Enums;
 
 using static LetMeHatch.ModEntry;
+using LetMeHatch.Infrastructure.Smapi;
 
 namespace LetMeHatch.Integrations
 {
@@ -26,11 +27,18 @@ namespace LetMeHatch.Integrations
                 IntegrationName.VanillaGame => "data/Integrations/Vanilla Game/content.json",
                 _ => ""
             };
+#if MIKE_DEV
             var breedingData = ModEntry.HelperInstance.Data.ReadJsonFile<
                 Dictionary<string, BreedingDataFemale>
             >(jsonPath);
             breedingData ??= CreateNewBreedingData(integration, jsonPath);
             return breedingData;
+#else
+            return EmbeddedJson.ReadOrThrow<Dictionary<string, BreedingDataFemale>>(
+                ModEntry.HelperInstance,
+                jsonPath
+            );
+#endif
         }
 
         private Dictionary<string, BreedingDataFemale> CreateNewBreedingData(
@@ -50,7 +58,9 @@ namespace LetMeHatch.Integrations
                 IntegrationName.VanillaGame => VanillaGameIntegration.CreateBreedingData(),
                 _ => new()
             };
+#if MIKE_DEV
             ModEntry.HelperInstance.Data.WriteJsonFile(jsonPath, breedingData);
+#endif
             return breedingData;
         }
     }

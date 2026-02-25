@@ -336,7 +336,7 @@ public sealed class RoosterHelper
 
         var baseBonus = Math.Clamp(Config.General.ChosenPercentageDailyLuckBonus, 0, 100);
 
-#if MIKE_DEVTOOLS
+#if MIKE_DEV
         var bonusMult = Math.Clamp(Config.DebugKnobs.BonusCalculationMultiplier, 0.0f, 10.0f);
         var bonus = Math.Clamp((int)Math.Round(baseBonus * bonusMult, MidpointRounding.AwayFromZero), 0, 100);
         var superUnluckyMult = Config.DebugKnobs.SuperUnluckyBonusMultiplier;

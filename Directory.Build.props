@@ -5,5 +5,16 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);CS9057</NoWarn>
+
+    <!-- Ensure Dev configuration exists solution-wide -->
+    <Configurations>Debug;Release;Dev</Configurations>
+  </PropertyGroup>
+
+  <!-- Dev = Release-like optimizations + symbols + global dev define -->
+  <PropertyGroup Condition="'$(Configuration)'=='Dev'">
+    <Optimize>true</Optimize>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <DefineConstants>$(DefineConstants);MIKE_DEV</DefineConstants>
   </PropertyGroup>
 </Project>

@@ -5,12 +5,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DefineConstants>$(DefineConstants);MIKE_DEVTOOLS</DefineConstants>
-  </PropertyGroup>
-  <ItemGroup>
+<ItemGroup>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)'!='Dev'">
+    <!-- Non-Dev builds embed JSON into generated code and do not ship data/*.json on disk. -->
+    <MikeEmbedText Include="data/**/*.json" />
+    <None Remove="data/**/*.json" />
+    <Content Remove="data/**/*.json" />
+  </ItemGroup>
+
   <ItemGroup>
   </ItemGroup>
   <ItemGroup>

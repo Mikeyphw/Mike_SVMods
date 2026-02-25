@@ -367,7 +367,7 @@ public sealed class DesertTombRuntime
             areas: areaStates,
             executor: _spawnExecutor,
             log: _log
-#if MIKE_DEVTOOLS
+#if WEGG_DEV
             , initialWaveFraction: DebugKnobs.TombPopulationInitialWaveFraction
             , reconcileIntervalTicks: DebugKnobs.TombPopulationReconcileIntervalTicks
             , maxSpawnsPerTick: DebugKnobs.TombPopulationMaxSpawnsPerTick
