@@ -106,8 +106,8 @@ public static class LmhGmcmMenu
     {
         layout.Page("edits", page =>
         {
-            page.Section(SafeT(core, "config.page.edits.name", "Edits"), tooltip: false);
-            page.Paragraph(SafeT(core, "config.edits.paragraph", "Per-animal edit toggles."));
+            page.Section(core.Translation.GetString("config.page.edits.name"), tooltip: false);
+            page.ParagraphDynamic(() => core.Translation.GetString("config.edits.paragraph"), id: "edits_paragraph");
             page.Separator(simple: true);
             page.Link("editsEggList");
             page.Link("editsBirthText");
@@ -126,7 +126,7 @@ public static class LmhGmcmMenu
     {
         layout.Page(
             "cloning",
-            title: () => SafeT(core, "config.page.cloning.name", "Cloning"),
+            title: () => core.Translation.GetString("config.page.cloning.name"),
             build: page =>
             {
                 page.Bool(cfg => cfg.CloneVanillaEggs, optionId: "CloneVanillaEggs", tooltip: true);
@@ -155,7 +155,7 @@ public static class LmhGmcmMenu
     {
         layout.Page(
             "colors",
-            title: () => SafeT(core, "config.page.colors.name", "Colors"),
+            title: () => core.Translation.GetString("config.page.colors.name"),
             build: page =>
             {
                 page.Bool(cfg => cfg.ChangeEggColors, optionId: "ChangeEggColors", tooltip: true);
@@ -165,7 +165,7 @@ public static class LmhGmcmMenu
                     tooltip: true);
 
                 page.Separator(simple: true);
-                page.ParagraphDynamic(() => SafeT(core, "config.colors.paragraph", "Egg color behavior."), id: "colors_intro");
+                page.ParagraphDynamic(() => core.Translation.GetString("config.colors.paragraph"), id: "colors_intro");
                 page.Separator(simple: true);
 
                 page.Link("eggPalette");
@@ -184,7 +184,7 @@ public static class LmhGmcmMenu
     {
         layout.Page(
             "breeding",
-            title: () => SafeT(core, "config.page.breeding.name", "Breeding"),
+            title: () => core.Translation.GetString("config.page.breeding.name"),
             build: page =>
             {
                 page.Bool(cfg => cfg.BreedingSystemEnabled, optionId: "BreedingSystemEnabled", tooltip: true);
@@ -238,7 +238,7 @@ public static class LmhGmcmMenu
                 title: () => packTitle,
                 build: page =>
                 {
-                    page.SectionLabel(() => SafeT(core, "config.section.Females.text", "Females"));
+                    page.SectionLabel(() => core.Translation.GetString("config.section.Females.text"));
 
                     foreach (var female in pack.FemaleKeys)
                         page.Link(BuildFemalePageId(pack.ContentPackId, female));
@@ -263,13 +263,12 @@ public static class LmhGmcmMenu
 
     private static void BuildBreedingPackIndexPage(GmcmPageBuilder<ModConfig> page, CoreContext core)
     {
-        page.Paragraph(SafeT(core, "config.section.LoadedBreedingSystems.text", "Loaded breeding systems"));
-
-        var packs = GetBreedingPacksSnapshot();
+        page.Section("LoadedBreedingSystems");
+var packs = GetBreedingPacksSnapshot();
         if (packs.Count == 0)
         {
             page.Separator(simple: true);
-            page.Paragraph(SafeT(core, "config.notavaliable", "Not available yet. Load a save first."));
+            page.ParagraphDynamic(() => core.Translation.GetString("config.notavailable"), id: "notavailable");
             return;
         }
 
@@ -287,20 +286,20 @@ public static class LmhGmcmMenu
         var manager = ModEntry.CurrentAssetManager;
         if (manager is null)
         {
-            page.Paragraph(SafeT(core, "config.notavaliable", "Not available yet. Load a save first."));
+            page.ParagraphDynamic(() => core.Translation.GetString("config.notavailable"), id: "notavailable");
             return;
         }
 
         if (!TryGetFemaleBreedingContext(manager, contentPackId, femaleKey, out var femaleData, out var femaleConfig))
         {
-            page.Paragraph($"Breeding data missing for '{femaleKey}' in '{contentPackId}'.");
+            page.ParagraphDynamic(() => core.Translation.GetString("config.breeding.missingData", femaleKey, contentPackId), id: "breeding_missing");
             return;
         }
 
         page.BoolLabel(
             elementId: "ApplyDailyBoost",
-            name: () => SafeT(core, "config.ApplyDailyBoost.name", "Apply daily luck boost"),
-            tooltip: () => SafeT(core, "config.ApplyDailyBoost.description", "Enable daily luck adjustments for this female."),
+            name: () => core.Translation.GetString("config.ApplyDailyBoost.name"),
+            tooltip: () => core.Translation.GetString("config.ApplyDailyBoost.description"),
             getValue: () => femaleData.ApplyDailyLuckBoost,
             setValue: v =>
             {
@@ -312,12 +311,12 @@ public static class LmhGmcmMenu
         if (femaleData.AdjustableEggChances)
         {
             page.Separator(simple: true);
-            page.SectionLabel(() => SafeT(core, "config.section.NormalHatching.text", "Normal hatching"));
+            page.SectionLabel(() => core.Translation.GetString("config.section.NormalHatching.text"));
 
             page.FloatLabel(
                 elementId: "NormalEggChance",
-                name: () => SafeT(core, "config.NormalEggChance.name", "Normal egg chance"),
-                tooltip: () => SafeT(core, "config.NormalEggChance.description", "Chance for normal eggs."),
+                name: () => core.Translation.GetString("config.NormalEggChance.name"),
+                tooltip: () => core.Translation.GetString("config.NormalEggChance.description"),
                 getValue: () => GetBreedingEggChance(femaleConfig, ItemType.Normal),
                 setValue: v => SetBreedingEggChance(femaleConfig, ItemType.Normal, v),
                 min: MinChance,
@@ -327,8 +326,8 @@ public static class LmhGmcmMenu
 
             page.FloatLabel(
                 elementId: "LargeEggChance",
-                name: () => SafeT(core, "config.LargeEggChance.name", "Large egg chance"),
-                tooltip: () => SafeT(core, "config.LargeEggChance.description", "Chance for large eggs."),
+                name: () => core.Translation.GetString("config.LargeEggChance.name"),
+                tooltip: () => core.Translation.GetString("config.LargeEggChance.description"),
                 getValue: () => GetBreedingEggChance(femaleConfig, ItemType.Large),
                 setValue: v => SetBreedingEggChance(femaleConfig, ItemType.Large, v),
                 min: MinChance,
@@ -336,11 +335,11 @@ public static class LmhGmcmMenu
                 interval: ChanceInterval
             );
 
-            page.SectionLabel(() => SafeT(core, "config.section.FertilizedHatching.text", "Fertilized hatching"));
+            page.SectionLabel(() => core.Translation.GetString("config.section.FertilizedHatching.text"));
             page.FloatLabel(
                 elementId: "FertilizedEggChance",
-                name: () => SafeT(core, "config.FertilizedEggChance.name", "Fertilized egg chance"),
-                tooltip: () => SafeT(core, "config.FertilizedEggChance.description", "Chance for fertilized eggs."),
+                name: () => core.Translation.GetString("config.FertilizedEggChance.name"),
+                tooltip: () => core.Translation.GetString("config.FertilizedEggChance.description"),
                 getValue: () => GetBreedingEggChance(femaleConfig, ItemType.FertilizedEgg),
                 setValue: v => SetBreedingEggChance(femaleConfig, ItemType.FertilizedEgg, v),
                 min: MinChance,
@@ -350,7 +349,7 @@ public static class LmhGmcmMenu
         }
 
         page.Separator(simple: true);
-        page.SectionLabel(() => SafeT(core, "config.section.Males.text", "Males"));
+        page.SectionLabel(() => core.Translation.GetString("config.section.Males.text"));
 
         foreach (var (maleKey, maleData) in femaleData.Males.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
         {
@@ -363,8 +362,8 @@ public static class LmhGmcmMenu
 
             page.BoolLabel(
                 elementId: $"EnableMale_{maleKey}",
-                name: () => SafeT(core, "config.EnableMale.name", "Enable male"),
-                tooltip: () => SafeT(core, "config.EnableMale.description", "Enable this male option for breeding."),
+                name: () => core.Translation.GetString("config.EnableMale.name"),
+                tooltip: () => core.Translation.GetString("config.EnableMale.description"),
                 getValue: () => GetMaleEnabled(femaleConfig, maleKey),
                 setValue: v => SetMaleEnabled(femaleConfig, maleKey, v)
             );
@@ -373,8 +372,8 @@ public static class LmhGmcmMenu
             {
                 page.BoolLabel(
                     elementId: $"AddAsAlternatePurchase_{maleKey}",
-                    name: () => SafeT(core, "config.AddAsAlternatePurchase.name", "Add as alternate purchase"),
-                    tooltip: () => SafeT(core, "config.AddAsAlternatePurchase.description", "Show this clone as alternate purchase in shops."),
+                    name: () => core.Translation.GetString("config.AddAsAlternatePurchase.name"),
+                    tooltip: () => core.Translation.GetString("config.AddAsAlternatePurchase.description"),
                     getValue: () => femaleConfig.MaleConfig.AddAsAlternatePurchase,
                     setValue: v => femaleConfig.MaleConfig.AddAsAlternatePurchase = v
                 );
@@ -386,8 +385,8 @@ public static class LmhGmcmMenu
             {
                 page.FloatLabel(
                     elementId: $"BoostByMale_{maleKey}",
-                    name: () => SafeT(core, "config.BoostByMale.name", "Boost by male"),
-                    tooltip: () => SafeT(core, "config.BoostByMale.description", "Extra chance boost when this male is present."),
+                    name: () => core.Translation.GetString("config.BoostByMale.name"),
+                    tooltip: () => core.Translation.GetString("config.BoostByMale.description"),
                     getValue: () => GetBoostByMale(femaleConfig, maleKey),
                     setValue: v => SetBoostByMale(femaleConfig, maleKey, v),
                     min: MinChance,
@@ -397,8 +396,8 @@ public static class LmhGmcmMenu
 
                 page.FloatLabel(
                     elementId: $"MaleChance_{maleKey}",
-                    name: () => SafeT(core, "config.MaleChance.name", "Male chance"),
-                    tooltip: () => SafeT(core, "config.MaleChance.description", "Chance to select this male."),
+                    name: () => core.Translation.GetString("config.MaleChance.name"),
+                    tooltip: () => core.Translation.GetString("config.MaleChance.description"),
                     getValue: () => GetMaleChance(femaleConfig, maleKey),
                     setValue: v => SetMaleChance(femaleConfig, maleKey, v),
                     min: MinChance,
@@ -416,7 +415,7 @@ public static class LmhGmcmMenu
     {
         layout.Page(
             "advanced",
-            title: () => SafeT(core, "config.page.advanced.name", "Advanced"),
+            title: () => core.Translation.GetString("config.page.advanced.name"),
             build: page =>
             {
                 page.Bool(cfg => cfg.StabilizeFarmAnimalsAssetOrder, optionId: "StabilizeFarmAnimalsAssetOrder", tooltip: true);
@@ -428,32 +427,32 @@ public static class LmhGmcmMenu
 
         layout.Page(
             "itemMappings",
-            title: () => SafeT(core, "config.page.itemMappings.name", "Item mappings"),
+            title: () => core.Translation.GetString("config.page.itemMappings.name"),
             build: page => BuildItemMappingsIndexPage(page, core)
         );
 
         layout.Page(
             "itemMappingsEgg",
-            title: () => SafeT(core, "config.page.itemMappingsEgg.name", "Egg mappings"),
+            title: () => core.Translation.GetString("config.page.itemMappingsEgg.name"),
             build: page => BuildItemMappingsCloneTypePage(page, core, configProvider, CloneItemType.Egg)
         );
 
         layout.Page(
             "itemMappingsMilk",
-            title: () => SafeT(core, "config.page.itemMappingsMilk.name", "Milk mappings"),
+            title: () => core.Translation.GetString("config.page.itemMappingsMilk.name"),
             build: page => BuildItemMappingsCloneTypePage(page, core, configProvider, CloneItemType.Milk)
         );
 
         layout.Page(
             "itemMappingsMisc",
-            title: () => SafeT(core, "config.page.itemMappingsMisc.name", "Misc mappings"),
+            title: () => core.Translation.GetString("config.page.itemMappingsMisc.name"),
             build: page => BuildItemMappingsCloneTypePage(page, core, configProvider, CloneItemType.Misc)
         );
     }
 
     private static void BuildItemMappingsIndexPage(GmcmPageBuilder<ModConfig> page, CoreContext core)
     {
-        page.Paragraph(SafeT(core, "config.itemMappings.paragraph", "Choose replacement outputs per animal and clone type."));
+        page.ParagraphDynamic(() => core.Translation.GetString("config.itemMappings.paragraph"), id: "itemmappings_paragraph");
         page.Separator(simple: true);
         page.Link("itemMappingsEgg");
         page.Link("itemMappingsMilk");
@@ -469,7 +468,7 @@ public static class LmhGmcmMenu
         var manager = ModEntry.CurrentAssetManager;
         if (manager is null)
         {
-            page.Paragraph(SafeT(core, "config.itemMappings.noSave", "Load a save to edit mappings."));
+            page.ParagraphDynamic(() => core.Translation.GetString("config.itemMappings.noSave"), id: "itemmappings_nosave");
             return;
         }
 
@@ -487,7 +486,7 @@ public static class LmhGmcmMenu
 
         if (rows.Count == 0)
         {
-            page.Paragraph(SafeT(core, "config.itemMappings.noAnimals", "No animals available for this mapping type."));
+            page.ParagraphDynamic(() => core.Translation.GetString("config.itemMappings.noAnimals"), id: "itemmappings_noanimals");
             return;
         }
 
@@ -502,9 +501,9 @@ public static class LmhGmcmMenu
                 page.TextLabel(
                     elementId: elementId,
                     name: () => itemType == ItemType.Normal
-                        ? SafeT(core, "config.itemMappings.itemType.normal.name", "Normal")
-                        : SafeT(core, "config.itemMappings.itemType.large.name", "Large"),
-                    tooltip: () => SafeT(core, "config.itemMappings.custom.tooltip", "Set custom mapped item ID."),
+                        ? core.Translation.GetString("config.itemMappings.itemType.normal.name")
+                        : core.Translation.GetString("config.itemMappings.itemType.large.name"),
+                    tooltip: () => core.Translation.GetString("config.itemMappings.custom.tooltip"),
                     getValue: () => GetItemMapping(cfg, byType, animalKey, cloneType, itemType),
                     setValue: v => SetItemMapping(cfg, byType, animalKey, cloneType, itemType, v),
                     allowedValues: allowed,
@@ -592,7 +591,7 @@ public static class LmhGmcmMenu
     {
         layout.Page(
             "debug",
-            title: () => SafeT(core, "config.page.debug.name", "Debug"),
+            title: () => core.Translation.GetString("config.page.debug.name"),
             build: page =>
             {
                 page.ParagraphGmcmOptionsStatus();
@@ -618,12 +617,12 @@ public static class LmhGmcmMenu
         var cfg = configProvider.Get();
         var animals = GetAnimalOptions(core, cfg);
 
-        page.Paragraph(SafeT(core, "config.edits.perAnimal.paragraph", "Configure per-animal overrides."));
+        page.ParagraphDynamic(() => core.Translation.GetString("config.edits.perAnimal.paragraph"), id: "edits_peranimal_paragraph");
 
         if (animals.Count <= 0)
         {
             page.Separator(simple: true);
-            page.Paragraph(SafeT(core, "config.edits.noAnimals", "No animals available."));
+            page.ParagraphDynamic(() => core.Translation.GetString("config.edits.noAnimals"), id: "edits_noanimals");
             return;
         }
 
@@ -638,7 +637,7 @@ public static class LmhGmcmMenu
             page.BoolLabel(
                 elementId: elementId,
                 name: () => label,
-                tooltip: () => SafeT(core, "config.edits.animal.tooltip", $"Toggle override for {animalKey}.").Replace("{0}", animalKey),
+            tooltip: () => core.Translation.GetString("config.edits.animal.tooltip", animalKey),
                 getValue: () => IsEnabled(GetOverrides(cfg, editType), animalKey),
                 setValue: v => SetEnabled(GetOverrides(cfg, editType), animalKey, v)
             );
@@ -654,7 +653,7 @@ public static class LmhGmcmMenu
         page.Separator(simple: true);
 
         page.ParagraphDynamic(
-            text: () => SafeT(core, "config.eggPalette.paragraph", "Choose which color groups each egg can use."),
+            text: () => core.Translation.GetString("config.eggPalette.paragraph"),
             id: "eggPalette_intro"
         );
 
@@ -665,7 +664,7 @@ public static class LmhGmcmMenu
         if (eggs.Count <= 0)
         {
             page.Separator(simple: true);
-            page.Paragraph(SafeT(core, "config.eggPalette.noEggs", "No eggs found."));
+            page.ParagraphDynamic(() => core.Translation.GetString("config.eggPalette.noEggs"), id: "eggpalette_noeggs");
             return;
         }
 
@@ -675,7 +674,7 @@ public static class LmhGmcmMenu
             page.SectionLabel(() => egg.Label);
 
             if (egg.Id == "305")
-                page.ParagraphDynamic(() => SafeT(core, "config.eggPalette.voidEggNote", "Void egg uses custom handling."), id: $"voidEgg_{egg.Id}");
+                page.ParagraphDynamic(() => core.Translation.GetString("config.eggPalette.voidEggNote"), id: $"voidEgg_{egg.Id}");
 
             foreach (var colorKey in colorGroups)
             {
@@ -683,8 +682,8 @@ public static class LmhGmcmMenu
 
                 page.BoolLabel(
                     elementId: elementId,
-                    name: () => SafeT(core, $"config.color.{colorKey}.name", colorKey),
-                    tooltip: () => SafeT(core, "config.eggPalette.allowColor.description", "Allow this color for this egg."),
+            name: () => core.Translation.TryGet($"config.color.{colorKey}.name", out var t) ? t : colorKey,
+                    tooltip: () => core.Translation.GetString("config.eggPalette.allowColor.description"),
                     getValue: () => GetEggPaletteEnabled(configProvider.Get(), egg.Id, colorGroups, colorKey),
                     setValue: v => SetEggPaletteEnabled(configProvider.Get(), egg.Id, colorGroups, colorKey, v)
                 );
@@ -701,7 +700,7 @@ public static class LmhGmcmMenu
         page.Separator(simple: true);
 
         page.ParagraphDynamic(
-            text: () => SafeT(core, "config.eggOverride.paragraph", "Force a fixed color per egg item."),
+            text: () => core.Translation.GetString("config.eggOverride.paragraph"),
             id: "eggOverride_intro"
         );
 
@@ -711,7 +710,7 @@ public static class LmhGmcmMenu
         if (eggs.Count <= 0)
         {
             page.Separator(simple: true);
-            page.Paragraph(SafeT(core, "config.eggPalette.noEggs", "No eggs found."));
+            page.ParagraphDynamic(() => core.Translation.GetString("config.eggPalette.noEggs"), id: "eggpalette_noeggs");
             return;
         }
 
@@ -722,16 +721,16 @@ public static class LmhGmcmMenu
 
             page.BoolLabel(
                 elementId: GmcmDynamicIds.ElementId("eggOverrideEnabled", egg.Id),
-                name: () => SafeT(core, "config.eggOverride.enabled.name", "Enable override"),
-                tooltip: () => SafeT(core, "config.eggOverride.enabled.description", "Enable fixed color for this egg."),
+                name: () => core.Translation.GetString("config.eggOverride.enabled.name"),
+                tooltip: () => core.Translation.GetString("config.eggOverride.enabled.description"),
                 getValue: () => IsEggColorOverrideEnabled(configProvider.Get(), egg.Id),
                 setValue: v => SetEggColorOverrideEnabled(configProvider.Get(), egg.Id, v)
             );
 
             page.ColorSwatchLabel(
                 elementId: GmcmDynamicIds.ElementId("eggOverrideColor", egg.Id),
-                name: () => SafeT(core, "config.eggOverride.color.name", "Override color"),
-                tooltip: () => SafeT(core, "config.eggOverride.color.description", "Pick fixed color for this egg."),
+                name: () => core.Translation.GetString("config.eggOverride.color.name"),
+                tooltip: () => core.Translation.GetString("config.eggOverride.color.description"),
                 getValue: () => GetEggColorOverride(configProvider.Get(), egg.Id),
                 setValue: v => SetEggColorOverride(configProvider.Get(), egg.Id, v),
                 showAlpha: false
@@ -1075,14 +1074,6 @@ public static class LmhGmcmMenu
 
         return new string(chars).Trim('_');
     }
-
-    private static string SafeT(CoreContext core, string key, string fallback)
-    {
-        try
-        {
-            var text = core.Translation.GetString(key);
-            return string.IsNullOrWhiteSpace(text) ? fallback : text;
-        }
         catch
         {
             return fallback;
