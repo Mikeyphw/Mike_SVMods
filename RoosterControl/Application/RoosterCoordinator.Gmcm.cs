@@ -254,7 +254,7 @@ internal sealed partial class RoosterCoordinator
         if (string.IsNullOrWhiteSpace(displayName) || string.Equals(displayName, femaleKey, StringComparison.OrdinalIgnoreCase))
             return femaleKey;
 
-        return $"{displayName} ({femaleKey})";
+        return Helper.Translation.Get("config.females.dynamic.label", new { displayName, femaleKey }).ToString();
     }
 
     private string GetFemaleTooltip(string femaleKey, FemaleAssignmentsPlanResult plan)
@@ -461,8 +461,7 @@ internal sealed partial class RoosterCoordinator
 
             b.TextLabel(
                 elementId: $"{pageId}.{(isDeluxe ? "deluxeProduceEntries" : "produceEntries")}.slot{slot}.choice",
-                name: () => $"{Helper.Translation.Get(choiceLabelKey)} #{slot}",
-                tooltip: () => Helper.Translation.Get(choiceDescKey).ToString(),
+                name: () => Helper.Translation.Get("config.gmcm.slotNumber.format", new { label = Helper.Translation.Get(choiceLabelKey).ToString(), slot }).ToString(),tooltip: () => Helper.Translation.Get(choiceDescKey).ToString(),
                 getValue: () => entry.Choice,
                 setValue: v => entry.Choice = v,
                 allowedValues: ProduceChoiceAllowedValues,
@@ -471,16 +470,14 @@ internal sealed partial class RoosterCoordinator
 
             b.TextLabel(
                 elementId: $"{pageId}.{(isDeluxe ? "deluxeProduceEntries" : "produceEntries")}.slot{slot}.customItemName",
-                name: () => $"{Helper.Translation.Get(customLabelKey)} #{slot}",
-                tooltip: () => Helper.Translation.Get(customDescKey).ToString(),
+                name: () => Helper.Translation.Get("config.gmcm.slotNumber.format", new { label = Helper.Translation.Get(customLabelKey).ToString(), slot }).ToString(),tooltip: () => Helper.Translation.Get(customDescKey).ToString(),
                 getValue: () => entry.CustomItemName,
                 setValue: v => entry.CustomItemName = v
             );
 
             b.IntLabel(
                 elementId: $"{pageId}.{(isDeluxe ? "deluxeProduceEntries" : "produceEntries")}.slot{slot}.probability",
-                name: () => $"{Helper.Translation.Get(probLabelKey)} #{slot}",
-                tooltip: () => Helper.Translation.Get(probDescKey).ToString(),
+                name: () => Helper.Translation.Get("config.gmcm.slotNumber.format", new { label = Helper.Translation.Get(probLabelKey).ToString(), slot }).ToString(),tooltip: () => Helper.Translation.Get(probDescKey).ToString(),
                 getValue: () => entry.Probability,
                 setValue: v => entry.Probability = v,
                 min: 0,
