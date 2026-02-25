@@ -13,6 +13,7 @@ using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Objects;
 using static LetMeHatch.EnumsAndStrings.Enums;
+using Mikew.NestCore.Helpers;
 
 namespace LetMeHatch.Integrations.Gmcm;
 
@@ -354,7 +355,7 @@ var packs = GetBreedingPacksSnapshot();
         foreach (var (maleKey, maleData) in femaleData.Males.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
         {
             var maleLabel = maleKey.EndsWith("_Male", StringComparison.OrdinalIgnoreCase)
-                ? "Cloned Male"
+                ? core.Translation.GetString("config.breeding.males.cloned.label")
                 : maleKey;
 
             page.Separator(simple: true);
@@ -379,7 +380,7 @@ var packs = GetBreedingPacksSnapshot();
                 );
             }
 
-            page.ParagraphDynamic(() => BuildMaleEggsParagraph(maleData), id: $"maleEggs_{contentPackId}_{femaleKey}_{maleKey}");
+            page.ParagraphDynamic(() => BuildMaleEggsParagraph(core.Translation, maleData), id: $"maleEggs_{contentPackId}_{femaleKey}_{maleKey}");
 
             if (maleData.AdjustableMaleChances)
             {
@@ -1023,14 +1024,17 @@ var packs = GetBreedingPacksSnapshot();
         return true;
     }
 
-    private static string BuildMaleEggsParagraph(BreedingDataMale maleData)
-    {
-        var lines = maleData.GetEggIDs()
-            .OrderBy(x => x.Key)
-            .Select(x => $"Type: {x.Key}, ID: {x.Value}");
+    
+private static string BuildMaleEggsParagraph(I18TranslationHelper i18n, BreedingDataMale maleData)
+{
+    var header = i18n.GetString("config.breeding.maleEggs.header");
 
-        return "Eggs:\n" + string.Join(Environment.NewLine, lines);
-    }
+    var lines = maleData.GetEggIDs()
+        .OrderBy(x => x.Key)
+        .Select(x => string.Format(i18n.GetString("config.breeding.maleEggs.entry"), x.Key, x.Value));
+
+    return header + Environment.NewLine + string.Join(Environment.NewLine, lines);
+}
 
     private static List<BreedingPackView> GetBreedingPacksSnapshot()
     {
