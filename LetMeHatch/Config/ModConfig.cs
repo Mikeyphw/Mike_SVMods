@@ -17,6 +17,7 @@ public class ModConfig : CoreModConfig
     public bool CloneVanillaEggs { get; set; }
     public bool DinoEggAsArtifact { get; set; }
     public bool CloneMachineRules { get; set; }
+    public bool UseDynamicCloneTextures { get; set; }
     public bool ChangeEggColors { get; set; }
     public bool OnlyFertilizedEggs { get; set; }
     public bool ColorClonedMilk { get; set; }

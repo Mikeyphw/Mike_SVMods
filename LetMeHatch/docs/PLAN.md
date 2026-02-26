@@ -36,3 +36,27 @@
 3. Keep allowed-values lists curated (avoid huge item catalogs).
 4. Validate and normalize mapping data before saving.
 5. Preserve config-file editing as an escape hatch.
+
+
+---
+
+# PLAN — Clone pipeline modernization (LetMeHatch)
+
+## Phase 1 — Scaffolding + contracts (no behavior changes)
+1. Add Core contracts: `CloneSpec`, `ClonePlan`, `IColorResolver`, `IClonePlanBuilder`, `ICloneObjectDataBuilder`, `ICloneTextureNamer`.
+2. Add config toggle `UseDynamicCloneTextures` (default `false`).
+3. Register clone pipeline services in composition root using placeholders (throw if called).
+4. Keep old cloning + texture pipeline untouched.
+5. Ensure `dotnet build` succeeds after applying this phase.
+
+## Phase 2 — Deterministic color resolver + clone plan builder (still not used)
+(Planned)
+
+## Phase 3 — Minimal ObjectData builder + dual-path cloning (flagged)
+(Planned)
+
+## Phase 4 — Dynamic per-item clone texture loader (flagged)
+(Planned)
+
+## Phase 5 — Flip default + remove legacy sheet pipeline
+(Planned)
