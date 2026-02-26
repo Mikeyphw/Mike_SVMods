@@ -36,15 +36,15 @@
 ## Clone pipeline modernization (2026)
 
 ### Phase 1 — Scaffolding + contracts (no behavior changes)
-- [ ] Add Core contracts: CloneSpec/ClonePlan + interfaces.
-- [ ] Add config toggle `UseDynamicCloneTextures`.
-- [ ] Register placeholders in composition root (throw if called).
-- [ ] Keep old cloning + texture pipeline untouched.
-- [ ] `dotnet build` remains green.
+- [x] Add Core contracts: CloneSpec/ClonePlan + interfaces.
+- [x] Add config toggle `UseDynamicCloneTextures`.
+- [x] Register placeholders in composition root (throw if called).
+- [x] Keep old cloning + texture pipeline untouched.
+- [x] `dotnet build` remains green.
 
 ### Phase 2 — Deterministic color resolver + clone plan builder
-- [ ] Implement Core `ColorResolver` (deterministic; no mutation).
-- [ ] Implement Core `ClonePlanBuilder`.
-- [ ] Add unit tests under `LetMeHatch.Core.Tests`.
-- [ ] Wire default implementations in composition root (still unused).
-- [ ] `dotnet build` remains green.
+- [x] Implement Core `ColorResolver` (deterministic; no mutation).
+- [x] Implement Core `ClonePlanBuilder`.
+- [x] Add unit tests under `LetMeHatch.Core.Tests`.
+- [x] Wire default implementations in composition root (still unused).
+- [x] `dotnet build` remains green.

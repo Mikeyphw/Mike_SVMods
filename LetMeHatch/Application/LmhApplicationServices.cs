@@ -28,8 +28,8 @@ public sealed class LmhApplicationServices
         MachinesEdits = machinesEdits ?? throw new ArgumentNullException(nameof(machinesEdits));
         AssetLoads = assetLoads ?? throw new ArgumentNullException(nameof(assetLoads));
 
-        ColorResolver = colorResolver ?? new ThrowingColorResolver();
-        ClonePlanBuilder = clonePlanBuilder ?? new ThrowingClonePlanBuilder();
+        ColorResolver = colorResolver ?? new ColorResolver();
+        ClonePlanBuilder = clonePlanBuilder ?? new ClonePlanBuilder();
         CloneObjectDataBuilder = cloneObjectDataBuilder ?? new ThrowingCloneObjectDataBuilder();
         CloneTextureNamer = cloneTextureNamer ?? new ThrowingCloneTextureNamer();
 

@@ -10,8 +10,8 @@
 
 
 ## Clone pipeline modernization (2026)
-- [ ] Phase 1: Scaffolding + contracts (no behavior changes)
-- [ ] Phase 2: Deterministic color resolver + clone plan builder
+- [x] Phase 1: Scaffolding + contracts (no behavior changes)
+- [x] Phase 2: Deterministic color resolver + clone plan builder
 - [ ] Phase 3: Minimal ObjectData builder + dual-path cloning
 - [ ] Phase 4: Dynamic per-item clone texture loader
 - [ ] Phase 5: Flip default + remove legacy sheet pipeline

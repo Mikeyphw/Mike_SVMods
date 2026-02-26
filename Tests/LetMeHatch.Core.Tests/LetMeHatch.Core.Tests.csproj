@@ -15,6 +15,15 @@
     <Compile Include="..\..\LetMeHatch\Core\Placeholders\PlaceholderStringPolicy.cs" Link="Core\Placeholders\PlaceholderStringPolicy.cs" />
     <Compile Include="..\..\LetMeHatch\Core\Placeholders\PlaceholderReplacementPolicy.cs" Link="Core\Placeholders\PlaceholderReplacementPolicy.cs" />
       <Compile Include="..\..\LetMeHatch\Core\Cloning\CloneTextureResolver.cs" Link="Core\Cloning\CloneTextureResolver.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\CloneSpec.cs" Link="Core\ClonePipeline\CloneSpec.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\ClonePlan.cs" Link="Core\ClonePipeline\ClonePlan.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\FarmAnimalProduceLists.cs" Link="Core\ClonePipeline\FarmAnimalProduceLists.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\ClonePlanBuildRequest.cs" Link="Core\ClonePipeline\ClonePlanBuildRequest.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\IClonePlanBuilder.cs" Link="Core\ClonePipeline\IClonePlanBuilder.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\ColorResolutionContext.cs" Link="Core\ClonePipeline\ColorResolutionContext.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\IColorResolver.cs" Link="Core\ClonePipeline\IColorResolver.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\ColorResolver.cs" Link="Core\ClonePipeline\ColorResolver.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\ClonePlanBuilder.cs" Link="Core\ClonePipeline\ClonePlanBuilder.cs" />
     <Compile Include="..\..\LetMeHatch\Infrastructure\Cloning\ICloneTextureBookkeeper.cs" Link="Infrastructure\Cloning\ICloneTextureBookkeeper.cs" />
     <Compile Include="..\..\LetMeHatch\Infrastructure\Cloning\CloneTextureBookkeeper.cs" Link="Infrastructure\Cloning\CloneTextureBookkeeper.cs" />
     <Compile Include="..\..\LetMeHatch\Cloning\IAnimalCloner.cs" Link="Cloning\IAnimalCloner.cs" />
