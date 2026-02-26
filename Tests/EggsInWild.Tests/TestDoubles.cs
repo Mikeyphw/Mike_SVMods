@@ -183,42 +183,71 @@ internal sealed class FakeMailService : IGameMailService
 
 internal sealed class FakeRecipeService : IGameRecipeService
 {
-    public readonly List<string> Learned = new();
+    public readonly HashSet<string> Crafting = new(StringComparer.Ordinal);
+    public readonly HashSet<string> Cooking = new(StringComparer.Ordinal);
+
+    public bool HasCraftingRecipe(string recipeName) => Crafting.Contains(recipeName);
+    public bool HasCookingRecipe(string recipeName) => Cooking.Contains(recipeName);
 
     public bool EnsureCraftingRecipeLearned(string recipeName)
-    {
-        if (!Learned.Contains(recipeName))
-            Learned.Add(recipeName);
+        => Crafting.Add(recipeName);
 
-        return true;
-    }
+    public bool EnsureCookingRecipeLearned(string recipeName)
+        => Cooking.Add(recipeName);
+
+    public bool ForgetCraftingRecipe(string recipeName)
+        => Crafting.Remove(recipeName);
+
+    public bool ForgetCookingRecipe(string recipeName)
+        => Cooking.Remove(recipeName);
+}
 }
 
 internal sealed class FakeQuestService : IGameQuestService
 {
-    private readonly HashSet<string> _quests = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _specialOrders = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _completedQuests = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _completedSpecialOrders = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _questLog = new(StringComparer.Ordinal);
 
     public void SetCompletedQuest(string questId, bool completed)
     {
         if (completed)
-            _quests.Add(questId);
+            _completedQuests.Add(questId);
         else
-            _quests.Remove(questId);
+            _completedQuests.Remove(questId);
     }
 
     public void SetCompletedSpecialOrder(string orderId, bool completed)
     {
         if (completed)
-            _specialOrders.Add(orderId);
+            _completedSpecialOrders.Add(orderId);
         else
-            _specialOrders.Remove(orderId);
+            _completedSpecialOrders.Remove(orderId);
     }
 
-    public bool HasCompletedQuest(string questId) => _quests.Contains(questId);
+    public bool HasCompletedQuest(string questId) => _completedQuests.Contains(questId);
 
-    public bool HasCompletedSpecialOrder(string orderId) => _specialOrders.Contains(orderId);
+    public bool HasCompletedSpecialOrder(string orderId) => _completedSpecialOrders.Contains(orderId);
+
+    public bool HasQuestInLog(string questId) => _questLog.Contains(questId);
+
+    public bool CompleteQuest(string questId) => _completedQuests.Add(questId);
+
+    public bool UncompleteQuest(string questId) => _completedQuests.Remove(questId);
+
+    public bool MarkSpecialOrderCompleted(string orderId) => _completedSpecialOrders.Add(orderId);
+
+    public bool UnmarkSpecialOrderCompleted(string orderId) => _completedSpecialOrders.Remove(orderId);
+
+    public void AddQuest(string questId) => _questLog.Add(questId);
+
+    public bool RemoveQuest(string questId) => _questLog.Remove(questId);
+
+    public bool AddSpecialOrder(string orderId) => true;
+
+    public bool RemoveSpecialOrder(string orderId) => true;
 }
+
 
 internal sealed class FakeUnlockFactsProvider : IUnlockFactsProvider
 {

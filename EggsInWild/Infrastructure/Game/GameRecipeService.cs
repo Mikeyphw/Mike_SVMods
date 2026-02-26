@@ -4,6 +4,24 @@ namespace EggsInWild.Infrastructure.Game;
 
 public sealed class GameRecipeService : IGameRecipeService
 {
+    public bool HasCraftingRecipe(string recipeName)
+    {
+        if (string.IsNullOrWhiteSpace(recipeName))
+            return false;
+
+        var player = Game1.player;
+        return player is not null && player.craftingRecipes.ContainsKey(recipeName);
+    }
+
+    public bool HasCookingRecipe(string recipeName)
+    {
+        if (string.IsNullOrWhiteSpace(recipeName))
+            return false;
+
+        var player = Game1.player;
+        return player is not null && player.cookingRecipes.ContainsKey(recipeName);
+    }
+
     public bool EnsureCraftingRecipeLearned(string recipeName)
     {
         if (string.IsNullOrWhiteSpace(recipeName))

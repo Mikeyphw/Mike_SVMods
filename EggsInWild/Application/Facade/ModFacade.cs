@@ -127,6 +127,23 @@ public sealed class ModFacade : IModFacade
         return new FacadeResult(true, msg);
     }
 
+
+    public FacadeResult PreviewStepEffects(ProgressionStep step)
+    {
+        if (_progression is null)
+            return new FacadeResult(false, "Progression service unavailable.");
+
+        if (!_isWorldReady())
+            return new FacadeResult(false, "World not ready.");
+
+        if (!_isMainPlayer())
+            return new FacadeResult(false, "Host-only.");
+
+        var text = _progression.PreviewStepEffects(step);
+        return new FacadeResult(true, text);
+    }
+
+
     public FacadeResult TryRunSpawnPlanNow()
     {
         if (_spawner is null)

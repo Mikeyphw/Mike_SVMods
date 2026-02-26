@@ -8,3 +8,6 @@
 - [ ] Expand the step effects catalog to include any progression-gated quests, special orders, items, and recipes beyond mail.
 - [ ] Add automated tests for ledger reconciliation (forward/backward step forcing).
 
+## Progression console command effects
+- [ ] Consider adding `--json` output option for effects preview.
+- [ ] Consider previewing quest completion-day adjustments in output.

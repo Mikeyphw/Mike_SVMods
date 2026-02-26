@@ -14,8 +14,9 @@ public sealed class ProgressionEffectsLedger
 
     public HashSet<string> MailReceived { get; set; } = new(StringComparer.Ordinal);
     public HashSet<string> MailForTomorrow { get; set; } = new(StringComparer.Ordinal);
-    public HashSet<string> Quests { get; set; } = new(StringComparer.Ordinal);
-    public HashSet<string> SpecialOrders { get; set; } = new(StringComparer.Ordinal);
+    public HashSet<string> ActiveQuests { get; set; } = new(StringComparer.Ordinal);
+    public HashSet<string> CompletedQuests { get; set; } = new(StringComparer.Ordinal);
+    public HashSet<string> CompletedSpecialOrders { get; set; } = new(StringComparer.Ordinal);
     public HashSet<string> CraftingRecipes { get; set; } = new(StringComparer.Ordinal);
     public HashSet<string> CookingRecipes { get; set; } = new(StringComparer.Ordinal);
 

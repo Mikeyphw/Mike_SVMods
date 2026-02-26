@@ -20,6 +20,8 @@ public interface IModFacade
 
     FacadeResult TrySetProgressionStep(ProgressionStep step, bool applySideEffects, string reason);
 
+    FacadeResult PreviewStepEffects(ProgressionStep step);
+
     FacadeResult TryPlaceItem(string locationName, string qualifiedItemId, int count, int maxAttempts);
 
     FacadeResult TryRunSpawnPlanNow();

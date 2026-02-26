@@ -31,3 +31,9 @@
 4. Extend game service abstractions to support removals required by reconciliation.
 5. Update command help text to document the new semantics.
 
+## Phase 9 — Progression console command effects
+1. Expand progression step-effects catalog to include cumulative quests, special orders, and crafting recipes.
+2. Ensure `wegg step set ... --effects` applies effects cumulatively and reconciles on rollback.
+3. Add `wegg step effects preview <step>` command to show add/remove diff.
+4. Keep effects rollback-safe by tracking only command-granted state in player modData ledger.
+5. Update tests to reflect new service capabilities.

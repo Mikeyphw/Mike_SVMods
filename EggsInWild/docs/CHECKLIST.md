@@ -26,3 +26,8 @@
 - [x] Extend game service abstractions to support removals required by reconciliation.
 - [x] Update command help text to document the new semantics.
 
+## Progression console command effects
+- [x] Cumulative step-effects include mail, quests, special orders, and crafting recipes.
+- [x] Rollback-safe reconcile removes only ledger-granted state.
+- [x] Add preview command: `wegg step effects preview <step>`.
+- [x] Update test doubles for new service APIs.

@@ -105,6 +105,17 @@ public sealed class ProgressionService
     }
 
 
+
+    public string PreviewStepEffects(ProgressionStep step)
+    {
+        EnsureInitialized();
+
+        var config = _config.Get();
+        var from = _data.Step;
+
+        return ProgressionSideEffects.PreviewTransition(from, step, _mail, _quests, _recipes, config);
+    }
+
     /// <summary>Force progression to a specific step. Intended for host-only console commands.</summary>
     public bool TryForceSetStep(
         ProgressionStep step,
@@ -151,7 +162,7 @@ public sealed class ProgressionService
         _data.LastStepAdvanceDay = facts.DayNumber;
 
         if (applySideEffects)
-            ProgressionSideEffects.ApplyTransition(from, step, _mail, _quests, _recipes, config);
+            ProgressionSideEffects.ApplyTransition(from, step, _mail, _quests, _recipes, _data, facts.DayNumber, config);
 
         _invalidateAssets();
         StepChanged?.Invoke(step);

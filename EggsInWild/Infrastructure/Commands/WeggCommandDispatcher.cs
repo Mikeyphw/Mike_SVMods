@@ -48,6 +48,7 @@ public sealed class WeggCommandDispatcher
         {
             "get" => new CommandResult(true, T("command.wegg.step.get", "ProgressionStep={0}", _facade.GetProgressionStep())),
             "set" => HandleStepSet(args),
+            "effects" => HandleStepEffects(args),
             _ => new CommandResult(false, $"{T("command.wegg.error.step.unknown", "Unknown step subcommand '{0}'.", args[1])}\n\n{HelpText()}"),
         };
     }
@@ -223,6 +224,7 @@ public sealed class WeggCommandDispatcher
             "  wegg reload",
             "  wegg step get",
             "  wegg step set <PartI|PartII|PartIII|PartIV|PartV|PartVI> [--effects]",
+            "  wegg step effects preview <PartI|PartII|PartIII|PartIV|PartV|PartVI>",
             "  wegg progression eval",
             "  wegg spawn now",
             "  wegg spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]",
