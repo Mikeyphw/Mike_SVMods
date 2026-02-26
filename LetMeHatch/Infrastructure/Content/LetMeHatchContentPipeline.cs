@@ -64,6 +64,7 @@ public static class LetMeHatchContentPipeline
     private static IEnumerable<IAssetLoader> CreateLoaders(ModAssetHandler assetHandler, LmhApplicationServices app)
     {
         yield return new ClonedEggsAssetLoader(assetHandler, app.AssetLoads);
+        yield return new DynamicCloneObjectTextureLoader(ModEntry.ModManifestInstance.UniqueID);
     }
 
     private static IEnumerable<EditorRegistration> CreateEditors(LmhApplicationServices app)
