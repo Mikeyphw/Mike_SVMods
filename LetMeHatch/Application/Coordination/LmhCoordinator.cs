@@ -322,20 +322,20 @@ public void DebugCloneTexturePreview(string cloneId)
 {
     if (string.IsNullOrWhiteSpace(cloneId))
     {
-        _log.Info("[clone texture preview] Usage: lmh_clone_texture_preview <cloneId>");
-        return;
+        _log.Log("[clone texture preview] Usage: lmh_clone_texture_preview <cloneId>", LogLevel.Info);
+return;
     }
 
     if (!Core.Cloning.CloneIdService.TryParseCloneId(cloneId, out _, out var originalItemId, out _))
     {
-        _log.Warn($"[clone texture preview] Not a recognized clone id: {cloneId}");
-        return;
+        _log.Log($"[clone texture preview] Not a recognized clone id: {cloneId}", LogLevel.Warn);
+return;
     }
 
     if (!StardewValley.Game1.objectData.TryGetValue(originalItemId, out var original))
     {
-        _log.Warn($"[clone texture preview] Original object not found: {originalItemId}");
-        return;
+        _log.Log($"[clone texture preview] Original object not found: {originalItemId}", LogLevel.Warn);
+return;
     }
 
     StardewValley.Game1.objectData.TryGetValue(cloneId, out var cloneData);
@@ -346,10 +346,10 @@ public void DebugCloneTexturePreview(string cloneId)
 
     var assetKey = $"Mods/{ModEntry.ModManifestInstance.UniqueID}/Objects/Clones/{cloneId}";
 
-    _log.Info($"[clone texture preview] cloneId={cloneId}");
-    _log.Info($"[clone texture preview] originalItemId={originalItemId} name={original.DisplayName ?? original.Name}");
-    _log.Info($"[clone texture preview] dynamicEnabled={ModEntry.Config.UseDynamicCloneTextures} tint={color}");
-    _log.Info($"[clone texture preview] assetKey={assetKey}");
+    _log.Log($"[clone texture preview] cloneId={cloneId}", LogLevel.Info);
+_log.Log($"[clone texture preview] originalItemId={originalItemId} name={original.DisplayName ?? original.Name}", LogLevel.Info);
+_log.Log($"[clone texture preview] dynamicEnabled={ModEntry.Config.UseDynamicCloneTextures} tint={color}", LogLevel.Info);
+_log.Log($"[clone texture preview] assetKey={assetKey}", LogLevel.Info);
 }
 
 }
