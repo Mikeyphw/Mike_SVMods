@@ -48,3 +48,11 @@
 - [x] Add unit tests under `LetMeHatch.Core.Tests`.
 - [x] Wire default implementations in composition root (still unused).
 - [x] `dotnet build` remains green.
+
+
+### Phase 3 — Minimal ObjectData builder (no wiring)
+- [x] Implement Core `CloneObjectDataBuilder` (whitelist-copy blueprint).
+- [x] Update Core request/response models to support whitelist-copy.
+- [x] Add unit tests under `LetMeHatch.Core.Tests`.
+- [x] Keep runtime cloning untouched.
+- [x] `dotnet build` remains green.

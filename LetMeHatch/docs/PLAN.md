@@ -52,8 +52,11 @@
 ## Phase 2 — Deterministic color resolver + clone plan builder (still not used)
 (Planned)
 
-## Phase 3 — Minimal ObjectData builder + dual-path cloning (flagged)
-(Planned)
+## Phase 3 — Minimal ObjectData builder (no wiring)
+1. Implement Core `CloneObjectDataBuilder` (whitelist-copy blueprint).
+2. Add unit tests under `LetMeHatch.Core.Tests`.
+3. Keep runtime cloning untouched.
+4. Ensure `dotnet build` succeeds after applying this phase.
 
 ## Phase 4 — Dynamic per-item clone texture loader (flagged)
 (Planned)

@@ -24,6 +24,8 @@
     <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\IColorResolver.cs" Link="Core\ClonePipeline\IColorResolver.cs" />
     <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\ColorResolver.cs" Link="Core\ClonePipeline\ColorResolver.cs" />
     <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\ClonePlanBuilder.cs" Link="Core\ClonePipeline\ClonePlanBuilder.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\ICloneObjectDataBuilder.cs" Link="Core\ClonePipeline\ICloneObjectDataBuilder.cs" />
+    <Compile Include="..\..\LetMeHatch\Core\ClonePipeline\CloneObjectDataBuilder.cs" Link="Core\ClonePipeline\CloneObjectDataBuilder.cs" />
     <Compile Include="..\..\LetMeHatch\Infrastructure\Cloning\ICloneTextureBookkeeper.cs" Link="Infrastructure\Cloning\ICloneTextureBookkeeper.cs" />
     <Compile Include="..\..\LetMeHatch\Infrastructure\Cloning\CloneTextureBookkeeper.cs" Link="Infrastructure\Cloning\CloneTextureBookkeeper.cs" />
     <Compile Include="..\..\LetMeHatch\Cloning\IAnimalCloner.cs" Link="Cloning\IAnimalCloner.cs" />
