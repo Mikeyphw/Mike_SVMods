@@ -1,45 +1,32 @@
-# PLAN — GMCM Menu (LetMeHatch)
+# LetMeHatch Plan
 
-## Scope
-- Subdir: `LetMeHatch`
-- Dependency: NestCore Phase 1 (host helper). Dynamic editor work depends on NestCore Phase 5.
+## Phase 1 — Scaffolding + contracts
+- Clone pipeline contracts and config toggle.
 
-## Phase 0 — Keep docs in sync
-1. Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
-2. Keep all debug/diagnostics options on GMCM page id `debug` only.
-3. Keep option IDs stable forever (translation keys and field IDs depend on this).
+## Phase 2 — Deterministic color resolver + clone plan builder
+- Core ColorResolver + ClonePlanBuilder + tests.
 
-## Phase 3 — Baseline GMCM menu via NestCore host + DSL
-1. Remove/retire legacy GMCM UI plumbing in favor of NestCore host + DSL.
-2. Wire `GmcmConfigHost` in `GameLaunched`; if GMCM missing, return.
-3. Build pages: `root`, `cloning`, `colors`, `breeding`, `advanced`, `debug`.
-4. Bind scalar options with stable `optionId`s; put all logging/show-debug toggles on `debug`.
-5. Add i18n keys under `config.*`; use `onSaved` only if cache refresh is needed.
+## Phase 3 — ObjectData blueprint builder
+- Minimal whitelist blueprint + tests.
 
-## Phase 7A — Dynamic per-pack/per-animal toggles (low risk)
-1. Add page `edits` populated from LMH’s known sources (packs/animal keys).
-2. Render one toggle per entry with custom label funcs (friendly name fallback to key).
-3. Use default-vs-override dictionary storage (remove key when equals default).
-4. Rebuild on `SaveLoaded` so dynamic sources are available.
-5. Keep option IDs stable using NestCore dynamic ID helper.
+## Phase 4 — FarmAnimals clone-plan adapter
+- Adapter to build ClonePlanBuildRequest from Data/FarmAnimals.
 
-## Phase 7B — Egg color controls (medium risk)
-1. Keep scalar toggles on `colors` page (`ChangeEggColors`, `LinkAnimalColorToEgg`).
-2. Add page `eggPalette` to control which color families are allowed when LMH randomizes colors per **egg item** (dictionary `EggColors[eggId][colorFamily]`).
-3. Add page `eggColorOverrides` to optionally force a fixed color per **egg item** (dictionary `EggColors_ColorObject[eggId]`), using GMCM Options color picker when available (falls back to native GMCM).
-4. Keep UI bounded: enumerate egg items from `Data/FarmAnimals` + `Data/Objects` and fall back to config keys if those assets aren’t available.
-5. Use stable element IDs derived from eggId + color key via `GmcmDynamicIds`.
+## Phase 5 — Wire plan + blueprint into cloning (flagged)
+- Use plan-driven clone enumeration behind flag.
+- Blueprint mapping into ObjectData (no deep clone).
 
-## Phase 7C — ItemToClone editor (highest risk; bounded UI)
-1. Add page `itemMappings` limited to curated/known animal relation order.
-2. Use dropdowns for known choices + a “Custom” fallback text entry.
-3. Keep allowed-values lists curated (avoid huge item catalogs).
-4. Validate and normalize mapping data before saving.
-5. Preserve config-file editing as an escape hatch.
+## Phase 6 — Dynamic per-clone texture loader (flagged)
+- Asset loader serves Mods/<UniqueId>/Objects/Clones/<cloneId> textures.
 
-## Phase 7 — Wire dynamic textures + preview + cache invalidation + remove legacy
-1. Route all cloned items to `Mods/<UniqueId>/Objects/Clones/<cloneId>` and set `SpriteIndex = 0`.
-2. Add console preview command: `lmh_clone_texture_preview <cloneId>`.
-3. Clear dynamic texture cache on SaveLoaded and on content invalidation.
-4. Remove legacy cloned-items sheet loader from the content pipeline.
-5. Build must remain green.
+## Phase 7 — Wire dynamic textures + preview + cache invalidation + remove legacy loader
+- Route cloned items to dynamic asset key, SpriteIndex=0.
+- Add preview + cache helpers.
+- Remove legacy loader from pipeline.
+
+## Phase 8 — Finalize migration + expand coverage
+1. Remove legacy cloned-items sheet plumbing (asset-load hook + adapter + legacy handler).
+2. Route fertilized eggs through dynamic texture assets (SpriteIndex=0).
+3. Implement tint precedence: config override → clone CustomFields hex → tag fallback.
+4. Add cache clear/dump commands and enhance preview with source texture + crop rect.
+5. Remove legacy sheet assets/files.
