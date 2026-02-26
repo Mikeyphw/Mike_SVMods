@@ -56,3 +56,5 @@
 - [x] Add unit tests under `LetMeHatch.Core.Tests`.
 - [x] Keep runtime cloning untouched.
 - [x] `dotnet build` remains green.
+
+- [x] Expand clone object-data blueprint fields (DisplayName/Type/ArtifactSpotChances + numeric overrides).

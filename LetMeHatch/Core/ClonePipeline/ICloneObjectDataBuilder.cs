@@ -23,7 +23,10 @@ public sealed record CloneObjectDataSource(
     IReadOnlyList<string>? ContextTags = null,
     IReadOnlyDictionary<string, string>? CustomFields = null,
     string? TextureAssetName = null,
-    int SpriteIndex = 0
+    int SpriteIndex = 0,
+    string? DisplayName = null,
+    string? Type = null,
+    IReadOnlyDictionary<string, float>? ArtifactSpotChances = null
 );
 
 /// <summary>
@@ -31,7 +34,13 @@ public sealed record CloneObjectDataSource(
 /// </summary>
 public sealed record CloneObjectDataOverrides(
     string? Name = null,
+    string? DisplayName = null,
     string? Description = null,
+    int? Price = null,
+    int? Edibility = null,
+    int? Category = null,
+    string? Type = null,
+    IReadOnlyDictionary<string, float>? ArtifactSpotChances = null,
     string? TextureAssetName = null,
     int? SpriteIndex = null,
     IReadOnlyList<string>? AdditionalContextTags = null,
@@ -50,10 +59,13 @@ public sealed record CloneObjectDataRequest(
 public sealed record CloneObjectData(
     string Id,
     string Name,
+    string DisplayName,
     string Description,
     int Price,
     int Edibility,
     int Category,
+    string? Type,
+    IReadOnlyDictionary<string, float>? ArtifactSpotChances,
     IReadOnlyList<string> ContextTags,
     IReadOnlyDictionary<string, string> CustomFields,
     string TextureAssetName,

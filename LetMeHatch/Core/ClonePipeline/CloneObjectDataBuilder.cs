@@ -18,7 +18,15 @@ public sealed class CloneObjectDataBuilder : ICloneObjectDataBuilder
         var o = request.Overrides;
 
         var name = o?.Name ?? request.Source.Name;
+        var displayName = o?.DisplayName ?? request.Source.DisplayName ?? name;
         var description = o?.Description ?? request.Source.Description;
+
+        var price = o?.Price ?? request.Source.Price;
+        var edibility = o?.Edibility ?? request.Source.Edibility;
+        var category = o?.Category ?? request.Source.Category;
+
+        var type = o?.Type ?? request.Source.Type;
+        var artifactSpotChances = o?.ArtifactSpotChances ?? request.Source.ArtifactSpotChances;
 
         var texture = o?.TextureAssetName ?? request.Source.TextureAssetName ?? string.Empty;
         var spriteIndex = o?.SpriteIndex ?? request.Source.SpriteIndex;
@@ -29,10 +37,13 @@ public sealed class CloneObjectDataBuilder : ICloneObjectDataBuilder
         return new CloneObjectData(
             Id: request.Spec.CloneItemId,
             Name: name,
+            DisplayName: displayName,
             Description: description,
-            Price: request.Source.Price,
-            Edibility: request.Source.Edibility,
-            Category: request.Source.Category,
+            Price: price,
+            Edibility: edibility,
+            Category: category,
+            Type: type,
+            ArtifactSpotChances: artifactSpotChances,
             ContextTags: tags,
             CustomFields: fields,
             TextureAssetName: texture,

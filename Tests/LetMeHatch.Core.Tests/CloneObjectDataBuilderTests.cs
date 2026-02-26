@@ -28,12 +28,17 @@ public sealed class CloneObjectDataBuilderTests
             Category: -5,
             ContextTags: new[] { "egg", "color_white" },
             CustomFields: new Dictionary<string, string> { ["originalEgg"] = "176" },
-            TextureAssetName: "Maps\\springobjects",
-            SpriteIndex: 176
+            TextureAssetName: "Maps\springobjects",
+            SpriteIndex: 176,
+            DisplayName: "Egg",
+            Type: "Egg",
+            ArtifactSpotChances: new Dictionary<string, float> { ["(O)114"] = 0.5f }
         );
 
         var overrides = new CloneObjectDataOverrides(
             Name: "Chicken Egg",
+            DisplayName: "Egg: Chicken",
+            Price: 65,
             AdditionalContextTags: new[] { "cloned_egg" },
             AdditionalCustomFields: new Dictionary<string, string> { ["animal"] = "Chicken" }
         );
@@ -43,10 +48,15 @@ public sealed class CloneObjectDataBuilderTests
 
         Assert.Equal(spec.CloneItemId, result.Id);
         Assert.Equal("Chicken Egg", result.Name);
+        Assert.Equal("Egg: Chicken", result.DisplayName);
         Assert.Equal(source.Description, result.Description);
-        Assert.Equal(source.Price, result.Price);
+        Assert.Equal(65, result.Price);
         Assert.Equal(source.Edibility, result.Edibility);
         Assert.Equal(source.Category, result.Category);
+        Assert.Equal(source.Type, result.Type);
+        Assert.NotNull(result.ArtifactSpotChances);
+        Assert.Equal(0.5f, result.ArtifactSpotChances!["(O)114"]);
+
         Assert.Contains("cloned_egg", result.ContextTags);
         Assert.Contains("egg", result.ContextTags);
         Assert.Equal("Chicken", result.CustomFields["animal"]);
