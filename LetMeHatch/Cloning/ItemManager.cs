@@ -1,3 +1,4 @@
+using System;
 using System.Text.RegularExpressions;
 using LetMeHatch.GameAssetManagement;
 using LetMeHatch.Breeding;
@@ -5,6 +6,7 @@ using LetMeHatch.Config;
 using LetMeHatch.Framework;
 using LetMeHatch.Helpers;
 using LetMeHatch.Models;
+using LetMeHatch.Core.ClonePipeline;
 using StardewModdingAPI;
 using Microsoft.Xna.Framework;
 using StardewValley;
@@ -74,6 +76,12 @@ namespace LetMeHatch.Cloning
         {
             foreach (var cloneItemType in AnimalItemRelationsManager.GetCloneItemTypes())
             {
+                if (cloneItemType == CloneItemType.Egg && ModEntry.Config.UseDynamicCloneTextures)
+                {
+                    CloneEggsFromFarmAnimalProducePlan();
+                    continue;
+                }
+
                 CloneEggsFromGame(cloneItemType);
             }
         }
@@ -187,7 +195,15 @@ namespace LetMeHatch.Cloning
                 color = _savedColors.ItemColors[animalKey];
             }
             var originalItemData = Game1.objectData[originalItemID];
-            var clonedItemData = originalItemData.CloneOrDeepClone(true)!;
+            ObjectData clonedItemData;
+            if (ModEntry.Config.UseDynamicCloneTextures)
+            {
+                clonedItemData = CreateCloneFromBlueprint(animalKey, originalItemID, itemType, cloneItemType, originalItemData);
+            }
+            else
+            {
+                clonedItemData = originalItemData.CloneOrDeepClone(true)!;
+            }
             SetItemDataProperties(
                 clonedItemData,
                 originalItemData,
