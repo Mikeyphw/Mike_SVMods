@@ -85,6 +85,99 @@ namespace LetMeHatch.Cloning
                 CloneEggsFromGame(cloneItemType);
             }
         }
+        private void CloneEggsFromFarmAnimalProducePlan()
+        {
+            var gameFarmAnimaldata = Game1.farmAnimalData;
+
+            var snapshot = new Dictionary<string, FarmAnimalProduceLists>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in gameFarmAnimaldata)
+            {
+                var animalKey = kvp.Key;
+                var animal = kvp.Value;
+
+                var produce = new List<string>();
+                if (animal.ProduceItemIds is not null)
+                {
+                    foreach (var p in animal.ProduceItemIds)
+                    {
+                        if (!string.IsNullOrWhiteSpace(p?.ItemId))
+                            produce.Add(p.ItemId);
+                    }
+                }
+
+                var deluxe = new List<string>();
+                if (animal.DeluxeProduceItemIds is not null)
+                {
+                    foreach (var p in animal.DeluxeProduceItemIds)
+                    {
+                        if (!string.IsNullOrWhiteSpace(p?.ItemId))
+                            deluxe.Add(p.ItemId);
+                    }
+                }
+
+                snapshot[animalKey] = new FarmAnimalProduceLists(produce, deluxe);
+            }
+
+            var request = new ClonePlanBuildRequest(ModEntry.ModManifestInstance.UniqueID, snapshot);
+            var plan = new ClonePlanBuilder().Build(request);
+
+            foreach (var spec in plan)
+            {
+                if (!gameFarmAnimaldata.TryGetValue(spec.AnimalKey, out var animalData))
+                    continue;
+
+                if (!Game1.objectData.TryGetValue(spec.OriginalItemId, out var originalItemData))
+                    continue;
+
+                var isEggLike = false;
+
+                if (!string.IsNullOrWhiteSpace(originalItemData.Name) &&
+                    originalItemData.Name.Contains("egg", StringComparison.OrdinalIgnoreCase))
+                {
+                    isEggLike = true;
+                }
+                else if (!string.IsNullOrWhiteSpace(originalItemData.DisplayName) &&
+                         originalItemData.DisplayName.Contains("egg", StringComparison.OrdinalIgnoreCase))
+                {
+                    isEggLike = true;
+                }
+                else if (originalItemData.ContextTags is not null)
+                {
+                    foreach (var tag in originalItemData.ContextTags)
+                    {
+                        if (!string.IsNullOrWhiteSpace(tag) &&
+                            tag.Contains("egg", StringComparison.OrdinalIgnoreCase))
+                        {
+                            isEggLike = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isEggLike)
+                    continue;
+
+                animalData.CustomFields ??= new();
+                animalData.ProduceItemIds ??= new();
+                animalData.DeluxeProduceItemIds ??= new();
+                animalData.CustomFields[$"Cloned{CloneItemType.Egg}s"] = "";
+
+                _itemsToAdd.TryAdd(spec.AnimalKey, new());
+                _itemsToAdd[spec.AnimalKey].TryAdd(CloneItemType.Egg, new Dictionary<string, ObjectData>());
+
+                var kv = CreateClonedItemData(
+                    spec.AnimalKey,
+                    spec.OriginalItemId,
+                    spec.ItemType,
+                    animalData,
+                    gameFarmAnimaldata,
+                    CloneItemType.Egg
+                );
+
+                _itemsToAdd[spec.AnimalKey][CloneItemType.Egg][kv.Key] = kv.Value;
+            }
+        }
+
 
         public void CloneEggsFromGame(CloneItemType cloneItemType)
         {
@@ -164,6 +257,62 @@ namespace LetMeHatch.Cloning
 
             return clonedItems;
         }
+
+        private ObjectData CreateCloneFromBlueprint(
+            string animalKey,
+            string originalItemId,
+            ItemType itemType,
+            CloneItemType cloneItemType,
+            ObjectData originalItemData)
+        {
+            var cloneItemId = _cloningHelper.GetClonedItemID(animalKey, originalItemId, cloneItemType, itemType);
+
+            var spec = new CloneSpec(
+                AnimalKey: animalKey,
+                OriginalItemId: originalItemId,
+                CloneItemId: cloneItemId,
+                CloneItemType: cloneItemType,
+                ItemType: itemType,
+                IsFertilized: false,
+                ColorSeedKey: $"{animalKey}:{originalItemId}:{cloneItemType}:{itemType}"
+            );
+
+            var source = new CloneObjectDataSource(
+                Name: originalItemData.Name,
+                Description: originalItemData.Description,
+                Price: originalItemData.Price,
+                Edibility: originalItemData.Edibility,
+                Category: originalItemData.Category,
+                ContextTags: originalItemData.ContextTags,
+                CustomFields: originalItemData.CustomFields,
+                TextureAssetName: originalItemData.Texture,
+                SpriteIndex: originalItemData.SpriteIndex,
+                DisplayName: originalItemData.DisplayName,
+                Type: originalItemData.Type,
+                ArtifactSpotChances: originalItemData.ArtifactSpotChances
+            );
+
+            var blueprint = new CloneObjectDataBuilder().Build(new CloneObjectDataRequest(spec, source));
+
+            return new ObjectData
+            {
+                Name = blueprint.Name,
+                DisplayName = blueprint.DisplayName,
+                Description = blueprint.Description,
+                Price = blueprint.Price,
+                Edibility = blueprint.Edibility,
+                Category = blueprint.Category,
+                Type = blueprint.Type,
+                ArtifactSpotChances = blueprint.ArtifactSpotChances is null
+                    ? null
+                    : new Dictionary<string, float>(blueprint.ArtifactSpotChances),
+                ContextTags = blueprint.ContextTags.ToList(),
+                CustomFields = blueprint.CustomFields.ToDictionary(k => k.Key, v => v.Value),
+                Texture = blueprint.TextureAssetName,
+                SpriteIndex = blueprint.SpriteIndex
+            };
+        }
+
 
         private KeyValuePair<string, ObjectData> CreateClonedItemData(
             string animalKey,
