@@ -1078,11 +1078,6 @@ private static string BuildMaleEggsParagraph(I18TranslationHelper i18n, Breeding
 
         return new string(chars).Trim('_');
     }
-        catch
-        {
-            return fallback;
-        }
-    }
 
     private sealed record EggOption(string Id, string Label);
     private sealed record AnimalOption(string Key, string Label);

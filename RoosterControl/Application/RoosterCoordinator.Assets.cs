@@ -41,8 +41,8 @@ internal sealed partial class RoosterCoordinator
                 {
                     ctx._fertilizedEggsEditor ??= new FertilizedEggsAssetEditor(
                         roosterHelper: ctx.RoosterHelper,
-                        getFertilizedNameSuffix: () => ctx.Helper.Translation.Get("egg.fertilized.name"),
-                        getFertilizedDescription: () => ctx.Helper.Translation.Get("egg.fertilized.description"),
+                        getFertilizedNameSuffix: () => ctx._i18n.GetString("egg.fertilized.name"),
+                        getFertilizedDescription: () => ctx._i18n.GetString("egg.fertilized.description"),
                         cloneEggsEnabled: ctx.GetHatchApiCloneEggsOption,
                         includeMearasEggs: true
                     );

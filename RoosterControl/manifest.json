@@ -7,6 +7,7 @@
   "MinimumApiVersion": "2.5",
   "UpdateKeys": ["22555"],
   "Dependencies": [
+    { "UniqueID": "Mikew.nestcore", "IsRequired": true },
     { "UniqueID": "Meara.Roosters", "IsRequired": true },
     { "UniqueID": "Mikew.letmehatch.smapi", "IsRequired": false },
     { "UniqueID": "6480.blueegg", "IsRequired": false }

@@ -238,8 +238,8 @@ namespace LetMeHatch.GameAssetManagement
         private string GetBirthText(FarmAnimalData animal)
         {
             return ModEntry.Config.AlternateBirthText
-                ? $"{ModEntry.HelperInstance?.Translation.Get("message.fullbirthtext")}: {animal.DisplayName}!"
-                : $"{ModEntry.HelperInstance?.Translation.Get("message.new")} {animal.DisplayName} {ModEntry.HelperInstance?.Translation.Get("message.hatched")}!";
+                ? $"{ModEntry.TranslationHelper.GetString("message.fullbirthtext")}: {animal.DisplayName}!"
+                : $"{ModEntry.TranslationHelper.GetString("message.new")} {animal.DisplayName} {ModEntry.TranslationHelper.GetString("message.hatched")}!";
         }
 
         private bool GetBirthTextCondition(

@@ -54,6 +54,11 @@ internal sealed class ModEntry : Mod
             "Print NestCore runtime status.",
             (_, _) => PrintStatus()
         );
+        helper.ConsoleCommands.Add(
+            "nestcore_i18n_missing_values",
+            "Scan NestCore-dependent mods and print i18n keys with missing/empty values.",
+            (_, _) => PrintI18nMissingValues()
+        );
 
         helper.Events.GameLoop.GameLaunched += OnGameLaunched;
     }
@@ -164,5 +169,34 @@ internal sealed class ModEntry : Mod
             LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"GmcmRegistered={_gmcm is not null}", LogLevel.Info);
         }
     }
-}
 
+    private void PrintI18nMissingValues()
+    {
+        if (_log is null)
+            return;
+
+        var reports = I18TranslationHelper.ScanNestCoreDependentModsForMissingValues(HelperInstance.DirectoryPath);
+        var scanned = reports.Count;
+        var withIssues = reports.Where(r => r.MissingValues.Count > 0).ToList();
+
+        LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"Scanned {scanned} NestCore-dependent mod(s).", LogLevel.Info);
+
+        if (withIssues.Count == 0)
+        {
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, "No missing/empty i18n values found.", LogLevel.Info);
+            return;
+        }
+
+        foreach (var report in withIssues)
+        {
+            LogScopedHelper.Log(
+                _log,
+                ModNestCoreCategory.Runtime,
+                $"[{report.ModName}] ({report.UniqueId}) - {report.MissingValues.Count} i18n issue(s)",
+                LogLevel.Warn);
+
+            foreach (var issue in report.MissingValues)
+                LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"  {issue.Key} -> {issue.Issue}", LogLevel.Warn);
+        }
+    }
+}

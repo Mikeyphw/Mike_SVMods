@@ -16,7 +16,7 @@ internal sealed partial class RoosterCoordinator
             data,
             Config,
             RoosterHelper,
-            Helper.Translation,
+            _i18n,
             ModTextures,
             enableStuckInside: Config.General.EnableStuckInside,
             isStuckInside: isStuckInside,

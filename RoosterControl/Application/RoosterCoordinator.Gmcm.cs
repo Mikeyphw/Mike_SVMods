@@ -254,7 +254,7 @@ internal sealed partial class RoosterCoordinator
         if (string.IsNullOrWhiteSpace(displayName) || string.Equals(displayName, femaleKey, StringComparison.OrdinalIgnoreCase))
             return femaleKey;
 
-        return Helper.Translation.Get("config.females.dynamic.label", new { displayName, femaleKey }).ToString();
+        return _i18n.GetString("config.females.dynamic.label", new { displayName, femaleKey });
     }
 
     private string GetFemaleTooltip(string femaleKey, FemaleAssignmentsPlanResult plan)
@@ -270,7 +270,7 @@ internal sealed partial class RoosterCoordinator
                 large = l;
         }
 
-        return Helper.Translation.Get(
+        return _i18n.GetString(
             "config.females.dynamic.tooltip",
             new
             {
@@ -278,13 +278,13 @@ internal sealed partial class RoosterCoordinator
                 normalEgg = string.IsNullOrWhiteSpace(normal) ? "-" : normal,
                 largeEgg = string.IsNullOrWhiteSpace(large) ? "-" : large
             }
-        ).ToString();
+        );
     }
 
     private string FormatFemaleAssignmentAllowedValue(string raw)
     {
         var key = $"config.females.assignment.allowed.{raw}";
-        return Helper.Translation.Get(key).ToString();
+        return _i18n.GetString(key);
     }
 
 
@@ -461,7 +461,7 @@ internal sealed partial class RoosterCoordinator
 
             b.TextLabel(
                 elementId: $"{pageId}.{(isDeluxe ? "deluxeProduceEntries" : "produceEntries")}.slot{slot}.choice",
-                name: () => Helper.Translation.Get("config.gmcm.slotNumber.format", new { label = Helper.Translation.Get(choiceLabelKey).ToString(), slot }).ToString(),tooltip: () => Helper.Translation.Get(choiceDescKey).ToString(),
+                name: () => _i18n.GetString("config.gmcm.slotNumber.format", new { label = _i18n.GetString(choiceLabelKey), slot }),tooltip: () => _i18n.GetString(choiceDescKey),
                 getValue: () => entry.Choice,
                 setValue: v => entry.Choice = v,
                 allowedValues: ProduceChoiceAllowedValues,
@@ -470,14 +470,14 @@ internal sealed partial class RoosterCoordinator
 
             b.TextLabel(
                 elementId: $"{pageId}.{(isDeluxe ? "deluxeProduceEntries" : "produceEntries")}.slot{slot}.customItemName",
-                name: () => Helper.Translation.Get("config.gmcm.slotNumber.format", new { label = Helper.Translation.Get(customLabelKey).ToString(), slot }).ToString(),tooltip: () => Helper.Translation.Get(customDescKey).ToString(),
+                name: () => _i18n.GetString("config.gmcm.slotNumber.format", new { label = _i18n.GetString(customLabelKey), slot }),tooltip: () => _i18n.GetString(customDescKey),
                 getValue: () => entry.CustomItemName,
                 setValue: v => entry.CustomItemName = v
             );
 
             b.IntLabel(
                 elementId: $"{pageId}.{(isDeluxe ? "deluxeProduceEntries" : "produceEntries")}.slot{slot}.probability",
-                name: () => Helper.Translation.Get("config.gmcm.slotNumber.format", new { label = Helper.Translation.Get(probLabelKey).ToString(), slot }).ToString(),tooltip: () => Helper.Translation.Get(probDescKey).ToString(),
+                name: () => _i18n.GetString("config.gmcm.slotNumber.format", new { label = _i18n.GetString(probLabelKey), slot }),tooltip: () => _i18n.GetString(probDescKey),
                 getValue: () => entry.Probability,
                 setValue: v => entry.Probability = v,
                 min: 0,

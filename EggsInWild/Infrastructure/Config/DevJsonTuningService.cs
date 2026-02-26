@@ -21,7 +21,6 @@ internal sealed class DevJsonTuningService
     private readonly ILog _log;
 
     private SpawnParametersJson? _spawnParameters;
-    private Dictionary<string, TombMonsterDefinitionJson>? _monsterDefinitions;
     private Dictionary<string, SpawnAreaRuleJson>? _spawnAreas;
     private Dictionary<string, LocationPackJson>? _locationPacks;
 
@@ -34,37 +33,127 @@ internal sealed class DevJsonTuningService
     public void BuildSpawnParametersPage(GmcmPageBuilder<ModConfig> page)
     {
         EnsureLoaded();
-        page.Section("ModData/SpawnParameters.json");
+        var spawnParameters = _spawnParameters!;
+        var spawnAreas = _spawnAreas!;
+        var locationPacks = _locationPacks!;
+
+        page.SectionLabel(() => "ModData/SpawnParameters.json");
 
         page.Int(
             optionId: "debug.json.spawn.maxSpawningTries",
-            getValue: () => _spawnParameters!.MaxSpawningTries,
+            getValue: () => spawnParameters.MaxSpawningTries,
             setValue: v => UpdateSpawnParameters(p => p.MaxSpawningTries = Math.Max(0, v)),
             min: 0,
             max: 10000,
             interval: 10
         );
 
+        page.Int(
+            optionId: "debug.json.spawn.maxEggPerMapAny",
+            getValue: () => spawnParameters.MaxEggPerMap_Any,
+            setValue: v => UpdateSpawnParameters(p => p.MaxEggPerMap_Any = Math.Max(0, v)),
+            min: 0,
+            max: 50,
+            interval: 1
+        );
+
+        page.Int(
+            optionId: "debug.json.spawn.maxEggPerMapMagic",
+            getValue: () => spawnParameters.MaxEggPerMap_Magic,
+            setValue: v => UpdateSpawnParameters(p => p.MaxEggPerMap_Magic = Math.Max(0, v)),
+            min: 0,
+            max: 50,
+            interval: 1
+        );
+
+        page.Int(
+            optionId: "debug.json.spawn.maxEggPerMapLarge",
+            getValue: () => spawnParameters.MaxEggPerMap_Large,
+            setValue: v => UpdateSpawnParameters(p => p.MaxEggPerMap_Large = Math.Max(0, v)),
+            min: 0,
+            max: 50,
+            interval: 1
+        );
+
         page.Float(
             optionId: "debug.json.spawn.baseRandomChance",
-            getValue: () => (float)_spawnParameters!.BaseRandomChance,
-            setValue: v => UpdateSpawnParameters(p => p.BaseRandomChance = Math.Clamp(v, 0f, 1f)),
+            getValue: () => (float)spawnParameters.BaseRandomChance,
+            setValue: v => UpdateSpawnParameters(p => p.BaseRandomChance = Math.Clamp((double)v, 0.0, 1.0)),
             min: 0f,
             max: 1f,
             interval: 0.01f
         );
 
         page.Separator(simple: true);
+        page.SectionLabel(() => "SpawnParameters – Parameters_Packs");
 
-        page.Section("ModData/SpawnAreas.json");
-        foreach (var entry in _spawnAreas)
+        var packs = spawnParameters.Parameters_Packs ?? new ParameterPackJson();
+        page.Int("debug.json.spawn.packs.minEggArea", () => packs.MinEggArea,
+            v => UpdateSpawnParameters(p => p.Parameters_Packs!.MinEggArea = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Int("debug.json.spawn.packs.maxEggArea", () => packs.MaxEggArea,
+            v => UpdateSpawnParameters(p => p.Parameters_Packs!.MaxEggArea = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Int("debug.json.spawn.packs.maxEggPack", () => packs.MaxEggPack,
+            v => UpdateSpawnParameters(p => p.Parameters_Packs!.MaxEggPack = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Int("debug.json.spawn.packs.certainEggs", () => packs.CertainEggs,
+            v => UpdateSpawnParameters(p => p.Parameters_Packs!.CertainEggs = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Bool("debug.json.spawn.packs.useJsonValues", () => packs.UseJsonValues,
+            v => UpdateSpawnParameters(p => p.Parameters_Packs!.UseJsonValues = v));
+        page.Int("debug.json.spawn.packs.maxEggsAll", () => packs.MaxEggs_All,
+            v => UpdateSpawnParameters(p => p.Parameters_Packs!.MaxEggs_All = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Int("debug.json.spawn.packs.minEggs", () => packs.MinEggs,
+            v => UpdateSpawnParameters(p => p.Parameters_Packs!.MinEggs = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+
+        page.Separator(simple: true);
+        page.SectionLabel(() => "SpawnParameters – Parameters_Vanilla");
+
+        var vanilla = spawnParameters.Parameters_Vanilla ?? new ParameterPackJson();
+        page.Int("debug.json.spawn.vanilla.minEggArea", () => vanilla.MinEggArea,
+            v => UpdateSpawnParameters(p => p.Parameters_Vanilla!.MinEggArea = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Int("debug.json.spawn.vanilla.maxEggArea", () => vanilla.MaxEggArea,
+            v => UpdateSpawnParameters(p => p.Parameters_Vanilla!.MaxEggArea = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Int("debug.json.spawn.vanilla.maxEggPack", () => vanilla.MaxEggPack,
+            v => UpdateSpawnParameters(p => p.Parameters_Vanilla!.MaxEggPack = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Int("debug.json.spawn.vanilla.certainEggs", () => vanilla.CertainEggs,
+            v => UpdateSpawnParameters(p => p.Parameters_Vanilla!.CertainEggs = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Bool("debug.json.spawn.vanilla.useJsonValues", () => vanilla.UseJsonValues,
+            v => UpdateSpawnParameters(p => p.Parameters_Vanilla!.UseJsonValues = v));
+        page.Int("debug.json.spawn.vanilla.maxEggsAll", () => vanilla.MaxEggs_All,
+            v => UpdateSpawnParameters(p => p.Parameters_Vanilla!.MaxEggs_All = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+        page.Int("debug.json.spawn.vanilla.minEggs", () => vanilla.MinEggs,
+            v => UpdateSpawnParameters(p => p.Parameters_Vanilla!.MinEggs = Math.Max(0, v)), min: 0, max: 999, interval: 1);
+
+        if (spawnParameters.MaxWorldEggs is { Count: > 0 })
+        {
+            page.Separator(simple: true);
+            page.SectionLabel(() => "SpawnParameters – MaxWorldEggs (existing keys)");
+
+            foreach (var key in spawnParameters.MaxWorldEggs.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
+            {
+                var localKey = key;
+                page.Int(
+                    optionId: $"debug.json.spawn.maxWorldEggs.{localKey}",
+                    getValue: () => spawnParameters.MaxWorldEggs.TryGetValue(localKey, out var value) ? value : 0,
+                    setValue: v => UpdateSpawnParameters(p => p.MaxWorldEggs[localKey] = Math.Max(0, v)),
+                    min: 0,
+                    max: 999,
+                    interval: 1
+                );
+            }
+
+            page.ParagraphDynamic(() => "Note: MaxWorldEggs keys are dynamic; labels use raw keys. Edits write to JSON.");
+        }
+
+        page.Separator(simple: true);
+
+        page.SectionLabel(() => "ModData/SpawnAreas.json");
+        foreach (var entry in spawnAreas)
         {
             var key = entry.Key;
             var area = entry.Value;
 
-            page.Int($"debug.json.spawn.areas.{key}.randomChance",
-                getValue: () => area.RandomChance,
-                setValue: v => UpdateSpawnAreas(() => area.RandomChance = Math.Clamp(v, 0f, 1f)),
+            page.Float($"debug.json.spawn.areas.{key}.randomChance",
+                getValue: () => (float)area.RandomChance,
+                setValue: v => UpdateSpawnAreas(() => area.RandomChance = Math.Clamp((double)v, 0.0, 1.0)),
                 min: 0f,
                 max: 1f,
                 interval: 0.01f
@@ -73,15 +162,15 @@ internal sealed class DevJsonTuningService
 
         page.Separator(simple: true);
 
-        page.Section("ModData/LocationPacks.json");
-        foreach (var pack in _locationPacks)
+        page.SectionLabel(() => "ModData/LocationPacks.json");
+        foreach (var pack in locationPacks)
         {
             var packKey = pack.Key;
             var packValue = pack.Value;
 
             page.Int($"debug.json.locationPacks.{packKey}.minSpawnsPerDay",
-                getValue: () => packValue.MinSpawnsPerDay,
-                setValue: v => UpdateLocationPacks(() => packValue.MinSpawnsPerDay = v),
+                getValue: () => packValue.MinimumSpawnsPerDay,
+                setValue: v => UpdateLocationPacks(() => packValue.MinimumSpawnsPerDay = v),
                 min: 0,
                 max: 100,
                 interval: 1
@@ -156,6 +245,14 @@ internal sealed class DevJsonTuningService
         {
             _log.Log($"[DevJson] Failed writing {ModDataPaths.LocationPacks}: {ex}", LogLevel.Warn);
         }
+    }
+
+    public void BuildSpawnChanceModifiersPage(GmcmPageBuilder<ModConfig> page)
+    {
+        page.SectionLabel(() => "Tuning – Egg Spawn Chance");
+        page.Float(cfg => cfg.DebugKnobs.SpawningChanceModifiers.LargeMagic, optionId: "debug.tuning.spawnChance.largeMagic", tooltip: true, min: -1f, max: 1f, interval: 0.01f);
+        page.Float(cfg => cfg.DebugKnobs.SpawningChanceModifiers.LargeWild, optionId: "debug.tuning.spawnChance.largeWild", tooltip: true, min: -1f, max: 1f, interval: 0.01f);
+        page.Float(cfg => cfg.DebugKnobs.SpawningChanceModifiers.Magic, optionId: "debug.tuning.spawnChance.magic", tooltip: true, min: -1f, max: 1f, interval: 0.01f);
     }
 }
 #endif

@@ -40,6 +40,7 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
     private readonly ModEntry _host;
     private readonly ISaveDataStore _saveData;
     private readonly ILog _log;
+    private readonly I18TranslationHelper _i18n;
 
     
 
@@ -99,6 +100,7 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
         _host = host;
         _saveData = saveData;
         _log = new SmapiLog(Monitor);
+        _i18n = new I18TranslationHelper(host.Helper);
         _catalogManager = new CatalogManager(_log);
     }
 

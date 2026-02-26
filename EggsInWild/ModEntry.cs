@@ -43,6 +43,7 @@ public sealed class ModEntry : Mod
     private IModDataLoader? _contentDataLoader;
 
 #if WEGG_DEV
+    private DevJsonTuningService? _devJsonTuning;
     private SpawnParametersJson? _devSpawnParametersJson;
     private Dictionary<string, TombMonsterDefinitionJson>? _devMonsterDefinitionsJson;
 
@@ -134,6 +135,10 @@ public sealed class ModEntry : Mod
             configProvider: _config
         );
 
+#if WEGG_DEV
+        _devJsonTuning = new DevJsonTuningService(Helper, new SmapiLog(Monitor));
+#endif
+
         RebuildGmcmLayout(force: true);
     }
 
@@ -174,7 +179,9 @@ public sealed class ModEntry : Mod
                 root.Link("prices", tooltip: true);
                 root.Link("animalNotes", tooltip: true);
                 root.Link("animalProgression", tooltip: true);
+#if WEGG_DEV
                 root.Link("debug", tooltip: true);
+#endif
             });
 
             layout.Page("desertTomb", page =>
@@ -226,15 +233,27 @@ public sealed class ModEntry : Mod
                 BuildAnimalProgressionPage(page, i18n);
             });
 
+ #if WEGG_DEV
             layout.Page("debug", page =>
             {
                 page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
                 page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
                 page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
-#if WEGG_DEV
-                page.Separator(simple: true);
 
-                page.Section("Tuning – Desert Tomb Generation");
+                page.Separator(simple: true);
+                page.Link("debug_desertTomb", tooltip: true);
+                page.Link("debug_spawning", tooltip: true);
+                page.Link("debug_weighting", tooltip: true);
+                page.Link("debug_monsters", tooltip: true);
+            });
+
+            // ============================
+            // Debug subpages
+            // ============================
+
+            layout.Page("debug_desertTomb", page =>
+            {
+                page.SectionLabel(() => "Tuning – Desert Tomb Generation");
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightingDarkChance, optionId: "debug.tuning.desertTomb.gen.lightingDarkChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightingDarkAltChance, optionId: "debug.tuning.desertTomb.gen.lightingDarkAltChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightingSpecialDarkChance, optionId: "debug.tuning.desertTomb.gen.lightingSpecialDarkChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
@@ -255,7 +274,7 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.Section("Tuning – Desert Tomb Spawning");
+                page.SectionLabel(() => "Tuning – Desert Tomb Spawning");
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Spawning.GuardFraction, optionId: "debug.tuning.desertTomb.spawn.guardFraction", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Spawning.WanderPackChance, optionId: "debug.tuning.desertTomb.spawn.wanderPackChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
 
@@ -271,7 +290,7 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.Section("Tuning – Desert Tomb Population");
+                page.SectionLabel(() => "Tuning – Desert Tomb Population");
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Population.InitialWaveFraction, optionId: "debug.tuning.desertTomb.pop.initialWaveFraction", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Int(cfg => cfg.DebugKnobs.DesertTomb.Population.ReconcileIntervalTicks, optionId: "debug.tuning.desertTomb.pop.reconcileIntervalTicks", tooltip: true, min: 1, max: 600, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.DesertTomb.Population.MaxSpawnsPerTick, optionId: "debug.tuning.desertTomb.pop.maxSpawnsPerTick", tooltip: true, min: 0, max: 50, interval: 1);
@@ -280,7 +299,7 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.Section("Tuning – Desert Tomb Luck / Loot");
+                page.SectionLabel(() => "Tuning – Desert Tomb Luck / Loot");
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.UnluckyDelta, optionId: "debug.tuning.desertTomb.luck.unluckyDelta", tooltip: true, min: -0.05f, max: 0f, interval: 0.0005f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.LuckyDelta, optionId: "debug.tuning.desertTomb.luck.luckyDelta", tooltip: true, min: 0f, max: 0.05f, interval: 0.0005f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.SuperLuckyDelta, optionId: "debug.tuning.desertTomb.luck.superLuckyDelta", tooltip: true, min: 0f, max: 0.5f, interval: 0.001f);
@@ -291,17 +310,19 @@ public sealed class ModEntry : Mod
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.LuckyMax, optionId: "debug.tuning.desertTomb.luck.luckyMax", tooltip: true, min: 0f, max: 0.2f, interval: 0.005f);
 
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Breakables.DropRateMultiplierMax, optionId: "debug.tuning.desertTomb.breakables.dropRateMultiplierMax", tooltip: true, min: 0f, max: 100f, interval: 0.5f);
+            });
+
+            layout.Page("debug_spawning", page =>
+            {
+                _devJsonTuning!.BuildSpawnChanceModifiersPage(page);
 
                 page.Separator(simple: true);
+                _devJsonTuning.BuildSpawnParametersPage(page);
+            });
 
-                page.Section("Tuning – Egg Spawn Chance");
-                page.Float(cfg => cfg.DebugKnobs.SpawningChanceModifiers.LargeMagic, optionId: "debug.tuning.spawnChance.largeMagic", tooltip: true, min: -1f, max: 1f, interval: 0.01f);
-                page.Float(cfg => cfg.DebugKnobs.SpawningChanceModifiers.LargeWild, optionId: "debug.tuning.spawnChance.largeWild", tooltip: true, min: -1f, max: 1f, interval: 0.01f);
-                page.Float(cfg => cfg.DebugKnobs.SpawningChanceModifiers.Magic, optionId: "debug.tuning.spawnChance.magic", tooltip: true, min: -1f, max: 1f, interval: 0.01f);
-
-                page.Separator(simple: true);
-
-                page.Section("Tuning – Economy Weighting");
+            layout.Page("debug_weighting", page =>
+            {
+                page.SectionLabel(() => "Tuning – Economy Weighting");
                 page.Int(cfg => cfg.DebugKnobs.Weighting.HorizonDays, optionId: "debug.tuning.weighting.horizonDays", tooltip: true, min: 1, max: 60, interval: 1);
                 page.Float(cfg => cfg.DebugKnobs.Weighting.DeluxeProbability, optionId: "debug.tuning.weighting.deluxeProbability", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
 
@@ -313,10 +334,11 @@ public sealed class ModEntry : Mod
 
                 page.Float(cfg => cfg.DebugKnobs.Weighting.UnlockedFactor, optionId: "debug.tuning.weighting.unlockedFactor", tooltip: true, min: 0f, max: 2f, interval: 0.01f);
                 page.Float(cfg => cfg.DebugKnobs.Weighting.HiddenNoAnchorPenalty, optionId: "debug.tuning.weighting.hiddenNoAnchorPenalty", tooltip: true, min: 0f, max: 2f, interval: 0.01f);
+            });
 
-                page.Separator(simple: true);
-
-                page.Section("Tuning – Monsters (Pharaoh)");
+            layout.Page("debug_monsters", page =>
+            {
+                page.SectionLabel(() => "Tuning – Monsters (Pharaoh)");
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.VisionTiles, optionId: "debug.tuning.monsters.pharaoh.visionTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.CastRangeTiles, optionId: "debug.tuning.monsters.pharaoh.castRangeTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.RewrapRangeTiles, optionId: "debug.tuning.monsters.pharaoh.rewrapRangeTiles", tooltip: true, min: 0, max: 30, interval: 1);
@@ -343,21 +365,21 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.Section("Tuning – Monsters (Sandi)");
+                page.SectionLabel(() => "Tuning – Monsters (Sandi)");
                 page.Float(cfg => cfg.DebugKnobs.Monsters.Sandi.DiveChanceOnHit, optionId: "debug.tuning.monsters.sandi.diveChanceOnHit", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Sandi.DiveDurationMs, optionId: "debug.tuning.monsters.sandi.diveDurationMs", tooltip: true, min: 0, max: 20000, interval: 50);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Sandi.DiveCooldownMs, optionId: "debug.tuning.monsters.sandi.diveCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
 
                 page.Separator(simple: true);
 
-                page.Section("Tuning – Monsters (Crawler)");
+                page.SectionLabel(() => "Tuning – Monsters (Crawler)");
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Crawler.CurlTriggerDistanceTiles, optionId: "debug.tuning.monsters.crawler.curlTriggerDistanceTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Crawler.CurlDurationMs, optionId: "debug.tuning.monsters.crawler.curlDurationMs", tooltip: true, min: 0, max: 20000, interval: 50);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Crawler.CurlCooldownMs, optionId: "debug.tuning.monsters.crawler.curlCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
 
                 page.Separator(simple: true);
 
-                page.Section("Tuning – Monsters (Hurricane)");
+                page.SectionLabel(() => "Tuning – Monsters (Hurricane)");
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.AlignTiles, optionId: "debug.tuning.monsters.hurricane.alignTiles", tooltip: true, min: 0, max: 60, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.SuckDistanceTiles, optionId: "debug.tuning.monsters.hurricane.suckDistanceTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.SwirlSegmentMs, optionId: "debug.tuning.monsters.hurricane.swirlSegmentMs", tooltip: true, min: 0, max: 20000, interval: 50);
@@ -366,10 +388,15 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                
+                page.SectionLabel(() => "Tuning – Monsters (Matango)");
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.VisionTiles, optionId: "debug.tuning.monsters.matango.visionTiles", tooltip: true, min: 0, max: 30, interval: 1);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.CastWindupMs, optionId: "debug.tuning.monsters.matango.castWindupMs", tooltip: true, min: 0, max: 10000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.RecoverMs, optionId: "debug.tuning.monsters.matango.recoverMs", tooltip: true, min: 0, max: 10000, interval: 50);
+                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.ShotCooldownMs, optionId: "debug.tuning.monsters.matango.shotCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
+
                 page.Separator(simple: true);
 
-                page.Section("JSON – MonsterDefinitions (Dev)");
+                page.SectionLabel(() => "JSON – MonsterDefinitions (Dev)");
                 page.ParagraphDynamic(
                     text: () => "Dev-only: edits assets/DesertTomb/MonsterDefinitions.json directly. Stats/Flags are written immediately. (Tip: restart or reload Tomb content to see changes.)",
                     id: "json_monsters_notice"
@@ -472,125 +499,11 @@ public sealed class ModEntry : Mod
                         fieldId: $"json_monsters_{NormalizeDevJsonKey(monsterKey)}_hostAuthoritative"
                     );
                 }
-
-page.Section("Tuning – Monsters (Matango)");
-                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.VisionTiles, optionId: "debug.tuning.monsters.matango.visionTiles", tooltip: true, min: 0, max: 30, interval: 1);
-                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.CastWindupMs, optionId: "debug.tuning.monsters.matango.castWindupMs", tooltip: true, min: 0, max: 10000, interval: 50);
-                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.RecoverMs, optionId: "debug.tuning.monsters.matango.recoverMs", tooltip: true, min: 0, max: 10000, interval: 50);
-                page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.ShotCooldownMs, optionId: "debug.tuning.monsters.matango.shotCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
-
-                page.Separator(simple: true);
-
-                page.Section("JSON – SpawnParameters (Dev)");
-                page.ParagraphDynamic(
-                    text: () => "Dev-only: these options edit ModData/SpawnParameters.json directly and write changes immediately. You may need to reload (e.g. wegg reload) or restart.",
-                    id: "json_spawn_notice"
-                );
-
-                page.Int("debug.json.spawn.maxSpawningTries",
-                    getValue: () => DevSpawnParameters.MaxSpawningTries,
-                    setValue: v => MutateDevSpawnParameters(p => p.MaxSpawningTries = Math.Max(0, v)),
-                    tooltip: true,
-                    min: 0,
-                    max: 10000,
-                    interval: 10);
-
-                page.Int("debug.json.spawn.maxEggPerMapAny",
-                    getValue: () => DevSpawnParameters.MaxEggPerMap_Any,
-                    setValue: v => MutateDevSpawnParameters(p => p.MaxEggPerMap_Any = Math.Max(0, v)),
-                    tooltip: true,
-                    min: 0,
-                    max: 50,
-                    interval: 1);
-
-                page.Int("debug.json.spawn.maxEggPerMapMagic",
-                    getValue: () => DevSpawnParameters.MaxEggPerMap_Magic,
-                    setValue: v => MutateDevSpawnParameters(p => p.MaxEggPerMap_Magic = Math.Max(0, v)),
-                    tooltip: true,
-                    min: 0,
-                    max: 50,
-                    interval: 1);
-
-                page.Int("debug.json.spawn.maxEggPerMapLarge",
-                    getValue: () => DevSpawnParameters.MaxEggPerMap_Large,
-                    setValue: v => MutateDevSpawnParameters(p => p.MaxEggPerMap_Large = Math.Max(0, v)),
-                    tooltip: true,
-                    min: 0,
-                    max: 50,
-                    interval: 1);
-
-                page.Float("debug.json.spawn.baseRandomChance",
-                    getValue: () => (float)DevSpawnParameters.BaseRandomChance,
-                    setValue: v => MutateDevSpawnParameters(p => p.BaseRandomChance = Math.Clamp((double)v, 0.0, 1.0)),
-                    tooltip: true,
-                    min: 0f,
-                    max: 1f,
-                    interval: 0.01f);
-
-                page.Separator(simple: true);
-                page.Section("SpawnParameters – Parameters_Packs");
-
-                page.Int("debug.json.spawn.packs.minEggArea", () => DevSpawnParameters.Parameters_Packs.MinEggArea,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MinEggArea = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Int("debug.json.spawn.packs.maxEggArea", () => DevSpawnParameters.Parameters_Packs.MaxEggArea,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MaxEggArea = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Int("debug.json.spawn.packs.maxEggPack", () => DevSpawnParameters.Parameters_Packs.MaxEggPack,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MaxEggPack = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Int("debug.json.spawn.packs.certainEggs", () => DevSpawnParameters.Parameters_Packs.CertainEggs,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.CertainEggs = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Bool("debug.json.spawn.packs.useJsonValues", () => DevSpawnParameters.Parameters_Packs.UseJsonValues,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.UseJsonValues = v), tooltip: true);
-                page.Int("debug.json.spawn.packs.maxEggsAll", () => DevSpawnParameters.Parameters_Packs.MaxEggs_All,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MaxEggs_All = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Int("debug.json.spawn.packs.minEggs", () => DevSpawnParameters.Parameters_Packs.MinEggs,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Packs.MinEggs = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-
-                page.Separator(simple: true);
-                page.Section("SpawnParameters – Parameters_Vanilla");
-
-                page.Int("debug.json.spawn.vanilla.minEggArea", () => DevSpawnParameters.Parameters_Vanilla.MinEggArea,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MinEggArea = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Int("debug.json.spawn.vanilla.maxEggArea", () => DevSpawnParameters.Parameters_Vanilla.MaxEggArea,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MaxEggArea = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Int("debug.json.spawn.vanilla.maxEggPack", () => DevSpawnParameters.Parameters_Vanilla.MaxEggPack,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MaxEggPack = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Int("debug.json.spawn.vanilla.certainEggs", () => DevSpawnParameters.Parameters_Vanilla.CertainEggs,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.CertainEggs = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Bool("debug.json.spawn.vanilla.useJsonValues", () => DevSpawnParameters.Parameters_Vanilla.UseJsonValues,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.UseJsonValues = v), tooltip: true);
-                page.Int("debug.json.spawn.vanilla.maxEggsAll", () => DevSpawnParameters.Parameters_Vanilla.MaxEggs_All,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MaxEggs_All = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-                page.Int("debug.json.spawn.vanilla.minEggs", () => DevSpawnParameters.Parameters_Vanilla.MinEggs,
-                    v => MutateDevSpawnParameters(p => p.Parameters_Vanilla.MinEggs = Math.Max(0, v)), tooltip: true, min: 0, max: 999, interval: 1);
-
-                if (DevSpawnParameters.MaxWorldEggs is { Count: > 0 })
-                {
-                    page.Separator(simple: true);
-                    page.Section("SpawnParameters – MaxWorldEggs (existing keys)");
-
-                    foreach (var key in DevSpawnParameters.MaxWorldEggs.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
-                    {
-                        var localKey = key;
-                        page.Int(
-                            optionId: $"debug.json.spawn.maxWorldEggs.{localKey}",
-                            getValue: () => DevSpawnParameters.MaxWorldEggs.TryGetValue(localKey, out var value) ? value : 0,
-                            setValue: v => MutateDevSpawnParameters(p => p.MaxWorldEggs[localKey] = Math.Max(0, v)),
-                            tooltip: false,
-                            min: 0,
-                            max: 999,
-                            interval: 1,
-                            fieldId: $"debug.json.spawn.maxWorldEggs.{NormalizeDevJsonKey(localKey)}"
-                        );
-                    }
-
-                    page.ParagraphDynamic(() => "Note: MaxWorldEggs keys are dynamic; labels use raw keys. Edits write to JSON.", id: "json_spawn_maxWorldEggs_note");
-                }
-
-#endif
-
             });
-        }, force: force);
-    }
+ #endif
+
+        }); // End of _gmcmHost.RebuildLayout
+    } // End of RebuildGmcmLayout method
 
     private void BuildAnimalProgressionPage(GmcmPageBuilder<ModConfig> page, I18TranslationHelper i18n)
     {

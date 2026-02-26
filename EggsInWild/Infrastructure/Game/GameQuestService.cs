@@ -45,6 +45,14 @@ public sealed class GameQuestService : IGameQuestService
             if (Game1.player.questLog.Any(q => string.Equals(q.id.Value, questId, StringComparison.OrdinalIgnoreCase)))
                 return;
         }
+        catch
+        {
+            // ignored
+        }
+
+        try { Game1.player.addQuest(questId); }
+        catch { /* ignored */ }
+    }
 
     public bool CompleteQuest(string questId)
     {
@@ -135,14 +143,6 @@ public sealed class GameQuestService : IGameQuestService
             return false;
         }
     }
-        catch
-        {
-            // ignored
-        }
-
-        try { Game1.player.addQuest(questId); }
-        catch { /* ignored */ }
-    }
 
     public bool RemoveQuest(string questId)
     {
@@ -208,3 +208,4 @@ public sealed class GameQuestService : IGameQuestService
         return removed;
     }
 }
+

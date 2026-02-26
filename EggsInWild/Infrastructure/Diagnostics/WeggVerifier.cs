@@ -333,6 +333,17 @@ public sealed class WeggVerifier
             "command.wegg.help",
             "command.wegg.error.schema.missing",
             "command.wegg.error.schema.unknown",
+            "config.page.desertTomb.name",
+            "config.page.hatching.name",
+            "config.page.items.name",
+            "config.page.prices.name",
+            "config.page.animalNotes.name",
+            "config.page.animalProgression.name",
+            "config.page.debug.name",
+            "config.page.debug_desertTomb.name",
+            "config.page.debug_spawning.name",
+            "config.page.debug_weighting.name",
+            "config.page.debug_monsters.name",
         };
 
         if (includeAllowedValues)

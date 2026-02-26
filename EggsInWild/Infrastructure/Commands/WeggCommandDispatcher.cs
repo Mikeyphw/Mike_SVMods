@@ -67,6 +67,21 @@ public sealed class WeggCommandDispatcher
         return ToCommandResult(res);
     }
 
+    private CommandResult HandleStepEffects(string[] args)
+    {
+        if (args.Length < 4)
+            return new CommandResult(false, $"{T("command.wegg.usage.step.effects.preview", "Usage: wegg step effects preview <PartI|PartII|...|PartVI>")}\n\n{HelpText()}");
+
+        var action = args[2].ToLowerInvariant();
+        if (action != "preview")
+            return new CommandResult(false, $"{T("command.wegg.error.step.effects.unknown", "Unknown step effects subcommand '{0}'.", args[2])}\n\n{HelpText()}");
+
+        if (!Enum.TryParse<ProgressionStep>(args[3], ignoreCase: true, out var step))
+            return new CommandResult(false, $"{T("command.wegg.error.step.invalid", "Invalid step '{0}'.", args[3])}\n\n{HelpText()}");
+
+        return ToCommandResult(_facade.PreviewStepEffects(step));
+    }
+
     private CommandResult HandleProgression(string[] args)
     {
         if (args.Length < 2)

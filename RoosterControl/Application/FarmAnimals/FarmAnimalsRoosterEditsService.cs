@@ -4,7 +4,7 @@ using RoosterControl.Constants;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using RoosterControl.Helpers;
-using StardewModdingAPI;
+using Mikew.NestCore.Helpers;
 using StardewValley.GameData.FarmAnimals;
 
 namespace RoosterControl.Application.FarmAnimals;
@@ -23,7 +23,7 @@ internal sealed class FarmAnimalsRoosterEditsService
         IDictionary<string, FarmAnimalData> data,
         RoosterControlConfig config,
         RoosterHelper roosterHelper,
-        ITranslationHelper i18n,
+        I18TranslationHelper i18n,
         IDictionary<Textures, Dictionary<TextureDetails, string>> textures,
         bool enableStuckInside,
         bool isStuckInside,
@@ -51,7 +51,7 @@ internal sealed class FarmAnimalsRoosterEditsService
         RoosterData rooster,
         FarmAnimalData entry,
         RoosterControlConfig config,
-        ITranslationHelper i18n,
+        I18TranslationHelper i18n,
         IDictionary<Textures, Dictionary<TextureDetails, string>> textures
     )
     {
@@ -69,14 +69,14 @@ internal sealed class FarmAnimalsRoosterEditsService
 
             if (rooster.RoosterType == RoosterType.Void)
             {
-                entry.ShopDisplayName = i18n.Get("shop.void.displayname");
-                entry.ShopDescription = i18n.Get("shop.void.description");
+                entry.ShopDisplayName = i18n.GetString("shop.void.displayname");
+                entry.ShopDescription = i18n.GetString("shop.void.description");
                 entry.ShopTexture = textures[Textures.VoidShopIcon][TextureDetails.GamePath];
             }
             else if (rooster.RoosterType == RoosterType.Gold)
             {
-                entry.ShopDisplayName = i18n.Get("shop.gold.displayname");
-                entry.ShopDescription = i18n.Get("shop.gold.description");
+                entry.ShopDisplayName = i18n.GetString("shop.gold.displayname");
+                entry.ShopDescription = i18n.GetString("shop.gold.description");
                 entry.ShopTexture = textures[Textures.GoldShopIcon][TextureDetails.GamePath];
             }
         }

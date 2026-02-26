@@ -143,8 +143,8 @@ private string GetFertilizedEggId(string eggFullID)
             if (!clone.CustomFields.ContainsKey("originalEgg") && baseEgg.CustomFields is not null && baseEgg.CustomFields.TryGetValue("originalEgg", out var originalEgg))
                 clone.CustomFields["originalEgg"] = originalEgg;
 
-            var suffix = Helper.Translation.Get("egg.fertilized.name");
-            var desc = Helper.Translation.Get("egg.fertilized.description");
+            var suffix = _i18n.GetString("egg.fertilized.name");
+            var desc = _i18n.GetString("egg.fertilized.description");
 
             if (!string.IsNullOrWhiteSpace(clone.DisplayName))
                 clone.DisplayName = $"{clone.DisplayName} ({suffix})";

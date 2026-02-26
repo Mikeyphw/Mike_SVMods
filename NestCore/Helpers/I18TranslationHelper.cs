@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using StardewModdingAPI;
 using Mikew.NestCore.Helpers.Logging;
@@ -13,6 +15,14 @@ namespace Mikew.NestCore.Helpers
     /// </summary>
     public class I18TranslationHelper
     {
+        public sealed record MissingValueEntry(string Key, string Issue);
+
+        public sealed record ModI18nMissingValueReport(
+            string ModName,
+            string UniqueId,
+            string ModDirectory,
+            IReadOnlyList<MissingValueEntry> MissingValues);
+
         private readonly IModHelper _helper;
         private readonly ConcurrentDictionary<string, string> _cache = new();
         private readonly ConcurrentDictionary<string, string> _usedKeys = new();
@@ -23,6 +33,11 @@ namespace Mikew.NestCore.Helpers
         private static readonly Regex TokenPattern = new(@"\{(\d+)\}", RegexOptions.Compiled);
         // Regex to find {{key}} nested keys
         private static readonly Regex NestedKeyPattern = new(@"\{\{(\w+)\}\}", RegexOptions.Compiled);
+        // Regexes for static GMCM ids in code (cross-mod i18n scan).
+        private static readonly Regex GmcmOptionIdPattern = new(@"optionId\s*:\s*""([^""]+)""", RegexOptions.Compiled);
+        private static readonly Regex GmcmPagePattern = new(@"layout\.Page\(\s*""([^""]+)""", RegexOptions.Compiled);
+        private static readonly Regex GmcmLinkPattern = new(@"\.Link\(\s*""([^""]+)""", RegexOptions.Compiled);
+        private static readonly Regex GmcmSectionPattern = new(@"(?:^|[\s.;])page\.Section\(\s*""([^""]+)""", RegexOptions.Compiled);
 
         // Current prefix for fluent API
         private string _currentPrefix = string.Empty;
@@ -45,6 +60,15 @@ namespace Mikew.NestCore.Helpers
         {
             RecordKey(key);
             return _helper.Translation.Get(key);
+        }
+
+        /// <summary>
+        /// Gets a translation by key with named tokens.
+        /// </summary>
+        public Translation Get(string key, object? tokens)
+        {
+            RecordKey(key);
+            return _helper.Translation.Get(key, tokens);
         }
 
         /// <summary>
@@ -84,6 +108,16 @@ namespace Mikew.NestCore.Helpers
             return tokens.Length > 0 
                 ? string.Format(baseString, tokens) 
                 : baseString;
+        }
+
+        /// <summary>
+        /// Gets a translation with named token interpolation.
+        /// </summary>
+        public string GetString(string key, object? tokens)
+        {
+            RecordKey(key);
+            var translation = _helper.Translation.Get(key, tokens);
+            return translation.ToString();
         }
 
         /// <summary>
@@ -502,6 +536,276 @@ namespace Mikew.NestCore.Helpers
             }
             
             return result;
+        }
+
+        #endregion
+
+        #region Cross-Mod Missing-Value Scan
+
+        /// <summary>
+        /// Scans sibling mod folders for NestCore-dependent mods and reports i18n keys
+        /// that are missing or have empty/non-string values.
+        /// </summary>
+        public static IReadOnlyList<ModI18nMissingValueReport> ScanNestCoreDependentModsForMissingValues(string nestCoreDirectoryPath)
+        {
+            var reports = new List<ModI18nMissingValueReport>();
+            if (string.IsNullOrWhiteSpace(nestCoreDirectoryPath) || !Directory.Exists(nestCoreDirectoryPath))
+                return reports;
+
+            var modsRoot = Directory.GetParent(nestCoreDirectoryPath)?.FullName;
+            if (string.IsNullOrWhiteSpace(modsRoot) || !Directory.Exists(modsRoot))
+                return reports;
+
+            foreach (var modDir in Directory.EnumerateDirectories(modsRoot))
+            {
+                var manifestPath = Path.Combine(modDir, "manifest.json");
+                if (!File.Exists(manifestPath))
+                    continue;
+
+                if (!TryReadManifest(manifestPath, out var modName, out var uniqueId, out var usesNestCore))
+                    continue;
+                if (!usesNestCore)
+                    continue;
+
+                var missing = FindMissingValuesForMod(modDir);
+                reports.Add(new ModI18nMissingValueReport(modName, uniqueId, modDir, missing));
+            }
+
+            return reports
+                .OrderBy(r => r.ModName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static bool TryReadManifest(
+            string manifestPath,
+            out string modName,
+            out string uniqueId,
+            out bool usesNestCore)
+        {
+            modName = Path.GetFileName(Path.GetDirectoryName(manifestPath) ?? manifestPath);
+            uniqueId = string.Empty;
+            usesNestCore = false;
+
+            try
+            {
+                using var stream = File.OpenRead(manifestPath);
+                using var doc = JsonDocument.Parse(stream);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("Name", out var nameProp) && nameProp.ValueKind == JsonValueKind.String)
+                    modName = nameProp.GetString() ?? modName;
+
+                if (root.TryGetProperty("UniqueID", out var uniqueIdProp) && uniqueIdProp.ValueKind == JsonValueKind.String)
+                    uniqueId = uniqueIdProp.GetString() ?? string.Empty;
+
+                if (string.Equals(uniqueId, "Mikew.nestcore", StringComparison.OrdinalIgnoreCase))
+                    usesNestCore = true;
+
+                if (!usesNestCore
+                    && root.TryGetProperty("Dependencies", out var depsProp)
+                    && depsProp.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var dep in depsProp.EnumerateArray())
+                    {
+                        if (dep.ValueKind != JsonValueKind.Object)
+                            continue;
+                        if (!dep.TryGetProperty("UniqueID", out var depIdProp) || depIdProp.ValueKind != JsonValueKind.String)
+                            continue;
+
+                        var depId = depIdProp.GetString() ?? string.Empty;
+                        if (string.Equals(depId, "Mikew.nestcore", StringComparison.OrdinalIgnoreCase))
+                        {
+                            usesNestCore = true;
+                            break;
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static IReadOnlyList<MissingValueEntry> FindMissingValuesForMod(string modDir)
+        {
+            var issues = new List<MissingValueEntry>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var i18nDir = Path.Combine(modDir, "i18n");
+
+            if (!Directory.Exists(i18nDir))
+            {
+                AddIssue(issues, seen, "<i18n>", "missing i18n folder");
+                return issues;
+            }
+
+            var defaultPath = Path.Combine(i18nDir, "default.json");
+            var defaultMap = TryReadI18nMap(defaultPath, out var defaultIssues);
+            foreach (var issue in defaultIssues)
+                AddIssue(issues, seen, issue.Key, issue.Issue);
+
+            if (!File.Exists(defaultPath))
+                AddIssue(issues, seen, "<default.json>", "missing default locale file");
+
+            var defaultKeys = defaultMap.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var referencedKey in CollectReferencedGmcmI18nKeys(modDir))
+            {
+                if (!defaultKeys.Contains(referencedKey))
+                    AddIssue(issues, seen, referencedKey, "missing key in default.json (referenced by GMCM code)");
+            }
+
+            foreach (var filePath in Directory.EnumerateFiles(i18nDir, "*.json"))
+            {
+                var fileName = Path.GetFileName(filePath);
+                var map = TryReadI18nMap(filePath, out var fileIssues);
+                foreach (var issue in fileIssues)
+                    AddIssue(issues, seen, issue.Key, issue.Issue);
+
+                if (string.Equals(fileName, "default.json", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                foreach (var key in defaultKeys)
+                {
+                    if (!map.ContainsKey(key))
+                        AddIssue(issues, seen, key, $"missing key in {fileName}");
+                }
+            }
+
+            return issues
+                .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(x => x.Issue, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static Dictionary<string, string> TryReadI18nMap(string filePath, out List<MissingValueEntry> issues)
+        {
+            issues = new List<MissingValueEntry>();
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var fileName = Path.GetFileName(filePath);
+
+            if (!File.Exists(filePath))
+                return map;
+
+            try
+            {
+                using var stream = File.OpenRead(filePath);
+                using var doc = JsonDocument.Parse(stream);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    issues.Add(new MissingValueEntry($"<{fileName}>", $"invalid JSON root (expected object) in {fileName}"));
+                    return map;
+                }
+
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    if (prop.Value.ValueKind == JsonValueKind.String)
+                    {
+                        var value = prop.Value.GetString() ?? string.Empty;
+                        map[prop.Name] = value;
+
+                        if (string.IsNullOrWhiteSpace(value))
+                            issues.Add(new MissingValueEntry(prop.Name, $"empty value in {fileName}"));
+                    }
+                    else if (prop.Value.ValueKind == JsonValueKind.Null)
+                    {
+                        issues.Add(new MissingValueEntry(prop.Name, $"null value in {fileName}"));
+                    }
+                    else
+                    {
+                        issues.Add(new MissingValueEntry(prop.Name, $"non-string value in {fileName}"));
+                    }
+                }
+            }
+            catch
+            {
+                issues.Add(new MissingValueEntry($"<{fileName}>", $"invalid JSON in {fileName}"));
+            }
+
+            return map;
+        }
+
+        private static void AddIssue(
+            List<MissingValueEntry> issues,
+            HashSet<string> seen,
+            string key,
+            string issue)
+        {
+            var dedupeKey = $"{key}\n{issue}";
+            if (!seen.Add(dedupeKey))
+                return;
+
+            issues.Add(new MissingValueEntry(key, issue));
+        }
+
+        private static IReadOnlyCollection<string> CollectReferencedGmcmI18nKeys(string modDir)
+        {
+            var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            IEnumerable<string> files;
+
+            try
+            {
+                files = Directory.EnumerateFiles(modDir, "*.cs", SearchOption.AllDirectories);
+            }
+            catch
+            {
+                return keys;
+            }
+
+            foreach (var file in files)
+            {
+                string text;
+                try
+                {
+                    text = File.ReadAllText(file);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                foreach (Match match in GmcmOptionIdPattern.Matches(text))
+                {
+                    var id = match.Groups[1].Value;
+                    if (string.IsNullOrWhiteSpace(id))
+                        continue;
+
+                    keys.Add($"config.{id}.name");
+                    keys.Add($"config.{id}.description");
+                }
+
+                foreach (Match match in GmcmPagePattern.Matches(text))
+                {
+                    var pageId = match.Groups[1].Value;
+                    if (string.IsNullOrWhiteSpace(pageId))
+                        continue;
+
+                    keys.Add($"config.page.{pageId}.name");
+                    keys.Add($"config.page.{pageId}.description");
+                }
+
+                foreach (Match match in GmcmLinkPattern.Matches(text))
+                {
+                    var pageId = match.Groups[1].Value;
+                    if (string.IsNullOrWhiteSpace(pageId))
+                        continue;
+
+                    keys.Add($"config.page.{pageId}.name");
+                }
+
+                foreach (Match match in GmcmSectionPattern.Matches(text))
+                {
+                    var sectionId = match.Groups[1].Value;
+                    if (string.IsNullOrWhiteSpace(sectionId))
+                        continue;
+
+                    keys.Add($"config.section.{sectionId}.text");
+                    keys.Add($"config.section.{sectionId}.description");
+                }
+            }
+
+            return keys;
         }
 
         #endregion
