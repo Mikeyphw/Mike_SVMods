@@ -370,12 +370,13 @@ namespace LetMeHatch.Cloning
                 cloneItemType,
                 color
             );
+            // Route cloned items through dynamic per-clone texture assets.
+            var cloneId = _cloningHelper.GetClonedItemID(animalKey, originalItemID, cloneItemType, itemType);
+            clonedItemData.Texture = $"Mods/{ModEntry.ModManifestInstance.UniqueID}/Objects/Clones/{cloneId}";
+            clonedItemData.SpriteIndex = 0;
 
-            return new(
-                _cloningHelper.GetClonedItemID(animalKey, originalItemID, cloneItemType, itemType),
-                clonedItemData
-            );
-        }
+            return new(cloneId, clonedItemData);
+}
 
         private void SetItemDataProperties(
             ObjectData clonedItemData,

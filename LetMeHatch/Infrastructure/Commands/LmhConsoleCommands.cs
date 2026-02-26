@@ -42,5 +42,11 @@ public static class LmhConsoleCommands
             (_, _) => coordinator.PrintStatus()
         );
 
+        helper.ConsoleCommands.Add(
+            "lmh_clone_texture_preview",
+            "Preview dynamic clone texture details.\n\nUsage: lmh_clone_texture_preview <cloneId>.",
+            (_, args) => coordinator.DebugCloneTexturePreview(args.Length >= 1 ? args[0] : string.Empty)
+        );
+
     }
 }

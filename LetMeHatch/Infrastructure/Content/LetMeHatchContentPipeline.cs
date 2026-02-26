@@ -56,14 +56,12 @@ public static class LetMeHatchContentPipeline
         foreach (var editor in CreateEditors(app))
             targets.Add(editor.Editor.AssetName);
 
-        targets.Add(assetHandler.GetAssetPath(Assets.Object.ClonedItems, ModAssetHandler.AssetPathType.GamePath));
-
+        
         return targets;
     }
 
     private static IEnumerable<IAssetLoader> CreateLoaders(ModAssetHandler assetHandler, LmhApplicationServices app)
     {
-        yield return new ClonedEggsAssetLoader(assetHandler, app.AssetLoads);
         yield return new DynamicCloneObjectTextureLoader(ModEntry.ModManifestInstance.UniqueID);
     }
 

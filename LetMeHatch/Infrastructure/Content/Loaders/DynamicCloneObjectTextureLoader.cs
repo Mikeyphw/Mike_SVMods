@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using LetMeHatch.Core.ClonePipeline;
 using LetMeHatch.Core.Cloning;
 using Microsoft.Xna.Framework;
@@ -13,7 +12,6 @@ namespace LetMeHatch.Infrastructure.Content.Loaders;
 
 /// <summary>
 /// Dynamically generates per-clone 16x16 textures under <c>Mods/&lt;UniqueId&gt;/Objects/Clones/&lt;cloneId&gt;</c>.
-/// Flagged behind <see cref="ModEntry.Config.UseDynamicCloneTextures"/>.
 /// </summary>
 public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
 {
@@ -34,10 +32,10 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
 
     public override string DebugHandles => "Mods/<UniqueId>/Objects/Clones/<cloneId>";
 
-    public override string DebugGates => "assetNameLower starts with mods/<uniqueid>/objects/clones/ and UseDynamicCloneTextures==true.";
+    public override string DebugGates => "assetNameLower starts with mods/<uniqueid>/objects/clones/.";
 
     public override bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
-        => ModEntry.Config.UseDynamicCloneTextures && assetNameLower.StartsWith(_prefixLower, StringComparison.Ordinal);
+        => assetNameLower.StartsWith(_prefixLower, StringComparison.Ordinal);
 
     public override void Load(string assetNameLower, AssetRequestedEventArgs e)
     {
@@ -53,6 +51,8 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
         );
     }
 
+    public static void ClearCache() => Cache.Clear();
+
     private static Texture2D BuildTexture(string cloneId)
     {
         Game1.objectData.TryGetValue(cloneId, out var cloneData);
@@ -63,17 +63,22 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
         if (!Game1.objectData.TryGetValue(originalItemId, out var originalData))
             throw new InvalidOperationException($"Original object not found: {originalItemId} (from clone {cloneId})");
 
-        var sourceTextureName = originalData.Texture;
-        var sourceIndex = originalData.SpriteIndex;
+        var sourceTexture = Game1.content.Load<Texture2D>(originalData.Texture);
+        var pixels = CropSprite(sourceTexture, originalData.SpriteIndex);
 
-        var sourceTexture = Game1.content.Load<Texture2D>(sourceTextureName);
-        var basePixels = CropSprite(sourceTexture, sourceIndex);
+        // If the flag is disabled, return the original sprite colors (still served through the dynamic asset path).
+        if (!ModEntry.Config.UseDynamicCloneTextures)
+            return ToTexture(pixels);
 
         var tint = ResolveTint(cloneId, cloneData, originalData);
-        ApplyTintInPlace(basePixels, tint);
+        ApplyTintInPlace(pixels, tint);
+        return ToTexture(pixels);
+    }
 
+    private static Texture2D ToTexture(Color[] pixels)
+    {
         var tex = new Texture2D(Game1.graphics.GraphicsDevice, 16, 16);
-        tex.SetData(basePixels);
+        tex.SetData(pixels);
         return tex;
     }
 
@@ -81,12 +86,7 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
     {
         var tags = cloneData?.ContextTags ?? originalData.ContextTags;
         var resolver = new ColorResolver();
-
-        return resolver.Resolve(new ColorResolutionContext(
-            Key: cloneId,
-            SeedKey: cloneId,
-            ContextTags: tags
-        ));
+        return resolver.Resolve(new ColorResolutionContext(Key: cloneId, SeedKey: cloneId, ContextTags: tags));
     }
 
     private static Color[] CropSprite(Texture2D texture, int spriteIndex)

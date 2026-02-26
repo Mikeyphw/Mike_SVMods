@@ -11,6 +11,7 @@ using LetMeHatch.GameAssetManagement;
 using Mikew.NestCore.Helpers.Config;
 using Mikew.NestCore.Helpers.Logging;
 using LetMeHatch.Infrastructure.Content;
+using LetMeHatch.Infrastructure.Content.Loaders;
 using Mikew.NestCore.Helpers.Content;
 using LetMeHatch.Integrations.Gmcm;
 using Mikew.NestCore.Framework;
@@ -87,6 +88,8 @@ public sealed class LmhCoordinator
             return;
         }
 
+        DynamicCloneObjectTextureLoader.ClearCache();
+
         if (_config.Get().CloneVanillaEggs && _assetManager.ItemsToAdd.Count <= 0)
         {
             _assetManager.ItemManager.CloneItemsFromGame();
@@ -135,6 +138,7 @@ public sealed class LmhCoordinator
         }
 
         InitializeAssetEditor();
+        DynamicCloneObjectTextureLoader.ClearCache();
         _api.SetGameAssetManager(_assetManager!);
 
 
@@ -271,6 +275,8 @@ private void InitializeAssetEditor()
             return;
         }
 
+        DynamicCloneObjectTextureLoader.ClearCache();
+
         _invalidation.Request(AssetNames.FarmAnimals);
         _invalidation.Request(AssetNames.Objects);
 
@@ -285,6 +291,8 @@ private void InitializeAssetEditor()
         {
             return;
         }
+
+        DynamicCloneObjectTextureLoader.ClearCache();
 
         _assetManager.BreedingDataLoader.LoadBreedingData();
 
@@ -308,5 +316,40 @@ private void InitializeAssetEditor()
             }
         }
     }
+
+
+public void DebugCloneTexturePreview(string cloneId)
+{
+    if (string.IsNullOrWhiteSpace(cloneId))
+    {
+        _log.Info("[clone texture preview] Usage: lmh_clone_texture_preview <cloneId>");
+        return;
+    }
+
+    if (!Core.Cloning.CloneIdService.TryParseCloneId(cloneId, out _, out var originalItemId, out _))
+    {
+        _log.Warn($"[clone texture preview] Not a recognized clone id: {cloneId}");
+        return;
+    }
+
+    if (!StardewValley.Game1.objectData.TryGetValue(originalItemId, out var original))
+    {
+        _log.Warn($"[clone texture preview] Original object not found: {originalItemId}");
+        return;
+    }
+
+    StardewValley.Game1.objectData.TryGetValue(cloneId, out var cloneData);
+
+    var tags = cloneData?.ContextTags ?? original.ContextTags;
+    var color = new Core.ClonePipeline.ColorResolver()
+        .Resolve(new Core.ClonePipeline.ColorResolutionContext(Key: cloneId, SeedKey: cloneId, ContextTags: tags));
+
+    var assetKey = $"Mods/{ModEntry.ModManifestInstance.UniqueID}/Objects/Clones/{cloneId}";
+
+    _log.Info($"[clone texture preview] cloneId={cloneId}");
+    _log.Info($"[clone texture preview] originalItemId={originalItemId} name={original.DisplayName ?? original.Name}");
+    _log.Info($"[clone texture preview] dynamicEnabled={ModEntry.Config.UseDynamicCloneTextures} tint={color}");
+    _log.Info($"[clone texture preview] assetKey={assetKey}");
+}
 
 }
