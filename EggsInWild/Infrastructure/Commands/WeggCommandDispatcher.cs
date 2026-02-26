@@ -237,6 +237,7 @@ public sealed class WeggCommandDispatcher
             "  wegg_schema wipe --yes",
             "",
             "Notes:",
+            "  - --effects applies cumulative progression side effects and reconciles on rollback.",
             "  - Host-only mutations; clients will be rejected.",
             "  - QualifiedItemId example: (O)390",
             "  - step set defaults to no side effects; use --effects to replay step mail effects."

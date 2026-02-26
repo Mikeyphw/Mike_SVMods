@@ -22,3 +22,12 @@
 3. Render a toggle per animal using NestCore dynamic-label overloads with stable element IDs.
 4. Store overrides in `AnimalProgressionMode` dictionary using default-vs-override removal (clean config).
 5. Rebuild menu on `SaveLoaded` and when relevant assets change.
+
+
+## Phase 1 — Progression console command effects
+1. Define a cumulative side-effect catalog for progression steps (mail/quests/orders/recipes).
+2. Track console-applied side effects in player modData to enable safe rollback.
+3. Update `wegg step set --effects` to apply cumulative effects and reconcile on rollback.
+4. Extend game service abstractions to support removals required by reconciliation.
+5. Update command help text to document the new semantics.
+

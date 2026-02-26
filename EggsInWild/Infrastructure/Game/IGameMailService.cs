@@ -10,4 +10,10 @@ public interface IGameMailService
 
     /// <summary>Add a mail directly to received mail list (flags/no-letter), if not already present.</summary>
     void AddReceivedMail(string mailId, bool noLetter = false);
+
+    /// <summary>Remove a mail from the received list (including no-letter variants), if present.</summary>
+    bool RemoveReceivedMail(string mailId);
+
+    /// <summary>Remove a mail from tomorrow queue (including no-letter variants), if present.</summary>
+    bool RemoveMailForTomorrow(string mailId);
 }

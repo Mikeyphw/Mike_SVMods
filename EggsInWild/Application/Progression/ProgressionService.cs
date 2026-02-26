@@ -151,7 +151,7 @@ public sealed class ProgressionService
         _data.LastStepAdvanceDay = facts.DayNumber;
 
         if (applySideEffects)
-            ProgressionRules.ApplyStepUnlockSideEffects(step, _mail, config);
+            ProgressionSideEffects.ApplyTransition(from, step, _mail, _quests, _recipes, config);
 
         _invalidateAssets();
         StepChanged?.Invoke(step);
