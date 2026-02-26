@@ -2,18 +2,18 @@
   "schema_version": "1",
   "diffs": [
     {
-      "id": "20260226T120000-0300-01",
-      "file": "LetMeHatch_20260226T120000-0300-01_clone_pipeline_phase3_expand_blueprint.patch",
-      "title": "LetMeHatch Clone pipeline phase3 expand blueprint",
-      "title_with_id": "LetMeHatch Clone pipeline phase3 expand blueprint [20260226T120000-0300-01]",
-      "created_at": "2026-02-26T12:08:50-03:00",
-      "applied_at": "2026-02-26T12:09:12-03:00",
+      "id": "20260226T125622-0300-01",
+      "file": "LetMeHatch_20260226T125622-0300-01_phase4_cloneplan_adapter_code_only_p0.patch",
+      "title": "LetMeHatch Phase4 cloneplan adapter code only p0",
+      "title_with_id": "LetMeHatch Phase4 cloneplan adapter code only p0 [20260226T125622-0300-01]",
+      "created_at": "2026-02-26T12:57:10-03:00",
+      "applied_at": "2026-02-26T12:57:38-03:00",
       "apply": {
         "method": "git",
-        "p": 1,
+        "p": 0,
         "dir": ""
       }
     }
   ],
-  "updated_at": "2026-02-26T12:09:12-03:00"
+  "updated_at": "2026-02-26T12:57:38-03:00"
 }\n
