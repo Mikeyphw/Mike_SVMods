@@ -36,8 +36,8 @@
 - [x] Diagnostics logging includes plan summary and canonical egg-domain results.
 
 ## Phase 13 — Introduce `BreedingPlan` (planner + executor split)
-- [ ] Core records added: `BreedingPlan`, `BreedingPairPlan`, `BreedingMutation`.
-- [ ] Contracts added: `IBreedingPlanner`, `IBreedingPlanExecutor`.
+- [x] Core records added: `BreedingPlan`, `BreedingPairPlan`, `BreedingMutation`.
+- [x] Contracts added: `IBreedingPlanner`, `IBreedingPlanExecutor`.
 - [ ] Planner reproduces current selection (no behavior drift).
 - [ ] Executor applies canonical egg-domain rebuild (destructive by design).
 - [ ] Breeding pipeline wired: inputs → plan → apply (flag optional).

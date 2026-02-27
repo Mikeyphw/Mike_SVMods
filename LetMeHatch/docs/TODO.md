@@ -6,5 +6,8 @@
 - [x] Phase 11: no-behavior-change cleanup + NestCore-first loader refactor
 - [x] Phase 12: breeding correctness + invariants (male clone never lays, RNG unification)
 - [ ] Phase 13: introduce BreedingPlan (planner + executor split)
-- [ ] Phase 14: destructive rebuild hardening (egg-domain only, perf, plan validation)
-- [ ] Phase 15: tests + docs upkeep (BreedingPlan coverage)
+- [x] Add Core records: BreedingPlan, BreedingPairPlan, BreedingMutation.
+- [x] Add contracts: IBreedingPlanner, IBreedingPlanExecutor.
+- [ ] Implement planner reproducing current selection (no behavior drift).
+- [ ] Implement executor applying canonical egg-domain rebuild (destructive by design).
+- [ ] Wire breeding pipeline: inputs → plan → apply (flag optional).

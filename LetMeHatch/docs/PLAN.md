@@ -61,6 +61,9 @@
 5. Add plan-style diagnostics logging (selected pairs, chances, canonical egg-domain outputs).
 
 ## Phase 13 — Introduce `BreedingPlan` (planner + executor split)
+
+Status: steps 1–2 completed (contracts + records).
+
 1. Add Core contracts: `BreedingPlan`, `BreedingPairPlan`, and `BreedingMutation` operations.
 2. Add planner/executor interfaces: `IBreedingPlanner`, `IBreedingPlanExecutor`.
 3. Implement planner that reproduces current pair selection + fertilized egg selection (no behavior drift).
