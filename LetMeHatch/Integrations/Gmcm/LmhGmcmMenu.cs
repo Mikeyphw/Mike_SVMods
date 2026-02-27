@@ -295,7 +295,10 @@ var packs = GetBreedingPacksSnapshot();
 
         if (!TryGetFemaleBreedingContext(manager, contentPackId, femaleKey, out var femaleData, out var femaleConfig))
         {
-            page.ParagraphDynamic(() => core.Translation.GetString("config.breeding.missingData", femaleKey, contentPackId), id: "breeding_missing");
+            page.ParagraphDynamic(
+                () => core.Translation.GetString("config.breeding.missingData", new { femaleKey, contentPackId }),
+                id: "breeding_missing"
+            );
             return;
         }
 
@@ -640,7 +643,7 @@ var packs = GetBreedingPacksSnapshot();
             page.BoolLabel(
                 elementId: elementId,
                 name: () => label,
-            tooltip: () => core.Translation.GetString("config.edits.animal.tooltip", animalKey),
+                tooltip: () => core.Translation.GetString("config.edits.animal.tooltip", new { animalKey }),
                 getValue: () => IsEnabled(GetOverrides(cfg, editType), animalKey),
                 setValue: v => SetEnabled(GetOverrides(cfg, editType), animalKey, v)
             );

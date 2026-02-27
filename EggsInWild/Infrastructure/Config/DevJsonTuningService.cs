@@ -21,7 +21,7 @@ internal sealed class DevJsonTuningService
     private readonly ILog _log;
 
     private SpawnParametersJson? _spawnParameters;
-    private Dictionary<string, SpawnAreaRuleJson>? _spawnAreas;
+    private Dictionary<string, List<SpawnAreaRuleJson>>? _spawnAreas;
     private Dictionary<string, LocationPackJson>? _locationPacks;
 
     public DevJsonTuningService(IModHelper helper, ILog log)
@@ -149,15 +149,21 @@ internal sealed class DevJsonTuningService
         foreach (var entry in spawnAreas)
         {
             var key = entry.Key;
-            var area = entry.Value;
+            var rules = entry.Value ?? new List<SpawnAreaRuleJson>();
 
-            page.Float($"debug.json.spawn.areas.{key}.randomChance",
-                getValue: () => (float)area.RandomChance,
-                setValue: v => UpdateSpawnAreas(() => area.RandomChance = Math.Clamp((double)v, 0.0, 1.0)),
-                min: 0f,
-                max: 1f,
-                interval: 0.01f
-            );
+            for (var i = 0; i < rules.Count; i++)
+            {
+                var localIndex = i;
+                var area = rules[localIndex];
+
+                page.Float($"debug.json.spawn.areas.{key}.{localIndex}.randomChance",
+                    getValue: () => (float)area.RandomChance,
+                    setValue: v => UpdateSpawnAreas(() => area.RandomChance = Math.Clamp((double)v, 0.0, 1.0)),
+                    min: 0f,
+                    max: 1f,
+                    interval: 0.01f
+                );
+            }
         }
 
         page.Separator(simple: true);
@@ -186,7 +192,7 @@ internal sealed class DevJsonTuningService
         var reader = new SmapiJsonFileReader(_helper);
 
         _spawnParameters = reader.ReadJsonFile<SpawnParametersJson>(ModDataPaths.SpawnParameters) ?? new SpawnParametersJson();
-        _spawnAreas = reader.ReadJsonFile<Dictionary<string, SpawnAreaRuleJson>>(ModDataPaths.SpawnAreas) ?? new Dictionary<string, SpawnAreaRuleJson>();
+        _spawnAreas = reader.ReadJsonFile<Dictionary<string, List<SpawnAreaRuleJson>>>(ModDataPaths.SpawnAreas) ?? new Dictionary<string, List<SpawnAreaRuleJson>>();
         _locationPacks = reader.ReadJsonFile<Dictionary<string, LocationPackJson>>(ModDataPaths.LocationPacks) ?? new Dictionary<string, LocationPackJson>();
     }
 

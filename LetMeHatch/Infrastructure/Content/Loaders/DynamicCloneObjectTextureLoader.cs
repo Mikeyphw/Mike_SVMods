@@ -98,13 +98,19 @@ public sealed class DynamicCloneObjectTextureLoader : IAssetRequestHandler<Conte
         Game1.objectData.TryGetValue(cloneId, out var cloneData);
 
         if (!CloneIdService.TryParseCloneId(cloneId, out var animalKey, out var originalItemId, out _))
-            throw new InvalidOperationException($"Not a recognized clone id: {cloneId}");
+        {
+            LogWarn($"Not a recognized clone id: {cloneId}. Using transparent fallback texture.");
+            return CreateTransparentTexture();
+        }
 
         if (!Game1.objectData.TryGetValue(originalItemId, out var originalData))
-            throw new InvalidOperationException($"Original object not found: {originalItemId} (from clone {cloneId})");
+        {
+            LogWarn($"Original object not found: {originalItemId} (from clone {cloneId}). Using transparent fallback texture.");
+            return CreateTransparentTexture();
+        }
 
-        var sourceTexture = Game1.content.Load<Texture2D>(originalData.Texture);
-        var pixels = CropSprite(sourceTexture, originalData.SpriteIndex);
+        var sourceTexture = LoadOriginalTextureWithFallback(originalData.Texture, cloneId, originalItemId);
+        var pixels = CropSprite(sourceTexture, originalData.SpriteIndex, cloneId, originalItemId);
 
         // If the flag is disabled, return the original sprite colors (still served through the dynamic asset path).
         if (!ModEntry.Config.UseDynamicCloneTextures)
@@ -119,11 +125,60 @@ public sealed class DynamicCloneObjectTextureLoader : IAssetRequestHandler<Conte
         return ToTexture(pixels);
     }
 
+    private static Texture2D LoadOriginalTextureWithFallback(string? textureName, string cloneId, string originalItemId)
+    {
+        foreach (var candidate in GetTextureLoadCandidates(textureName))
+        {
+            try
+            {
+                var texture = Game1.content.Load<Texture2D>(candidate);
+                if (texture is not null)
+                    return texture;
+            }
+            catch (Exception ex)
+            {
+                LogTrace($"Failed loading texture candidate '{candidate}' for clone '{cloneId}' (original {originalItemId}): {ex.Message}");
+            }
+        }
+
+        LogWarn(
+            $"Failed to load texture '{textureName ?? "<null>"}' for clone '{cloneId}' (original {originalItemId}). " +
+            "Falling back to transparent texture."
+        );
+        return CreateTransparentTexture();
+    }
+
+    private static IEnumerable<string> GetTextureLoadCandidates(string? textureName)
+    {
+        if (!string.IsNullOrWhiteSpace(textureName))
+        {
+            yield return textureName;
+
+            var slashIndex = textureName.IndexOf('/');
+            if (slashIndex > 0 && !char.IsUpper(textureName[0]))
+            {
+                var normalized = char.ToUpperInvariant(textureName[0]) + textureName[1..];
+                if (!string.Equals(normalized, textureName, StringComparison.Ordinal))
+                    yield return normalized;
+            }
+        }
+
+        const string defaultTexture = "Maps/springobjects";
+        yield return defaultTexture;
+        yield return "Maps/SpringObjects";
+    }
+
     private static Texture2D ToTexture(Color[] pixels)
     {
         var tex = new Texture2D(Game1.graphics.GraphicsDevice, 16, 16);
         tex.SetData(pixels);
         return tex;
+    }
+
+    private static Texture2D CreateTransparentTexture()
+    {
+        var pixels = new Color[16 * 16];
+        return ToTexture(pixels);
     }
 
     private static Color ResolveTint(
@@ -198,16 +253,40 @@ public sealed class DynamicCloneObjectTextureLoader : IAssetRequestHandler<Conte
         return true;
     }
 
-    private static Color[] CropSprite(Texture2D texture, int spriteIndex)
+    private static Color[] CropSprite(Texture2D texture, int spriteIndex, string cloneId, string originalItemId)
     {
         const int tileSize = 16;
         var columns = Math.Max(1, texture.Width / tileSize);
-        var x = (spriteIndex % columns) * tileSize;
-        var y = (spriteIndex / columns) * tileSize;
+        var rows = Math.Max(1, texture.Height / tileSize);
+        var maxSprites = columns * rows;
+        if (maxSprites <= 0)
+            return new Color[tileSize * tileSize];
+
+        var clampedSpriteIndex = Math.Clamp(spriteIndex, 0, maxSprites - 1);
+        if (clampedSpriteIndex != spriteIndex)
+        {
+            LogTrace(
+                $"Sprite index {spriteIndex} out of range for clone '{cloneId}' (original {originalItemId}) " +
+                $"on texture {texture.Width}x{texture.Height}; clamped to {clampedSpriteIndex}."
+            );
+        }
+
+        var x = (clampedSpriteIndex % columns) * tileSize;
+        var y = (clampedSpriteIndex / columns) * tileSize;
 
         var data = new Color[tileSize * tileSize];
         texture.GetData(0, new Rectangle(x, y, tileSize, tileSize), data, 0, data.Length);
         return data;
+    }
+
+    private static void LogWarn(string message)
+    {
+        ModEntry.MonitorInstance.Log($"[DynamicCloneObjectTextureLoader] {message}", LogLevel.Warn);
+    }
+
+    private static void LogTrace(string message)
+    {
+        ModEntry.MonitorInstance.Log($"[DynamicCloneObjectTextureLoader] {message}", LogLevel.Trace);
     }
 
     private static void ApplyTintInPlace(Color[] pixels, Color tint, DynamicCloneTintMode mode)
