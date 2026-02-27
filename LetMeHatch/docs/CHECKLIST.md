@@ -38,9 +38,9 @@
 ## Phase 13 — Introduce `BreedingPlan` (planner + executor split)
 - [x] Core records added: `BreedingPlan`, `BreedingPairPlan`, `BreedingMutation`.
 - [x] Contracts added: `IBreedingPlanner`, `IBreedingPlanExecutor`.
-- [ ] Planner reproduces current selection (no behavior drift).
-- [ ] Executor applies canonical egg-domain rebuild (destructive by design).
-- [ ] Breeding pipeline wired: inputs → plan → apply (flag optional).
+- [x] Planner reproduces current selection (no behavior drift).
+- [x] Executor applies canonical egg-domain rebuild (destructive by design).
+- [x] Breeding pipeline wired: inputs → plan → apply (flag optional).
 
 ## Phase 14 — Destructive rebuild hardening (still destructive)
 - [ ] Destruction scoped to egg-domain only (no unrelated produce removal).

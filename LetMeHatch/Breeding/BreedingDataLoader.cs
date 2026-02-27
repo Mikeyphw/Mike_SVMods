@@ -1,3 +1,4 @@
+using System;
 using System.Text.RegularExpressions;
 using LetMeHatch.Config;
 using LetMeHatch.Framework;
@@ -7,6 +8,7 @@ using LetMeHatch.Integrations;
 using LetMeHatch.Models;
 using LetMeHatch.Infrastructure.Smapi;
 using LetMeHatch.Core.Random;
+using LetMeHatch.Core.Breeding;
 using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Framework.Random;
 using StardewModdingAPI;
@@ -440,6 +442,24 @@ namespace LetMeHatch.Breeding
             return "";
         }
 
+
+        private static DateOnly ToDateOnly(int year, string season, int dayOfMonth)
+        {
+            var month = (season ?? string.Empty).ToLowerInvariant() switch
+            {
+                "spring" => 3,
+                "summer" => 6,
+                "fall" => 9,
+                "winter" => 12,
+                _ => 1
+            };
+
+            var safeYear = year <= 0 ? 1 : year;
+            var safeDay = Math.Clamp(dayOfMonth, 1, 28);
+
+            return new DateOnly(safeYear, month, safeDay);
+        }
+
         private Dictionary<ItemType, string?> FindEgg(string femaleKey, FarmAnimalData animalData)
         {
             var foundEggs = GetVanillaEggsID(femaleKey);
@@ -584,13 +604,17 @@ namespace LetMeHatch.Breeding
         )
         {
             var validBreedingData = GetBreedingDataGroupedByFemale();
+            var planner = new DefaultBreedingPlanner();
+            var executor = new BreedingPlanExecutor(WildEggsIDs);
+
             var sharedRng = config.DeterministicBreedingRng ? null : new GameRandomProvider();
             foreach (var (femaleKey, breedingDataList) in validBreedingData)
             {
                 IRandomProvider rng;
+                int seed;
                 if (config.DeterministicBreedingRng)
                 {
-                    var seed = DeterministicSeed.For(
+                    seed = DeterministicSeed.For(
                         Game1.uniqueIDForThisGame,
                         Game1.Date.Year,
                         Game1.Date.Season,
@@ -602,6 +626,7 @@ namespace LetMeHatch.Breeding
                 }
                 else
                 {
+                    seed = 0;
                     rng = sharedRng!;
                 }
 
@@ -609,37 +634,22 @@ namespace LetMeHatch.Breeding
                 {
                     male.Value.SetQuantity(male.Key);
                 }
-                var chosenFemaleData = breedingDataList
-                    .Where(x => x.BreedingData.Males.Any())
-                    .GetRandomItem(i => 1, randomProvider: rng);
-                var chosenMaleData = chosenFemaleData
-                    .BreedingData.Males.Where(x => x.Value.GetQuantity() > 0)
-                    .GetRandomItem(m => m.Value.GetQuantity(), randomProvider: rng);
-                if (chosenFemaleData.BreedingData == null)
-                {
-                    LoggerHelper.VerboseLog(
-                        $"Skipped female {femaleKey} because did not find a breeding data."
-                    );
-                    continue;
-                }
-                if (chosenMaleData.Key == null)
-                {
-                    LoggerHelper.VerboseLog(
-                        $"Skipped female {femaleKey} because did not find a male breeding data."
-                    );
-                    continue;
-                }
-                var currentBreedingSystem = new BreedingSystem(
-                    WildEggsIDs,
-                    breedingConfigsByPack,
-                    config.OnlyFertilizedEggs,
-                    femaleKey,
-                    chosenFemaleData,
-                    chosenMaleData,
-                    farmAnimalsData,
-                    rng
+
+                var plan = planner.BuildPlan(
+                    new BreedingPlanInput(
+                        InGameDate: ToDateOnly(Game1.Date.Year, Game1.Date.Season, Game1.Date.DayOfMonth),
+                        Seed: seed,
+                        Rng: rng,
+                        OnlyFertilizedEggs: config.OnlyFertilizedEggs,
+                        DailyLuckBonus: config.DailyLuckBonus,
+                        FarmAnimals: farmAnimalsData,
+                        FemaleKey: femaleKey,
+                        Candidates: breedingDataList.ToList(),
+                        BreedingConfigsByPack: breedingConfigsByPack
+                    )
                 );
-                currentBreedingSystem.Run();
+
+                executor.Apply(farmAnimalsData, plan);
             }
         }
 

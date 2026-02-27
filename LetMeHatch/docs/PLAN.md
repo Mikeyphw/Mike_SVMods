@@ -62,7 +62,7 @@
 
 ## Phase 13 — Introduce `BreedingPlan` (planner + executor split)
 
-Status: steps 1–2 completed (contracts + records).
+Status: completed (planner + executor + wiring).
 
 1. Add Core contracts: `BreedingPlan`, `BreedingPairPlan`, and `BreedingMutation` operations.
 2. Add planner/executor interfaces: `IBreedingPlanner`, `IBreedingPlanExecutor`.

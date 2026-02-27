@@ -20,9 +20,18 @@ public sealed record BreedingPlan(
 public sealed record BreedingPairPlan(
     string FemaleAnimalKey,
     string MaleAnimalKey,
-    double FertilizeChance,
-    string? FertilizedEggItemId,
-    BreedingMode Mode);
+    IReadOnlyList<string> OtherMaleKeys,
+    BreedingMode Mode,
+    string? EggToClearItemId,
+    string? EggToAssignItemId,
+    bool FertilizedSucceeded,
+    int MaleQuantity,
+    double BaseFertilizedChance,
+    double AdjustedFertilizedChance,
+    double MaleChance,
+    double BoostByMale,
+    bool ApplyDailyLuckBoost,
+    string? SelectedEggType);
 
 /// <summary>
 /// How egg generation should behave for the pair.
