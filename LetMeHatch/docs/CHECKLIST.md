@@ -29,11 +29,11 @@
 - [x] No behavior/feature changes (refactor/perf only).
 
 ## Phase 12 — Breeding correctness + invariants (destructive, but safe)
-- [ ] Female filtering bug fixed (`Males.Count <= 0`).
-- [ ] RNG unified across planning + application.
-- [ ] Male keys (including clones) never have `EggItemIds` (enforced at end of apply).
-- [ ] Fertilization semantics updated: `maleChance` affects fertilization only; eggs remain female-owned.
-- [ ] Diagnostics logging includes plan summary and canonical egg-domain results.
+- [x] Female filtering bug fixed (`Males.Count <= 0`).
+- [x] RNG unified across planning + application.
+- [x] Male keys (including clones) never have `EggItemIds` (enforced at end of apply).
+- [x] Fertilization semantics updated: `maleChance` affects fertilization only; eggs remain female-owned.
+- [x] Diagnostics logging includes plan summary and canonical egg-domain results.
 
 ## Phase 13 — Introduce `BreedingPlan` (planner + executor split)
 - [ ] Core records added: `BreedingPlan`, `BreedingPairPlan`, `BreedingMutation`.

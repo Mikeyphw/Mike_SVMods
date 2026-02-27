@@ -11,6 +11,8 @@ using StardewValley.Buildings;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.TokenizableStrings;
 using static LetMeHatch.EnumsAndStrings.Enums;
+using System;
+using System.Collections.Generic;
 
 using static LetMeHatch.ModEntry;
 
@@ -19,10 +21,12 @@ namespace LetMeHatch.Breeding
     public class BreedingSystem
     {
         private readonly IDictionary<string, FarmAnimalData> _gameAnimalData;
+        private readonly string _femaleKey;
+        private readonly string _maleKey;
         private readonly FarmAnimalData _gameDataFemale;
         private readonly FarmAnimalData _gameDataMale;
         private readonly Dictionary<ItemType, (string? ID, float Chance)> _eggs;
-        private readonly List<FarmAnimalData> _malesNotChosenGameData;
+        private readonly List<(string Key, FarmAnimalData Data)> _otherMales;
         private readonly int _chosenMaleQuantity;
         private readonly bool _onlyFertilizedEggs;
         private readonly bool _applyDailyLuckBoost;
@@ -41,13 +45,15 @@ namespace LetMeHatch.Breeding
             (string ContentPackID, BreedingDataFemale BreedingData) chosenFemaleData,
             KeyValuePair<string, BreedingDataMale> chosenMaleData,
             IDictionary<string, FarmAnimalData> farmAnimalsData,
-            IRandomProvider? rng = null
+            IRandomProvider rng
         )
         {
             WildEggsIDs = wildEggsIDs;
             _gameAnimalData = farmAnimalsData;
+            _femaleKey = femaleKey;
+            _maleKey = chosenMaleData.Key;
 
-            _rng = rng ?? new GameRandomProvider();
+            _rng = rng ?? throw new ArgumentNullException(nameof(rng));
             _eggSelector = new EggSelectionUseCase(_rng);
 
             var generalConfig = breedingConfigsByPack[chosenFemaleData.ContentPackID][femaleKey];
@@ -55,7 +61,7 @@ namespace LetMeHatch.Breeding
             _gameDataFemale = _gameAnimalData[femaleKey];
             _gameDataMale = _gameAnimalData[chosenMaleData.Key];
             _eggs = GetEggs(generalConfig.EggChances, chosenMaleData.Value.GetEggIDs());
-            _malesNotChosenGameData = GetOtherMalesFarmAnimalData(
+            _otherMales = GetOtherMalesFarmAnimalData(
                 chosenFemaleData.BreedingData.Males,
                 chosenMaleData.Key
             );
@@ -91,14 +97,14 @@ namespace LetMeHatch.Breeding
             };
         }
 
-        private List<FarmAnimalData> GetOtherMalesFarmAnimalData(
+        private List<(string Key, FarmAnimalData Data)> GetOtherMalesFarmAnimalData(
             Dictionary<string, BreedingDataMale> males,
             string chosenMaleKey
         )
         {
             return males
                 .Where(r => r.Key != chosenMaleKey)
-                .Select(r => _gameAnimalData[r.Key])
+                .Select(r => (r.Key, _gameAnimalData[r.Key]))
                 .ToList();
         }
 
@@ -132,8 +138,43 @@ namespace LetMeHatch.Breeding
             return b.buildingType.Value.ToLower().Contains("coop");
         }
 
-        public void Run()
+        
+        private static bool IsMaleOnly(FarmAnimalData data)
         {
+            return data.Gender == FarmAnimalGender.Male;
+        }
+
+        private static bool IsMaleOnly(string animalKey, FarmAnimalData data)
+        {
+            if (IsMaleOnly(data))
+            {
+                return true;
+            }
+
+            return animalKey.EndsWith("#_Male", StringComparison.OrdinalIgnoreCase)
+                || animalKey.EndsWith("_Male", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void EnforceMaleNeverLaysInvariant()
+        {
+            if (IsMaleOnly(_maleKey, _gameDataMale))
+            {
+                _gameDataMale.EggItemIds = null;
+            }
+
+            foreach (var other in _otherMales)
+            {
+                if (IsMaleOnly(other.Key, other.Data))
+                {
+                    other.Data.EggItemIds = null;
+                }
+            }
+        }
+
+public void Run()
+        {
+            try
+            {
             if (_onlyFertilizedEggs && string.IsNullOrEmpty(_eggs[ItemType.FertilizedEgg].ID))
             {
                 LoggerHelper.VerboseLog(
@@ -154,13 +195,23 @@ namespace LetMeHatch.Breeding
                 );
                 return;
             }
-            if (_onlyFertilizedEggs && !string.IsNullOrEmpty(_eggs[ItemType.FertilizedEgg].ID))
+                        LoggerHelper.VerboseLog(
+                $"LetMeHatch breeding pair selected: female='{_femaleKey}' male='{_maleKey}' maleQty={_chosenMaleQuantity} onlyFertilized={_onlyFertilizedEggs} maleChance={_maleChance} boostByMale={_boostByMale}.",
+                LogLevel.Trace
+            );
+
+if (_onlyFertilizedEggs && !string.IsNullOrEmpty(_eggs[ItemType.FertilizedEgg].ID))
             {
                 FertilizedHatchingSystem();
             }
             else if (!_onlyFertilizedEggs)
             {
                 NormalHatchingSystem();
+            }
+            }
+            finally
+            {
+                EnforceMaleNeverLaysInvariant();
             }
         }
 
@@ -178,90 +229,130 @@ namespace LetMeHatch.Breeding
                 );
                 return;
             }
-            if (
-                _eggSelector.RollChance(_eggs[ItemType.FertilizedEgg].Chance + _chosenMaleQuantity * _boostByMale)
-            )
-            {
-                _gameDataFemale.DeluxeProduceItemIds ??= new();
-                _gameDataFemale.DeluxeProduceItemIds.Clear();
-                _gameDataFemale.DeluxeProduceItemIds.Add(CreateFarmAnimalProduce(fertilizedEgg));
 
-                _gameDataFemale.ProduceItemIds ??= new();
-                _gameDataFemale.ProduceItemIds.Clear();
-                _gameDataFemale.ProduceItemIds.Add(CreateFarmAnimalProduce(fertilizedEgg));
-            }
-            if (_eggSelector.RollChanceInclusive(_maleChance))
+            var baseChance = _eggs[ItemType.FertilizedEgg].Chance + _chosenMaleQuantity * _boostByMale;
+            var adjustedChance = _applyDailyLuckBoost
+                ? (float)DailyLuckHelper.AdjustChanceByDailyLuck(baseChance, ModEntry.Config.DailyLuckBonus)
+                : baseChance;
+
+            var fertilized =
+                _eggSelector.RollChance(adjustedChance) && _eggSelector.RollChanceInclusive(_maleChance);
+
+            LoggerHelper.VerboseLog(
+                $"LetMeHatch fertilized roll: female='{_femaleKey}' male='{_maleKey}' chance={adjustedChance:0.###} maleChance={_maleChance:0.###} => fertilized={fertilized}.",
+                LogLevel.Trace
+            );
+
+            if (!fertilized)
             {
-                _gameDataMale.EggItemIds.Add(fertilizedEgg);
+                return;
             }
-            else
-            {
-                _gameDataFemale.EggItemIds.Add(fertilizedEgg);
-            }
+
+            _gameDataFemale.DeluxeProduceItemIds ??= new();
+            _gameDataFemale.DeluxeProduceItemIds.Clear();
+            _gameDataFemale.DeluxeProduceItemIds.Add(CreateFarmAnimalProduce(fertilizedEgg));
+
+            _gameDataFemale.ProduceItemIds ??= new();
+            _gameDataFemale.ProduceItemIds.Clear();
+            _gameDataFemale.ProduceItemIds.Add(CreateFarmAnimalProduce(fertilizedEgg));
+
+            _gameDataFemale.EggItemIds ??= new();
+            _gameDataFemale.EggItemIds.Add(fertilizedEgg);
         }
 
-        private void ClearEggLists(List<FarmAnimalData>? animalsThatShareEgg, string eggID)
+
+private void ClearEggLists(List<FarmAnimalData>? animalsThatShareEgg, string eggID)
         {
             // Retain only the items in EggItemIds that are also in WildEggs
 
-            _gameDataMale.EggItemIds ??= new();
-            _gameDataMale.EggItemIds.RemoveAll(item => !WildEggsIDs.Contains(item));
+            if (IsMaleOnly(_gameDataMale))
+            {
+                _gameDataMale.EggItemIds = null;
+            }
+            else
+            {
+                _gameDataMale.EggItemIds ??= new();
+                _gameDataMale.EggItemIds.RemoveAll(item => !WildEggsIDs.Contains(item));
+            }
 
             _gameDataFemale.EggItemIds ??= new();
             _gameDataFemale.EggItemIds.RemoveAll(item => !WildEggsIDs.Contains(item));
 
             animalsThatShareEgg?.ForEach(a =>
             {
+                if (IsMaleOnly(a))
+                {
+                    a.EggItemIds = null;
+                    return;
+                }
+
                 a.EggItemIds ??= new();
                 a.EggItemIds.Remove(eggID);
             });
 
-            _malesNotChosenGameData.ForEach(or =>
+            _otherMales.ForEach(or =>
             {
-                or.EggItemIds ??= new();
-                or.EggItemIds.RemoveAll(item => !WildEggsIDs.Contains(item));
+                if (IsMaleOnly(or.Data))
+                {
+                    or.Data.EggItemIds = null;
+                    return;
+                }
+
+                or.Data.EggItemIds ??= new();
+                or.Data.EggItemIds.RemoveAll(item => !WildEggsIDs.Contains(item));
             });
         }
 
         private void NormalHatchingSystem()
         {
+            var weighted = new List<(ItemType item, double weight)>();
+
             foreach (var eggType in new[] { ItemType.Normal, ItemType.Large })
             {
-                if (!string.IsNullOrEmpty(_eggs[eggType].ID))
-                {
-                    RunNormalHatchingSystem(eggType);
-                }
-                else
+                var (id, chance) = _eggs[eggType];
+                if (string.IsNullOrEmpty(id))
                 {
                     LoggerHelper.VerboseLog(
                         $"Can't run hatching system for {eggType} eggs because none are available. Couple: ({GetAnimalDisplayName(_gameDataFemale)},{GetAnimalDisplayName(_gameDataMale)}).",
                         LogLevel.Warn
                     );
+                    continue;
+                }
+
+                var adjustedWeight = _applyDailyLuckBoost
+                    ? DailyLuckHelper.AdjustChanceByDailyLuck((double)chance, ModEntry.Config.DailyLuckBonus)
+                    : chance;
+
+                if (adjustedWeight > 0)
+                {
+                    weighted.Add((eggType, adjustedWeight));
                 }
             }
+
+            if (weighted.Count == 0)
+            {
+                return;
+            }
+
+            var chosenType = _eggSelector.RollWeightedOrDefault(weighted, weighted[0].item);
+
+            LoggerHelper.VerboseLog(
+                $"LetMeHatch normal roll: female='{_femaleKey}' male='{_maleKey}' chosenType={chosenType}.",
+                LogLevel.Trace
+            );
+
+            RunNormalHatchingSystem(chosenType);
         }
 
         private void RunNormalHatchingSystem(ItemType eggType)
         {
-            var (ID, Chance) = _eggs[eggType];
-            var animalsThatShareEgg = GetAnimalsThatProduceSameEgg(ID!);
+            var (id, _) = _eggs[eggType];
+            var animalsThatShareEgg = GetAnimalsThatProduceSameEgg(id!);
 
-            ClearEggLists(animalsThatShareEgg, ID!);
-            var adjustedChance = _applyDailyLuckBoost
-                ? DailyLuckHelper.AdjustChanceByDailyLuck(
-                    (double)Chance,
-                    ModEntry.Config.DailyLuckBonus
-                )
-                : Chance;
+            ClearEggLists(animalsThatShareEgg, id!);
 
-            if (_eggSelector.ChooseRecipient(adjustedChance) == EggRecipient.Male)
-            {
-                _gameDataMale.EggItemIds.Add(ID);
-            }
-            else
-            {
-                _gameDataFemale.EggItemIds.Add(ID);
-            }
+            _gameDataFemale.EggItemIds ??= new();
+            _gameDataFemale.EggItemIds.Add(id);
         }
 
         private List<FarmAnimalData> GetAnimalsThatProduceSameEgg(string femaleEgg)

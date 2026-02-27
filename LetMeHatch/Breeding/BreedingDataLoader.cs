@@ -160,7 +160,7 @@ namespace LetMeHatch.Breeding
                 if (Game1.farmAnimalData.ContainsKey(femaleData.Key))
                 {
                     FilterMales(femaleData.Value.Males, femaleData.Key, contentPackID);
-                    if (femaleData.Value.Males.Count < 0)
+                    if (femaleData.Value.Males.Count <= 0)
                     {
                         femalesToRemove.Add(femaleData.Key);
                         LoggerHelper.VerboseLog(
@@ -584,9 +584,10 @@ namespace LetMeHatch.Breeding
         )
         {
             var validBreedingData = GetBreedingDataGroupedByFemale();
+            var sharedRng = config.DeterministicBreedingRng ? null : new GameRandomProvider();
             foreach (var (femaleKey, breedingDataList) in validBreedingData)
             {
-                IRandomProvider? rng = null;
+                IRandomProvider rng;
                 if (config.DeterministicBreedingRng)
                 {
                     var seed = DeterministicSeed.For(
@@ -599,6 +600,11 @@ namespace LetMeHatch.Breeding
                     );
                     rng = new SeededRandomProvider(seed);
                 }
+                else
+                {
+                    rng = sharedRng!;
+                }
+
                 foreach (var male in breedingDataList.SelectMany(x => x.BreedingData.Males))
                 {
                     male.Value.SetQuantity(male.Key);
