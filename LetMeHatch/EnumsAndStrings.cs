@@ -48,6 +48,14 @@ public static class Enums
         Misc
     }
 
+
+    public enum DynamicCloneTintMode
+    {
+        None,
+        Grayscale,
+        Multiply,
+    }
+
     public enum ColorOptions
     {
         Saturation,

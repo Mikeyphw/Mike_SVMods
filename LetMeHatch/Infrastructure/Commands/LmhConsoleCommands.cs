@@ -47,6 +47,24 @@ public static class LmhConsoleCommands
             "Preview dynamic clone texture details.\n\nUsage: lmh_clone_texture_preview <cloneId>.",
             (_, args) => coordinator.DebugCloneTexturePreview(args.Length >= 1 ? args[0] : string.Empty)
         );
+        helper.ConsoleCommands.Add(
+            "lmh_clone_texture_healthcheck",
+            "Healthcheck dynamic clone texture generation by attempting to load N clone textures.\n\nUsage: lmh_clone_texture_healthcheck [count].",
+            (_, args) => coordinator.DebugCloneTextureHealthcheck(args.Length >= 1 ? args[0] : string.Empty)
+        );
+
+        helper.ConsoleCommands.Add(
+            "lmh_clone_texture_stats",
+            "Print dynamic clone texture cache stats.\n\nUsage: lmh_clone_texture_stats [maxKeys].",
+            (_, args) => coordinator.DebugCloneTextureStats(args.Length >= 1 ? args[0] : string.Empty)
+        );
+
+        helper.ConsoleCommands.Add(
+            "lmh_clone_texture_clear_cache",
+            "Clear the dynamic clone texture cache.\n\nUsage: lmh_clone_texture_clear_cache.",
+            (_, _) => coordinator.DebugCloneTextureClearCache()
+        );
+
 
     }
 }

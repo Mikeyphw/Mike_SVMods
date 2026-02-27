@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.GameData.Objects;
+using static LetMeHatch.EnumsAndStrings.Enums;
 
 namespace LetMeHatch.Infrastructure.Content.Loaders;
 
@@ -79,8 +80,12 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
         if (!ModEntry.Config.UseDynamicCloneTextures)
             return ToTexture(pixels);
 
+        var mode = ModEntry.Config.DynamicCloneTintMode;
+        if (mode == DynamicCloneTintMode.None)
+            return ToTexture(pixels);
+
         var tint = ResolveTint(cloneId, animalKey, originalItemId, cloneData, originalData);
-        ApplyTintInPlace(pixels, tint);
+        ApplyTintInPlace(pixels, tint, mode);
         return ToTexture(pixels);
     }
 
@@ -97,10 +102,18 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
         string originalItemId,
         ObjectData? cloneData,
         ObjectData originalData)
+        => ResolveTintWithSource(cloneId, animalKey, originalItemId, cloneData, originalData).Tint;
+
+    internal static (Color Tint, string Source) ResolveTintWithSource(
+        string cloneId,
+        string animalKey,
+        string originalItemId,
+        ObjectData? cloneData,
+        ObjectData originalData)
     {
         // 1) Config override by original object id.
         if (ModEntry.Config.EggColors_ColorObject.TryGetValue(originalItemId, out var cfgColor))
-            return cfgColor;
+            return (cfgColor, "config.override");
 
         // 2) Saved per-animal mapping (legacy LMH behavior).
         var saved = ModEntry.CurrentAssetManager?.SavedColors;
@@ -108,18 +121,19 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
             && saved.ItemColors.TryGetValue(animalKey, out var savedHex)
             && TryParseHexColor(savedHex, out var savedColor))
         {
-            return savedColor;
+            return (savedColor, "save.per_animal");
         }
 
         // 3) Clone custom field hex.
         var hex = TryGetCloneHexColor(cloneData);
         if (TryParseHexColor(hex, out var parsed))
-            return parsed;
+            return (parsed, "clone.custom_field");
 
         // 4) Context tags fallback.
         var tags = cloneData?.ContextTags ?? originalData.ContextTags;
         var resolver = new ColorResolver();
-        return resolver.Resolve(new ColorResolutionContext(Key: cloneId, SeedKey: cloneId, ContextTags: tags));
+        var resolved = resolver.Resolve(new ColorResolutionContext(Key: cloneId, SeedKey: cloneId, ContextTags: tags));
+        return (resolved, "context_tags");
     }
 
     private static string TryGetCloneHexColor(ObjectData? cloneData)
@@ -166,7 +180,25 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
         return data;
     }
 
-    private static void ApplyTintInPlace(Color[] pixels, Color tint)
+    private static void ApplyTintInPlace(Color[] pixels, Color tint, DynamicCloneTintMode mode)
+    {
+        switch (mode)
+        {
+            case DynamicCloneTintMode.Grayscale:
+                ApplyGrayscaleTintInPlace(pixels, tint);
+                return;
+
+            case DynamicCloneTintMode.Multiply:
+                ApplyMultiplyTintInPlace(pixels, tint);
+                return;
+
+            case DynamicCloneTintMode.None:
+            default:
+                return;
+        }
+    }
+
+    private static void ApplyGrayscaleTintInPlace(Color[] pixels, Color tint)
     {
         var tr = tint.R / 255f;
         var tg = tint.G / 255f;
@@ -184,6 +216,27 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
                 (byte)(lum * tr * 255f),
                 (byte)(lum * tg * 255f),
                 (byte)(lum * tb * 255f),
+                p.A
+            );
+        }
+    }
+
+    private static void ApplyMultiplyTintInPlace(Color[] pixels, Color tint)
+    {
+        var tr = tint.R / 255f;
+        var tg = tint.G / 255f;
+        var tb = tint.B / 255f;
+
+        for (var i = 0; i < pixels.Length; i++)
+        {
+            var p = pixels[i];
+            if (p.A == 0)
+                continue;
+
+            pixels[i] = new Color(
+                (byte)Math.Clamp(p.R * tr, 0f, 255f),
+                (byte)Math.Clamp(p.G * tg, 0f, 255f),
+                (byte)Math.Clamp(p.B * tb, 0f, 255f),
                 p.A
             );
         }

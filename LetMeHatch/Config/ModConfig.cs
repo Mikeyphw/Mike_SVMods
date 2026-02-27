@@ -18,6 +18,7 @@ public class ModConfig : CoreModConfig
     public bool DinoEggAsArtifact { get; set; }
     public bool CloneMachineRules { get; set; }
     public bool UseDynamicCloneTextures { get; set; }
+    public DynamicCloneTintMode DynamicCloneTintMode { get; set; }
     public bool ChangeEggColors { get; set; }
     public bool OnlyFertilizedEggs { get; set; }
     public bool ColorClonedMilk { get; set; }
@@ -80,6 +81,8 @@ public class ModConfig : CoreModConfig
         CloneVanillaEggs = true;
         DinoEggAsArtifact = false;
         CloneMachineRules = false;
+        UseDynamicCloneTextures = false;
+        DynamicCloneTintMode = DynamicCloneTintMode.Grayscale;
         ChangeEggColors = false;
         LinkAnimalColorToEgg = true;
         OnlyFertilizedEggs = true;

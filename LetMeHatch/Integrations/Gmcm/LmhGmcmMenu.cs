@@ -132,6 +132,7 @@ public static class LmhGmcmMenu
             {
                 page.Bool(cfg => cfg.CloneVanillaEggs, optionId: "CloneVanillaEggs", tooltip: true);
                 page.Bool(cfg => cfg.CloneMachineRules, optionId: "CloneMachineRules", tooltip: true);
+                page.Bool(cfg => cfg.UseDynamicCloneTextures, optionId: "UseDynamicCloneTextures", tooltip: true);
                 page.Bool("DinoEggsAsArtifact",
                     getValue: () => configProvider.Get().DinoEggAsArtifact,
                     setValue: v => configProvider.Get().DinoEggAsArtifact = v,
@@ -160,6 +161,7 @@ public static class LmhGmcmMenu
             build: page =>
             {
                 page.Bool(cfg => cfg.ChangeEggColors, optionId: "ChangeEggColors", tooltip: true);
+                page.Enum(cfg => cfg.DynamicCloneTintMode, optionId: "DynamicCloneTintMode", tooltip: true);
                 page.Bool("LinkAnimalColorToEggs",
                     getValue: () => configProvider.Get().LinkAnimalColorToEgg,
                     setValue: v => configProvider.Get().LinkAnimalColorToEgg = v,

@@ -37,3 +37,10 @@
 3. Clear dynamic clone texture cache on config updates (GMCM) via SmapiConfigProvider.ConfigUpdated.
 4. Remove remaining legacy gray texture hooks and sheet asset references.
 5. Build must remain green.
+
+## Phase 10 — Tint modes + clone texture diagnostics
+1. Add DynamicCloneTintMode enum + config + GMCM + i18n.
+2. Implement tint modes in DynamicCloneObjectTextureLoader (None/Grayscale/Multiply).
+3. Add console commands: healthcheck, stats, clear cache.
+4. Enhance clone texture preview output (mode + tint source).
+5. Build must remain green.

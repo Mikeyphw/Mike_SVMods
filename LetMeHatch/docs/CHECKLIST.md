@@ -13,3 +13,10 @@
 - [ ] Cache clears on config updates.
 - [ ] No GrayTextures hooks outside TextureManager.
 - [ ] `dotnet build` remains green.
+
+## Phase 10 — Tint modes + clone texture diagnostics
+- [ ] Add DynamicCloneTintMode enum + config + GMCM + i18n.
+- [ ] Implement tint modes in DynamicCloneObjectTextureLoader (None/Grayscale/Multiply).
+- [ ] Add console commands: healthcheck, stats, clear cache.
+- [ ] Enhance clone texture preview output (mode + tint source).
+- [ ] `dotnet build` remains green.
