@@ -604,6 +604,8 @@ namespace LetMeHatch.Breeding
         )
         {
             var validBreedingData = GetBreedingDataGroupedByFemale();
+            var scopeKeys = BuildBreedingScopeKeys(validBreedingData);
+            var coopIndex = CoopBreedingIndex.Build(Game1.getFarm());
             var planner = new DefaultBreedingPlanner();
             var executor = new BreedingPlanExecutor(WildEggsIDs);
 
@@ -632,7 +634,8 @@ namespace LetMeHatch.Breeding
 
                 foreach (var male in breedingDataList.SelectMany(x => x.BreedingData.Males))
                 {
-                    male.Value.SetQuantity(male.Key);
+                    var qty = coopIndex.GetMaleQuantityForFemale(male.Key, femaleKey);
+                    male.Value.SetQuantity(qty);
                 }
 
                 var plan = planner.BuildPlan(
@@ -643,6 +646,7 @@ namespace LetMeHatch.Breeding
                         OnlyFertilizedEggs: config.OnlyFertilizedEggs,
                         DailyLuckBonus: config.DailyLuckBonus,
                         FarmAnimals: farmAnimalsData,
+                        ScopeAnimalKeys: scopeKeys,
                         FemaleKey: femaleKey,
                         Candidates: breedingDataList.ToList(),
                         BreedingConfigsByPack: breedingConfigsByPack
@@ -652,6 +656,41 @@ namespace LetMeHatch.Breeding
                 executor.Apply(farmAnimalsData, plan);
             }
         }
+
+        private static IReadOnlyCollection<string> BuildBreedingScopeKeys(
+            IReadOnlyDictionary<string, IEnumerable<(string ContentPackID, BreedingDataFemale BreedingData)>> byFemale
+        )
+        {
+            var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (femaleKey, list) in byFemale)
+            {
+                if (!string.IsNullOrWhiteSpace(femaleKey))
+                {
+                    keys.Add(femaleKey);
+                }
+
+                foreach (var (_, breedingData) in list)
+                {
+                    if (breedingData?.Males is null)
+                    {
+                        continue;
+                    }
+
+                    foreach (var maleKey in breedingData.Males.Keys)
+                    {
+                        if (!string.IsNullOrWhiteSpace(maleKey))
+                        {
+                            keys.Add(maleKey);
+                        }
+                    }
+                }
+            }
+
+            return keys;
+        }
+
+
 
         private Dictionary<
             string,

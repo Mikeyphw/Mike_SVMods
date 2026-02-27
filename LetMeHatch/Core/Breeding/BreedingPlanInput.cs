@@ -16,6 +16,7 @@ public sealed record BreedingPlanInput(
     bool OnlyFertilizedEggs,
     float DailyLuckBonus,
     IDictionary<string, FarmAnimalData> FarmAnimals,
+    IReadOnlyCollection<string> ScopeAnimalKeys,
     string FemaleKey,
     IReadOnlyList<(string ContentPackId, BreedingDataFemale BreedingData)> Candidates,
     IReadOnlyDictionary<string, Dictionary<string, BreedingConfig>> BreedingConfigsByPack);

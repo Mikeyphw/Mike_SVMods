@@ -1,4 +1,3 @@
-using LetMeHatch.Breeding;
 using static LetMeHatch.EnumsAndStrings.Enums;
 
 using static LetMeHatch.ModEntry;
@@ -50,9 +49,9 @@ namespace LetMeHatch.Models
             FinalEggsIDs = new(eggIDs);
         }
 
-        public void SetQuantity(string maleKey)
+        public void SetQuantity(int quantity)
         {
-            Quantity = BreedingSystem.GetMaleQuantity(maleKey);
+            Quantity = quantity < 0 ? 0 : quantity;
         }
 
         public int GetQuantity()

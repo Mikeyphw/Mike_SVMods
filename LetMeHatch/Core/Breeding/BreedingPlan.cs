@@ -10,6 +10,7 @@ public sealed record BreedingPlan(
     string PlanId,
     DateOnly InGameDate,
     int Seed,
+    IReadOnlyCollection<string> ScopeAnimalKeys,
     IReadOnlyList<BreedingPairPlan> Pairs,
     IReadOnlyList<BreedingMutation> Mutations,
     IReadOnlyList<string> Diagnostics);

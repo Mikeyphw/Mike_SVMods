@@ -11,3 +11,10 @@
 - [x] Implement planner reproducing current selection (no behavior drift).
 - [x] Implement executor applying canonical egg-domain rebuild (destructive by design).
 - [x] Wire breeding pipeline: inputs → plan → apply (flag optional).
+
+
+## Phase 14
+- [ ] Egg-domain-only destructive rebuild (preserve non-egg produce)
+- [ ] Track LMH-managed egg ids (CustomFields) and only clear LMH state
+- [ ] Coop-scoped male counts
+- [ ] Add diagnostics + perf index

@@ -20,6 +20,7 @@ public sealed class DefaultBreedingPlanner : IBreedingPlanner
         if (input is null) throw new ArgumentNullException(nameof(input));
 
         var diagnostics = new List<string>();
+        var scopeKeys = input.ScopeAnimalKeys ?? Array.Empty<string>();
         var pairs = new List<BreedingPairPlan>();
         var mutations = new List<BreedingMutation>();
 
@@ -31,21 +32,14 @@ public sealed class DefaultBreedingPlanner : IBreedingPlanner
         if (viable.Count == 0)
         {
             diagnostics.Add($"No viable breeding candidates for female '{input.FemaleKey}'.");
-            return new BreedingPlan(
-                PlanId: BuildPlanId(input),
-                InGameDate: input.InGameDate,
-                Seed: input.Seed,
-                Pairs: pairs,
-                Mutations: mutations,
-                Diagnostics: diagnostics
-            );
+            return new BreedingPlan(PlanId: BuildPlanId(input), InGameDate: input.InGameDate, Seed: input.Seed, ScopeAnimalKeys: scopeKeys, Pairs: pairs, Mutations: mutations, Diagnostics: diagnostics);
         }
 
         var chosenFemale = viable.GetRandomItem(_ => 1, randomProvider: rng);
         if (string.IsNullOrEmpty(chosenFemale.ContentPackId) || chosenFemale.BreedingData is null)
         {
             diagnostics.Add($"Skipped female '{input.FemaleKey}' because no chosen breeding data was available.");
-            return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, pairs, mutations, diagnostics);
+            return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, scopeKeys, pairs, mutations, diagnostics);
         }
 
         var males = chosenFemale.BreedingData.Males ?? new Dictionary<string, BreedingDataMale>();
@@ -56,13 +50,13 @@ public sealed class DefaultBreedingPlanner : IBreedingPlanner
         if (string.IsNullOrEmpty(chosenMale.Key) || chosenMale.Value is null)
         {
             diagnostics.Add($"Skipped female '{input.FemaleKey}' because no male breeding data was available.");
-            return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, pairs, mutations, diagnostics);
+            return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, scopeKeys, pairs, mutations, diagnostics);
         }
 
         if (!TryGetGeneralConfig(input.BreedingConfigsByPack, chosenFemale.ContentPackId, input.FemaleKey, out var generalConfig))
         {
             diagnostics.Add($"Skipped female '{input.FemaleKey}' because no BreedingConfig was found for contentPack='{chosenFemale.ContentPackId}'.");
-            return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, pairs, mutations, diagnostics);
+            return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, scopeKeys, pairs, mutations, diagnostics);
         }
 
         var eggs = GetEggs(generalConfig, chosenMale.Value);
@@ -114,7 +108,7 @@ public sealed class DefaultBreedingPlanner : IBreedingPlanner
             mutations.Add(new BreedingMutation.EnforceMaleNeverLays(other));
         }
 
-        return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, pairs, mutations, diagnostics);
+        return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, scopeKeys, pairs, mutations, diagnostics);
     }
 
     private static void BuildNormalPlan(
