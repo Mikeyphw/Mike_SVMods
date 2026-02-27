@@ -27,3 +27,29 @@
 - [x] Remove unused legacy loader files/interfaces.
 - [x] Remove LINQ allocations in diagnostics + cache key enumeration.
 - [x] No behavior/feature changes (refactor/perf only).
+
+## Phase 12 — Breeding correctness + invariants (destructive, but safe)
+- [ ] Female filtering bug fixed (`Males.Count <= 0`).
+- [ ] RNG unified across planning + application.
+- [ ] Male keys (including clones) never have `EggItemIds` (enforced at end of apply).
+- [ ] Fertilization semantics updated: `maleChance` affects fertilization only; eggs remain female-owned.
+- [ ] Diagnostics logging includes plan summary and canonical egg-domain results.
+
+## Phase 13 — Introduce `BreedingPlan` (planner + executor split)
+- [ ] Core records added: `BreedingPlan`, `BreedingPairPlan`, `BreedingMutation`.
+- [ ] Contracts added: `IBreedingPlanner`, `IBreedingPlanExecutor`.
+- [ ] Planner reproduces current selection (no behavior drift).
+- [ ] Executor applies canonical egg-domain rebuild (destructive by design).
+- [ ] Breeding pipeline wired: inputs → plan → apply (flag optional).
+
+## Phase 14 — Destructive rebuild hardening (still destructive)
+- [ ] Destruction scoped to egg-domain only (no unrelated produce removal).
+- [ ] Optional LMH-owned egg tracking implemented (clone/fertilized ids).
+- [ ] Male counts computed in a single pass and reused.
+- [ ] Plan validation fail-fast rules added (no eggs on males, clone placeholders required).
+- [ ] Plan diff logging added (added/removed egg-like ids, enforcement actions).
+
+## Phase 15 — Tests + documentation upkeep
+- [ ] Invariant tests: male never lays; egg-like-only replacement; deterministic plan.
+- [ ] Snapshot tests added for synthetic `Data/FarmAnimals` maps.
+- [ ] PLAN/TODO/CHECKLIST updated as phases complete.

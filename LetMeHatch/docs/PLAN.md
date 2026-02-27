@@ -52,3 +52,86 @@
 4. Remove LINQ allocations in clone texture diagnostics + cache key enumeration.
 5. Keep diagnostics output stable (no new commands/features; refactor only).
 6. Update PLAN/CHECKLIST/TODO to reflect Phase 10–11 completion.
+
+## Phase 12 — Breeding correctness + invariants (destructive, but safe)
+1. Fix female filtering bug (`Males.Count <= 0`).
+2. Unify RNG: construct once per run/day and thread through selection + application.
+3. Enforce invariant: male animal keys (including clones) never have `EggItemIds` (final write in executor).
+4. Clarify semantics: `maleChance` drives fertilization chance; eggs remain on the female egg-domain only.
+5. Add plan-style diagnostics logging (selected pairs, chances, canonical egg-domain outputs).
+
+## Phase 13 — Introduce `BreedingPlan` (planner + executor split)
+1. Add Core contracts: `BreedingPlan`, `BreedingPairPlan`, and `BreedingMutation` operations.
+2. Add planner/executor interfaces: `IBreedingPlanner`, `IBreedingPlanExecutor`.
+3. Implement planner that reproduces current pair selection + fertilized egg selection (no behavior drift).
+4. Implement executor that applies a canonical (destructive) egg-domain rebuild per animal key.
+5. Wire current breeding entrypoint to: build inputs → plan → apply (optionally behind a config flag first).
+
+## Phase 14 — Destructive rebuild hardening (still destructive)
+1. Scope destruction to egg-domain only:
+   - rewrite `EggItemIds` canonically,
+   - remove only egg-like entries from `ProduceItemIds`/`DeluxeProduceItemIds`,
+   - never remove unrelated produce.
+2. Optional: track LMH-owned egg ids (clone/fertilized) to make canonical rebuild deterministic and auditable.
+3. Performance: compute male counts in a single pass (dictionary) and reuse for all pair calculations.
+4. Add plan validation (fail-fast):
+   - forbid adding eggs to male keys,
+   - require all clone placeholders exist before apply.
+5. Add plan diff logging: per animal key (added/removed egg-like ids, fertilized egg choice, enforcement actions).
+
+## Phase 15 — Tests + documentation upkeep
+1. Add xUnit tests for invariants:
+   - male clone never gets `EggItemIds`,
+   - fertilized replacement only touches egg-like entries,
+   - deterministic plan given seed.
+2. Add snapshot-style tests for small synthetic `Data/FarmAnimals` maps.
+3. Update `PLAN.md`, `TODO.md`, and `CHECKLIST.md` as phases complete.
+
+### Appendix — Concrete `BreedingPlan` structure (Core)
+```csharp
+public sealed record BreedingPlan(
+    string PlanId,
+    DateOnly InGameDate,
+    int Seed,
+    IReadOnlyList<BreedingPairPlan> Pairs,
+    IReadOnlyList<BreedingMutation> Mutations,
+    IReadOnlyList<string> Diagnostics);
+
+public sealed record BreedingPairPlan(
+    string FemaleAnimalKey,
+    string MaleAnimalKey,
+    double FertilizeChance,
+    string? FertilizedEggItemId,
+    string Mode);
+
+public abstract record BreedingMutation
+{
+    public sealed record EnsureCloneExists(string OriginalKey, string CloneKey) : BreedingMutation;
+
+    public sealed record RebuildFemaleEggDomain(
+        string FemaleKey,
+        IReadOnlyList<string> CanonicalEggItemIds,
+        string? FertilizedEggItemId) : BreedingMutation;
+
+    public sealed record StripEggLikeFromProduces(string AnimalKey) : BreedingMutation;
+
+    public sealed record EnforceMaleNeverLays(string MaleKey) : BreedingMutation;
+}
+
+public interface IBreedingPlanner
+{
+    BreedingPlan BuildPlan(BreedingPlanInput input);
+}
+
+public sealed record BreedingPlanInput(
+    DateOnly InGameDate,
+    int Seed,
+    IReadOnlyDictionary<string, FarmAnimalData> GameData,
+    IReadOnlyList<BreedingFemaleConfig> Females,
+    IReadOnlyDictionary<string, int> MaleCountsByAnimalKey);
+
+public interface IBreedingPlanExecutor
+{
+    void Apply(IDictionary<string, FarmAnimalData> gameDataFarmAnimals, BreedingPlan plan);
+}
+```
