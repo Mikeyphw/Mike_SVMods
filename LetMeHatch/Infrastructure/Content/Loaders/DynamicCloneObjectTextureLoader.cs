@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using LetMeHatch.Core.ClonePipeline;
 using LetMeHatch.Core.Cloning;
 using Microsoft.Xna.Framework;
@@ -53,11 +54,19 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
 
     public static void ClearCache() => Cache.Clear();
 
+    public static int CacheCount => Cache.Count;
+
+    public static string[] GetCacheKeys(int maxKeys)
+    {
+        if (maxKeys <= 0) return Array.Empty<string>();
+        return Cache.Keys.Take(maxKeys).ToArray();
+    }
+
     private static Texture2D BuildTexture(string cloneId)
     {
         Game1.objectData.TryGetValue(cloneId, out var cloneData);
 
-        if (!CloneIdService.TryParseCloneId(cloneId, out _, out var originalItemId, out _))
+        if (!CloneIdService.TryParseCloneId(cloneId, out var animalKey, out var originalItemId, out _))
             throw new InvalidOperationException($"Not a recognized clone id: {cloneId}");
 
         if (!Game1.objectData.TryGetValue(originalItemId, out var originalData))
@@ -70,7 +79,7 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
         if (!ModEntry.Config.UseDynamicCloneTextures)
             return ToTexture(pixels);
 
-        var tint = ResolveTint(cloneId, cloneData, originalData);
+        var tint = ResolveTint(cloneId, animalKey, originalItemId, cloneData, originalData);
         ApplyTintInPlace(pixels, tint);
         return ToTexture(pixels);
     }
@@ -82,11 +91,67 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
         return tex;
     }
 
-    private static Color ResolveTint(string cloneId, ObjectData? cloneData, ObjectData originalData)
+    private static Color ResolveTint(
+        string cloneId,
+        string animalKey,
+        string originalItemId,
+        ObjectData? cloneData,
+        ObjectData originalData)
     {
+        // 1) Config override by original object id.
+        if (ModEntry.Config.EggColors_ColorObject.TryGetValue(originalItemId, out var cfgColor))
+            return cfgColor;
+
+        // 2) Saved per-animal mapping (legacy LMH behavior).
+        var saved = ModEntry.CurrentAssetManager?.SavedColors;
+        if (saved is not null
+            && saved.ItemColors.TryGetValue(animalKey, out var savedHex)
+            && TryParseHexColor(savedHex, out var savedColor))
+        {
+            return savedColor;
+        }
+
+        // 3) Clone custom field hex.
+        var hex = TryGetCloneHexColor(cloneData);
+        if (TryParseHexColor(hex, out var parsed))
+            return parsed;
+
+        // 4) Context tags fallback.
         var tags = cloneData?.ContextTags ?? originalData.ContextTags;
         var resolver = new ColorResolver();
         return resolver.Resolve(new ColorResolutionContext(Key: cloneId, SeedKey: cloneId, ContextTags: tags));
+    }
+
+    private static string TryGetCloneHexColor(ObjectData? cloneData)
+    {
+        if (cloneData?.CustomFields is null)
+            return string.Empty;
+
+        return cloneData.CustomFields.TryGetValue("ClonedColor", out var v) ? (v ?? string.Empty) : string.Empty;
+    }
+
+    private static bool TryParseHexColor(string hex, out Color color)
+    {
+        color = default;
+        if (string.IsNullOrWhiteSpace(hex))
+            return false;
+
+        var h = hex.Trim();
+        if (h.StartsWith("#", StringComparison.Ordinal))
+            h = h.Substring(1);
+
+        if (h.Length != 6)
+            return false;
+
+        if (!int.TryParse(h.Substring(0, 2), System.Globalization.NumberStyles.HexNumber, null, out var r))
+            return false;
+        if (!int.TryParse(h.Substring(2, 2), System.Globalization.NumberStyles.HexNumber, null, out var g))
+            return false;
+        if (!int.TryParse(h.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out var b))
+            return false;
+
+        color = new Color(r, g, b);
+        return true;
     }
 
     private static Color[] CropSprite(Texture2D texture, int spriteIndex)

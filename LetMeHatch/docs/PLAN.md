@@ -30,3 +30,10 @@
 3. Implement tint precedence: config override → clone CustomFields hex → tag fallback.
 4. Add cache clear/dump commands and enhance preview with source texture + crop rect.
 5. Remove legacy sheet assets/files.
+
+## Phase 9 — Legacy cleanup + tint parity + cache invalidation
+1. Remove legacy cloned-items sheet loader plumbing (asset-load hook + handler + adapter).
+2. Update dynamic clone tint precedence: config override → SavedColors per-animal → clone CustomFields hex → tags.
+3. Clear dynamic clone texture cache on config updates (GMCM) via SmapiConfigProvider.ConfigUpdated.
+4. Remove remaining legacy gray texture hooks and sheet asset references.
+5. Build must remain green.

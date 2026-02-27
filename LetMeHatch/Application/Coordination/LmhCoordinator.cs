@@ -96,8 +96,7 @@ public sealed class LmhCoordinator
         }
 
 #if MIKE_DEV
-        _core.Helper.Data.WriteJsonFile("data/gray.json", _assetManager.TextureManager.GrayTextures.Keys);
-#endif
+        #endif
 
         _invalidation.Request(AssetNames.FarmAnimals);
         _invalidation.Request(AssetNames.Objects);

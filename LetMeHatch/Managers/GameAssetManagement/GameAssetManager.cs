@@ -170,24 +170,9 @@ namespace LetMeHatch.GameAssetManagement
             FertilizedEggsToAdd.Clear();
             OutpuItemsToClone.Clear();
             MachineEditor.MachineRules.Clear();
-            TextureManager.GrayTextures.Clear();
             ClonedItemsTextureInfo.Clear();
         }
 
-        public void HandleClonedEggsAsset(AssetRequestedEventArgs e)
-        {
-            var clonedItemsModPath = AssetHandler.GetAssetPath(
-                Assets.Object.ClonedItems,
-                ModAssetHandler.AssetPathType.ModFolderPath
-            );
-
-            e.LoadFromModFile<Texture2D>(clonedItemsModPath, AssetLoadPriority.Exclusive);
-
-            if (TextureManager.GrayTextures.Count > 0)
-            {
-                e.Edit(TextureManager.ProcessClonedItemsTextures, AssetEditPriority.Late);
-            }
-        }
         #endregion
     }
 }

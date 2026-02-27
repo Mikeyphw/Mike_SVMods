@@ -15,8 +15,6 @@ public sealed class AssetLoadsAdapter : IAssetLoads
         _assets = assets ?? throw new ArgumentNullException(nameof(assets));
     }
 
-    public void OnClonedEggsAssetRequested(AssetRequestedEventArgs e) => _assets.HandleClonedEggsAsset(e);
-
     public void OnMaleClonesTextureRequested(AssetRequestedEventArgs e)
     {
         // Intentionally no-op until MaleClones texture asset wiring is finalized.

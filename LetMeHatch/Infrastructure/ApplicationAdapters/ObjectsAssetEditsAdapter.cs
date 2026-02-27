@@ -21,7 +21,7 @@ public sealed class ObjectsAssetEditsAdapter : IObjectsAssetEdits
             itemsToAddCount: () => assets.ItemsToAdd.Count,
             editClonedEggs: data => assets.ItemManager.EditNewClonedEggs(data),
             editFertilizedEggs: data => assets.ItemManager.EditNewFertilizedEggs(data),
-            processTextures: data => assets.TextureManager.ProcessClonedTexturesWithGrayColor(data));
+            processTextures: _ => { });
     }
 
     public bool TryAddClonedEggObjects(Dictionary<string, ObjectData> data, bool onlyFertilizedEggs) =>

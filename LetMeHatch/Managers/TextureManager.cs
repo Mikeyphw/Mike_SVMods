@@ -677,28 +677,8 @@ namespace LetMeHatch.GameAssetManagement
         )
         {
             int spriteIndex = 0;
-            string texture = string.Empty;
-            bool isColored = false;
-
-            if (
-                cloneItemType != CloneItemType.Milk
-                || (cloneItemType == CloneItemType.Milk && ModEntry.Config.ColorClonedMilk)
-            )
-            {
-                spriteIndex = ++_clonedEggsSpriteIndex;
-                // LoggerHelper.Log.Log($"Sprite Index changed to {_clonedEggsSpriteIndex}", LogLevel.Alert);
-                texture = AssetHandler.GetAssetPath(
-                    Assets.Object.ClonedItems,
-                    AssetPathType.GamePath
-                );
-                isColored = true;
-            }
-            else if (!ModEntry.Config.ColorClonedMilk)
-            {
-                spriteIndex = originalData.SpriteIndex;
-                texture = originalData.Texture;
-                isColored = false;
-            }
+            string texture = $"Mods/{ModEntry.ModManifestInstance.UniqueID}/Objects/Clones/{clonedID}";
+            bool isColored = ModEntry.Config.UseDynamicCloneTextures;
 
             _clonedItemsTextureInfo[clonedID] = new()
             {

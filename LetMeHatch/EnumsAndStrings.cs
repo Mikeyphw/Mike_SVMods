@@ -62,8 +62,7 @@ public static class Enums
     {
         public enum Object
         {
-            ClonedItems
-        }
+}
     }
 
     public enum AssetFolder

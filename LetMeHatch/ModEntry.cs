@@ -1,6 +1,7 @@
 using LetMeHatch.Application.Coordination;
 using LetMeHatch.Config;
 using LetMeHatch.Infrastructure.Commands;
+using LetMeHatch.Infrastructure.Content.Loaders;
 using LetMeHatch.Infrastructure.Smapi;
 using LetMeHatch.GameAssetManagement;
 using Mikew.NestCore.Framework;
@@ -49,6 +50,12 @@ namespace LetMeHatch
             _configProvider = new SmapiConfigProvider<ModConfig>(helper, Monitor);
 
             InitializeStaticFields(Monitor, helper, ModManifest, _configProvider.Get());
+
+            _configProvider.ConfigUpdated += (_, cfg) =>
+            {
+                InitializeStaticFields(Monitor, helper, ModManifest, cfg);
+                DynamicCloneObjectTextureLoader.ClearCache();
+            };
 
             _core = new CoreContext(helper, Monitor, ModManifest, TranslationHelper);
             _log = new NestCoreLog(LoggerHelper);
