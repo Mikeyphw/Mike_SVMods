@@ -44,3 +44,11 @@
 3. Add console commands: healthcheck, stats, clear cache.
 4. Enhance clone texture preview output (mode + tint source).
 5. Build must remain green.
+
+## Phase 11 — No-behavior-change cleanup + NestCore-first loader refactor
+1. Remove unused fields/warnings and keep build green.
+2. Refactor dynamic clone texture loader to a NestCore IAssetRequestHandler (remove LMH loader adapter layer).
+3. Delete unused legacy loader files/interfaces now superseded by NestCore pipeline.
+4. Remove LINQ allocations in clone texture diagnostics + cache key enumeration.
+5. Keep diagnostics output stable (no new commands/features; refactor only).
+6. Update PLAN/CHECKLIST/TODO to reflect Phase 10–11 completion.

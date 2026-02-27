@@ -4,7 +4,6 @@ using LetMeHatch.Application.Gateways;
 using LetMeHatch.Infrastructure.Gateways;
 using LetMeHatch.Infrastructure.ApplicationAdapters;
 using System.Collections.Generic;
-using System.Linq;
 using LetMeHatch.Config;
 using LetMeHatch.Framework;
 using LetMeHatch.GameAssetManagement;
@@ -364,12 +363,18 @@ public void DebugCloneTextureHealthcheck(string countArg)
         return;
     }
 
-    var cloneIds = StardewValley.Game1.objectData.Keys
-        .Where(id => Core.Cloning.CloneIdService.IsClonedItem(id))
-        .Take(count)
-        .ToArray();
+    var cloneIds = new List<string>(capacity: Math.Min(count, 256));
 
-    if (cloneIds.Length == 0)
+    foreach (var id in StardewValley.Game1.objectData.Keys)
+    {
+        if (!Core.Cloning.CloneIdService.IsClonedItem(id))
+            continue;
+
+        cloneIds.Add(id);
+        if (cloneIds.Count >= count)
+            break;
+    }
+if (cloneIds.Count == 0)
     {
         _log.Log("[clone texture healthcheck] No clone ids found in object data.", LogLevel.Info);
         return;
@@ -394,7 +399,7 @@ public void DebugCloneTextureHealthcheck(string countArg)
         }
     }
 
-    _log.Log($"[clone texture healthcheck] checked={cloneIds.Length} ok={ok} fail={fail} cacheCount={Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.CacheCount}", LogLevel.Info);
+    _log.Log($"[clone texture healthcheck] checked={cloneIds.Count} ok={ok} fail={fail} cacheCount={Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.CacheCount}", LogLevel.Info);
 }
 
 public void DebugCloneTextureStats(string maxKeysArg)

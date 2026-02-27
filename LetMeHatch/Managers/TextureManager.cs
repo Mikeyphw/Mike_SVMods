@@ -573,9 +573,6 @@ namespace LetMeHatch.GameAssetManagement
             string,
             Dictionary<TextureInfoType, ItemTextureInfo>
         > _clonedItemsTextureInfo;
-
-        private int _clonedEggsSpriteIndex = -1;
-
         public TextureManager(
             SavedColors savedColors,
             CloningHelper cloningHelper,

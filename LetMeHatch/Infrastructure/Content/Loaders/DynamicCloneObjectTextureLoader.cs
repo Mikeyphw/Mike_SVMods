@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Concurrent;
-using System.Linq;
+using System.Collections.Generic;
 using LetMeHatch.Core.ClonePipeline;
 using LetMeHatch.Core.Cloning;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.GameData.Objects;
+using Mikew.NestCore.Helpers.Content;
+using LetMeHatch.Infrastructure.Content;
 using static LetMeHatch.EnumsAndStrings.Enums;
 
 namespace LetMeHatch.Infrastructure.Content.Loaders;
@@ -15,7 +18,7 @@ namespace LetMeHatch.Infrastructure.Content.Loaders;
 /// <summary>
 /// Dynamically generates per-clone 16x16 textures under <c>Mods/&lt;UniqueId&gt;/Objects/Clones/&lt;cloneId&gt;</c>.
 /// </summary>
-public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
+public sealed class DynamicCloneObjectTextureLoader : IAssetRequestHandler<ContentContext>, IContentHandlerDebugInfo
 {
     private readonly string _prefixLower;
     private readonly int _prefixLen;
@@ -23,7 +26,6 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
     private static readonly ConcurrentDictionary<string, Texture2D> Cache = new(StringComparer.Ordinal);
 
     public DynamicCloneObjectTextureLoader(string modUniqueId)
-        : base(AssetLoadPriority.Exclusive)
     {
         if (string.IsNullOrWhiteSpace(modUniqueId))
             throw new ArgumentException("Mod unique id must be non-empty.", nameof(modUniqueId));
@@ -32,14 +34,33 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
         _prefixLen = _prefixLower.Length;
     }
 
-    public override string DebugHandles => "Mods/<UniqueId>/Objects/Clones/<cloneId>";
+    
+    public int Order => (int)AssetLoadPriority.Exclusive;
 
-    public override string DebugGates => "assetNameLower starts with mods/<uniqueid>/objects/clones/.";
+    public bool StopAfterHandle => false;
 
-    public override bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
+    public bool IsMatch(AssetRequestedEventArgs e)
+    {
+        var nameLower = e.NameWithoutLocale.BaseName.ToLowerInvariant();
+        return CanLoad(nameLower, e);
+    }
+
+    public bool ShouldApply(ContentContext context, AssetRequestedEventArgs e) => true;
+
+    public void Handle(AssetRequestedEventArgs e, ContentContext context)
+    {
+        var nameLower = e.NameWithoutLocale.BaseName.ToLowerInvariant();
+        Load(nameLower, e);
+    }
+
+    public string DebugHandles => "Mods/<UniqueId>/Objects/Clones/<cloneId>";
+
+    public string DebugGates => "assetNameLower starts with mods/<uniqueid>/objects/clones/.";
+
+    private bool CanLoad(string assetNameLower, AssetRequestedEventArgs e)
         => assetNameLower.StartsWith(_prefixLower, StringComparison.Ordinal);
 
-    public override void Load(string assetNameLower, AssetRequestedEventArgs e)
+    private void Load(string assetNameLower, AssetRequestedEventArgs e)
     {
         var fullName = e.NameWithoutLocale.BaseName;
         if (fullName.Length <= _prefixLen)
@@ -60,7 +81,16 @@ public sealed class DynamicCloneObjectTextureLoader : AssetLoaderBase
     public static string[] GetCacheKeys(int maxKeys)
     {
         if (maxKeys <= 0) return Array.Empty<string>();
-        return Cache.Keys.Take(maxKeys).ToArray();
+
+        var keys = new List<string>(capacity: Math.Min(maxKeys, Cache.Count));
+        foreach (var key in Cache.Keys)
+        {
+            keys.Add(key);
+            if (keys.Count >= maxKeys)
+                break;
+        }
+
+        return keys.ToArray();
     }
 
     private static Texture2D BuildTexture(string cloneId)

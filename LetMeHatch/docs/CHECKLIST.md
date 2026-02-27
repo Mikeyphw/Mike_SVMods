@@ -15,8 +15,15 @@
 - [ ] `dotnet build` remains green.
 
 ## Phase 10 — Tint modes + clone texture diagnostics
-- [ ] Add DynamicCloneTintMode enum + config + GMCM + i18n.
-- [ ] Implement tint modes in DynamicCloneObjectTextureLoader (None/Grayscale/Multiply).
-- [ ] Add console commands: healthcheck, stats, clear cache.
-- [ ] Enhance clone texture preview output (mode + tint source).
-- [ ] `dotnet build` remains green.
+- [x] Add DynamicCloneTintMode enum + config + GMCM + i18n.
+- [x] Implement tint modes in DynamicCloneObjectTextureLoader (None/Grayscale/Multiply).
+- [x] Add console commands: healthcheck, stats, clear cache.
+- [x] Enhance clone texture preview output (mode + tint source).
+- [x] `dotnet build` remains green.
+
+## Phase 11 — No-behavior-change cleanup + NestCore-first loader refactor
+- [x] Remove unused fields/warnings; `dotnet build` remains green.
+- [x] Dynamic clone loader implements NestCore IAssetRequestHandler (no LMH loader adapter layer).
+- [x] Remove unused legacy loader files/interfaces.
+- [x] Remove LINQ allocations in diagnostics + cache key enumeration.
+- [x] No behavior/feature changes (refactor/perf only).

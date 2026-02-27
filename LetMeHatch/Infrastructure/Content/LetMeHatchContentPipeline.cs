@@ -37,8 +37,8 @@ public static class LetMeHatchContentPipeline
             log,
             () => new ContentContext(core, configProvider, log, assetHandler, assets, app));
 
-        foreach (var loader in CreateLoaders(assetHandler, app))
-            pipeline.RegisterHandler(new LmhAssetLoaderHandler(loader));
+        foreach (var handler in CreateLoaders(assetHandler, app))
+            pipeline.RegisterHandler(handler);
 
         foreach (var reg in CreateEditors(app))
             pipeline.RegisterEditor(reg.Editor, order: reg.Order);
@@ -60,7 +60,7 @@ public static class LetMeHatchContentPipeline
         return targets;
     }
 
-    private static IEnumerable<IAssetLoader> CreateLoaders(ModAssetHandler assetHandler, LmhApplicationServices app)
+    private static IEnumerable<IAssetRequestHandler<ContentContext>> CreateLoaders(ModAssetHandler assetHandler, LmhApplicationServices app)
     {
         yield return new DynamicCloneObjectTextureLoader(ModEntry.ModManifestInstance.UniqueID);
     }
