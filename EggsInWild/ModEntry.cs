@@ -234,18 +234,6 @@ public sealed class ModEntry : Mod
             });
 
  #if WEGG_DEV
-            layout.Page("debug", page =>
-            {
-                page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
-                page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
-                page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
-
-                page.Separator(simple: true);
-                page.Link("debug_desertTomb", tooltip: true);
-                page.Link("debug_spawning", tooltip: true);
-                page.Link("debug_weighting", tooltip: true);
-                page.Link("debug_monsters", tooltip: true);
-            });
 
             // ============================
             // Debug subpages
@@ -500,6 +488,21 @@ public sealed class ModEntry : Mod
                     );
                 }
             });
+
+            // Debug hub page
+            layout.Page("debug", page =>
+            {
+                page.Bool(cfg => cfg.DesertTombPharaohTrackerEnabled, optionId: "debug.desertTomb.pharaohTracker", tooltip: true);
+                page.Bool(cfg => cfg.DesertTombDebugLogging, optionId: "debug.desertTomb.traceLogging", tooltip: true);
+                page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
+
+                page.Separator(simple: true);
+                page.Link("debug_desertTomb", tooltip: true);
+                page.Link("debug_spawning", tooltip: true);
+                page.Link("debug_weighting", tooltip: true);
+                page.Link("debug_monsters", tooltip: true);
+            });
+
  #endif
 
         }); // End of _gmcmHost.RebuildLayout
