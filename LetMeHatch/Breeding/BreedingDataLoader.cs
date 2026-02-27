@@ -443,14 +443,14 @@ namespace LetMeHatch.Breeding
         }
 
 
-        private static DateOnly ToDateOnly(int year, string season, int dayOfMonth)
+        private static DateOnly ToDateOnly(int year, Season season, int dayOfMonth)
         {
-            var month = (season ?? string.Empty).ToLowerInvariant() switch
+            var month = season switch
             {
-                "spring" => 3,
-                "summer" => 6,
-                "fall" => 9,
-                "winter" => 12,
+                Season.Spring => 3,
+                Season.Summer => 6,
+                Season.Fall => 9,
+                Season.Winter => 12,
                 _ => 1
             };
 
