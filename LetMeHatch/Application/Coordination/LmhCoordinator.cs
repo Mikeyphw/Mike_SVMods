@@ -1,4 +1,8 @@
 using System;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using LetMeHatch.Core.Breeding;
 using LetMeHatch.Application;
 using LetMeHatch.Application.Gateways;
 using LetMeHatch.Infrastructure.Gateways;
@@ -315,6 +319,179 @@ private void InitializeAssetEditor()
         }
     }
 
+
+
+
+public void DebugBreedingDumpPlans(string pathArg, string femaleKeyArg)
+{
+    if (!Context.IsWorldReady || _assetManager is null)
+    {
+        _log.Log("[breeding dump plans] World not ready or asset manager not initialized.", LogLevel.Warn);
+        return;
+    }
+
+    var farmAnimals = Game1.farmAnimalData;
+    var femaleKeyFilter = string.IsNullOrWhiteSpace(femaleKeyArg) ? null : femaleKeyArg.Trim();
+
+    var plans = _assetManager.BreedingDataLoader.BuildPlansForToday(
+        farmAnimals,
+        ModEntry.Config,
+        _assetManager.BreedingConfigsByPack,
+        femaleKeyFilter
+    );
+
+    var dump = plans.Select(ToDump).ToList();
+    var json = JsonSerializer.Serialize(dump, new JsonSerializerOptions { WriteIndented = true });
+
+    var defaultName = $"breeding_plans_{Game1.Date.Year}_{Game1.Date.Season}_{Game1.Date.DayOfMonth}.json";
+    var path = ResolveOutputPath(pathArg, defaultName);
+
+    Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+    File.WriteAllText(path, json);
+
+    _log.Log($"[breeding dump plans] Wrote {dump.Count} plan(s) to: {path}", LogLevel.Info);
+}
+
+public void DebugBreedingDumpCoopIndex(string pathArg)
+{
+    if (!Context.IsWorldReady)
+    {
+        _log.Log("[breeding dump coop index] World not ready.", LogLevel.Warn);
+        return;
+    }
+
+    var index = CoopBreedingIndex.Build(Game1.getFarm());
+    var dump = index.GetAdultCountsByCoop();
+
+    var json = JsonSerializer.Serialize(dump, new JsonSerializerOptions { WriteIndented = true });
+    var defaultName = $"breeding_coop_index_{Game1.Date.Year}_{Game1.Date.Season}_{Game1.Date.DayOfMonth}.json";
+    var path = ResolveOutputPath(pathArg, defaultName);
+
+    Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+    File.WriteAllText(path, json);
+
+    _log.Log($"[breeding dump coop index] Wrote coop index (coops={dump.Count}) to: {path}", LogLevel.Info);
+}
+
+public void DebugBreedingValidatePlans(string femaleKeyArg)
+{
+    if (!Context.IsWorldReady || _assetManager is null)
+    {
+        _log.Log("[breeding validate plans] World not ready or asset manager not initialized.", LogLevel.Warn);
+        return;
+    }
+
+    var farmAnimals = Game1.farmAnimalData;
+    var femaleKeyFilter = string.IsNullOrWhiteSpace(femaleKeyArg) ? null : femaleKeyArg.Trim();
+
+    var plans = _assetManager.BreedingDataLoader.BuildPlansForToday(
+        farmAnimals,
+        ModEntry.Config,
+        _assetManager.BreedingConfigsByPack,
+        femaleKeyFilter
+    );
+
+    var validator = new BreedingPlanValidator();
+
+    var invalid = 0;
+    foreach (var plan in plans)
+    {
+        var result = validator.Validate(plan);
+        if (result.IsValid)
+        {
+            continue;
+        }
+
+        invalid++;
+        _log.Log($"[breeding validate plans] INVALID planId={plan.PlanId} errors={result.Errors.Count}", LogLevel.Warn);
+        foreach (var err in result.Errors)
+        {
+            _log.Log($"[breeding validate plans] - {err}", LogLevel.Warn);
+        }
+    }
+
+    if (invalid == 0)
+    {
+        _log.Log($"[breeding validate plans] OK ({plans.Count} plan(s)).", LogLevel.Info);
+    }
+}
+
+private static BreedingPlanDump ToDump(BreedingPlan plan)
+{
+    return new BreedingPlanDump(
+        plan.PlanId,
+        plan.InGameDate,
+        plan.Seed,
+        plan.ScopeAnimalKeys.ToList(),
+        plan.Pairs.Select(p => new BreedingPairDump(
+            p.FemaleAnimalKey,
+            p.MaleAnimalKey,
+            p.OtherMaleKeys.ToList(),
+            p.Mode.ToString(),
+            p.EggToClearItemId,
+            p.EggToAssignItemId,
+            p.FertilizedSucceeded,
+            p.MaleQuantity,
+            p.BaseFertilizedChance,
+            p.AdjustedFertilizedChance,
+            p.MaleChance,
+            p.BoostByMale,
+            p.ApplyDailyLuckBoost,
+            p.SelectedEggType
+        )).ToList(),
+        plan.Mutations.Select(m => m.ToString() ?? string.Empty).ToList(),
+        plan.Diagnostics.ToList()
+    );
+}
+
+private static string ResolveOutputPath(string pathArg, string defaultFileName)
+{
+    var modDir = ModEntry.HelperInstance.DirectoryPath;
+    var baseDir = Path.Combine(modDir, "data");
+
+    if (string.IsNullOrWhiteSpace(pathArg))
+    {
+        return Path.Combine(baseDir, defaultFileName);
+    }
+
+    var candidate = pathArg.Trim();
+    if (!Path.IsPathRooted(candidate))
+    {
+        candidate = Path.Combine(baseDir, candidate);
+    }
+
+    if (Directory.Exists(candidate))
+    {
+        return Path.Combine(candidate, defaultFileName);
+    }
+
+    return candidate;
+}
+
+private sealed record BreedingPlanDump(
+    string PlanId,
+    DateOnly InGameDate,
+    int Seed,
+    List<string> ScopeAnimalKeys,
+    List<BreedingPairDump> Pairs,
+    List<string> Mutations,
+    List<string> Diagnostics);
+
+private sealed record BreedingPairDump(
+    string FemaleAnimalKey,
+    string MaleAnimalKey,
+    List<string> OtherMaleKeys,
+    string Mode,
+    string? EggToClearItemId,
+    string? EggToAssignItemId,
+    bool FertilizedSucceeded,
+    int MaleQuantity,
+    double BaseFertilizedChance,
+    double AdjustedFertilizedChance,
+    double MaleChance,
+    double BoostByMale,
+    bool ApplyDailyLuckBoost,
+    string? SelectedEggType);
 
 public void DebugCloneTexturePreview(string cloneId)
 {

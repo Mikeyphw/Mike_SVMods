@@ -14,7 +14,12 @@
 
 
 ## Phase 14
-- [ ] Egg-domain-only destructive rebuild (preserve non-egg produce)
-- [ ] Track LMH-managed egg ids (CustomFields) and only clear LMH state
-- [ ] Coop-scoped male counts
-- [ ] Add diagnostics + perf index
+- [x] Egg-domain-only destructive rebuild (preserve non-egg produce)
+- [x] Track LMH-managed egg ids (CustomFields) and only clear LMH state
+- [x] Coop-scoped male counts
+- [x] Add diagnostics + perf index
+
+## Phase 15
+- [x] Add tests: validator, executor invariants, coop index.
+- [x] Add breeding debug console commands (plan dump, coop index dump, validate).
+- [x] Add BreedingPlanValidator and wire validation before apply.

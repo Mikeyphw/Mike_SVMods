@@ -608,6 +608,7 @@ namespace LetMeHatch.Breeding
             var coopIndex = CoopBreedingIndex.Build(Game1.getFarm());
             var planner = new DefaultBreedingPlanner();
             var executor = new BreedingPlanExecutor(WildEggsIDs);
+            var validator = new BreedingPlanValidator();
 
             var sharedRng = config.DeterministicBreedingRng ? null : new GameRandomProvider();
             foreach (var (femaleKey, breedingDataList) in validBreedingData)
@@ -653,9 +654,85 @@ namespace LetMeHatch.Breeding
                     )
                 );
 
+                validator.ValidateOrThrow(plan);
+
                 executor.Apply(farmAnimalsData, plan);
             }
         }
+
+
+        public IReadOnlyList<BreedingPlan> BuildPlansForToday(
+            IDictionary<string, FarmAnimalData> farmAnimalsData,
+            ModConfig config,
+            Dictionary<string, Dictionary<string, BreedingConfig>> breedingConfigsByPack,
+            string? femaleKeyFilter = null
+        )
+        {
+            var validBreedingData = GetBreedingDataGroupedByFemale();
+            if (!string.IsNullOrWhiteSpace(femaleKeyFilter))
+            {
+                validBreedingData = validBreedingData
+                    .Where(kvp => string.Equals(kvp.Key, femaleKeyFilter, StringComparison.OrdinalIgnoreCase))
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            }
+
+            var scopeKeys = BuildBreedingScopeKeys(validBreedingData);
+            var coopIndex = CoopBreedingIndex.Build(Game1.getFarm());
+            var planner = new DefaultBreedingPlanner();
+
+            var sharedRng = config.DeterministicBreedingRng ? null : new GameRandomProvider();
+            var plans = new List<BreedingPlan>();
+
+            foreach (var (femaleKey, breedingDataList) in validBreedingData)
+            {
+                IRandomProvider rng;
+                int seed;
+
+                if (config.DeterministicBreedingRng)
+                {
+                    seed = DeterministicSeed.For(
+                        Game1.uniqueIDForThisGame,
+                        Game1.Date.Year,
+                        Game1.Date.Season,
+                        Game1.Date.DayOfMonth,
+                        femaleKey,
+                        "hatching"
+                    );
+                    rng = new SeededRandomProvider(seed);
+                }
+                else
+                {
+                    seed = 0;
+                    rng = sharedRng!;
+                }
+
+                foreach (var male in breedingDataList.SelectMany(x => x.BreedingData.Males))
+                {
+                    var qty = coopIndex.GetMaleQuantityForFemale(male.Key, femaleKey);
+                    male.Value.SetQuantity(qty);
+                }
+
+                var plan = planner.BuildPlan(
+                    new BreedingPlanInput(
+                        InGameDate: ToDateOnly(Game1.Date.Year, Game1.Date.Season, Game1.Date.DayOfMonth),
+                        Seed: seed,
+                        Rng: rng,
+                        OnlyFertilizedEggs: config.OnlyFertilizedEggs,
+                        DailyLuckBonus: config.DailyLuckBonus,
+                        FarmAnimals: farmAnimalsData,
+                        ScopeAnimalKeys: scopeKeys,
+                        FemaleKey: femaleKey,
+                        Candidates: breedingDataList.ToList(),
+                        BreedingConfigsByPack: breedingConfigsByPack
+                    )
+                );
+
+                plans.Add(plan);
+            }
+
+            return plans;
+        }
+
 
         private static IReadOnlyCollection<string> BuildBreedingScopeKeys(
             IReadOnlyDictionary<string, IEnumerable<(string ContentPackID, BreedingDataFemale BreedingData)>> byFemale

@@ -43,13 +43,13 @@
 - [x] Breeding pipeline wired: inputs → plan → apply (flag optional).
 
 ## Phase 14 — Destructive rebuild hardening (still destructive)
-- [ ] Destruction scoped to egg-domain only (no unrelated produce removal).
-- [ ] Optional LMH-owned egg tracking implemented (clone/fertilized ids).
-- [ ] Male counts computed in a single pass and reused.
-- [ ] Plan validation fail-fast rules added (no eggs on males, clone placeholders required).
-- [ ] Plan diff logging added (added/removed egg-like ids, enforcement actions).
+- [x] Destruction scoped to egg-domain only (no unrelated produce removal).
+- [x] Optional LMH-owned egg tracking implemented (clone/fertilized ids).
+- [x] Male counts computed in a single pass and reused.
+- [x] Plan validation fail-fast rules added (no eggs on males, clone placeholders required).
+- [x] Plan diff logging added (added/removed egg-like ids, enforcement actions).
 
 ## Phase 15 — Tests + documentation upkeep
-- [ ] Invariant tests: male never lays; egg-like-only replacement; deterministic plan.
-- [ ] Snapshot tests added for synthetic `Data/FarmAnimals` maps.
-- [ ] PLAN/TODO/CHECKLIST updated as phases complete.
+- [x] Invariant tests: male never lays; egg-like-only replacement; deterministic plan.
+- [x] Snapshot tests added for synthetic `Data/FarmAnimals` maps.
+- [x] PLAN/TODO/CHECKLIST updated as phases complete.

@@ -66,5 +66,28 @@ public static class LmhConsoleCommands
         );
 
 
+        helper.ConsoleCommands.Add(
+            "lmh_breeding_dump_plans",
+            "Dumps the computed breeding plans for today to JSON.\n\nUsage: lmh_breeding_dump_plans [path] [femaleKey].",
+            (_, args) => coordinator.DebugBreedingDumpPlans(
+                args.Length >= 1 ? args[0] : string.Empty,
+                args.Length >= 2 ? args[1] : string.Empty
+            )
+        );
+
+        helper.ConsoleCommands.Add(
+            "lmh_breeding_dump_coop_index",
+            "Dumps the coop adult-count breeding index for today to JSON.\n\nUsage: lmh_breeding_dump_coop_index [path].",
+            (_, args) => coordinator.DebugBreedingDumpCoopIndex(args.Length >= 1 ? args[0] : string.Empty)
+        );
+
+        helper.ConsoleCommands.Add(
+            "lmh_breeding_validate_plans",
+            "Validates today's breeding plans and prints any invariant violations.\n\nUsage: lmh_breeding_validate_plans [femaleKey].",
+            (_, args) => coordinator.DebugBreedingValidatePlans(args.Length >= 1 ? args[0] : string.Empty)
+        );
+
+
+
     }
 }

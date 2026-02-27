@@ -83,6 +83,9 @@ Status: completed (planner + executor + wiring).
 5. Add plan diff logging: per animal key (added/removed egg-like ids, fertilized egg choice, enforcement actions).
 
 ## Phase 15 — Tests + documentation upkeep
+
+Status: completed (tests + debug commands + validator).
+
 1. Add xUnit tests for invariants:
    - male clone never gets `EggItemIds`,
    - fertilized replacement only touches egg-like entries,
