@@ -34,7 +34,7 @@ public sealed class WeggConsoleCommands
 
         helper.ConsoleCommands.Add(
             name: "wegg_notes",
-            documentation: "EggsInWild AnimalNotes commands. Type `wegg_notes dump`.",
+            documentation: _i18n.GetOrDefault("command.wegg.notes.documentation", "EggsInWild AnimalNotes commands. Type `wegg_notes dump`."),
             callback: (_, args) =>
             {
                 LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Commands, $"wegg_notes args={string.Join(" ", args)}", LogLevel.Trace);
@@ -49,7 +49,7 @@ public sealed class WeggConsoleCommands
 
         helper.ConsoleCommands.Add(
             name: "wegg_schema",
-            documentation: "EggsInWild schema commands. Type `wegg_schema wipe --yes`.",
+            documentation: _i18n.GetOrDefault("command.wegg.schema.documentation", "EggsInWild schema commands. Type `wegg_schema wipe --yes`."),
             callback: (_, args) =>
             {
                 LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Commands, $"wegg_schema args={string.Join(" ", args)}", LogLevel.Trace);

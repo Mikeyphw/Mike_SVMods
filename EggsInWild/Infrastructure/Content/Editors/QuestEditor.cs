@@ -46,13 +46,13 @@ public sealed class QuestEditor : AssetEditorBase<ContentContext>
         {
             quests[ProgressionIds.Quests.TheDesertScroll] = CreateQuestString(
                 type: "ItemDelivery",
-                title: TranslateOrFallback(context, "quest.theDesertScroll.title", "The Desert Scroll"),
-                details: TranslateOrFallback(context, "quest.theDesertScroll.questDetails", "Deliver the scroll to the Wizard."),
-                hint: TranslateOrFallback(context, "quest.theDesertScroll.hint", "A scroll from the desert might help."),
+                title: TranslateOrFallback(context, "quest.DesertScroll.title", "The Desert Scroll"),
+                details: TranslateOrFallback(context, "quest.DesertScroll.questDetails", "Deliver the scroll to the Wizard."),
+                hint: TranslateOrFallback(context, "quest.DesertScroll.hint", "A scroll from the desert might help."),
                 solution: $"Wizard {ModItemIds.OsirisScroll}",
                 gold: 500,
                 cancellable: false,
-                reaction: TranslateOrFallback(context, "quest.theDesertScroll.reactionText", "This will do nicely.")
+                reaction: TranslateOrFallback(context, "quest.DesertScroll.reactionText", "This will do nicely.")
             );
         }
 
@@ -68,7 +68,7 @@ public sealed class QuestEditor : AssetEditorBase<ContentContext>
                 var baseDetails = TranslateOrFallback(context, "quest.NoteDelivery.questDetails", "Deliver the note to Marnie.");
                 var baseHint = TranslateOrFallback(context, "quest.NoteDelivery.hint", "Deliver the note.");
 
-                var reactionKey = $"quest.NoteDelivery.reactionText{StardewValley.Game1.random.Next(4)}";
+                var reactionKey = $"quest.NoteDelivery.reactionText.{StardewValley.Game1.random.Next(4)}";
                 var reaction = TranslateOrFallback(context, reactionKey, "Thanks for bringing this to me.");
 
                 var goldReward = GetNoteQuestGoldReward(context, animalKey);

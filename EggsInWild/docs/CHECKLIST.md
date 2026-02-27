@@ -3,7 +3,7 @@
 ## Scope
 ## Phase 0 — Keep docs in sync
 - [x] Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
-- [x] Keep all debug/diagnostics options on GMCM page id `debug` only.
+- [x] Keep GMCM page id `debug` as the hub; debug/diagnostics options may live on `debug.*` subpages.
 - [x] Keep option IDs stable forever (translation keys and field IDs depend on this).
 ## Phase 2 — Baseline GMCM menu via NestCore host + DSL
 - [x] Wire `GmcmConfigHost` in `GameLaunched`; if GMCM missing, return.
@@ -31,3 +31,10 @@
 - [x] Rollback-safe reconcile removes only ledger-granted state.
 - [x] Add preview command: `wegg step effects preview <step>`.
 - [x] Update test doubles for new service APIs.
+
+## Phase 10 — Normalize i18n key taxonomy
+- [x] Normalize UI keys under `ui.*` (HUD / HUDMessage).
+- [x] Normalize mail keys (`mail.*.body`, variant bodies as `mail.*.body.<n>`), remove legacy typos.
+- [x] Normalize quest group IDs + variant keys.
+- [x] Normalize GMCM free-text keys under `config.section.*` and `config.paragraph.*`.
+- [x] Update verifiers/diagnostics to validate normalized keys only.

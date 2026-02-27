@@ -6,7 +6,7 @@
 
 ## Phase 0 — Keep docs in sync
 1. Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
-2. Keep all debug/diagnostics options on GMCM page id `debug` only.
+2. Keep GMCM page id `debug` as the hub; debug/diagnostics options may live on `debug.*` subpages.
 3. Keep option IDs stable forever (translation keys and field IDs depend on this).
 
 ## Phase 2 — Baseline GMCM menu via NestCore host + DSL
@@ -37,3 +37,10 @@
 3. Add `wegg step effects preview <step>` command to show add/remove diff.
 4. Keep effects rollback-safe by tracking only command-granted state in player modData ledger.
 5. Update tests to reflect new service capabilities.
+
+## Phase 10 — Normalize i18n key taxonomy
+1. Normalize UI keys under `ui.*` (HUD / HUDMessage).
+2. Normalize mail keys (`mail.*.body`, variant bodies as `mail.*.body.<n>`), remove legacy typos.
+3. Normalize quest group IDs + variant keys (e.g. `quest.DesertScroll.*`, `quest.NoteDelivery.reactionText.<n>`).
+4. Normalize GMCM free-text keys under `config.section.*` and `config.paragraph.*`.
+5. Update verifiers/diagnostics to validate normalized keys only.

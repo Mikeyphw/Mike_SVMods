@@ -11,3 +11,6 @@
 ## Progression console command effects
 - [ ] Consider adding `--json` output option for effects preview.
 - [ ] Consider previewing quest completion-day adjustments in output.
+
+## Localization
+- [ ] If you maintain extra locales, port key renames from `i18n/default.json` (Phase 10).

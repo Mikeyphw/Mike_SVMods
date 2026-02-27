@@ -220,7 +220,7 @@ public sealed class ModEntry : Mod
                 page.Bool(cfg => cfg.AnimalNotesQuestMailHostOnly, optionId: "animalNotes.hostOnlyQuestMail", tooltip: true);
                 page.Bool(cfg => cfg.AnimalNotesAllowClientDiscoveries, optionId: "animalNotes.allowClientDiscoveries", tooltip: true);
                 page.ParagraphDynamic(
-                    () => Translate(i18n, "config.animalNotes.progressionOverrides.paragraph", "Per-animal progression overrides are managed on the Animal Progression page."),
+                    () => Translate(i18n, "config.paragraph.animalNotes.progressionOverrides.text", "Per-animal progression overrides are managed on the Animal Progression page."),
                     id: "animalNotes_progression_hint");
                 page.Link("animalProgression", tooltip: true);
             });
@@ -228,7 +228,7 @@ public sealed class ModEntry : Mod
             layout.Page("animalProgression", page =>
             {
                 page.ParagraphDynamic(
-                    () => Translate(i18n, "config.animalProgression.description.paragraph", "Configure per-animal progression gating."),
+                    () => Translate(i18n, "config.paragraph.animalProgression.description.text", "Configure per-animal progression gating."),
                     id: "animalProgression_intro");
                 BuildAnimalProgressionPage(page, i18n);
             });
@@ -239,9 +239,9 @@ public sealed class ModEntry : Mod
             // Debug subpages
             // ============================
 
-            layout.Page("debug_desertTomb", page =>
+            layout.Page("debug.desertTomb", page =>
             {
-                page.SectionLabel(() => "Tuning – Desert Tomb Generation");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.desertTomb.tuningGeneration.label", "Tuning – Desert Tomb Generation"));
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightingDarkChance, optionId: "debug.tuning.desertTomb.gen.lightingDarkChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightingDarkAltChance, optionId: "debug.tuning.desertTomb.gen.lightingDarkAltChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Generation.LightingSpecialDarkChance, optionId: "debug.tuning.desertTomb.gen.lightingSpecialDarkChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
@@ -262,7 +262,7 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.SectionLabel(() => "Tuning – Desert Tomb Spawning");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.desertTomb.tuningSpawning.label", "Tuning – Desert Tomb Spawning"));
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Spawning.GuardFraction, optionId: "debug.tuning.desertTomb.spawn.guardFraction", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Spawning.WanderPackChance, optionId: "debug.tuning.desertTomb.spawn.wanderPackChance", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
 
@@ -278,7 +278,7 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.SectionLabel(() => "Tuning – Desert Tomb Population");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.desertTomb.tuningPopulation.label", "Tuning – Desert Tomb Population"));
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Population.InitialWaveFraction, optionId: "debug.tuning.desertTomb.pop.initialWaveFraction", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Int(cfg => cfg.DebugKnobs.DesertTomb.Population.ReconcileIntervalTicks, optionId: "debug.tuning.desertTomb.pop.reconcileIntervalTicks", tooltip: true, min: 1, max: 600, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.DesertTomb.Population.MaxSpawnsPerTick, optionId: "debug.tuning.desertTomb.pop.maxSpawnsPerTick", tooltip: true, min: 0, max: 50, interval: 1);
@@ -287,7 +287,7 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.SectionLabel(() => "Tuning – Desert Tomb Luck / Loot");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.desertTomb.tuningLuckLoot.label", "Tuning – Desert Tomb Luck / Loot"));
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.UnluckyDelta, optionId: "debug.tuning.desertTomb.luck.unluckyDelta", tooltip: true, min: -0.05f, max: 0f, interval: 0.0005f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.LuckyDelta, optionId: "debug.tuning.desertTomb.luck.luckyDelta", tooltip: true, min: 0f, max: 0.05f, interval: 0.0005f);
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.LootLuck.SuperLuckyDelta, optionId: "debug.tuning.desertTomb.luck.superLuckyDelta", tooltip: true, min: 0f, max: 0.5f, interval: 0.001f);
@@ -300,7 +300,7 @@ public sealed class ModEntry : Mod
                 page.Float(cfg => cfg.DebugKnobs.DesertTomb.Breakables.DropRateMultiplierMax, optionId: "debug.tuning.desertTomb.breakables.dropRateMultiplierMax", tooltip: true, min: 0f, max: 100f, interval: 0.5f);
             });
 
-            layout.Page("debug_spawning", page =>
+            layout.Page("debug.spawning", page =>
             {
                 _devJsonTuning!.BuildSpawnChanceModifiersPage(page);
 
@@ -308,9 +308,9 @@ public sealed class ModEntry : Mod
                 _devJsonTuning.BuildSpawnParametersPage(page);
             });
 
-            layout.Page("debug_weighting", page =>
+            layout.Page("debug.weighting", page =>
             {
-                page.SectionLabel(() => "Tuning – Economy Weighting");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.weighting.tuningEconomy.label", "Tuning – Economy Weighting"));
                 page.Int(cfg => cfg.DebugKnobs.Weighting.HorizonDays, optionId: "debug.tuning.weighting.horizonDays", tooltip: true, min: 1, max: 60, interval: 1);
                 page.Float(cfg => cfg.DebugKnobs.Weighting.DeluxeProbability, optionId: "debug.tuning.weighting.deluxeProbability", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
 
@@ -324,9 +324,9 @@ public sealed class ModEntry : Mod
                 page.Float(cfg => cfg.DebugKnobs.Weighting.HiddenNoAnchorPenalty, optionId: "debug.tuning.weighting.hiddenNoAnchorPenalty", tooltip: true, min: 0f, max: 2f, interval: 0.01f);
             });
 
-            layout.Page("debug_monsters", page =>
+            layout.Page("debug.monsters", page =>
             {
-                page.SectionLabel(() => "Tuning – Monsters (Pharaoh)");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.monsters.tuningPharaoh.label", "Tuning – Monsters (Pharaoh)"));
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.VisionTiles, optionId: "debug.tuning.monsters.pharaoh.visionTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.CastRangeTiles, optionId: "debug.tuning.monsters.pharaoh.castRangeTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Pharaoh.RewrapRangeTiles, optionId: "debug.tuning.monsters.pharaoh.rewrapRangeTiles", tooltip: true, min: 0, max: 30, interval: 1);
@@ -353,21 +353,21 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.SectionLabel(() => "Tuning – Monsters (Sandi)");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.monsters.tuningSandi.label", "Tuning – Monsters (Sandi)"));
                 page.Float(cfg => cfg.DebugKnobs.Monsters.Sandi.DiveChanceOnHit, optionId: "debug.tuning.monsters.sandi.diveChanceOnHit", tooltip: true, min: 0f, max: 1f, interval: 0.01f);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Sandi.DiveDurationMs, optionId: "debug.tuning.monsters.sandi.diveDurationMs", tooltip: true, min: 0, max: 20000, interval: 50);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Sandi.DiveCooldownMs, optionId: "debug.tuning.monsters.sandi.diveCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
 
                 page.Separator(simple: true);
 
-                page.SectionLabel(() => "Tuning – Monsters (Crawler)");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.monsters.tuningCrawler.label", "Tuning – Monsters (Crawler)"));
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Crawler.CurlTriggerDistanceTiles, optionId: "debug.tuning.monsters.crawler.curlTriggerDistanceTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Crawler.CurlDurationMs, optionId: "debug.tuning.monsters.crawler.curlDurationMs", tooltip: true, min: 0, max: 20000, interval: 50);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Crawler.CurlCooldownMs, optionId: "debug.tuning.monsters.crawler.curlCooldownMs", tooltip: true, min: 0, max: 20000, interval: 50);
 
                 page.Separator(simple: true);
 
-                page.SectionLabel(() => "Tuning – Monsters (Hurricane)");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.monsters.tuningHurricane.label", "Tuning – Monsters (Hurricane)"));
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.AlignTiles, optionId: "debug.tuning.monsters.hurricane.alignTiles", tooltip: true, min: 0, max: 60, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.SuckDistanceTiles, optionId: "debug.tuning.monsters.hurricane.suckDistanceTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Hurricane.SwirlSegmentMs, optionId: "debug.tuning.monsters.hurricane.swirlSegmentMs", tooltip: true, min: 0, max: 20000, interval: 50);
@@ -376,7 +376,7 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.SectionLabel(() => "Tuning – Monsters (Matango)");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.monsters.tuningMatango.label", "Tuning – Monsters (Matango)"));
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.VisionTiles, optionId: "debug.tuning.monsters.matango.visionTiles", tooltip: true, min: 0, max: 30, interval: 1);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.CastWindupMs, optionId: "debug.tuning.monsters.matango.castWindupMs", tooltip: true, min: 0, max: 10000, interval: 50);
                 page.Int(cfg => cfg.DebugKnobs.Monsters.Matango.RecoverMs, optionId: "debug.tuning.monsters.matango.recoverMs", tooltip: true, min: 0, max: 10000, interval: 50);
@@ -384,13 +384,13 @@ public sealed class ModEntry : Mod
 
                 page.Separator(simple: true);
 
-                page.SectionLabel(() => "JSON – MonsterDefinitions (Dev)");
+                page.SectionLabel(() => Translate(i18n, "config.section.debug.monsters.jsonMonsterDefinitions.label", "JSON – MonsterDefinitions (Dev)"));
                 page.ParagraphDynamic(
-                    text: () => "Dev-only: edits assets/DesertTomb/MonsterDefinitions.json directly. Stats/Flags are written immediately. (Tip: restart or reload Tomb content to see changes.)",
+                    text: () => Translate(i18n, "config.paragraph.debug.monsters.jsonMonsterDefinitions.notice.text", "Dev-only: edits assets/DesertTomb/MonsterDefinitions.json directly. Stats/Flags are written immediately. (Tip: restart or reload Tomb content to see changes.)"),
                     id: "json_monsters_notice"
                 );
                 page.ParagraphDynamic(
-                    text: () => "Fields: DifficultyAdd and SpeedAdd are additive adjustments; MaxHealthMultiplier/Add adjust max HP; DamageToFarmer sets base damage; ResilienceAdd adjusts resilience; IsBoss and HostAuthoritative are behavior flags.",
+                    text: () => Translate(i18n, "config.paragraph.debug.monsters.jsonMonsterDefinitions.fields.text", "Fields: DifficultyAdd and SpeedAdd are additive adjustments; MaxHealthMultiplier/Add adjust max HP; DamageToFarmer sets base damage; ResilienceAdd adjusts resilience; IsBoss and HostAuthoritative are behavior flags."),
                     id: "json_monsters_fields"
                 );
 
@@ -497,10 +497,10 @@ public sealed class ModEntry : Mod
                 page.Bool(cfg => cfg.AnimalNotesDebugMode, optionId: "debug.animalNotes.debugMode", tooltip: true);
 
                 page.Separator(simple: true);
-                page.Link("debug_desertTomb", tooltip: true);
-                page.Link("debug_spawning", tooltip: true);
-                page.Link("debug_weighting", tooltip: true);
-                page.Link("debug_monsters", tooltip: true);
+                page.Link("debug.desertTomb", tooltip: true);
+                page.Link("debug.spawning", tooltip: true);
+                page.Link("debug.weighting", tooltip: true);
+                page.Link("debug.monsters", tooltip: true);
             });
 
  #endif
@@ -513,7 +513,7 @@ public sealed class ModEntry : Mod
         if (!Context.IsWorldReady)
         {
             page.ParagraphDynamic(
-                () => Translate(i18n, "config.animalProgression.loadSave.paragraph", "Load a save to edit per-animal progression settings."),
+                () => Translate(i18n, "config.paragraph.animalProgression.loadSave.text", "Load a save to edit per-animal progression settings."),
                 id: "animalProgression_loadSave");
             return;
         }
@@ -528,7 +528,7 @@ public sealed class ModEntry : Mod
             var smapiLog = new SmapiLog(Monitor);
             smapiLog.LogScoped(ScopedLogCatalog.ModWeCategory.Content, $"Failed to load Data/FarmAnimals for GMCM Animal Progression page: {ex}", LogLevel.Error);
             page.ParagraphDynamic(
-                () => Translate(i18n, "config.animalProgression.loadFailed.paragraph", "Couldn't load Data/FarmAnimals. Try again after loading a save, or check your SMAPI log."),
+                () => Translate(i18n, "config.paragraph.animalProgression.loadFailed.text", "Couldn't load Data/FarmAnimals. Try again after loading a save, or check your SMAPI log."),
                 id: "animalProgression_loadFailed");
             return;
         }
@@ -536,7 +536,7 @@ public sealed class ModEntry : Mod
         if (farmAnimals.Count == 0)
         {
             page.ParagraphDynamic(
-                () => Translate(i18n, "config.animalProgression.empty.paragraph", "No farm animals were found in Data/FarmAnimals."),
+                () => Translate(i18n, "config.paragraph.animalProgression.empty.text", "No farm animals were found in Data/FarmAnimals."),
                 id: "animalProgression_empty");
             return;
         }

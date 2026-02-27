@@ -32,7 +32,7 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
         {
             mail[ProgressionIds.Mail.MarnieThanks] = CreateMailWithItem(
                 context,
-                bodyKey: "mail.MarnieThanks",
+                bodyKey: "mail.MarnieThanks.body",
                 bodyFallback: "Thanks for helping with those wild eggs. The Wizard asked you to stop by his tower.",
                 itemType: "quest",
                 itemId: ProgressionIds.Quests.WizardStudy,
@@ -45,7 +45,7 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
         {
             mail[ProgressionIds.Mail.WizardThanks] = CreateMailWithItem(
                 context,
-                bodyKey: "mail.WizardThanks",
+                bodyKey: "mail.WizardThanks.body",
                 bodyFallback: "Your research has proven useful. I have another task for you.",
                 itemType: "quest",
                 itemId: ProgressionIds.Quests.TheDesertScroll,
@@ -58,7 +58,7 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
         {
             mail[ProgressionIds.Mail.WizardFindings] = CreateMailWithItem(
                 context,
-                bodyKey: "mail.WizardFindings",
+                bodyKey: "mail.WizardFindings.body",
                 bodyFallback: "These findings may help you craft a potent elixir.",
                 itemType: "craftingRecipe",
                 itemId: "Elixir Of Revitalized Essence",
@@ -85,22 +85,16 @@ public sealed class MailEditor : AssetEditorBase<ContentContext>
 
         var animalName = ResolveFarmAnimalDisplayName(animalKey);
 
-        var body = TAny(
+        var bodyKey = $"mail.animalAvailable.body.{variant}";
+
+        var body = T(
             context,
-            keys: new[]
-            {
-                $"mail.animalAvailable.body{variant}",
-                $"mail.animalAvaliable{variant}",
-            },
+            key: bodyKey,
             fallback: "Dear @,^^Thanks for the note! The animals are doing great and are now available in my shop.");
 
-        var banner = TAny(
+        var banner = T(
             context,
-            keys: new[]
-            {
-                "mail.animalAvailable.banner",
-                "mail.animalAvaliable.newAnimal",
-            },
+            key: "mail.animalAvailable.banner",
             fallback: "**New Animal Available:**");
 
         var title = T(context, "mail.animalAvailable.title", "{0} Available", animalName);
