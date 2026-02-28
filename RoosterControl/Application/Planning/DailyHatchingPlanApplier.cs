@@ -71,7 +71,7 @@ internal sealed class DailyHatchingPlanApplier
         if (!string.IsNullOrWhiteSpace(plan.FemaleEggIdToRemove))
         {
             data[femaleKey].EggItemIds ??= new();
-            data[femaleKey].EggItemIds.Remove(plan.FemaleEggIdToRemove);
+            RemoveEggItemIdIgnoreCase(data[femaleKey].EggItemIds, plan.FemaleEggIdToRemove);
         }
 
         foreach (var otherAnimal in otherAnimalsSharingEggs)
@@ -79,7 +79,7 @@ internal sealed class DailyHatchingPlanApplier
             if (!data.ContainsKey(otherAnimal) || data[otherAnimal].EggItemIds is null)
                 continue;
 
-            data[otherAnimal].EggItemIds.Remove(eggId);
+            RemoveEggItemIdIgnoreCase(data[otherAnimal].EggItemIds, eggId);
         }
     }
 

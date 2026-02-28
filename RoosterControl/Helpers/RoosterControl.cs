@@ -9,6 +9,7 @@ using RoosterControl.Framework.Config;
 using RoosterControl.Application.FarmAnimals;
 using RoosterControl.Application.Catalogs;
 using RoosterControl.Application.Produces;
+using RoosterControl.Application.Planning;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
@@ -239,16 +240,38 @@ public sealed class RoosterHelper
         };
     }
 
-    private void RollChosenProduces(RoosterData rooster)
+    private 
+void RollChosenProduces(RoosterData rooster)
+{
+    var farmId = 0L;
+    var day = 0;
+
+    if (Context.IsWorldReady)
     {
-        var rng = new SystemRandomProvider(Rnd);
-
-        rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen] =
-            _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Produce], rng);
-
-        rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen] =
-            _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rng);
+        farmId = Game1.uniqueIDForThisGame;
+        day = Game1.Date.TotalDays;
     }
+
+    var produceSeed = ComputeChosenProduceSeed(farmId, day, rooster.RoosterType, ProduceTypeEntries.Produce);
+    var deluxeSeed = ComputeChosenProduceSeed(farmId, day, rooster.RoosterType, ProduceTypeEntries.Deluxe);
+
+    var rngProduce = new SeededRandomProvider(produceSeed);
+    var rngDeluxe = new SeededRandomProvider(deluxeSeed);
+
+    rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen] =
+        _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Produce], rngProduce);
+
+    rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen] =
+        _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rngDeluxe);
+}
+
+private static int ComputeChosenProduceSeed(long farmId, int day, RoosterType roosterType, ProduceTypeEntries produceType)
+{
+    var key = $"rc|chosen-produce|{farmId}|{day}|{roosterType}|{produceType}";
+    var hash = StableHash.Fnv1a64(key);
+    return unchecked((int)(hash ^ (hash >> 32)));
+}
+
 
     private void ApplyFertilizedBoost(RoosterData rooster)
     {

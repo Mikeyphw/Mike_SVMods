@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using RoosterControl.Application.FarmAnimals;
@@ -156,7 +157,7 @@ internal sealed class DailyHatchingPlanService
 
         if (!rooster.Eggs.TryGetValue(eggType, out var egg)
             || !egg.TryGetValue(RoosterItemDataEntries.Probability, out var rawChance)
-            || !int.TryParse(rawChance, out var chance)
+            || !int.TryParse(rawChance, NumberStyles.Integer, CultureInfo.InvariantCulture, out var chance)
             || chance <= 0)
         {
             return new EggChancePlan { Enabled = true, ChancePercent = 0, RolledSuccess = false };
@@ -196,7 +197,7 @@ internal sealed class DailyHatchingPlanService
     {
         if (!rooster.Eggs.TryGetValue(EggTypeEntries.Fertilized, out var egg)
             || !egg.TryGetValue(RoosterItemDataEntries.Probability, out var rawChance)
-            || !float.TryParse(rawChance, out var fertilizedChance))
+            || !float.TryParse(rawChance, NumberStyles.Float, CultureInfo.InvariantCulture, out var fertilizedChance))
         {
             fertilizedChance = 0;
         }

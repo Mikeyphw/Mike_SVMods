@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using RoosterControl.Application.Hatching.Decisions;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
@@ -74,7 +75,7 @@ internal sealed class FertilizedOnlyHatchingStrategy : IHatchingStrategy
             return false;
         if (!egg.TryGetValue(RoosterItemDataEntries.Probability, out var raw))
             return false;
-        return float.TryParse(raw, out chance);
+        return float.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out chance);
     }
 
     private static bool TryGetEggId(RoosterData rooster, EggTypeEntries eggType, out string eggId)
