@@ -7,7 +7,7 @@
 ## Status
 - Phase 0: complete
 - Phase 1: complete
-- Phase 5: in progress (dynamic labels + ids + enum value formatting complete; rebuild helpers/docs/tests pending)
+- Phase 5: complete
 
 ## Phase 0 — Planning docs baseline
 1. Create/refresh `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md`.

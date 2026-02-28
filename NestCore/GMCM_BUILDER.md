@@ -425,3 +425,65 @@ GMCM Options UniqueID: `jltaylor-us.GMCMOptions`.
 - `page.ParagraphDynamic(...)`: uses GMCM Options dynamic paragraph when available; falls back to native `AddParagraph`.
 - `page.ColorSwatch(...)`: same as `Color(...)` but auto-uses `MakeColorSwatchDrawer()` when GMCM Options is available.
 - `page.ColorSwatchLabel(...)`: dynamic-label version for dictionary/derived values; falls back to native GMCM color option if GMCM Options isn't installed.
+
+
+---
+
+## Save-dependent menus (next-tick rebuild helpers)
+
+Some menus build dynamic options from save/game state. To avoid querying world state directly inside SMAPI event handlers,
+NestCore can rebuild your GMCM layout on the **next update tick** when the save is loaded and/or when returning to title.
+
+```csharp
+// In GameLaunched:
+_gmcmHost.RebuildLayoutSaveAware(
+    define: DefineLayout,
+    force: true,
+    rebuildOnSaveLoaded: true,
+    rebuildOnReturnedToTitle: true
+);
+```
+
+If your menu depends on something that is initialized asynchronously after `SaveLoaded`, provide a readiness predicate and a max tick budget:
+
+```csharp
+_gmcmHost.RebuildLayoutSaveAware(
+    define: DefineLayout,
+    force: true,
+    rebuildOnSaveLoaded: true,
+    rebuildOnReturnedToTitle: false,
+    saveLoadedReady: () => MyService.Current is not null,
+    saveLoadedMaxTicks: 120
+);
+```
+
+---
+
+## Default + overrides dictionary pattern (remove key when equals default)
+
+For per-item/per-animal configuration, prefer storing only overrides:
+
+- missing key => use default
+- key present => use overridden value
+- when a value is changed back to default => **remove the key**
+
+NestCore provides <c>OverrideDictionaries</c> for this:
+
+```csharp
+using Mikew.NestCore.Helpers.Config;
+
+public sealed class ModConfig
+{
+    public Dictionary<string, bool> FeatureEnabledOverrides { get; set; } = new();
+}
+
+private const bool FeatureDefaultEnabled = true;
+
+private static bool IsEnabled(ModConfig cfg, string key)
+    => OverrideDictionaries.GetValue(cfg.FeatureEnabledOverrides, key, FeatureDefaultEnabled);
+
+private static void SetEnabled(ModConfig cfg, string key, bool enabled)
+    => OverrideDictionaries.SetOverride(cfg.FeatureEnabledOverrides, key, enabled, FeatureDefaultEnabled);
+```
+
+This keeps configs smaller and avoids "redundant overrides" drift over time.

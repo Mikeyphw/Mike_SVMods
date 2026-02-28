@@ -106,8 +106,6 @@ public sealed class ModEntry : Mod
         helper.Events.GameLoop.GameLaunched += OnGameLaunched;
         helper.Events.GameLoop.DayStarted += OnDayStarted;
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
-        helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
-
         InitializeModAssetHandler();
         InitializeContentPipeline();
 
@@ -138,8 +136,6 @@ public sealed class ModEntry : Mod
 #if WEGG_DEV
         _devJsonTuning = new DevJsonTuningService(Helper, new SmapiLog(Monitor));
 #endif
-
-        RebuildGmcmLayout(force: true);
     }
 
     private void OnDayStarted(object? sender, DayStartedEventArgs e)
@@ -151,22 +147,13 @@ public sealed class ModEntry : Mod
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         _contentProgression?.OnSaveLoaded();
-        RebuildGmcmLayout(force: true);
     }
-
-    private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
-    {
-        RebuildGmcmLayout(force: true);
-    }
-
     private void RebuildGmcmLayout(bool force)
     {
         if (_gmcmHost is null)
             return;
 
-        var i18n = new I18TranslationHelper(Helper);
-
-        _gmcmHost.RebuildLayout(layout =>
+        _gmcmHost.RebuildLayoutSaveAware(define: layout =>
         {
             layout.Root(root =>
             {
@@ -505,7 +492,7 @@ public sealed class ModEntry : Mod
 
  #endif
 
-        }); // End of _gmcmHost.RebuildLayout
+        }, force: force, rebuildOnSaveLoaded: true, rebuildOnReturnedToTitle: true); // End of _gmcmHost.RebuildLayoutSaveAware
     } // End of RebuildGmcmLayout method
 
     private void BuildAnimalProgressionPage(GmcmPageBuilder<ModConfig> page, I18TranslationHelper i18n)
@@ -709,8 +696,6 @@ public sealed class ModEntry : Mod
         var config = _config?.Get() ?? new ModConfig();
         var log = _contentLog ?? new SmapiLog(Monitor);
         var dataLoader = _contentDataLoader ?? new ModDataLoader(JsonFileReaderFactory.Create(Helper), log);
-        var i18n = new I18TranslationHelper(Helper);
-
         return new ContentContext(
             helper: Helper,
             log: log,

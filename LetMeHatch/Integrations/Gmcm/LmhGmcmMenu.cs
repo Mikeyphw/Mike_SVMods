@@ -8,7 +8,6 @@ using Mikew.NestCore.Framework;
 using Mikew.NestCore.Helpers.Config;
 using Mikew.NestCore.Integrations.Gmcm;
 using Microsoft.Xna.Framework;
-using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Objects;
@@ -45,41 +44,25 @@ public static class LmhGmcmMenu
 
         if (host is null)
             return;
-
-        void Rebuild(bool force)
+        void Define(GmcmMenuLayout<ModConfig> layout)
         {
-            host.RebuildLayout(layout =>
-            {
-                BuildRoot(layout, core);
-                BuildEditsPages(layout, core, configProvider);
-                BuildCloningPage(layout, core, configProvider);
-                BuildColorsPages(layout, core, configProvider);
-                BuildBreedingPages(layout, core, configProvider);
-                BuildAdvancedPages(layout, core, configProvider);
-                BuildDebugPage(layout, core, configProvider);
-            }, force: force);
+            BuildRoot(layout, core);
+            BuildEditsPages(layout, core, configProvider);
+            BuildCloningPage(layout, core, configProvider);
+            BuildColorsPages(layout, core, configProvider);
+            BuildBreedingPages(layout, core, configProvider);
+            BuildAdvancedPages(layout, core, configProvider);
+            BuildDebugPage(layout, core, configProvider);
         }
 
-        Rebuild(force: true);
-
-        core.Helper.Events.GameLoop.SaveLoaded += (_, _) =>
-        {
-            var tries = 0;
-            EventHandler<UpdateTickedEventArgs>? onTick = null;
-            onTick = (_, __) =>
-            {
-                tries++;
-                if (ModEntry.CurrentAssetManager is null && tries < 120)
-                    return;
-
-                core.Helper.Events.GameLoop.UpdateTicked -= onTick;
-                Rebuild(force: true);
-            };
-
-            core.Helper.Events.GameLoop.UpdateTicked += onTick;
-        };
-    }
-
+        host.RebuildLayoutSaveAware(
+            define: Define,
+            force: true,
+            rebuildOnSaveLoaded: true,
+            rebuildOnReturnedToTitle: false,
+            saveLoadedReady: () => ModEntry.CurrentAssetManager is not null,
+            saveLoadedMaxTicks: 120
+        );
     private static void BuildRoot(GmcmMenuLayout<ModConfig> layout, CoreContext core)
     {
         layout.Root(root =>
@@ -945,12 +928,7 @@ var packs = GetBreedingPacksSnapshot();
         => !overrides.TryGetValue(key, out var value) || value;
 
     private static void SetEnabled(Dictionary<string, bool> overrides, string key, bool enabled)
-    {
-        if (enabled)
-            overrides.Remove(key);
-        else
-            overrides[key] = false;
-    }
+        => OverrideDictionaries.SetOverride(overrides, key, enabled, defaultValue: true);
 
     private static float GetEggChance(ModConfig cfg, ItemType type)
         => cfg.EggChances.TryGetValue(type, out var v) ? v : 0f;
