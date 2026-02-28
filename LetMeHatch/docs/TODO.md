@@ -2,6 +2,7 @@
 
 - [ ] Phase 8: finalize dynamic textures migration
 - [ ] Phase 9: legacy cleanup + tint parity + cache invalidation
+- [x] Gate LetMeHatch dev-only code behind `LMH_DEV` (built via `dotnet build -c Dev`).
 - [x] Phase 10: tint modes + clone texture diagnostics
 - [x] Phase 11: no-behavior-change cleanup + NestCore-first loader refactor
 - [x] Phase 12: breeding correctness + invariants (male clone never lays, RNG unification)

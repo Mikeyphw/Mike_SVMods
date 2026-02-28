@@ -1,5 +1,10 @@
 # LetMeHatch Plan
 
+## Phase 0 — Dev-only gating + docs hygiene
+- Gate LetMeHatch dev-only code behind `LMH_DEV` (built via `dotnet build -c Dev`).
+- Keep `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` in sync.
+- Ensure `dotnet build` remains green across `Debug`, `Release`, and `Dev`.
+
 ## Phase 1 — Scaffolding + contracts
 - Clone pipeline contracts and config toggle.
 

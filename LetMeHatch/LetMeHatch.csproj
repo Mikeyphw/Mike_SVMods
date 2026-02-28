@@ -6,6 +6,11 @@
     <Nullable>enable</Nullable>
     <GamePath>C:\Users\Mike\Documents\Stardew Valley</GamePath>
   </PropertyGroup>
+  <!-- Dev config only: enables LMH_DEV (no Debug build define). -->
+  <PropertyGroup Condition="'$(Configuration)'=='Dev'">
+    <DefineConstants>$(DefineConstants);LMH_DEV</DefineConstants>
+  </PropertyGroup>
+
   
   <ItemGroup>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />

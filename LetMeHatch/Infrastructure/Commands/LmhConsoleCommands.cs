@@ -17,6 +17,8 @@ public static class LmhConsoleCommands
             (_, _) => coordinator.RequestEarlyInit()
         );
 
+ 
+#if LMH_DEV
         helper.ConsoleCommands.Add(
             "lmh_checki18n",
             "Checks internationalization keys for the mod.\n\nUsage: lmh_checki18n.",
@@ -36,12 +38,16 @@ public static class LmhConsoleCommands
             (_, _) => coordinator.InvalidateAllContent()
         );
 
+#endif
+
         helper.ConsoleCommands.Add(
             "lmh_status",
             "Print LetMeHatch runtime/integration status.\n\nUsage: lmh_status.",
             (_, _) => coordinator.PrintStatus()
         );
 
+
+#if LMH_DEV
         helper.ConsoleCommands.Add(
             "lmh_clone_texture_preview",
             "Preview dynamic clone texture details.\n\nUsage: lmh_clone_texture_preview <cloneId>.",
@@ -86,7 +92,7 @@ public static class LmhConsoleCommands
             "Validates today's breeding plans and prints any invariant violations.\n\nUsage: lmh_breeding_validate_plans [femaleKey].",
             (_, args) => coordinator.DebugBreedingValidatePlans(args.Length >= 1 ? args[0] : string.Empty)
         );
-
+#endif
 
 
     }

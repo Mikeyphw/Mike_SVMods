@@ -98,8 +98,6 @@ public sealed class LmhCoordinator
             _assetManager.ItemManager.CloneItemsFromGame();
         }
 
-#if MIKE_DEV
-        #endif
 
         _invalidation.Request(AssetNames.FarmAnimals);
         _invalidation.Request(AssetNames.Objects);
@@ -318,6 +316,7 @@ private void InitializeAssetEditor()
             }
         }
     }
+#if LMH_DEV
 
 
 public void DebugBreedingDumpPlans(string pathArg, string femaleKeyArg)
@@ -348,6 +347,9 @@ public void DebugBreedingDumpPlans(string pathArg, string femaleKeyArg)
 
     _log.Log($"[breeding dump plans] Wrote {plans.Count} plan(s) to: {path}", LogLevel.Info);
 }
+#endif
+#if LMH_DEV
+
 
 public void DebugBreedingDumpCoopIndex(string pathArg)
 {
@@ -367,6 +369,9 @@ public void DebugBreedingDumpCoopIndex(string pathArg)
 
     _log.Log($"[breeding dump coop index] Wrote coop index (coops={index.GetAdultCountsByCoop().Count}) to: {path}", LogLevel.Info);
 }
+#endif
+#if LMH_DEV
+
 
 public void DebugBreedingValidatePlans(string femaleKeyArg)
 {
@@ -410,6 +415,8 @@ public void DebugBreedingValidatePlans(string femaleKeyArg)
         _log.Log($"[breeding validate plans] OK ({plans.Count} plan(s)).", LogLevel.Info);
     }
 }
+#endif
+
 
 private static string ResolveOutputPath(string pathArg, string defaultFileName)
 {
@@ -434,6 +441,7 @@ private static string ResolveOutputPath(string pathArg, string defaultFileName)
 
     return candidate;
 }
+#if LMH_DEV
 
 
 public void DebugCloneTexturePreview(string cloneId)
@@ -472,6 +480,9 @@ public void DebugCloneTexturePreview(string cloneId)
     _log.Log($"[clone texture preview] dynamicEnabled={ModEntry.Config.UseDynamicCloneTextures} tintMode={ModEntry.Config.DynamicCloneTintMode} tint={tint} tintSource={tintSource}", LogLevel.Info);
     _log.Log($"[clone texture preview] assetKey={assetKey}", LogLevel.Info);
 }
+#endif
+#if LMH_DEV
+
 
 public void DebugCloneTextureHealthcheck(string countArg)
 {
@@ -521,6 +532,9 @@ public void DebugCloneTextureHealthcheck(string countArg)
 
     _log.Log($"[clone texture healthcheck] checked={cloneIds.Count} ok={ok} fail={fail} cacheCount={Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.CacheCount}", LogLevel.Info);
 }
+#endif
+#if LMH_DEV
+
 
 public void DebugCloneTextureStats(string maxKeysArg)
 {
@@ -531,6 +545,9 @@ public void DebugCloneTextureStats(string maxKeysArg)
     if (keys.Length > 0)
         _log.Log($"[clone texture stats] keys={string.Join(", ", keys)}", LogLevel.Info);
 }
+#endif
+#if LMH_DEV
+
 
 public void DebugCloneTextureClearCache()
 {
@@ -538,6 +555,8 @@ public void DebugCloneTextureClearCache()
     Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.ClearCache();
     _log.Log($"[clone texture clear cache] cleared={before}", LogLevel.Info);
 }
+#endif
+
 
 private static int TryParsePositiveInt(string? arg, int defaultValue, int maxValue)
 {

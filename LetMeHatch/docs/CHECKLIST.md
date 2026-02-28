@@ -1,5 +1,8 @@
 # LetMeHatch Checklist
 
+## Phase 0 — Dev-only gating
+- [x] Gate LetMeHatch dev-only code behind `LMH_DEV` (built via `dotnet build -c Dev`).
+
 ## Phase 8 — Finalize dynamic textures migration
 - [ ] Remove legacy cloned-items sheet plumbing.
 - [ ] Route fertilized eggs through dynamic texture assets.

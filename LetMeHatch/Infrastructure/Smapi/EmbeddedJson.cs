@@ -11,7 +11,7 @@ namespace LetMeHatch.Infrastructure.Smapi;
 /// </summary>
 internal static class EmbeddedJson
 {
-#if !MIKE_DEV
+#if !LMH_DEV
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -26,7 +26,7 @@ internal static class EmbeddedJson
     {
         if (helper is null) throw new ArgumentNullException(nameof(helper));
 
-#if MIKE_DEV
+#if LMH_DEV
         return helper.Data.ReadJsonFile<T>(relativePath);
 #else
         var json = EmbeddedTextStore.GetOrThrow(
@@ -56,7 +56,7 @@ internal static class EmbeddedJson
         throw new InvalidOperationException($"Missing or empty JSON: {EmbeddedTextStore.NormalizeKey(relativePath)}");
     }
 
-#if !MIKE_DEV
+#if !LMH_DEV
     internal static string GetTextOrThrow(string relativePath, string? context = null)
         => EmbeddedTextStore.GetOrThrow(LetMeHatch.Generated.EmbeddedTextFiles.Files, relativePath, context);
 #endif

@@ -550,7 +550,7 @@ namespace LetMeHatch.Cloning
                 }
                 return AnimalExclusions;
             }
-#if MIKE_DEV
+#if LMH_DEV
             var exclusions = ModEntry.HelperInstance.Data.ReadJsonFile<EditExclusion>("data/exclusions.json");
             if (exclusions is null)
             {

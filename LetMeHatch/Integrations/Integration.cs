@@ -27,7 +27,7 @@ namespace LetMeHatch.Integrations
                 IntegrationName.VanillaGame => "data/Integrations/Vanilla Game/content.json",
                 _ => ""
             };
-#if MIKE_DEV
+#if LMH_DEV
             var breedingData = ModEntry.HelperInstance.Data.ReadJsonFile<
                 Dictionary<string, BreedingDataFemale>
             >(jsonPath);
@@ -58,7 +58,7 @@ namespace LetMeHatch.Integrations
                 IntegrationName.VanillaGame => VanillaGameIntegration.CreateBreedingData(),
                 _ => new()
             };
-#if MIKE_DEV
+#if LMH_DEV
             ModEntry.HelperInstance.Data.WriteJsonFile(jsonPath, breedingData);
 #endif
             return breedingData;

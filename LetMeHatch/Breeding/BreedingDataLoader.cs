@@ -114,7 +114,7 @@ namespace LetMeHatch.Breeding
 
         private static string EnsureIntegrationDirectory(string contentPackName)
         {
-#if MIKE_DEV
+#if LMH_DEV
             return Path.Combine(ModEntry.HelperInstance.DirectoryPath, $"data/Integrations/{contentPackName}");
 #else
             var dir = Path.Combine(ModEntry.HelperInstance.DirectoryPath, "temp", "Integrations", contentPackName);
