@@ -259,10 +259,21 @@ private NextTickScheduler _nextTick;
     public void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         _saveState = _saveData.Read<State.RoosterControlSaveState>(SaveStateKey) ?? new State.RoosterControlSaveState();
+
+        if (_saveState.SchemaVersion < 2)
+        {
+            _saveState.SchemaVersion = 2;
+            _saveState.CurrentDailyDecisions = null;
+            _saveState.PreviousDailyDecisions = null;
+        }
+
         _needsRoosterSetup = true;
         _lastRoosterSetupDay = -1;
         _lastDebugDumpDay = -1;
+
         InvalidateDailyPlanCache("save loaded");
+
+        _previousDailyDecisions = _saveState.CurrentDailyDecisions ?? _saveState.PreviousDailyDecisions;
 
         RunStartupValidationV2();
 
@@ -277,10 +288,13 @@ private NextTickScheduler _nextTick;
             _femaleAssignmentsDirty = false;
         }
 
-
+        _saveState.SchemaVersion = 2;
         _saveState.LastRoosterSetupDay = _lastRoosterSetupDay;
         _saveState.LastDebugDumpDay = _lastDebugDumpDay;
         _saveState.LastKnownLuck = DailyLuck;
+
+        _saveState.CurrentDailyDecisions = _dailyDecisions;
+        _saveState.PreviousDailyDecisions = _previousDailyDecisions;
 
         _saveData.Write(SaveStateKey, _saveState);
     }

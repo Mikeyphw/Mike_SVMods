@@ -1,28 +1,25 @@
 using System;
 using System.Collections.Generic;
-using Mikew.NestCore.Helpers;
+using Mikew.NestCore.Helpers.GameStateQueries;
 using RoosterControl.Application.Hatching;
 using RoosterControl.Application.Planning;
+using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using RoosterControl.Helpers;
-using RoosterControl.Enums;
-using Mikew.NestCore.Helpers.GameStateQueries;
-using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 
-using LuckyTypes = Mikew.NestCore.EnumsAndStrings.Enums.LuckyTypes;
-
 namespace RoosterControl.Application;
 
 internal sealed partial class RoosterCoordinator
 {
-        private DailyFarmAnimalsDecisions? _dailyDecisions;
+    private DailyFarmAnimalsDecisions? _dailyDecisions;
     private DailyFarmAnimalsDecisions? _previousDailyDecisions;
 
-public void OnDayStarted(object? sender, DayStartedEventArgs e) => OnDayStart(sender, e);
+    public void OnDayStarted(object? sender, DayStartedEventArgs e)
+        => OnDayStart(sender, e);
 
     /// <summary>The method called after a new day starts.</summary>
     private void OnDayStart(object? sender, DayStartedEventArgs e)
@@ -63,56 +60,53 @@ public void OnDayStarted(object? sender, DayStartedEventArgs e) => OnDayStart(se
     }
 
     internal void GetRoostersFemales(
-    IDictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData> animalData,
-    Dictionary<RoosterType, RoosterData> roosters
-)
-{
-    var plan = FemaleAssignmentService.ComputeFemaleAssignmentsPlan(
-        config: Config,
-        animalData: animalData,
-        roosters: roosters,
-        animalExclusions: _animalExclusions,
-        hatchApi: HatchApi
-    );
+        IDictionary<string, FarmAnimalData> animalData,
+        Dictionary<RoosterType, RoosterData> roosters)
+    {
+        var plan = FemaleAssignmentService.ComputeFemaleAssignmentsPlan(
+            config: Config,
+            animalData: animalData,
+            roosters: roosters,
+            animalExclusions: _animalExclusions,
+            hatchApi: HatchApi
+        );
 
-    FemaleAssignmentService.ApplyFemaleAssignmentsPlan(Config, RoosterHelper, plan);
+        FemaleAssignmentService.ApplyFemaleAssignmentsPlan(Config, RoosterHelper, plan);
 
-    if (plan.ConfigChanged)
-        _femaleAssignmentsDirty = true;
-}
+        if (plan.ConfigChanged)
+            _femaleAssignmentsDirty = true;
+    }
+
     private void UpdateRoosterHatchingApi()
     {
         FemaleAssignmentService.UpdateChosenFemalesApi(Config);
     }
 
     private void RunHatchingSystem(
-    RoosterData rooster,
-    IDictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData> data,
-    DailyHatchingPlanEnvelope? plan
-)
-{
-    var ctx = new HatchingContext(Config, RoosterHelper, _animalExclusions, HatchApi);
-
-    if (plan is null)
+        RoosterData rooster,
+        IDictionary<string, FarmAnimalData> data,
+        DailyHatchingPlanEnvelope? plan)
     {
-        _farmAnimalHatching.ApplyForRooster(ctx, rooster, data);
-        return;
+        var ctx = new HatchingContext(Config, RoosterHelper, _animalExclusions, HatchApi);
+
+        if (plan is null)
+        {
+            _farmAnimalHatching.ApplyForRooster(ctx, rooster, data);
+            return;
+        }
+
+        var buildingKey = ResolveBuildingKey(rooster, data);
+        var otherAnimals = GetOtherAnimalsSharingEggsCached(data, rooster, plan);
+
+        _planApplier.Apply(
+            plan: plan,
+            buildingKey: buildingKey,
+            rooster: rooster,
+            data: data,
+            otherAnimalsSharingEggs: otherAnimals
+        );
     }
 
-    var buildingKey = ResolveBuildingKey(rooster, data);
-    var otherAnimals = GetOtherAnimalsSharingEggsCached(data, rooster, plan);
-
-    _planApplier.Apply(
-        plan: plan,
-        buildingKey: buildingKey,
-        rooster: rooster,
-        data: data,
-        otherAnimalsSharingEggs: otherAnimals
-    );
-}
-    
-
-    
     private bool TryApplyDailyFarmAnimalsEdits(IDictionary<string, FarmAnimalData> data)
     {
         if (!Context.IsWorldReady)
@@ -154,7 +148,7 @@ public void OnDayStarted(object? sender, DayStartedEventArgs e) => OnDayStart(se
         }
     }
 
-private void RunFarmAnimalsDailySystems()
+    private void RunFarmAnimalsDailySystems()
     {
         if (!Context.IsWorldReady)
             return;
@@ -175,6 +169,7 @@ private void RunFarmAnimalsDailySystems()
 
         var today = SDate.Now().DaysSinceStart;
         var farmId = unchecked((long)Game1.uniqueIDForThisGame);
+
         _previousDailyDecisions = _dailyDecisions;
         _dailyDecisions = new DailyFarmAnimalsDecisions(today, farmId, _dailyPlanFingerprint, plan);
 
@@ -197,11 +192,11 @@ private void RunFarmAnimalsDailySystems()
 
     private static void ReloadCoopRoosters()
     {
-        foreach (var roosterFarmAnimal in Helpers.RoosterHelper.GetRoostersFromCoops())
+        foreach (var roosterFarmAnimal in RoosterHelper.GetRoostersFromCoops())
             roosterFarmAnimal.reload(roosterFarmAnimal.home);
     }
 
-private bool GetHatchApiCloneEggsOption()
+    private bool GetHatchApiCloneEggsOption()
         => HatchApi is not null
             && (HatchApi.GetClonedAnimalsInfo().Count > 0 || HatchApi.AnimalsWithClonedEggs.Count > 0);
 
@@ -222,8 +217,7 @@ private bool GetHatchApiCloneEggsOption()
         }
         catch
         {
-            return
-                string.Equals(Game1.currentSeason, "winter", StringComparison.OrdinalIgnoreCase)
+            return string.Equals(Game1.currentSeason, "winter", StringComparison.OrdinalIgnoreCase)
                 || Game1.isRaining
                 || Game1.isLightning
                 || Game1.isSnowing;

@@ -60,3 +60,8 @@
 - [x] Add `ra_debug_diff` (previous vs current decisions diff), support `--full` and `--json`.
 - [x] Ensure outputs are copy/paste friendly and stable ordered.
 
+### Phase 6 — Persist daily decisions snapshot (save state)
+- [x] Extend per-save state schema to store previous/current DailyFarmAnimalsDecisions snapshots.
+- [x] Load saved snapshots on SaveLoaded and surface them to debug commands.
+- [x] Persist snapshots on Saving.
+- [x] SchemaVersion migration 1 → 2.

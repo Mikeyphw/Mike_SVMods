@@ -20,3 +20,5 @@
 - [x] Phase 5: upgrade `ra_debug_produce` with `--full` + `--json` and random-group expansion trace.
 - [x] Phase 5: add `ra_debug_plan` (apply/skip reasons) with `--json`.
 - [x] Phase 5: add `ra_debug_diff` (prev vs current diff) with `--full` + `--json`.
+
+- [x] Phase 6: persist daily decisions snapshot in save state (diff across sessions).

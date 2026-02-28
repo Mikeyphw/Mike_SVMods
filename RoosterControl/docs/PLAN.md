@@ -1,6 +1,6 @@
 # PLAN — GMCM Menu (RoosterControl)
 
-Status: Phase 8B produce tables + rooster produce system Phase 4 (steps 1–4) implemented.
+Status: Phase 8B produce tables + rooster produce system Phase 6 implemented.
 
 ## Scope
 - Subdir: `RoosterControl`
@@ -68,3 +68,10 @@ Status: Phase 8B produce tables + rooster produce system Phase 4 (steps 1–4) i
 3. Add `ra_debug_plan` (daily decisions + apply/skip reasons), support `--json`.
 4. Add `ra_debug_diff` (previous vs current decisions diff), support `--full` and `--json`.
 5. Ensure outputs are copy/paste friendly and stable ordered.
+
+### Phase 6 — Persist daily decisions snapshot (save state)
+1. Extend per-save state schema to store previous/current <c>DailyFarmAnimalsDecisions</c> snapshots.
+2. Load saved snapshots on <c>SaveLoaded</c> and expose them to the debug commands (diff across sessions).
+3. Update snapshots when computing today’s decisions; persist on <c>Saving</c>.
+4. Migrate SchemaVersion=1 → 2 without crashing (null snapshots).
+5. Keep snapshots copy/paste friendly (stable ordering for JSON dumps).
