@@ -20,6 +20,7 @@ namespace RoosterControl.Application;
 internal sealed partial class RoosterCoordinator
 {
         private DailyFarmAnimalsDecisions? _dailyDecisions;
+    private DailyFarmAnimalsDecisions? _previousDailyDecisions;
 
 public void OnDayStarted(object? sender, DayStartedEventArgs e) => OnDayStart(sender, e);
 
@@ -174,6 +175,7 @@ private void RunFarmAnimalsDailySystems()
 
         var today = SDate.Now().DaysSinceStart;
         var farmId = unchecked((long)Game1.uniqueIDForThisGame);
+        _previousDailyDecisions = _dailyDecisions;
         _dailyDecisions = new DailyFarmAnimalsDecisions(today, farmId, _dailyPlanFingerprint, plan);
 
         // Apply the plan through the asset editor (single source of truth).

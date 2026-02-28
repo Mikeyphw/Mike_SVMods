@@ -39,7 +39,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260228T153456-0300-01",
+      "file": "20260228T153456-0300-01",
+      "title": "Phase 5: Dev debug UX (produce/plan/diff --full/--json) + fix daily refresh helper",
+      "title_with_id": "Phase 5: Dev debug UX (produce/plan/diff --full/--json) + fix daily refresh helper [20260228T153456-0300-01]",
+      "created_at": "2026-02-28T16:01:14-03:00",
+      "applied_at": "2026-02-28T18:36:22-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-02-28T11:36:34-03:00"
+  "updated_at": "2026-02-28T18:36:22-03:00"
 }

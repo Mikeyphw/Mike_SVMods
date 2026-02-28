@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using RoosterControl.Application.Hatching;
 using RoosterControl.Application.Catalogs;
 using RoosterControl.Constants;
@@ -153,8 +154,20 @@ Helper.ConsoleCommands.Add(
 #if RCTRL_DEV
         Helper.ConsoleCommands.Add(
             "ra_debug_produce",
-            "Dev-only: dump deterministic chosen-produce seed + results. Usage: ra_debug_produce <roosterType> [day] [locationName] [buildingType]",
+            "Dev-only: dump deterministic chosen-produce decisions. Usage: ra_debug_produce [--full] [--json] <roosterType> [day] [locationName] [buildingType]",
             DebugProduceCommand
+        );
+
+        Helper.ConsoleCommands.Add(
+            "ra_debug_plan",
+            "Dev-only: dump daily hatching plan snapshot. Usage: ra_debug_plan [--full] [--json] [day] [buildingKey]",
+            DebugPlanCommand
+        );
+
+        Helper.ConsoleCommands.Add(
+            "ra_debug_diff",
+            "Dev-only: diff previous vs current daily decisions snapshot. Usage: ra_debug_diff [--full] [--json]",
+            DebugDiffCommand
         );
 
         Helper.ConsoleCommands.Add(
@@ -390,6 +403,21 @@ private void RequestInvalidate(string assetName)
     }
 }
 
+
+private void QueueRefreshFarmAnimalsAfterDailyDecisions()
+{
+    if (_farmAnimalsRefreshQueued)
+        return;
+
+    _farmAnimalsRefreshQueued = true;
+    _nextTick.Enqueue(() =>
+    {
+        _farmAnimalsRefreshQueued = false;
+        RefreshFarmAnimalsOnLocationChange();
+    });
+}
+
+
     private void PrintStatus()
     {
         LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WorldReady={Context.IsWorldReady}", LogLevel.Info);
@@ -419,6 +447,400 @@ private void RequestInvalidate(string assetName)
             Monitor.Log("[ra_debug_produce] RoosterHelper is not initialized yet.", LogLevel.Warn);
             return;
         }
+
+    private static (List<string> Positional, bool Full, bool Json) ParseDebugArgs(string[] args)
+    {
+        var positional = new List<string>();
+        var full = false;
+        var json = false;
+
+        foreach (var raw in args ?? Array.Empty<string>())
+        {
+            var token = (raw ?? string.Empty).Trim();
+            if (token.Length == 0)
+                continue;
+
+            if (token.Equals("--full", StringComparison.OrdinalIgnoreCase))
+            {
+                full = true;
+                continue;
+            }
+
+            if (token.Equals("--json", StringComparison.OrdinalIgnoreCase))
+            {
+                json = true;
+                continue;
+            }
+
+            positional.Add(raw);
+        }
+
+        return (positional, full, json);
+    }
+
+    private void DebugPlanCommand(string _command, string[] args)
+    {
+        var (positional, full, json) = ParseDebugArgs(args);
+
+        if (positional.Count > 0 && positional[0].Equals("help", StringComparison.OrdinalIgnoreCase))
+        {
+            Monitor.Log(
+                "Usage: ra_debug_plan [--full] [--json] [day] [buildingKey]\n" +
+                "Example: ra_debug_plan\n" +
+                "Example: ra_debug_plan 1234 \"Deluxe Coop\"\n" +
+                "Example: ra_debug_plan --json",
+                LogLevel.Info
+            );
+            return;
+        }
+
+        if (!Context.IsWorldReady)
+        {
+            Monitor.Log("[ra_debug_plan] Save not loaded.", LogLevel.Info);
+            return;
+        }
+
+        int? dayOverride = null;
+        string? buildingKeyFilter = null;
+
+        if (positional.Count >= 1 && int.TryParse(positional[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var day))
+        {
+            dayOverride = day;
+            if (positional.Count >= 2)
+                buildingKeyFilter = positional[1];
+        }
+        else if (positional.Count >= 1)
+        {
+            buildingKeyFilter = positional[0];
+        }
+
+        var plan = _dailyDecisions?.Plan ?? _dailyPlan;
+        if (plan is null)
+        {
+            try
+            {
+                var data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+                plan = EnsureDailyPlanForToday(data, forceRecompute: false, out _);
+            }
+            catch (Exception ex)
+            {
+                Monitor.Log($"[ra_debug_plan] Failed to load {FarmAnimalsAssetName}: {ex}", LogLevel.Error);
+                return;
+            }
+        }
+
+        if (plan is null)
+        {
+            Monitor.Log("[ra_debug_plan] No plan available.", LogLevel.Info);
+            return;
+        }
+
+        if (dayOverride is not null && plan.Day != dayOverride.Value)
+        {
+            Monitor.Log($"[ra_debug_plan] Plan day {plan.Day} does not match requested day {dayOverride.Value}.", LogLevel.Info);
+            return;
+        }
+
+        var dump = json
+            ? JsonSerializer.Serialize(BuildDebugPlanDump(plan, buildingKeyFilter, full), new JsonSerializerOptions { WriteIndented = false })
+            : BuildDebugPlanText(plan, buildingKeyFilter, full);
+
+        Monitor.Log(dump, LogLevel.Info);
+    }
+
+    private void DebugDiffCommand(string _command, string[] args)
+    {
+        var (positional, full, json) = ParseDebugArgs(args);
+
+        if (positional.Count > 0 && positional[0].Equals("help", StringComparison.OrdinalIgnoreCase))
+        {
+            Monitor.Log(
+                "Usage: ra_debug_diff [--full] [--json]\n" +
+                "Example: ra_debug_diff\n" +
+                "Example: ra_debug_diff --full\n" +
+                "Example: ra_debug_diff --json",
+                LogLevel.Info
+            );
+            return;
+        }
+
+        if (_dailyDecisions is null)
+        {
+            Monitor.Log("[ra_debug_diff] No current daily decisions snapshot.", LogLevel.Info);
+            return;
+        }
+
+        if (_previousDailyDecisions is null)
+        {
+            Monitor.Log("[ra_debug_diff] No previous daily decisions snapshot (nothing to diff yet).", LogLevel.Info);
+            return;
+        }
+
+        var dump = json
+            ? JsonSerializer.Serialize(BuildDebugDiffDump(_previousDailyDecisions, _dailyDecisions, full), new JsonSerializerOptions { WriteIndented = false })
+            : BuildDebugDiffText(_previousDailyDecisions, _dailyDecisions, full);
+
+        Monitor.Log(dump, LogLevel.Info);
+    }
+
+    private sealed record DebugPlanDump(
+        int Day,
+        long FarmId,
+        string Fingerprint,
+        long Nonce,
+        List<DebugBuildingPlan> Buildings
+    );
+
+    private sealed record DebugBuildingPlan(string BuildingKey, List<DebugRoosterPlan> Roosters);
+    private sealed record DebugRoosterPlan(string RoosterKey, List<DebugFemalePlan> Females);
+    private sealed record DebugFemalePlan(string FemaleKey, EggChancePlan? NormalEgg, EggChancePlan? LargeEgg, FertilizedOnlyPlan? FertilizedOnly);
+
+    private DebugPlanDump BuildDebugPlanDump(DailyHatchingPlanEnvelope plan, string? buildingKeyFilter, bool full)
+    {
+        var buildings = new List<DebugBuildingPlan>();
+
+        foreach (var (buildingKey, building) in plan.Buildings.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrWhiteSpace(buildingKeyFilter)
+                && !buildingKey.Contains(buildingKeyFilter.Trim(), StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var roosters = new List<DebugRoosterPlan>();
+            foreach (var (roosterKey, rooster) in building.Roosters.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                var females = new List<DebugFemalePlan>();
+                foreach (var (femaleKey, female) in rooster.Females.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    females.Add(new DebugFemalePlan(
+                        FemaleKey: femaleKey,
+                        NormalEgg: full ? female.NormalEgg : null,
+                        LargeEgg: full ? female.LargeEgg : null,
+                        FertilizedOnly: full ? female.FertilizedOnly : null
+                    ));
+                }
+
+                roosters.Add(new DebugRoosterPlan(roosterKey, females));
+            }
+
+            buildings.Add(new DebugBuildingPlan(buildingKey, roosters));
+        }
+
+        return new DebugPlanDump(plan.Day, plan.FarmId, plan.Fingerprint, plan.Nonce, buildings);
+    }
+
+    private string BuildDebugPlanText(DailyHatchingPlanEnvelope plan, string? buildingKeyFilter, bool full)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"[ra_debug_plan] Day={plan.Day} FarmId={plan.FarmId} Fingerprint={plan.Fingerprint} Nonce={plan.Nonce}");
+
+        foreach (var (buildingKey, building) in plan.Buildings.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrWhiteSpace(buildingKeyFilter)
+                && !buildingKey.Contains(buildingKeyFilter.Trim(), StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            sb.AppendLine($"Building: {buildingKey}");
+
+            foreach (var (roosterKey, rooster) in building.Roosters.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                sb.AppendLine($"  Rooster: {roosterKey}");
+
+                foreach (var (femaleKey, female) in rooster.Females.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    sb.AppendLine($"    Female: {femaleKey}");
+
+                    if (!full)
+                        continue;
+
+                    if (female.NormalEgg is not null)
+                        sb.AppendLine($"      NormalEgg: enabled={female.NormalEgg.Enabled} chance={female.NormalEgg.ChancePercent} rolled={female.NormalEgg.RolledSuccess} add={female.NormalEgg.EggIdToAddToRooster} remove={female.NormalEgg.FemaleEggIdToRemove}");
+
+                    if (female.LargeEgg is not null)
+                        sb.AppendLine($"      LargeEgg: enabled={female.LargeEgg.Enabled} chance={female.LargeEgg.ChancePercent} rolled={female.LargeEgg.RolledSuccess} add={female.LargeEgg.EggIdToAddToRooster} remove={female.LargeEgg.FemaleEggIdToRemove}");
+
+                    if (female.FertilizedOnly is not null)
+                        sb.AppendLine($"      FertilizedOnly: upgradeChance={female.FertilizedOnly.FemaleUpgradeChancePercent} ratio={female.FertilizedOnly.RoosterToChickenRatioPercent} upgrade={female.FertilizedOnly.UpgradeFemaleProduceToFertilized} roosterHatches={female.FertilizedOnly.RoosterHatchesFertilizedEgg} roosterEgg={female.FertilizedOnly.RoosterFertilizedEggId} femaleEgg={female.FertilizedOnly.FemaleFertilizedEggId}");
+                }
+            }
+        }
+
+        return sb.ToString().TrimEnd();
+    }
+
+    private sealed record DebugDiffDump(
+        int PreviousDay,
+        string PreviousFingerprint,
+        int CurrentDay,
+        string CurrentFingerprint,
+        List<string> Changes
+    );
+
+    private DebugDiffDump BuildDebugDiffDump(DailyFarmAnimalsDecisions prev, DailyFarmAnimalsDecisions curr, bool full)
+    {
+        var changes = BuildDebugDiffChanges(prev.Plan, curr.Plan, full);
+        return new DebugDiffDump(prev.Day, prev.Fingerprint, curr.Day, curr.Fingerprint, changes);
+    }
+
+    private string BuildDebugDiffText(DailyFarmAnimalsDecisions prev, DailyFarmAnimalsDecisions curr, bool full)
+    {
+        var changes = BuildDebugDiffChanges(prev.Plan, curr.Plan, full);
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"[ra_debug_diff] prevDay={prev.Day} prevFingerprint={prev.Fingerprint}");
+        sb.AppendLine($"[ra_debug_diff] currDay={curr.Day} currFingerprint={curr.Fingerprint}");
+
+        if (changes.Count == 0)
+            sb.AppendLine("No changes detected.");
+        else
+            changes.ForEach(c => sb.AppendLine(c));
+
+        return sb.ToString().TrimEnd();
+    }
+
+    private static List<string> BuildDebugDiffChanges(DailyHatchingPlanEnvelope? prev, DailyHatchingPlanEnvelope? curr, bool full)
+    {
+        var changes = new List<string>();
+
+        if (prev is null && curr is null)
+            return changes;
+
+        if (prev is null)
+        {
+            changes.Add("Plan created (no previous plan).");
+            return changes;
+        }
+
+        if (curr is null)
+        {
+            changes.Add("Plan cleared (no current plan).");
+            return changes;
+        }
+
+        if (!string.Equals(prev.Fingerprint, curr.Fingerprint, StringComparison.OrdinalIgnoreCase))
+            changes.Add($"Fingerprint changed: '{prev.Fingerprint}' -> '{curr.Fingerprint}'");
+
+        if (!full)
+        {
+            changes.Add($"Buildings: prev={prev.Buildings.Count} curr={curr.Buildings.Count}");
+            return changes;
+        }
+
+        var prevBuildings = prev.Buildings.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var currBuildings = curr.Buildings.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var b in prevBuildings.Except(currBuildings).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+            changes.Add($"Building removed: {b}");
+        foreach (var b in currBuildings.Except(prevBuildings).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+            changes.Add($"Building added: {b}");
+
+        foreach (var b in prevBuildings.Intersect(currBuildings).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+        {
+            var pb = prev.Buildings[b];
+            var cb = curr.Buildings[b];
+
+            var prevRoosters = pb.Roosters.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var currRoosters = cb.Roosters.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var r in prevRoosters.Except(currRoosters).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+                changes.Add($"Rooster removed: {b}/{r}");
+            foreach (var r in currRoosters.Except(prevRoosters).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+                changes.Add($"Rooster added: {b}/{r}");
+
+            foreach (var r in prevRoosters.Intersect(currRoosters).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+            {
+                var pr = pb.Roosters[r];
+                var cr = cb.Roosters[r];
+
+                var prevFemales = pr.Females.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var currFemales = cr.Females.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var f in prevFemales.Except(currFemales).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+                    changes.Add($"Female removed: {b}/{r}/{f}");
+                foreach (var f in currFemales.Except(prevFemales).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+                    changes.Add($"Female added: {b}/{r}/{f}");
+
+                foreach (var f in prevFemales.Intersect(currFemales).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+                {
+                    var pf = pr.Females[f];
+                    var cf = cr.Females[f];
+
+                    if (!AreEggPlansEqual(pf.NormalEgg, cf.NormalEgg))
+                        changes.Add($"NormalEgg changed: {b}/{r}/{f}");
+                    if (!AreEggPlansEqual(pf.LargeEgg, cf.LargeEgg))
+                        changes.Add($"LargeEgg changed: {b}/{r}/{f}");
+                    if (!AreFertilizedPlansEqual(pf.FertilizedOnly, cf.FertilizedOnly))
+                        changes.Add($"FertilizedOnly changed: {b}/{r}/{f}");
+                }
+            }
+        }
+
+        return changes;
+    }
+
+    private static bool AreEggPlansEqual(EggChancePlan? a, EggChancePlan? b)
+    {
+        if (a is null && b is null) return true;
+        if (a is null || b is null) return false;
+
+        return a.Enabled == b.Enabled
+            && a.ChancePercent == b.ChancePercent
+            && a.RolledSuccess == b.RolledSuccess
+            && string.Equals(a.EggIdToAddToRooster, b.EggIdToAddToRooster, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(a.FemaleEggIdToRemove ?? string.Empty, b.FemaleEggIdToRemove ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool AreFertilizedPlansEqual(FertilizedOnlyPlan? a, FertilizedOnlyPlan? b)
+    {
+        if (a is null && b is null) return true;
+        if (a is null || b is null) return false;
+
+        return Math.Abs(a.FemaleUpgradeChancePercent - b.FemaleUpgradeChancePercent) < 0.0001f
+            && a.RoosterToChickenRatioPercent == b.RoosterToChickenRatioPercent
+            && a.UpgradeFemaleProduceToFertilized == b.UpgradeFemaleProduceToFertilized
+            && a.RoosterHatchesFertilizedEgg == b.RoosterHatchesFertilizedEgg
+            && string.Equals(a.RoosterFertilizedEggId, b.RoosterFertilizedEggId, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(a.FemaleFertilizedEggId, b.FemaleFertilizedEggId, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+        var (positional, full, json) = ParseDebugArgs(args);
+
+        if (positional.Count == 0 || positional[0].Equals("help", StringComparison.OrdinalIgnoreCase))
+        {
+            Monitor.Log(
+                "Usage: ra_debug_produce [--full] [--json] <roosterType> [day] [locationName] [buildingType]\n" +
+                "Example: ra_debug_produce WhiteRooster\n" +
+                "Example: ra_debug_produce --full WhiteRooster 1234 Farm \"Deluxe Coop\"\n" +
+                "Example: ra_debug_produce --json WhiteRooster",
+                LogLevel.Info
+            );
+            return;
+        }
+
+        if (!Enum.TryParse<RoosterType>(positional[0], ignoreCase: true, out var roosterType))
+        {
+            Monitor.Log($"[ra_debug_produce] Unknown roosterType '{positional[0]}'. Valid: {string.Join(", ", Enum.GetNames(typeof(RoosterType)))}", LogLevel.Warn);
+            return;
+        }
+
+        int? dayOverride = null;
+        if (positional.Count >= 2 && int.TryParse(positional[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var day))
+            dayOverride = day;
+
+        var locationOverride = positional.Count >= 3 ? positional[2] : null;
+        var buildingOverride = positional.Count >= 4 ? positional[3] : null;
+
+        var dump = RoosterHelper.DebugDumpChosenProduce(
+            roosterType,
+            dayOverride,
+            locationOverride,
+            buildingOverride,
+            full: full,
+            json: json
+        );
+
+        Monitor.Log(dump, LogLevel.Info);
+    }
 
         if (args.Length == 0 || args[0].Equals("help", StringComparison.OrdinalIgnoreCase))
         {

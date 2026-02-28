@@ -71,6 +71,58 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
         );
     }
 
+
+
+    public ProduceResolutionTrace ResolveWithTrace(string choiceKey, int baseSeed)
+    {
+        if (string.IsNullOrWhiteSpace(choiceKey))
+            return new ProduceResolutionTrace(string.Empty, baseSeed, Array.Empty<ProduceResolutionStep>(), string.Empty, CycleDetected: false);
+
+        var trimmed = choiceKey.Trim();
+        var steps = new List<ProduceResolutionStep>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var resolved = ResolveInnerDeterministicWithTrace(trimmed, baseSeed, depth: 0, seen, steps, out var cycleDetected);
+
+        return new ProduceResolutionTrace(trimmed, baseSeed, steps, resolved, cycleDetected);
+    }
+
+    private string ResolveInnerDeterministicWithTrace(
+        string key,
+        int baseSeed,
+        int depth,
+        HashSet<string> seen,
+        List<ProduceResolutionStep> steps,
+        out bool cycleDetected
+    )
+    {
+        cycleDetected = false;
+
+        if (string.IsNullOrWhiteSpace(key))
+            return string.Empty;
+
+        if (!seen.Add(key))
+        {
+            cycleDetected = true;
+            return Translate(key);
+        }
+
+        if (_groups.TryGetValue(key, out var options) && options is { Count: > 0 })
+        {
+            var pickSeed = RoosterSeedKey.ForRandomGroupPick(baseSeed, key, depth);
+            var index = (options.Count <= 0) ? 0 : (int)((uint)pickSeed % (uint)options.Count);
+
+            var picked = options[index]?.Trim() ?? string.Empty;
+            steps.Add(new ProduceResolutionStep(depth, key, pickSeed, index, picked));
+
+            var resolved = ResolveInnerDeterministicWithTrace(picked, baseSeed, depth + 1, seen, steps, out var innerCycle);
+            cycleDetected = innerCycle;
+            return resolved;
+        }
+
+        return Translate(key);
+    }
+
     private string ResolveInnerRandom(string key, HashSet<string> seen)
     {
         if (string.IsNullOrWhiteSpace(key))
@@ -111,3 +163,20 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
     private static string Translate(string key)
         => ItemIds.VariableValues.TryGetValue(key, out var translated) ? translated : key;
 }
+
+
+internal sealed record ProduceResolutionTrace(
+    string InputKey,
+    int BaseSeed,
+    IReadOnlyList<ProduceResolutionStep> Steps,
+    string ResolvedKey,
+    bool CycleDetected
+);
+
+internal sealed record ProduceResolutionStep(
+    int Depth,
+    string GroupKey,
+    int PickSeed,
+    int Index,
+    string Picked
+);

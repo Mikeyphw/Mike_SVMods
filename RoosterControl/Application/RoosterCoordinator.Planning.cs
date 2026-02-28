@@ -500,8 +500,9 @@ internal sealed partial class RoosterCoordinator
 
             _ = EnsureDailyPlanForToday(data, forceRecompute: true, out _);
 
-            var today = SDate.Now().DaysSinceStart;
+            var today = StardewModdingAPI.Utilities.SDate.Now().DaysSinceStart;
             var farmId = unchecked((long)Game1.uniqueIDForThisGame);
+            _previousDailyDecisions = _dailyDecisions;
             _dailyDecisions = new DailyFarmAnimalsDecisions(today, farmId, _dailyPlanFingerprint, _dailyPlan);
 
             RequestInvalidate(FarmAnimalsAssetName);

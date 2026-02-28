@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using Mikew.NestCore.Framework.Random;
 using RoosterControl.Application.Catalogs;
 using RoosterControl.Application.FarmAnimals;
@@ -448,15 +449,20 @@ public sealed class RoosterHelper
     }
 
 #if RCTRL_DEV
-    internal string DebugDumpChosenProduce(
+    public string DebugDumpChosenProduce(
         RoosterType roosterType,
         int? dayOverride = null,
         string? locationNameOverride = null,
-        string? buildingTypeOverride = null
+        string? buildingTypeOverride = null,
+        bool full = false,
+        bool json = false
     )
     {
         if (!Roosters.TryGetValue(roosterType, out var rooster))
             return $"[ra_debug_produce] Unknown rooster type: {roosterType}";
+
+        if (!Config.Roosters.TryGetValue(roosterType, out var settings) || settings is null)
+            return $"[ra_debug_produce] Missing config settings for rooster type: {roosterType}";
 
         var farmId = 0UL;
         var day = 0;
@@ -491,17 +497,31 @@ public sealed class RoosterHelper
         var produceSeed = RoosterSeedKey.ForChosenProduce(seedCtx, ProduceTypeEntries.Produce);
         var deluxeSeed = RoosterSeedKey.ForChosenProduce(seedCtx, ProduceTypeEntries.Deluxe);
 
-        var rngProduce = new SeededRandomProvider(produceSeed);
-        var rngDeluxe = new SeededRandomProvider(deluxeSeed);
+        var produceRoll = RollChosenSlot(settings.ProduceEntries, new SeededRandomProvider(produceSeed));
+        var deluxeRoll = RollChosenSlot(settings.DeluxeProduceEntries, new SeededRandomProvider(deluxeSeed));
 
-        var chosenProduce = _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Produce], rngProduce);
-        var chosenDeluxe = _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rngDeluxe);
+        var produceChosen = BuildSlotDump(seedCtx, ProduceTypeEntries.Produce, produceRoll);
+        var deluxeChosen = BuildSlotDump(seedCtx, ProduceTypeEntries.Deluxe, deluxeRoll);
 
-        chosenProduce.TryGetValue(RoosterItemDataEntries.Name, out var chosenProduceName);
-        chosenProduce.TryGetValue(RoosterItemDataEntries.Probability, out var chosenProduceWeight);
+        if (json)
+        {
+            var dump = new DebugProduceDump(
+                RoosterType: roosterType.ToString(),
+                FarmAnimalName: seedCtx.FarmAnimalName,
+                FarmId: seedCtx.FarmId,
+                Day: seedCtx.Day,
+                LocationName: seedCtx.LocationName,
+                BuildingType: seedCtx.BuildingType,
+                ProduceSeed: produceSeed,
+                DeluxeSeed: deluxeSeed,
+                ChosenProduce: produceChosen,
+                ChosenDeluxe: deluxeChosen,
+                ProduceCandidates: full ? BuildCandidates(seedCtx, ProduceTypeEntries.Produce, settings.ProduceEntries) : null,
+                DeluxeCandidates: full ? BuildCandidates(seedCtx, ProduceTypeEntries.Deluxe, settings.DeluxeProduceEntries) : null
+            );
 
-        chosenDeluxe.TryGetValue(RoosterItemDataEntries.Name, out var chosenDeluxeName);
-        chosenDeluxe.TryGetValue(RoosterItemDataEntries.Probability, out var chosenDeluxeWeight);
+            return JsonSerializer.Serialize(dump, new JsonSerializerOptions { WriteIndented = false });
+        }
 
         var sb = new StringBuilder();
         sb.AppendLine("[ra_debug_produce] Inputs:");
@@ -515,10 +535,140 @@ public sealed class RoosterHelper
         sb.AppendLine($"  produceSeed: {produceSeed}");
         sb.AppendLine($"  deluxeSeed: {deluxeSeed}");
         sb.AppendLine("[ra_debug_produce] Results:");
-        sb.AppendLine($"  chosenProduce: {chosenProduceName} (weight {chosenProduceWeight})");
-        sb.AppendLine($"  chosenDeluxe: {chosenDeluxeName} (weight {chosenDeluxeWeight})");
+        sb.AppendLine($"  chosenProduce: {produceChosen.ResolvedId} (slot {produceChosen.Slot} weight {produceChosen.Weight})");
+        sb.AppendLine($"  chosenDeluxe: {deluxeChosen.ResolvedId} (slot {deluxeChosen.Slot} weight {deluxeChosen.Weight})");
+
+        if (full)
+        {
+            sb.AppendLine("[ra_debug_produce] ProduceCandidates:");
+            foreach (var c in BuildCandidates(seedCtx, ProduceTypeEntries.Produce, settings.ProduceEntries))
+                sb.AppendLine($"  {c.Slot}: key={c.ChoiceKey} resolved={c.ResolvedId} weight={c.Weight} baseSeed={c.BaseSeed} steps={c.TraceSteps?.Count ?? 0}");
+
+            sb.AppendLine("[ra_debug_produce] DeluxeCandidates:");
+            foreach (var c in BuildCandidates(seedCtx, ProduceTypeEntries.Deluxe, settings.DeluxeProduceEntries))
+                sb.AppendLine($"  {c.Slot}: key={c.ChoiceKey} resolved={c.ResolvedId} weight={c.Weight} baseSeed={c.BaseSeed} steps={c.TraceSteps?.Count ?? 0}");
+
+            if (produceChosen.TraceSteps is { Count: > 0 })
+            {
+                sb.AppendLine("[ra_debug_produce] ChosenProduceTrace:");
+                foreach (var step in produceChosen.TraceSteps)
+                    sb.AppendLine($"  depth={step.Depth} group={step.GroupKey} pickSeed={step.PickSeed} index={step.Index} picked={step.Picked}");
+            }
+
+            if (deluxeChosen.TraceSteps is { Count: > 0 })
+            {
+                sb.AppendLine("[ra_debug_produce] ChosenDeluxeTrace:");
+                foreach (var step in deluxeChosen.TraceSteps)
+                    sb.AppendLine($"  depth={step.Depth} group={step.GroupKey} pickSeed={step.PickSeed} index={step.Index} picked={step.Picked}");
+            }
+        }
+
         return sb.ToString().TrimEnd();
     }
+
+    private int RollChosenSlot(IReadOnlyList<ProduceEntry> entries, IRandomProvider rng)
+    {
+        var table = new WeightedTable<int>(rng);
+
+        for (var i = 0; i < entries.Count && i < 4; i++)
+        {
+            var e = entries[i] ?? new ProduceEntry();
+            table.Add(i, Math.Clamp(e.Probability, 0, 100));
+        }
+
+        return table.RollOrDefault(0);
+    }
+
+    private DebugProduceSlotDump BuildSlotDump(in RoosterSeedKey.Context seedCtx, ProduceTypeEntries produceType, int slotIndex)
+    {
+        var slot = (ProduceEntries)slotIndex;
+        var slotOrdinal = slotIndex + 1;
+        var channel = $"produce:{produceType}:{slot}";
+
+        var settings = Config.Roosters[seedCtx.RoosterType];
+        var entry = (produceType == ProduceTypeEntries.Produce ? settings.ProduceEntries : settings.DeluxeProduceEntries)[slotIndex] ?? new ProduceEntry();
+
+        var choice = (entry.Choice ?? string.Empty).Trim();
+        var choiceKey = choice.Equals(ItemIds.CustomItems.Custom, StringComparison.OrdinalIgnoreCase)
+            ? (entry.CustomItemName ?? ItemIds.CustomItems.Custom).Trim()
+            : choice;
+
+        var baseSeed = RoosterSeedKey.ForChoiceResolution(seedCtx, channel, slotOrdinal);
+
+        var (resolved, traceSteps) = ResolveWithOptionalTrace(choiceKey, baseSeed);
+
+        return new DebugProduceSlotDump(slotOrdinal, slot.ToString(), choiceKey, resolved, entry.Probability, baseSeed, traceSteps);
+    }
+
+    private List<DebugProduceSlotDump> BuildCandidates(in RoosterSeedKey.Context seedCtx, ProduceTypeEntries produceType, IReadOnlyList<ProduceEntry> entries)
+    {
+        var list = new List<DebugProduceSlotDump>();
+
+        for (var i = 0; i < entries.Count && i < 4; i++)
+        {
+            var slot = (ProduceEntries)i;
+            var slotOrdinal = i + 1;
+            var channel = $"produce:{produceType}:{slot}";
+
+            var entry = entries[i] ?? new ProduceEntry();
+            var choice = (entry.Choice ?? string.Empty).Trim();
+            var choiceKey = choice.Equals(ItemIds.CustomItems.Custom, StringComparison.OrdinalIgnoreCase)
+                ? (entry.CustomItemName ?? ItemIds.CustomItems.Custom).Trim()
+                : choice;
+
+            var baseSeed = RoosterSeedKey.ForChoiceResolution(seedCtx, channel, slotOrdinal);
+            var (resolved, traceSteps) = ResolveWithOptionalTrace(choiceKey, baseSeed);
+
+            list.Add(new DebugProduceSlotDump(slotOrdinal, slot.ToString(), choiceKey, resolved, entry.Probability, baseSeed, traceSteps));
+        }
+
+        return list;
+    }
+
+    private (string Resolved, IReadOnlyList<DebugResolutionStep>? Steps) ResolveWithOptionalTrace(string choiceKey, int baseSeed)
+    {
+        if (_produceResolver is RandomGroupProduceResolver rg)
+        {
+            var trace = rg.ResolveWithTrace(choiceKey, baseSeed);
+            var steps = trace.Steps.Select(s => new DebugResolutionStep(s.Depth, s.GroupKey, s.PickSeed, s.Index, s.Picked)).ToList();
+            return (trace.ResolvedKey, steps);
+        }
+
+        return (_produceResolver.Resolve(choiceKey, baseSeed), null);
+    }
+
+    private sealed record DebugProduceDump(
+        string RoosterType,
+        string FarmAnimalName,
+        ulong FarmId,
+        int Day,
+        string LocationName,
+        string BuildingType,
+        int ProduceSeed,
+        int DeluxeSeed,
+        DebugProduceSlotDump ChosenProduce,
+        DebugProduceSlotDump ChosenDeluxe,
+        List<DebugProduceSlotDump>? ProduceCandidates,
+        List<DebugProduceSlotDump>? DeluxeCandidates
+    );
+
+    private sealed record DebugProduceSlotDump(
+        int SlotOrdinal,
+        string Slot,
+        string ChoiceKey,
+        string ResolvedId,
+        int Weight,
+        int BaseSeed,
+        IReadOnlyList<DebugResolutionStep>? TraceSteps
+    );
+
+    private sealed record DebugResolutionStep(
+        int Depth,
+        string GroupKey,
+        int PickSeed,
+        int Index,
+        string Picked
+    );
 #endif
 
     private void ApplyFertilizedBoost(RoosterData rooster)
