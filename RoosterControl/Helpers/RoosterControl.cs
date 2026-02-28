@@ -254,7 +254,7 @@ public sealed class RoosterHelper
         locationName = Game1.getFarm()?.NameOrUniqueName ?? "Farm";
     }
 
-    var buildingType = rooster.BuildingRequirement.ToString();
+    var buildingType = rooster.BuildingRequired.ToString();
     var farmAnimalName = rooster.FarmAnimalName ?? string.Empty;
 
     var produceSeed = ComputeChosenProduceSeed(
@@ -335,7 +335,7 @@ private static int ComputeChosenProduceSeed(
 
         var buildingType = !string.IsNullOrWhiteSpace(buildingTypeOverride)
             ? buildingTypeOverride!
-            : rooster.BuildingRequirement.ToString();
+            : rooster.BuildingRequired.ToString();
 
         var farmAnimalName = rooster.FarmAnimalName ?? string.Empty;
 
