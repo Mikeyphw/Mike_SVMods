@@ -243,7 +243,7 @@ public sealed class RoosterHelper
     private 
 void RollChosenProduces(RoosterData rooster)
 {
-    var farmId = 0L;
+    var farmId = 0UL;
     var day = 0;
 
     if (Context.IsWorldReady)
@@ -265,7 +265,7 @@ void RollChosenProduces(RoosterData rooster)
         _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rngDeluxe);
 }
 
-private static int ComputeChosenProduceSeed(long farmId, int day, RoosterType roosterType, ProduceTypeEntries produceType)
+private static int ComputeChosenProduceSeed(ulong farmId, int day, RoosterType roosterType, ProduceTypeEntries produceType)
 {
     var key = $"rc|chosen-produce|{farmId}|{day}|{roosterType}|{produceType}";
     var hash = StableHash.Fnv1a64(key);

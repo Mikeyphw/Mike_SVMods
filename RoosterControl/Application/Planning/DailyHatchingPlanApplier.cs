@@ -135,4 +135,17 @@ internal sealed class DailyHatchingPlanApplier
             .Select(a => a.Key)
             .ToList();
     }
+
+
+    private static void RemoveEggItemIdIgnoreCase(List<string> eggItemIds, string eggItemIdToRemove)
+    {
+        if (eggItemIds is null || eggItemIds.Count == 0 || string.IsNullOrWhiteSpace(eggItemIdToRemove))
+            return;
+
+        for (var i = eggItemIds.Count - 1; i >= 0; i--)
+        {
+            if (string.Equals(eggItemIds[i], eggItemIdToRemove, StringComparison.OrdinalIgnoreCase))
+                eggItemIds.RemoveAt(i);
+        }
+    }
 }
