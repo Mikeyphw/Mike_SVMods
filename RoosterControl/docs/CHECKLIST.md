@@ -45,3 +45,9 @@
 - [x] Clarify weights vs percent semantics (UI labels + validation rules).
 - [x] Validate random-group references (missing keys, cycles) at catalog load.
 - [x] Canonicalize produce entries on save (trim, stable ordering, normalized weights).
+
+
+### Phase 4 — Pipeline consolidation (asset editor owns mutations)
+- [x] Move all `Data/FarmAnimals` mutations into the asset editor pipeline.
+- [x] Make coordinator compute plans; editor applies the edits.
+- [ ] Batch invalidations via NestCore next-tick helpers.

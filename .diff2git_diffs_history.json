@@ -52,7 +52,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260228T134410-0300-01",
+      "file": "20260228T134410-0300-01",
+      "title": "RoosterControl: Phase 4 (1+2) apply daily hatching edits via FarmAnimals asset editor",
+      "title_with_id": "RoosterControl: Phase 4 (1+2) apply daily hatching edits via FarmAnimals asset editor [20260228T134410-0300-01]",
+      "created_at": "2026-02-28T14:56:12-03:00",
+      "applied_at": "2026-02-28T14:56:22-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-02-28T12:47:20-03:00"
+  "updated_at": "2026-02-28T14:56:22-03:00"
 }

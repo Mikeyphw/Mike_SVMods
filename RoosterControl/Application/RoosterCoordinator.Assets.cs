@@ -26,7 +26,7 @@ internal sealed partial class RoosterCoordinator
                 shouldApply: (ctx, _) => ctx.HasDayStarted,
                 handle: (ctx, e) =>
                 {
-                    ctx._farmAnimalsEditor ??= new FarmAnimalsAssetEditor(ctx.RoosterHelper, ctx.SetRoosterData);
+                    ctx._farmAnimalsEditor ??= new FarmAnimalsAssetEditor(ctx.RoosterHelper, ctx.SetRoosterData, ctx.TryApplyDailyFarmAnimalsEdits);
                     ctx._farmAnimalsEditor.Edit(e);
                 })
         );

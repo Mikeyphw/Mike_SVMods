@@ -1,6 +1,6 @@
 # PLAN — GMCM Menu (RoosterControl)
 
-Status: Phase 8B produce tables + rooster produce system Phase 3 validation/semantics implemented.
+Status: Phase 8B produce tables + rooster produce system Phase 4 (steps 1–2) implemented.
 
 ## Scope
 - Subdir: `RoosterControl`
@@ -59,3 +59,4 @@ Status: Phase 8B produce tables + rooster produce system Phase 3 validation/sema
 1. Move all `Data/FarmAnimals` mutations into the asset editor pipeline.
 2. Make coordinator compute plans; editor applies the edits.
 3. Batch invalidations via NestCore next-tick helpers.
+4. Move debug dump / diagnostics to post-apply (next tick) only.

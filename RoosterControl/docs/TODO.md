@@ -12,4 +12,6 @@
 ## Rooster Produce System
 - [x] Phase 3: weight/percent semantics cleanup + validation warnings.
 - [x] Phase 3: validate random-group references (missing/cycles) on catalog load.
-- [ ] Phase 4: consolidate FarmAnimals mutations into the asset editor pipeline.
+- [x] Phase 4: consolidate FarmAnimals mutations into the asset editor pipeline (steps 1–2).
+
+- [ ] Phase 4: batch invalidations via NestCore next-tick helpers.

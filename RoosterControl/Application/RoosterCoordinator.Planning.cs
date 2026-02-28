@@ -39,6 +39,7 @@ internal sealed partial class RoosterCoordinator
         _dailyPlan = null;
         _dailyPlanDay = -1;
         _dailyPlanFingerprint = string.Empty;
+        _dailyDecisions = null;
         InvalidateRuleCaches(reason);
     }
 
@@ -498,6 +499,10 @@ internal sealed partial class RoosterCoordinator
             }
 
             _ = EnsureDailyPlanForToday(data, forceRecompute: true, out _);
+
+            var today = SDate.Now().DaysSinceStart;
+            var farmId = unchecked((long)Game1.uniqueIDForThisGame);
+            _dailyDecisions = new DailyFarmAnimalsDecisions(today, farmId, _dailyPlanFingerprint, _dailyPlan);
 
             RequestInvalidate(FarmAnimalsAssetName);
             RequestInvalidate(ObjectsAssetName);

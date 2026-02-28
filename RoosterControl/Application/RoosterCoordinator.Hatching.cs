@@ -19,7 +19,9 @@ namespace RoosterControl.Application;
 
 internal sealed partial class RoosterCoordinator
 {
-    public void OnDayStarted(object? sender, DayStartedEventArgs e) => OnDayStart(sender, e);
+        private DailyFarmAnimalsDecisions? _dailyDecisions;
+
+public void OnDayStarted(object? sender, DayStartedEventArgs e) => OnDayStart(sender, e);
 
     /// <summary>The method called after a new day starts.</summary>
     private void OnDayStart(object? sender, DayStartedEventArgs e)
@@ -109,7 +111,49 @@ internal sealed partial class RoosterCoordinator
 }
     
 
-    private void RunFarmAnimalsDailySystems()
+    
+    private bool TryApplyDailyFarmAnimalsEdits(IDictionary<string, FarmAnimalData> data)
+    {
+        if (!Context.IsWorldReady)
+            return false;
+
+        if (_dailyDecisions is null)
+            return false;
+
+        var today = SDate.Now().DaysSinceStart;
+        var farmId = unchecked((long)Game1.uniqueIDForThisGame);
+        if (!_dailyDecisions.MatchesToday(farmId, today))
+            return false;
+
+        var plan = _dailyDecisions.Plan;
+
+        foreach (var rooster in RoosterHelper.Roosters.Values)
+            RunHatchingSystem(rooster, data, plan);
+
+        return true;
+    }
+
+    private void RefreshFarmAnimalsAfterDailyDecisions()
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        _ = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        ReloadCoopRoosters();
+
+        try
+        {
+            var data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+            if (data is not null)
+                DebugDumpFarmAnimalsIfEnabled(new Dictionary<string, FarmAnimalData>(data));
+        }
+        catch
+        {
+            // best effort
+        }
+    }
+
+private void RunFarmAnimalsDailySystems()
     {
         if (!Context.IsWorldReady)
             return;
@@ -128,14 +172,16 @@ internal sealed partial class RoosterCoordinator
             usedHostPlan: out _
         );
 
-        foreach (var rooster in RoosterHelper.Roosters.Values)
-            RunHatchingSystem(rooster, data, plan);
+        var today = SDate.Now().DaysSinceStart;
+        var farmId = unchecked((long)Game1.uniqueIDForThisGame);
+        _dailyDecisions = new DailyFarmAnimalsDecisions(today, farmId, _dailyPlanFingerprint, plan);
 
+        // Apply the plan through the asset editor (single source of truth).
+        RequestInvalidate(FarmAnimalsAssetName);
         if (RoosterHelper.FemaleEggs.Count > 0)
             RequestInvalidate(ObjectsAssetName);
 
-        ReloadCoopRoosters();
-        DebugDumpFarmAnimalsIfEnabled(new Dictionary<string, FarmAnimalData>(data));
+        QueueNextTickAction(RefreshFarmAnimalsAfterDailyDecisions);
     }
 
     private void RefreshFarmAnimalsOnLocationChange()
