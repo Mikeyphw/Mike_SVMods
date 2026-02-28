@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -141,6 +142,15 @@ Helper.ConsoleCommands.Add(
     "Print RoosterControl runtime/integration status.",
     (_, _) => PrintStatus()
 );
+
+#if RCTRL_DEV
+        Helper.ConsoleCommands.Add(
+            "ra_debug_produce",
+            "Dev-only: dump deterministic chosen-produce seed + results. Usage: ra_debug_produce <roosterType> [day] [locationName] [buildingType]",
+            DebugProduceCommand
+        );
+#endif
+
 
 AssetHandler = new NestModAssetHandler(ModManifest.UniqueID, Monitor);
         AssetHandler.AddAssets(
@@ -335,7 +345,47 @@ AssetHandler = new NestModAssetHandler(ModManifest.UniqueID, Monitor);
         _animalExclusions = _farmAnimalExclusionsService.LoadOrCreate(Helper);
     }
 
-    private void DumpStateCommand(string command, string[] args)
+    
+
+#if RCTRL_DEV
+    private void DebugProduceCommand(string _command, string[] args)
+    {
+        if (RoosterHelper is null)
+        {
+            Monitor.Log("[ra_debug_produce] RoosterHelper is not initialized yet.", LogLevel.Warn);
+            return;
+        }
+
+        if (args.Length == 0 || args[0].Equals("help", StringComparison.OrdinalIgnoreCase))
+        {
+            Monitor.Log(
+                "Usage: ra_debug_produce <roosterType> [day] [locationName] [buildingType]\n" +
+                "Example: ra_debug_produce WhiteRooster\n" +
+                "Example: ra_debug_produce WhiteRooster 1234 Farm DeluxeCoop",
+                LogLevel.Info
+            );
+            return;
+        }
+
+        if (!Enum.TryParse<RoosterType>(args[0], ignoreCase: true, out var roosterType))
+        {
+            Monitor.Log($"[ra_debug_produce] Unknown roosterType '{args[0]}'. Valid: {string.Join(", ", Enum.GetNames(typeof(RoosterType)))}", LogLevel.Warn);
+            return;
+        }
+
+        int? dayOverride = null;
+        if (args.Length >= 2 && int.TryParse(args[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var day))
+            dayOverride = day;
+
+        var locationOverride = args.Length >= 3 ? args[2] : null;
+        var buildingOverride = args.Length >= 4 ? args[3] : null;
+
+        var dump = RoosterHelper.DebugDumpChosenProduce(roosterType, dayOverride, locationOverride, buildingOverride);
+        Monitor.Log(dump, LogLevel.Info);
+    }
+#endif
+
+private void DumpStateCommand(string command, string[] args)
     {
         if (!Context.IsWorldReady)
         {

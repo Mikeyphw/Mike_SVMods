@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using Mikew.NestCore.Framework.Random;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
@@ -240,20 +241,41 @@ public sealed class RoosterHelper
         };
     }
 
-    private 
-void RollChosenProduces(RoosterData rooster)
+    private void RollChosenProduces(RoosterData rooster)
 {
     var farmId = 0UL;
     var day = 0;
+    var locationName = "not-ready";
 
     if (Context.IsWorldReady)
     {
         farmId = Game1.uniqueIDForThisGame;
         day = Game1.Date.TotalDays;
+        locationName = Game1.getFarm()?.NameOrUniqueName ?? "Farm";
     }
 
-    var produceSeed = ComputeChosenProduceSeed(farmId, day, rooster.RoosterType, ProduceTypeEntries.Produce);
-    var deluxeSeed = ComputeChosenProduceSeed(farmId, day, rooster.RoosterType, ProduceTypeEntries.Deluxe);
+    var buildingType = rooster.BuildingRequirement.ToString();
+    var farmAnimalName = rooster.FarmAnimalName ?? string.Empty;
+
+    var produceSeed = ComputeChosenProduceSeed(
+        farmId,
+        day,
+        locationName,
+        buildingType,
+        farmAnimalName,
+        rooster.RoosterType,
+        ProduceTypeEntries.Produce
+    );
+
+    var deluxeSeed = ComputeChosenProduceSeed(
+        farmId,
+        day,
+        locationName,
+        buildingType,
+        farmAnimalName,
+        rooster.RoosterType,
+        ProduceTypeEntries.Deluxe
+    );
 
     var rngProduce = new SeededRandomProvider(produceSeed);
     var rngDeluxe = new SeededRandomProvider(deluxeSeed);
@@ -265,11 +287,108 @@ void RollChosenProduces(RoosterData rooster)
         _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rngDeluxe);
 }
 
-private static int ComputeChosenProduceSeed(ulong farmId, int day, RoosterType roosterType, ProduceTypeEntries produceType)
+private static int ComputeChosenProduceSeed(
+    ulong farmId,
+    int day,
+    string locationName,
+    string buildingType,
+    string farmAnimalName,
+    RoosterType roosterType,
+    ProduceTypeEntries produceType
+)
 {
-    var key = $"rc|chosen-produce|{farmId}|{day}|{roosterType}|{produceType}";
+    locationName ??= string.Empty;
+    buildingType ??= string.Empty;
+    farmAnimalName ??= string.Empty;
+
+    var key = $"rc|chosen-produce|{farmId}|{day}|{locationName}|{buildingType}|{farmAnimalName}|{roosterType}|{produceType}";
     var hash = StableHash.Fnv1a64(key);
-    return unchecked((int)(hash ^ (hash >> 32)));
+    return unchecked((int)(hash 
+
+#if RCTRL_DEV
+    internal string DebugDumpChosenProduce(
+        RoosterType roosterType,
+        int? dayOverride = null,
+        string? locationNameOverride = null,
+        string? buildingTypeOverride = null
+    )
+    {
+        if (!Roosters.TryGetValue(roosterType, out var rooster))
+            return $"[ra_debug_produce] Unknown rooster type: {roosterType}";
+
+        var farmId = 0UL;
+        var day = 0;
+        var locationName = "not-ready";
+
+        if (Context.IsWorldReady)
+        {
+            farmId = Game1.uniqueIDForThisGame;
+            day = Game1.Date.TotalDays;
+            locationName = Game1.getFarm()?.NameOrUniqueName ?? "Farm";
+        }
+
+        if (dayOverride is not null)
+            day = dayOverride.Value;
+
+        if (!string.IsNullOrWhiteSpace(locationNameOverride))
+            locationName = locationNameOverride!;
+
+        var buildingType = !string.IsNullOrWhiteSpace(buildingTypeOverride)
+            ? buildingTypeOverride!
+            : rooster.BuildingRequirement.ToString();
+
+        var farmAnimalName = rooster.FarmAnimalName ?? string.Empty;
+
+        var produceSeed = ComputeChosenProduceSeed(
+            farmId,
+            day,
+            locationName,
+            buildingType,
+            farmAnimalName,
+            rooster.RoosterType,
+            ProduceTypeEntries.Produce
+        );
+
+        var deluxeSeed = ComputeChosenProduceSeed(
+            farmId,
+            day,
+            locationName,
+            buildingType,
+            farmAnimalName,
+            rooster.RoosterType,
+            ProduceTypeEntries.Deluxe
+        );
+
+        var rngProduce = new SeededRandomProvider(produceSeed);
+        var rngDeluxe = new SeededRandomProvider(deluxeSeed);
+
+        var chosenProduce = _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Produce], rngProduce);
+        var chosenDeluxe = _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rngDeluxe);
+
+        chosenProduce.TryGetValue(RoosterItemDataEntries.Name, out var chosenProduceName);
+        chosenProduce.TryGetValue(RoosterItemDataEntries.Probability, out var chosenProduceWeight);
+
+        chosenDeluxe.TryGetValue(RoosterItemDataEntries.Name, out var chosenDeluxeName);
+        chosenDeluxe.TryGetValue(RoosterItemDataEntries.Probability, out var chosenDeluxeWeight);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("[ra_debug_produce] Inputs:");
+        sb.AppendLine($"  roosterType: {roosterType}");
+        sb.AppendLine($"  farmAnimalName: {farmAnimalName}");
+        sb.AppendLine($"  farmId: {farmId}");
+        sb.AppendLine($"  day: {day}");
+        sb.AppendLine($"  locationName: {locationName}");
+        sb.AppendLine($"  buildingType: {buildingType}");
+        sb.AppendLine("[ra_debug_produce] Seeds:");
+        sb.AppendLine($"  produceSeed: {produceSeed}");
+        sb.AppendLine($"  deluxeSeed: {deluxeSeed}");
+        sb.AppendLine("[ra_debug_produce] Results:");
+        sb.AppendLine($"  chosenProduce: {chosenProduceName} (weight {chosenProduceWeight})");
+        sb.AppendLine($"  chosenDeluxe: {chosenDeluxeName} (weight {chosenDeluxeWeight})");
+        return sb.ToString().TrimEnd();
+    }
+#endif
+^ (hash >> 32)));
 }
 
 
