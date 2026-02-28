@@ -24,3 +24,18 @@
 - [x] Keep allowed-values curated to avoid huge lists.
 - [x] Validate and normalize before save.
 - [x] Preserve config-file editing as an escape hatch.
+
+
+## Rooster Produce System
+### Phase 1 — Stability + determinism baseline
+- [x] Parse all chance/probability values with `CultureInfo.InvariantCulture` + `NumberStyles`.
+- [x] Make egg ID removals case-insensitive (`OrdinalIgnoreCase`).
+- [x] Make chosen produce deterministic per day (seeded RNG, no shared `Random`).
+- [x] Add dev-gated console command to dump seed inputs + chosen results.
+
+### Phase 2 — Determinism everywhere (no call-order sensitivity)
+- [x] Centralize seed derivation (`RoosterSeedKey`).
+- [x] Remove shared/static RNG usage from RoosterControl produce paths.
+- [x] Make `RandomGroupProduceResolver` support deterministic resolution via base seed.
+- [x] Ensure deluxe produce selection is deterministic and uses the same seed model.
+- [x] Add dev-only warnings for suspicious random-group keys (rate-limited).

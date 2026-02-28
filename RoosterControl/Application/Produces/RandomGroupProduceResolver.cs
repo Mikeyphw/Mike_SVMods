@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RoosterControl.Application.Catalogs;
+using RoosterControl.Application.Planning;
 using RoosterControl.Constants;
 
 namespace RoosterControl.Application.Produces;
@@ -13,19 +14,35 @@ public interface IProduceResolver
 }
 
 /// <summary>
+/// Extension of <see cref="IProduceResolver"/> for deterministic resolution.
+/// </summary>
+public interface IDeterministicProduceResolver : IProduceResolver
+{
+    /// <summary>
+    /// Resolve a choice key deterministically using a caller-provided base seed.
+    /// </summary>
+    string Resolve(string choiceKey, int baseSeed);
+}
+
+/// <summary>
 /// Random group -> choice resolver. Random groups are provided by <see cref="ProduceCatalog.RandomGroups"/>.
 /// </summary>
-public sealed class RandomGroupProduceResolver : IProduceResolver
+public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
 {
     private readonly IDictionary<string, List<string>> _groups;
-    private readonly Random _random;
+    private readonly Random? _random;
 
-    public RandomGroupProduceResolver(ProduceCatalog? produceCatalog, Random random)
+    public RandomGroupProduceResolver(ProduceCatalog? produceCatalog)
     {
-        _random = random ?? throw new ArgumentNullException(nameof(random));
         _groups =
             (produceCatalog?.RandomGroups as IDictionary<string, List<string>>)
             ?? new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    public RandomGroupProduceResolver(ProduceCatalog? produceCatalog, Random random)
+        : this(produceCatalog)
+    {
+        _random = random ?? throw new ArgumentNullException(nameof(random));
     }
 
     public string Resolve(string choiceKey)
@@ -33,10 +50,28 @@ public sealed class RandomGroupProduceResolver : IProduceResolver
         if (string.IsNullOrWhiteSpace(choiceKey))
             return string.Empty;
 
-        return ResolveInner(choiceKey.Trim(), new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+        var trimmed = choiceKey.Trim();
+
+        if (_random is null)
+            return Resolve(trimmed, baseSeed: 0);
+
+        return ResolveInnerRandom(trimmed, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
     }
 
-    private string ResolveInner(string key, HashSet<string> seen)
+    public string Resolve(string choiceKey, int baseSeed)
+    {
+        if (string.IsNullOrWhiteSpace(choiceKey))
+            return string.Empty;
+
+        return ResolveInnerDeterministic(
+            choiceKey.Trim(),
+            baseSeed,
+            depth: 0,
+            seen: new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        );
+    }
+
+    private string ResolveInnerRandom(string key, HashSet<string> seen)
     {
         if (string.IsNullOrWhiteSpace(key))
             return string.Empty;
@@ -46,8 +81,28 @@ public sealed class RandomGroupProduceResolver : IProduceResolver
 
         if (_groups.TryGetValue(key, out var options) && options is { Count: > 0 })
         {
-            var picked = options[_random.Next(options.Count)];
-            return ResolveInner(picked?.Trim() ?? string.Empty, seen);
+            var picked = options[_random!.Next(options.Count)];
+            return ResolveInnerRandom(picked?.Trim() ?? string.Empty, seen);
+        }
+
+        return Translate(key);
+    }
+
+    private string ResolveInnerDeterministic(string key, int baseSeed, int depth, HashSet<string> seen)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return string.Empty;
+
+        if (!seen.Add(key))
+            return Translate(key);
+
+        if (_groups.TryGetValue(key, out var options) && options is { Count: > 0 })
+        {
+            var pickSeed = RoosterSeedKey.ForRandomGroupPick(baseSeed, key, depth);
+            var index = (options.Count <= 0) ? 0 : (int)((uint)pickSeed % (uint)options.Count);
+
+            var picked = options[index];
+            return ResolveInnerDeterministic(picked?.Trim() ?? string.Empty, baseSeed, depth + 1, seen);
         }
 
         return Translate(key);

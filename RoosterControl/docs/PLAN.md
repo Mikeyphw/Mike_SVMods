@@ -33,3 +33,29 @@ Status: Phase 8B produce tables + localized female assignment values implemented
 3. Keep allowed-values curated to avoid huge lists.
 4. Validate and normalize before save.
 5. Preserve config-file editing as an escape hatch.
+
+
+## Rooster Produce System
+
+### Phase 1 — Stability + determinism baseline
+1. Parse all chance/probability values with `CultureInfo.InvariantCulture` + `NumberStyles`.
+2. Make egg ID removals case-insensitive (`OrdinalIgnoreCase`).
+3. Make chosen produce deterministic per day (seeded RNG, no shared `Random`).
+4. Add dev-gated console command to dump seed inputs + chosen results.
+
+### Phase 2 — Determinism everywhere (no call-order sensitivity)
+1. Centralize seed derivation (`RoosterSeedKey`).
+2. Remove shared/static RNG usage from RoosterControl produce paths.
+3. Make `RandomGroupProduceResolver` support deterministic resolution via base seed.
+4. Ensure deluxe produce selection is deterministic and uses the same seed model.
+5. Add dev-only warnings for suspicious random-group keys (rate-limited).
+
+### Phase 3 — Validation + semantics cleanup (weights vs percent)
+1. Clarify weights vs percent semantics (UI labels + validation rules).
+2. Validate random-group references (missing keys, cycles) at catalog load.
+3. Canonicalize produce entries on save (trim, stable ordering, normalized weights).
+
+### Phase 4 — Pipeline consolidation (asset editor owns mutations)
+1. Move all `Data/FarmAnimals` mutations into the asset editor pipeline.
+2. Make coordinator compute plans; editor applies the edits.
+3. Batch invalidations via NestCore next-tick helpers.

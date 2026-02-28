@@ -71,4 +71,48 @@ public sealed class RandomGroupProduceResolverTests
 
         Assert.Equal("A", value); // cycle breaks by returning untranslated key
     }
+
+    [Fact]
+    public void ResolveDeterministic_IsStable_ForSameSeed()
+    {
+        var catalog = new ProduceCatalog
+        {
+            RandomGroups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Random Gems"] = new() { ItemIds.Gemstones.Amethyst, ItemIds.Gemstones.Jade }
+            }
+        };
+
+        var resolver = new RandomGroupProduceResolver(catalog);
+
+        var first = resolver.Resolve(ItemIds.RandomProduces.RandomGems, baseSeed: 12345);
+        var second = resolver.Resolve(ItemIds.RandomProduces.RandomGems, baseSeed: 12345);
+
+        Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public void ResolveDeterministic_StableAcrossCallOrder()
+    {
+        var catalog = new ProduceCatalog
+        {
+            RandomGroups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["A"] = new() { "B", "C" },
+                ["B"] = new() { ItemIds.Gemstones.Jade },
+                ["C"] = new() { ItemIds.Gemstones.Amethyst },
+            }
+        };
+
+        var resolver = new RandomGroupProduceResolver(catalog);
+
+        var a1 = resolver.Resolve("A", baseSeed: 999);
+        var b1 = resolver.Resolve("B", baseSeed: 999);
+
+        var b2 = resolver.Resolve("B", baseSeed: 999);
+        var a2 = resolver.Resolve("A", baseSeed: 999);
+
+        Assert.Equal(a1, a2);
+        Assert.Equal(b1, b2);
+    }
 }

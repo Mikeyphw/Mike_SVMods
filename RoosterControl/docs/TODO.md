@@ -7,3 +7,9 @@
 - [x] Ensure dynamic female list is stable across rebuilds (consistent ordering).
 - [x] Switch RoosterControl dev symbol from `MIKE_DEV` to `RCTRL_DEV`.
 
+
+
+## Rooster Produce System
+- [ ] Phase 3: weight/percent semantics cleanup + validation warnings.
+- [ ] Phase 3: validate random-group references (missing/cycles) on catalog load.
+- [ ] Phase 4: consolidate FarmAnimals mutations into the asset editor pipeline.

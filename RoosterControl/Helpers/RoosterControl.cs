@@ -4,13 +4,13 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Mikew.NestCore.Framework.Random;
+using RoosterControl.Application.Catalogs;
+using RoosterControl.Application.FarmAnimals;
+using RoosterControl.Application.Planning;
+using RoosterControl.Application.Produces;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
-using RoosterControl.Application.FarmAnimals;
-using RoosterControl.Application.Catalogs;
-using RoosterControl.Application.Produces;
-using RoosterControl.Application.Planning;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
@@ -25,15 +25,17 @@ namespace RoosterControl.Helpers;
 /// </summary>
 public sealed class RoosterHelper
 {
-    private static readonly Random Rnd = new();
     private readonly FarmAnimalRatioWeightingService _weighting = new();
     private readonly IModHelper _helper;
     private readonly IMonitor _monitor;
 
-    private readonly IProduceResolver _produceResolver;
-
+    private readonly IDeterministicProduceResolver _produceResolver;
+    private readonly ProduceCatalog? _produceCatalog;
     private readonly RoosterCatalog? _roosterCatalog;
 
+#if RCTRL_DEV
+    private readonly HashSet<string> _determinismWarnings = new(StringComparer.OrdinalIgnoreCase);
+#endif
 
     public RoosterControlConfig Config { get; private set; }
     public LuckyTypes DailyLuck { private get; set; } = LuckyTypes.SuperUnlucky;
@@ -42,15 +44,22 @@ public sealed class RoosterHelper
     public Dictionary<string, Dictionary<EggTypeEntries, string>> FemaleEggs { get; } =
         new(StringComparer.OrdinalIgnoreCase);
 
-    public IProduceResolver ProduceResolver => _produceResolver;
+    public IDeterministicProduceResolver ProduceResolver => _produceResolver;
 
-    public RoosterHelper(RoosterControlConfig config, IModHelper helper, IMonitor monitor, RoosterCatalog? roosterCatalog = null, ProduceCatalog? produceCatalog = null)
+    public RoosterHelper(
+        RoosterControlConfig config,
+        IModHelper helper,
+        IMonitor monitor,
+        RoosterCatalog? roosterCatalog = null,
+        ProduceCatalog? produceCatalog = null
+    )
     {
         Config = config ?? throw new ArgumentNullException(nameof(config));
         _helper = helper ?? throw new ArgumentNullException(nameof(helper));
         _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
         _roosterCatalog = roosterCatalog;
-        _produceResolver = new RandomGroupProduceResolver(produceCatalog, Rnd);
+        _produceCatalog = produceCatalog;
+        _produceResolver = new RandomGroupProduceResolver(produceCatalog);
     }
 
     public void UpdateConfig(RoosterControlConfig config)
@@ -63,7 +72,7 @@ public sealed class RoosterHelper
         if (chance >= 100)
             return true;
 
-        return Rnd.Next(100) < chance;
+        return GetPercentageRng().Next(100) < chance;
     }
 
     public static bool UpdatePercentage(float chance)
@@ -73,8 +82,11 @@ public sealed class RoosterHelper
         if (chance >= 100)
             return true;
 
-        return Rnd.NextDouble() * 100.0 < chance;
+        return GetPercentageRng().NextDouble() * 100.0 < chance;
     }
+
+    private static IRandomProvider GetPercentageRng()
+        => Context.IsWorldReady ? new GameRandomProvider() : new SeededRandomProvider(0);
 
     public void SetUpRoosters()
     {
@@ -86,7 +98,8 @@ public sealed class RoosterHelper
             ? ApplyLuckAdjustments(Config.General.FertilizedEggProbability)
             : 0;
 
-        var eggsByType = BuildEggs(normalEggProbability, largeEggProbability, fertilizedEggProbability);
+        var defaultCatalog = CatalogDefaults.CreateRoosterCatalogDefaults();
+        var (farmId, day, locationName) = GetWorldSeedInputs();
 
         var roosterMap = new Dictionary<RoosterType, RoosterData>();
         foreach (var roosterType in RoosterControlConfig.CreateDefaultRoosters().Keys)
@@ -95,6 +108,25 @@ public sealed class RoosterHelper
 
             var farmAnimalName = GetFarmAnimalKey(roosterType);
             var femaleKey = GetDefaultFemaleKey(roosterType);
+
+            var seedCtx = new RoosterSeedKey.Context(
+                FarmId: farmId,
+                Day: day,
+                LocationName: locationName,
+                BuildingType: settings.BuildingRequired.ToString(),
+                FarmAnimalName: farmAnimalName,
+                RoosterType: roosterType
+            );
+
+            var eggs = BuildEggsForRooster(
+                roosterType,
+                settings,
+                defaultCatalog,
+                normalEggProbability,
+                largeEggProbability,
+                fertilizedEggProbability,
+                seedCtx
+            );
 
             var rooster = new RoosterData
             {
@@ -109,19 +141,31 @@ public sealed class RoosterHelper
                 MatureDays = settings.MatureDays,
                 Price = settings.Price,
                 Buyable = settings.Buyable,
-                Eggs = eggsByType[roosterType],
-                AllProduces = BuildProduces(settings, _produceResolver),
+                Eggs = eggs,
+                AllProduces = BuildProduces(settings, seedCtx),
                 Quantity = UpdateRoosterQuantity(farmAnimalName),
                 Females = GetAdditionalFemaleKeys(roosterType),
             };
 
-            RollChosenProduces(rooster);
+            RollChosenProduces(rooster, seedCtx);
             ApplyFertilizedBoost(rooster);
 
             roosterMap[roosterType] = rooster;
         }
 
         Roosters = roosterMap;
+    }
+
+    private static (ulong FarmId, int Day, string LocationName) GetWorldSeedInputs()
+    {
+        if (!Context.IsWorldReady)
+            return (0UL, 0, "not-ready");
+
+        return (
+            Game1.uniqueIDForThisGame,
+            Game1.Date.TotalDays,
+            Game1.getFarm()?.NameOrUniqueName ?? "Farm"
+        );
     }
 
     private static void EnsureRoosterDefaults(RoosterControlConfig cfg)
@@ -131,53 +175,60 @@ public sealed class RoosterHelper
             cfg.Roosters.TryAdd(key, def);
     }
 
-    private Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>> BuildEggs(
+    private Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>> BuildEggsForRooster(
+        RoosterType roosterType,
+        RoosterSettings settings,
+        RoosterCatalog defaultCatalog,
         int normalEggProbability,
         int largeEggProbability,
-        int fertilizedEggProbability
+        int fertilizedEggProbability,
+        in RoosterSeedKey.Context seedCtx
     )
     {
-        var eggProbabilities = new[] { normalEggProbability, largeEggProbability, fertilizedEggProbability };
-        var defaultCatalog = CatalogDefaults.CreateRoosterCatalogDefaults();
+        var enableHatching = settings.EnableRoosterHatching;
 
-        var result = new Dictionary<RoosterType, Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>>();
-        foreach (var roosterType in RoosterControlConfig.CreateDefaultRoosters().Keys)
+        var probs = new[] { normalEggProbability, largeEggProbability, fertilizedEggProbability };
+        if (Config.General.HatchingMode == HatchingMode.OnlyFertilizedEggs)
         {
-            var settings = Config.Roosters[roosterType];
-            var enableHatching = settings.EnableRoosterHatching;
-
-            var probs = (int[])eggProbabilities.Clone();
-            if (Config.General.HatchingMode == HatchingMode.OnlyFertilizedEggs)
-            {
-                probs[0] = 0;
-                probs[1] = 0;
-            }
-
-            var eggCatalog = GetEggCatalog(roosterType, defaultCatalog);
-
-            var eggsDict = new Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>
-            {
-                [EggTypeEntries.Normal] = new Dictionary<RoosterItemDataEntries, string>
-                {
-                    [RoosterItemDataEntries.Name] = _produceResolver.Resolve(eggCatalog.Normal),
-                    [RoosterItemDataEntries.Probability] = enableHatching ? probs[0].ToString(CultureInfo.InvariantCulture) : "0",
-                },
-                [EggTypeEntries.Large] = new Dictionary<RoosterItemDataEntries, string>
-                {
-                    [RoosterItemDataEntries.Name] = _produceResolver.Resolve(eggCatalog.Large),
-                    [RoosterItemDataEntries.Probability] = enableHatching ? probs[1].ToString(CultureInfo.InvariantCulture) : "0",
-                },
-                [EggTypeEntries.Fertilized] = new Dictionary<RoosterItemDataEntries, string>
-                {
-                    [RoosterItemDataEntries.Name] = _produceResolver.Resolve(eggCatalog.Fertilized),
-                    [RoosterItemDataEntries.Probability] = enableHatching ? probs[2].ToString(CultureInfo.InvariantCulture) : "0",
-                }
-            };
-
-            result[roosterType] = eggsDict;
+            probs[0] = 0;
+            probs[1] = 0;
         }
 
-        return result;
+        var eggCatalog = GetEggCatalog(roosterType, defaultCatalog);
+
+        return new Dictionary<EggTypeEntries, Dictionary<RoosterItemDataEntries, string>>
+        {
+            [EggTypeEntries.Normal] = new Dictionary<RoosterItemDataEntries, string>
+            {
+                [RoosterItemDataEntries.Name] = ResolveChoiceDeterministic(
+                    eggCatalog.Normal,
+                    seedCtx,
+                    channel: "egg:normal",
+                    slotOrdinal: 1
+                ),
+                [RoosterItemDataEntries.Probability] = enableHatching ? probs[0].ToString(CultureInfo.InvariantCulture) : "0",
+            },
+            [EggTypeEntries.Large] = new Dictionary<RoosterItemDataEntries, string>
+            {
+                [RoosterItemDataEntries.Name] = ResolveChoiceDeterministic(
+                    eggCatalog.Large,
+                    seedCtx,
+                    channel: "egg:large",
+                    slotOrdinal: 2
+                ),
+                [RoosterItemDataEntries.Probability] = enableHatching ? probs[1].ToString(CultureInfo.InvariantCulture) : "0",
+            },
+            [EggTypeEntries.Fertilized] = new Dictionary<RoosterItemDataEntries, string>
+            {
+                [RoosterItemDataEntries.Name] = ResolveChoiceDeterministic(
+                    eggCatalog.Fertilized,
+                    seedCtx,
+                    channel: "egg:fertilized",
+                    slotOrdinal: 3
+                ),
+                [RoosterItemDataEntries.Probability] = enableHatching ? probs[2].ToString(CultureInfo.InvariantCulture) : "0",
+            }
+        };
     }
 
     private EggCatalog GetEggCatalog(RoosterType roosterType, RoosterCatalog defaults)
@@ -195,10 +246,13 @@ public sealed class RoosterHelper
         return defaults.Roosters[roosterType.ToString()].Eggs;
     }
 
-    private static Dictionary<ProduceTypeEntries, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>> BuildProduces(RoosterSettings settings, IProduceResolver resolver)
+    private Dictionary<ProduceTypeEntries, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>> BuildProduces(
+        RoosterSettings settings,
+        in RoosterSeedKey.Context seedCtx
+    )
     {
-        var produce = BuildProduceEntries(settings.ProduceEntries, resolver);
-        var deluxe = BuildProduceEntries(settings.DeluxeProduceEntries, resolver);
+        var produce = BuildProduceEntries(settings.ProduceEntries, seedCtx, ProduceTypeEntries.Produce);
+        var deluxe = BuildProduceEntries(settings.DeluxeProduceEntries, seedCtx, ProduceTypeEntries.Deluxe);
 
         return new Dictionary<ProduceTypeEntries, Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>>
         {
@@ -207,103 +261,140 @@ public sealed class RoosterHelper
         };
     }
 
-    private static Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>> BuildProduceEntries(List<ProduceEntry> entries, IProduceResolver resolver)
+    private Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>> BuildProduceEntries(
+        List<ProduceEntry> entries,
+        in RoosterSeedKey.Context seedCtx,
+        ProduceTypeEntries produceType
+    )
     {
         entries ??= ProduceEntry.CreateDefaultFour();
         while (entries.Count < 4)
             entries.Add(new ProduceEntry());
 
-        var mapped = new Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>
+        return new Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>
         {
-            [ProduceEntries.First] = MapProduceEntry(entries[0], resolver),
-            [ProduceEntries.Second] = MapProduceEntry(entries[1], resolver),
-            [ProduceEntries.Third] = MapProduceEntry(entries[2], resolver),
-            [ProduceEntries.Fourth] = MapProduceEntry(entries[3], resolver),
+            [ProduceEntries.First] = MapProduceEntry(entries[0], seedCtx, produceType, ProduceEntries.First, slotOrdinal: 1),
+            [ProduceEntries.Second] = MapProduceEntry(entries[1], seedCtx, produceType, ProduceEntries.Second, slotOrdinal: 2),
+            [ProduceEntries.Third] = MapProduceEntry(entries[2], seedCtx, produceType, ProduceEntries.Third, slotOrdinal: 3),
+            [ProduceEntries.Fourth] = MapProduceEntry(entries[3], seedCtx, produceType, ProduceEntries.Fourth, slotOrdinal: 4),
             [ProduceEntries.Chosen] = new Dictionary<RoosterItemDataEntries, string>(),
         };
-
-        return mapped;
     }
 
-    private static Dictionary<RoosterItemDataEntries, string> MapProduceEntry(ProduceEntry entry, IProduceResolver resolver)
+    private Dictionary<RoosterItemDataEntries, string> MapProduceEntry(
+        ProduceEntry entry,
+        in RoosterSeedKey.Context seedCtx,
+        ProduceTypeEntries produceType,
+        ProduceEntries slot,
+        int slotOrdinal
+    )
     {
         entry ??= new ProduceEntry();
 
         var choice = entry.Choice ?? string.Empty;
-        var name = choice.Equals(ItemIds.CustomItems.Custom, StringComparison.OrdinalIgnoreCase)
-            ? resolver.Resolve(entry.CustomItemName ?? ItemIds.CustomItems.Custom)
-            : resolver.Resolve(choice);
+        var keyToResolve = choice.Equals(ItemIds.CustomItems.Custom, StringComparison.OrdinalIgnoreCase)
+            ? entry.CustomItemName ?? ItemIds.CustomItems.Custom
+            : choice;
+
+        var resolved = ResolveChoiceDeterministic(
+            keyToResolve,
+            seedCtx,
+            channel: $"produce:{produceType}:{slot}",
+            slotOrdinal: slotOrdinal
+        );
 
         return new Dictionary<RoosterItemDataEntries, string>
         {
-            [RoosterItemDataEntries.Name] = name,
+            [RoosterItemDataEntries.Name] = resolved,
             [RoosterItemDataEntries.Probability] = Math.Clamp(entry.Probability, 0, 100).ToString(CultureInfo.InvariantCulture),
         };
     }
 
-    private void RollChosenProduces(RoosterData rooster)
-{
-    var farmId = 0UL;
-    var day = 0;
-    var locationName = "not-ready";
-
-    if (Context.IsWorldReady)
+    public string ResolveChoiceDeterministic(string choiceKey, RoosterData rooster, string channel, int slotOrdinal = 0)
     {
-        farmId = Game1.uniqueIDForThisGame;
-        day = Game1.Date.TotalDays;
-        locationName = Game1.getFarm()?.NameOrUniqueName ?? "Farm";
+        if (rooster is null) throw new ArgumentNullException(nameof(rooster));
+
+        var (farmId, day, locationName) = GetWorldSeedInputs();
+        var ctx = new RoosterSeedKey.Context(
+            FarmId: farmId,
+            Day: day,
+            LocationName: locationName,
+            BuildingType: rooster.BuildingRequired.ToString(),
+            FarmAnimalName: rooster.FarmAnimalName ?? string.Empty,
+            RoosterType: rooster.RoosterType
+        );
+
+        return ResolveChoiceDeterministic(choiceKey, ctx, channel, slotOrdinal);
     }
 
-    var buildingType = rooster.BuildingRequired.ToString();
-    var farmAnimalName = rooster.FarmAnimalName ?? string.Empty;
+    private string ResolveChoiceDeterministic(string choiceKey, in RoosterSeedKey.Context seedCtx, string channel, int slotOrdinal)
+    {
+        var baseSeed = RoosterSeedKey.ForChoiceResolution(seedCtx, channel, slotOrdinal);
+        var resolved = _produceResolver.Resolve(choiceKey, baseSeed);
 
-    var produceSeed = ComputeChosenProduceSeed(
-        farmId,
-        day,
-        locationName,
-        buildingType,
-        farmAnimalName,
-        rooster.RoosterType,
-        ProduceTypeEntries.Produce
-    );
+#if RCTRL_DEV
+        WarnIfSuspiciousRandomGroup(choiceKey, resolved, seedCtx);
+#endif
 
-    var deluxeSeed = ComputeChosenProduceSeed(
-        farmId,
-        day,
-        locationName,
-        buildingType,
-        farmAnimalName,
-        rooster.RoosterType,
-        ProduceTypeEntries.Deluxe
-    );
+        return resolved;
+    }
 
-    var rngProduce = new SeededRandomProvider(produceSeed);
-    var rngDeluxe = new SeededRandomProvider(deluxeSeed);
+#if RCTRL_DEV
+    private void WarnIfSuspiciousRandomGroup(string choiceKey, string resolved, in RoosterSeedKey.Context seedCtx)
+    {
+        if (_produceCatalog?.RandomGroups is null || string.IsNullOrWhiteSpace(choiceKey))
+            return;
 
-    rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen] =
-        _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Produce], rngProduce);
+        var trimmed = choiceKey.Trim();
 
-    rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen] =
-        _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rngDeluxe);
-}
+        var isKnownGroup = _produceCatalog.RandomGroups.TryGetValue(trimmed, out _);
+        if (isKnownGroup && resolved.Equals(trimmed, StringComparison.OrdinalIgnoreCase))
+        {
+            WarnOncePerDay(
+                seedCtx.Day,
+                $"cycle|{trimmed}",
+                $"[determinism] Random group '{trimmed}' appears cyclic/unresolvable (resolved to itself)."
+            );
+            return;
+        }
 
-private static int ComputeChosenProduceSeed(
-    ulong farmId,
-    int day,
-    string locationName,
-    string buildingType,
-    string farmAnimalName,
-    RoosterType roosterType,
-    ProduceTypeEntries produceType
-)
-{
-    locationName ??= string.Empty;
-    buildingType ??= string.Empty;
-    farmAnimalName ??= string.Empty;
+        var looksRandomGroup = trimmed.StartsWith("Random", StringComparison.OrdinalIgnoreCase);
+        var isTranslatedVar = ItemIds.VariableValues.ContainsKey(trimmed);
 
-    var key = $"rc|chosen-produce|{farmId}|{day}|{locationName}|{buildingType}|{farmAnimalName}|{roosterType}|{produceType}";
-    var hash = StableHash.Fnv1a64(key);
-    return unchecked((int)(hash 
+        if (looksRandomGroup && !isKnownGroup && !isTranslatedVar)
+        {
+            WarnOncePerDay(
+                seedCtx.Day,
+                $"unknown|{trimmed}",
+                $"[determinism] Unknown random-group key '{trimmed}'. Did you forget to define it in the produce catalog?"
+            );
+        }
+    }
+
+    private void WarnOncePerDay(int day, string key, string message)
+    {
+        var fullKey = $"{day}|{key}";
+        if (!_determinismWarnings.Add(fullKey))
+            return;
+
+        _monitor.Log(message, LogLevel.Warn);
+    }
+#endif
+
+    private void RollChosenProduces(RoosterData rooster, in RoosterSeedKey.Context seedCtx)
+    {
+        var produceSeed = RoosterSeedKey.ForChosenProduce(seedCtx, ProduceTypeEntries.Produce);
+        var deluxeSeed = RoosterSeedKey.ForChosenProduce(seedCtx, ProduceTypeEntries.Deluxe);
+
+        var rngProduce = new SeededRandomProvider(produceSeed);
+        var rngDeluxe = new SeededRandomProvider(deluxeSeed);
+
+        rooster.AllProduces[ProduceTypeEntries.Produce][ProduceEntries.Chosen] =
+            _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Produce], rngProduce);
+
+        rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen] =
+            _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rngDeluxe);
+    }
 
 #if RCTRL_DEV
     internal string DebugDumpChosenProduce(
@@ -337,27 +428,17 @@ private static int ComputeChosenProduceSeed(
             ? buildingTypeOverride!
             : rooster.BuildingRequired.ToString();
 
-        var farmAnimalName = rooster.FarmAnimalName ?? string.Empty;
-
-        var produceSeed = ComputeChosenProduceSeed(
-            farmId,
-            day,
-            locationName,
-            buildingType,
-            farmAnimalName,
-            rooster.RoosterType,
-            ProduceTypeEntries.Produce
+        var seedCtx = new RoosterSeedKey.Context(
+            FarmId: farmId,
+            Day: day,
+            LocationName: locationName,
+            BuildingType: buildingType,
+            FarmAnimalName: rooster.FarmAnimalName ?? string.Empty,
+            RoosterType: rooster.RoosterType
         );
 
-        var deluxeSeed = ComputeChosenProduceSeed(
-            farmId,
-            day,
-            locationName,
-            buildingType,
-            farmAnimalName,
-            rooster.RoosterType,
-            ProduceTypeEntries.Deluxe
-        );
+        var produceSeed = RoosterSeedKey.ForChosenProduce(seedCtx, ProduceTypeEntries.Produce);
+        var deluxeSeed = RoosterSeedKey.ForChosenProduce(seedCtx, ProduceTypeEntries.Deluxe);
 
         var rngProduce = new SeededRandomProvider(produceSeed);
         var rngDeluxe = new SeededRandomProvider(deluxeSeed);
@@ -374,11 +455,11 @@ private static int ComputeChosenProduceSeed(
         var sb = new StringBuilder();
         sb.AppendLine("[ra_debug_produce] Inputs:");
         sb.AppendLine($"  roosterType: {roosterType}");
-        sb.AppendLine($"  farmAnimalName: {farmAnimalName}");
-        sb.AppendLine($"  farmId: {farmId}");
-        sb.AppendLine($"  day: {day}");
-        sb.AppendLine($"  locationName: {locationName}");
-        sb.AppendLine($"  buildingType: {buildingType}");
+        sb.AppendLine($"  farmAnimalName: {seedCtx.FarmAnimalName}");
+        sb.AppendLine($"  farmId: {seedCtx.FarmId}");
+        sb.AppendLine($"  day: {seedCtx.Day}");
+        sb.AppendLine($"  locationName: {seedCtx.LocationName}");
+        sb.AppendLine($"  buildingType: {seedCtx.BuildingType}");
         sb.AppendLine("[ra_debug_produce] Seeds:");
         sb.AppendLine($"  produceSeed: {produceSeed}");
         sb.AppendLine($"  deluxeSeed: {deluxeSeed}");
@@ -388,9 +469,6 @@ private static int ComputeChosenProduceSeed(
         return sb.ToString().TrimEnd();
     }
 #endif
-^ (hash >> 32)));
-}
-
 
     private void ApplyFertilizedBoost(RoosterData rooster)
     {
@@ -507,6 +585,7 @@ private static int ComputeChosenProduceSeed(
 
         return Math.Clamp(adjusted, 0, 100);
     }
+
     public void UpdateFemaleEggs(RoosterData rooster, IDictionary<string, FarmAnimalData> animalData)
     {
         var eggTypeMap = new Dictionary<string, EggTypeEntries>
@@ -550,7 +629,7 @@ private static int ComputeChosenProduceSeed(
         };
     }
 
-        private string GetFarmAnimalKey(RoosterType roosterType)
+    private string GetFarmAnimalKey(RoosterType roosterType)
     {
         if (_roosterCatalog?.Roosters is not null
             && _roosterCatalog.Roosters.TryGetValue(roosterType.ToString(), out var entry)
