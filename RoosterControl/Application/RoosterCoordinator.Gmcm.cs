@@ -502,7 +502,7 @@ internal sealed partial class RoosterCoordinator
             return;
 
         _gmcmRebuildQueued = true;
-        QueueNextTickAction(() =>
+        _nextTick.Enqueue(() =>
         {
             _gmcmRebuildQueued = false;
             _gmcmHost?.RebuildLayout(

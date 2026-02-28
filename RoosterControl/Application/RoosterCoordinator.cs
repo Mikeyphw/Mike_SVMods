@@ -23,6 +23,7 @@ using ILetMeHatchApi = Mikew.NestCore.Framework.ILetMeHatchApi;
 using LuckyTypes = Mikew.NestCore.EnumsAndStrings.Enums.LuckyTypes;
 using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Helpers.Content;
+using Mikew.NestCore.Helpers.Timing;
 using Mikew.NestCore.Helpers.Logging;
 using RoosterControl.Infrastructure.Assets;
 using RoosterControl.Application.FarmAnimals;
@@ -82,9 +83,13 @@ internal ILetMeHatchApi? HatchApi;
     
     private readonly FarmAnimalExclusionsService _farmAnimalExclusionsService = new();
 private readonly FarmAnimalHatchingService _farmAnimalHatching = new();
-private readonly HashSet<string> _pendingInvalidations = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Queue<Action> _nextTickActions = new();
-    private bool _nextTickHooked;
+private NextTickScheduler _nextTick;
+    private AssetInvalidationBatcher _invalidations;
+
+    private readonly HashSet<string> _debugInvalidationsRequested = new(StringComparer.OrdinalIgnoreCase);
+    private bool _debugInvalidationClearQueued;
+
+    private bool _farmAnimalsRefreshQueued;
     private bool _femaleAssignmentsDirty;
     private bool _needsRoosterSetup = true;
     private int _lastRoosterSetupDay = -1;
@@ -103,6 +108,8 @@ private readonly HashSet<string> _pendingInvalidations = new(StringComparer.Ordi
         _log = new SmapiLog(Monitor);
         _i18n = new I18TranslationHelper(host.Helper);
         _catalogManager = new CatalogManager(_log);
+        _nextTick = new NextTickScheduler(host.Helper, _log);
+        _invalidations = new AssetInvalidationBatcher(host.Helper, _log, _nextTick);
     }
 
     internal void Initialize()
@@ -149,6 +156,82 @@ Helper.ConsoleCommands.Add(
             "Dev-only: dump deterministic chosen-produce seed + results. Usage: ra_debug_produce <roosterType> [day] [locationName] [buildingType]",
             DebugProduceCommand
         );
+
+        Helper.ConsoleCommands.Add(
+            "ra_debug_pipeline",
+            "Dev-only: dump rooster produce/hatching pipeline state. Usage: ra_debug_pipeline",
+            DebugPipelineCommand
+        );
+private void DebugPipelineCommand(string _command, string[] args)
+{
+    var sb = new StringBuilder();
+
+    sb.AppendLine($"WorldReady={Context.IsWorldReady} MainPlayer={Context.IsMainPlayer} HasDayStarted={HasDayStarted}");
+    sb.AppendLine($"FarmAnimalsRefreshQueued={_farmAnimalsRefreshQueued}");
+
+    if (_debugInvalidationsRequested.Count > 0)
+        sb.AppendLine($"InvalidationsRequested={string.Join(", ", _debugInvalidationsRequested)}");
+    else
+        sb.AppendLine("InvalidationsRequested=<none>");
+
+    if (!Context.IsWorldReady)
+    {
+        Monitor.Log(sb.ToString(), LogLevel.Info);
+        return;
+    }
+
+    var today = SDate.Now().DaysSinceStart;
+    var farmId = unchecked((long)Game1.uniqueIDForThisGame);
+
+    sb.AppendLine($"Day={today} FarmId={farmId} DailyLuck={DailyLuck}");
+    sb.AppendLine($"DailyPlanFingerprint={_dailyPlanFingerprint}");
+
+    if (_dailyDecisions is null)
+    {
+        sb.AppendLine("DailyDecisions=<null>");
+        Monitor.Log(sb.ToString(), LogLevel.Info);
+        return;
+    }
+
+    sb.AppendLine($"DailyDecisions.Day={_dailyDecisions.Day} FarmId={_dailyDecisions.FarmId} Fingerprint={_dailyDecisions.Fingerprint}");
+    sb.AppendLine($"DailyDecisions.MatchesToday={_dailyDecisions.MatchesToday(farmId, today)}");
+
+    var plan = _dailyDecisions.Plan;
+    if (plan is null)
+    {
+        sb.AppendLine("DailyPlan=<null>");
+        Monitor.Log(sb.ToString(), LogLevel.Info);
+        return;
+    }
+
+    var buildings = plan.Buildings?.Count ?? 0;
+    var roosterCount = 0;
+    var femaleCount = 0;
+    var normalEggPlans = 0;
+    var largeEggPlans = 0;
+    var fertilizedOnlyPlans = 0;
+
+    foreach (var b in plan.Buildings.Values)
+    {
+        roosterCount += b.Roosters.Count;
+        foreach (var r in b.Roosters.Values)
+        {
+            femaleCount += r.Females.Count;
+            foreach (var f in r.Females.Values)
+            {
+                if (f.NormalEgg is not null) normalEggPlans++;
+                if (f.LargeEgg is not null) largeEggPlans++;
+                if (f.FertilizedOnly is not null) fertilizedOnlyPlans++;
+            }
+        }
+    }
+
+    sb.AppendLine($"DailyPlan: version={plan.Version} nonce={plan.Nonce} fingerprint={plan.Fingerprint}");
+    sb.AppendLine($"DailyPlanCounts: buildings={buildings} roosters={roosterCount} females={femaleCount} eggPlans(normal={normalEggPlans}, large={largeEggPlans}) fertilizedOnly={fertilizedOnlyPlans}");
+
+    Monitor.Log(sb.ToString(), LogLevel.Info);
+}
+
 #endif
 
 
@@ -229,7 +312,7 @@ AssetHandler = new NestModAssetHandler(ModManifest.UniqueID, Monitor);
         _ = Helper.GameContent.InvalidateCache(FarmAnimalsAssetName);
 
         // Avoid side effects in AssetRequested; refresh and reload after the cache invalidation.
-        QueueNextTickAction(RefreshFarmAnimalsOnLocationChange);
+        _nextTick.Enqueue(RefreshFarmAnimalsOnLocationChange);
     }
 
     public void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
@@ -265,29 +348,47 @@ AssetHandler = new NestModAssetHandler(ModManifest.UniqueID, Monitor);
     {
         HasDayStarted = false;
         InvalidateDailyPlanCache("returned to title");
-        _pendingInvalidations.Clear();
-        _nextTickActions.Clear();
 
-        if (_nextTickHooked)
-        {
-            Helper.Events.GameLoop.UpdateTicked -= OnNextTick;
-            _nextTickHooked = false;
-        }
+        ResetSchedulers();
+        _debugInvalidationsRequested.Clear();
+        _debugInvalidationClearQueued = false;
+        _farmAnimalsRefreshQueued = false;
 
-        RequestGmcmRebuild();
+RequestGmcmRebuild();
     }
 
-    private void RequestInvalidate(string assetName)
+    
+private void ResetSchedulers()
+{
+    _invalidations.Dispose();
+    _nextTick.Dispose();
+
+    _nextTick = new NextTickScheduler(Helper, _log);
+    _invalidations = new AssetInvalidationBatcher(Helper, _log, _nextTick);
+}
+
+private void RequestInvalidate(string assetName)
+{
+    if (string.IsNullOrWhiteSpace(assetName))
+        return;
+
+    if (assetName.Equals(FarmAnimalsAssetName, StringComparison.OrdinalIgnoreCase))
+        InvalidateRuleCaches("FarmAnimals invalidated");
+
+    _invalidations.Request(assetName);
+
+    // Debug-only: keep a short-lived snapshot of invalidation requests for pipeline dumps.
+    _debugInvalidationsRequested.Add(assetName);
+    if (!_debugInvalidationClearQueued)
     {
-        if (string.IsNullOrWhiteSpace(assetName))
-            return;
-
-        if (assetName.Equals(FarmAnimalsAssetName, StringComparison.OrdinalIgnoreCase))
-            InvalidateRuleCaches("FarmAnimals invalidated");
-
-        _pendingInvalidations.Add(assetName);
-        QueueNextTickAction(FlushInvalidations);
+        _debugInvalidationClearQueued = true;
+        _nextTick.Enqueue(() =>
+        {
+            _debugInvalidationClearQueued = false;
+            _debugInvalidationsRequested.Clear();
+        });
     }
+}
 
     private void PrintStatus()
     {
@@ -297,47 +398,10 @@ AssetHandler = new NestModAssetHandler(ModManifest.UniqueID, Monitor);
         LogScopedHelper.Log(_log, ModRoosterControlCategory.General,
             $"Catalogs: roosters={_catalogs.Roosters.Roosters.Count}, produce={_catalogs.Produce.Roosters.Count}, hatching={_catalogs.Hatching.Roosters.Count}",
             LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"PendingInvalidations={_pendingInvalidations.Count}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"InvalidateBatchPending~={_debugInvalidationsRequested.Count}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"FarmAnimalsRefreshQueued={_farmAnimalsRefreshQueued}", LogLevel.Info);
         LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"NeedsRoosterSetup={_needsRoosterSetup}", LogLevel.Info);
     }
-
-    private void FlushInvalidations()
-    {
-        foreach (var name in _pendingInvalidations)
-            _ = Helper.GameContent.InvalidateCache(name);
-
-        _pendingInvalidations.Clear();
-    }
-
-    private void QueueNextTickAction(Action action)
-    {
-        _nextTickActions.Enqueue(action);
-        if (_nextTickHooked)
-            return;
-
-        _nextTickHooked = true;
-        Helper.Events.GameLoop.UpdateTicked += OnNextTick;
-    }
-
-    private void OnNextTick(object? sender, UpdateTickedEventArgs e)
-    {
-        while (_nextTickActions.Count > 0)
-        {
-            var action = _nextTickActions.Dequeue();
-            try
-            {
-                action();
-            }
-            catch (Exception ex)
-            {
-                LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"Deferred action failed: {ex}", LogLevel.Error);
-            }
-        }
-
-        Helper.Events.GameLoop.UpdateTicked -= OnNextTick;
-        _nextTickHooked = false;
-    }
-
 
 
     private void LoadExclusionsData()
@@ -383,6 +447,76 @@ AssetHandler = new NestModAssetHandler(ModManifest.UniqueID, Monitor);
         var dump = RoosterHelper.DebugDumpChosenProduce(roosterType, dayOverride, locationOverride, buildingOverride);
         Monitor.Log(dump, LogLevel.Info);
     }
+private void DebugPipelineCommand(string _command, string[] args)
+{
+    var sb = new StringBuilder();
+
+    sb.AppendLine($"WorldReady={Context.IsWorldReady} MainPlayer={Context.IsMainPlayer} HasDayStarted={HasDayStarted}");
+    sb.AppendLine($"FarmAnimalsRefreshQueued={_farmAnimalsRefreshQueued}");
+
+    if (_debugInvalidationsRequested.Count > 0)
+        sb.AppendLine($"InvalidationsRequested={string.Join(", ", _debugInvalidationsRequested)}");
+    else
+        sb.AppendLine("InvalidationsRequested=<none>");
+
+    if (!Context.IsWorldReady)
+    {
+        Monitor.Log(sb.ToString(), LogLevel.Info);
+        return;
+    }
+
+    var today = SDate.Now().DaysSinceStart;
+    var farmId = unchecked((long)Game1.uniqueIDForThisGame);
+
+    sb.AppendLine($"Day={today} FarmId={farmId} DailyLuck={DailyLuck}");
+    sb.AppendLine($"DailyPlanFingerprint={_dailyPlanFingerprint}");
+
+    if (_dailyDecisions is null)
+    {
+        sb.AppendLine("DailyDecisions=<null>");
+        Monitor.Log(sb.ToString(), LogLevel.Info);
+        return;
+    }
+
+    sb.AppendLine($"DailyDecisions.Day={_dailyDecisions.Day} FarmId={_dailyDecisions.FarmId} Fingerprint={_dailyDecisions.Fingerprint}");
+    sb.AppendLine($"DailyDecisions.MatchesToday={_dailyDecisions.MatchesToday(farmId, today)}");
+
+    var plan = _dailyDecisions.Plan;
+    if (plan is null)
+    {
+        sb.AppendLine("DailyPlan=<null>");
+        Monitor.Log(sb.ToString(), LogLevel.Info);
+        return;
+    }
+
+    var buildings = plan.Buildings?.Count ?? 0;
+    var roosterCount = 0;
+    var femaleCount = 0;
+    var normalEggPlans = 0;
+    var largeEggPlans = 0;
+    var fertilizedOnlyPlans = 0;
+
+    foreach (var b in plan.Buildings.Values)
+    {
+        roosterCount += b.Roosters.Count;
+        foreach (var r in b.Roosters.Values)
+        {
+            femaleCount += r.Females.Count;
+            foreach (var f in r.Females.Values)
+            {
+                if (f.NormalEgg is not null) normalEggPlans++;
+                if (f.LargeEgg is not null) largeEggPlans++;
+                if (f.FertilizedOnly is not null) fertilizedOnlyPlans++;
+            }
+        }
+    }
+
+    sb.AppendLine($"DailyPlan: version={plan.Version} nonce={plan.Nonce} fingerprint={plan.Fingerprint}");
+    sb.AppendLine($"DailyPlanCounts: buildings={buildings} roosters={roosterCount} females={femaleCount} eggPlans(normal={normalEggPlans}, large={largeEggPlans}) fertilizedOnly={fertilizedOnlyPlans}");
+
+    Monitor.Log(sb.ToString(), LogLevel.Info);
+}
+
 #endif
 
 private void DumpStateCommand(string command, string[] args)

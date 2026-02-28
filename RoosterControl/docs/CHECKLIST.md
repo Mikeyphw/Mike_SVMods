@@ -50,4 +50,6 @@
 ### Phase 4 — Pipeline consolidation (asset editor owns mutations)
 - [x] Move all `Data/FarmAnimals` mutations into the asset editor pipeline.
 - [x] Make coordinator compute plans; editor applies the edits.
-- [ ] Batch invalidations via NestCore next-tick helpers.
+- [x] Batch invalidations via NestCore next-tick helpers.
+- [x] Move debug dump / diagnostics to post-apply (next tick) only.
+- [x] Add dev-gated pipeline summary console command (`ra_debug_pipeline`).

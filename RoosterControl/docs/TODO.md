@@ -14,4 +14,5 @@
 - [x] Phase 3: validate random-group references (missing/cycles) on catalog load.
 - [x] Phase 4: consolidate FarmAnimals mutations into the asset editor pipeline (steps 1–2).
 
-- [ ] Phase 4: batch invalidations via NestCore next-tick helpers.
+- [x] Phase 4: batch invalidations via NestCore next-tick helpers.
+- [x] Phase 4: add dev-gated pipeline summary console command (`ra_debug_pipeline`).

@@ -1,6 +1,6 @@
 # PLAN — GMCM Menu (RoosterControl)
 
-Status: Phase 8B produce tables + rooster produce system Phase 4 (steps 1–2) implemented.
+Status: Phase 8B produce tables + rooster produce system Phase 4 (steps 1–4) implemented.
 
 ## Scope
 - Subdir: `RoosterControl`

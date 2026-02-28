@@ -181,7 +181,7 @@ private void RunFarmAnimalsDailySystems()
         if (RoosterHelper.FemaleEggs.Count > 0)
             RequestInvalidate(ObjectsAssetName);
 
-        QueueNextTickAction(RefreshFarmAnimalsAfterDailyDecisions);
+        QueueRefreshFarmAnimalsAfterDailyDecisions();
     }
 
     private void RefreshFarmAnimalsOnLocationChange()

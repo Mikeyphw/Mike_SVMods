@@ -34,7 +34,7 @@ internal sealed partial class RoosterCoordinator
         var roostersExport = new RoosterDataExport(RoosterHelper.Roosters);
         var farmAnimalsExport = new FarmAnimalsExport(farmAnimals);
 
-        QueueNextTickAction(() =>
+        _nextTick.Enqueue(() =>
         {
             WriteStateDump(
                 $"{StardewModdingAPI.Constants.SaveFolderName}_roosters_{today}.json",

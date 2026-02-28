@@ -65,7 +65,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260228T141321-0300-01",
+      "file": "20260228T141321-0300-01",
+      "title": "RoosterControl: Phase 4 (3+4) NestCore invalidation batching + dev pipeline summary command",
+      "title_with_id": "RoosterControl: Phase 4 (3+4) NestCore invalidation batching + dev pipeline summary command [20260228T141321-0300-01]",
+      "created_at": "2026-02-28T14:56:43-03:00",
+      "applied_at": "2026-02-28T14:56:56-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-02-28T14:56:22-03:00"
+  "updated_at": "2026-02-28T14:56:56-03:00"
 }
