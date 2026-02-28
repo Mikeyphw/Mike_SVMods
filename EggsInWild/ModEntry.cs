@@ -136,6 +136,8 @@ public sealed class ModEntry : Mod
 #if WEGG_DEV
         _devJsonTuning = new DevJsonTuningService(Helper, new SmapiLog(Monitor));
 #endif
+
+        RebuildGmcmLayout(force: true);
     }
 
     private void OnDayStarted(object? sender, DayStartedEventArgs e)
@@ -153,6 +155,8 @@ public sealed class ModEntry : Mod
         if (_gmcmHost is null)
             return;
 
+
+        var i18n = new I18TranslationHelper(Helper);
         _gmcmHost.RebuildLayoutSaveAware(define: layout =>
         {
             layout.Root(root =>

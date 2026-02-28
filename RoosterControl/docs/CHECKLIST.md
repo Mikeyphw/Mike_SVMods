@@ -53,3 +53,10 @@
 - [x] Batch invalidations via NestCore next-tick helpers.
 - [x] Move debug dump / diagnostics to post-apply (next tick) only.
 - [x] Add dev-gated pipeline summary console command (`ra_debug_pipeline`).
+### Phase 5 — Debug command suite + JSON dumps
+- [x] Upgrade `ra_debug_produce` with `--full` (candidates + weights + random-group trace) and `--json` (single-line stable JSON via records).
+- [x] Add deterministic trace path in `RandomGroupProduceResolver` for random-group expansion.
+- [x] Add `ra_debug_plan` (daily decisions + apply/skip reasons), support `--json`.
+- [x] Add `ra_debug_diff` (previous vs current decisions diff), support `--full` and `--json`.
+- [x] Ensure outputs are copy/paste friendly and stable ordered.
+

@@ -60,3 +60,11 @@ Status: Phase 8B produce tables + rooster produce system Phase 4 (steps 1–4) i
 2. Make coordinator compute plans; editor applies the edits.
 3. Batch invalidations via NestCore next-tick helpers.
 4. Move debug dump / diagnostics to post-apply (next tick) only.
+
+
+### Phase 5 — Debug command suite + JSON dumps
+1. Upgrade `ra_debug_produce` with `--full` (candidates + weights + random-group trace) and `--json` (single-line stable JSON via records).
+2. Add deterministic trace path in `RandomGroupProduceResolver` for random-group expansion.
+3. Add `ra_debug_plan` (daily decisions + apply/skip reasons), support `--json`.
+4. Add `ra_debug_diff` (previous vs current decisions diff), support `--full` and `--json`.
+5. Ensure outputs are copy/paste friendly and stable ordered.
