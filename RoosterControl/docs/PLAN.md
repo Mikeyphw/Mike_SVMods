@@ -10,6 +10,8 @@ Status: Phase 8B produce tables + localized female assignment values implemented
 1. Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
 2. Keep all debug/diagnostics options on GMCM page id `debug` only.
 3. Keep option IDs stable forever (translation keys and field IDs depend on this).
+4. Gate RoosterControl dev-only code behind `RCTRL_DEV` (built via `dotnet build -c Dev`).
+
 
 ## Phase 4 — Baseline GMCM menu via NestCore host (delegate binding)
 1. Wire `GmcmConfigHost` in `GameLaunched` using delegate binding (`get/reset/save`) to preserve schema handling.

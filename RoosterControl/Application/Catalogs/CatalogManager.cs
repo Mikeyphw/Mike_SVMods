@@ -12,7 +12,7 @@ using Mikew.NestCore.Helpers.Logging;
 
 using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
-#if !MIKE_DEV
+#if !RCTRL_DEV
 using RoosterControl.Generated;
 #endif
 
@@ -46,7 +46,7 @@ internal sealed class CatalogManager
         if (monitor is null) throw new ArgumentNullException(nameof(monitor));
 
         var defaults = CatalogDefaults.CreateDefaults();
-#if MIKE_DEV
+#if RCTRL_DEV
         EnsureFolderExists(Path.Combine(helper.DirectoryPath, "data", CatalogRoot));
 #endif
 
@@ -60,7 +60,7 @@ internal sealed class CatalogManager
         CatalogMigrator.MergeMissing(bundle, defaults);
         CatalogSanitizer.Sanitize(bundle);
 
-#if MIKE_DEV
+#if RCTRL_DEV
         // Normalize on disk so users have stable formatting and clamped probability values.
         helper.Data.WriteJsonFile(RoostersFile, bundle.Roosters);
         helper.Data.WriteJsonFile(ProduceFile, bundle.Produce);
@@ -403,7 +403,7 @@ return CatalogApplicator.ApplyToConfig(
     private static T ReadOrCreate<T>(IModHelper helper, string relativePath, T defaults)
         where T : class, new()
     {
-#if MIKE_DEV
+#if RCTRL_DEV
         var loaded = helper.Data.ReadJsonFile<T>(relativePath);
         if (loaded is null)
         {
