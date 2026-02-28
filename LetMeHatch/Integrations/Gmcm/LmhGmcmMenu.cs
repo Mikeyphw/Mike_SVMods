@@ -63,6 +63,8 @@ public static class LmhGmcmMenu
             saveLoadedReady: () => ModEntry.CurrentAssetManager is not null,
             saveLoadedMaxTicks: 120
         );
+    }
+
     private static void BuildRoot(GmcmMenuLayout<ModConfig> layout, CoreContext core)
     {
         layout.Root(root =>

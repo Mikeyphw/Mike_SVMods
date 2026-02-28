@@ -73,7 +73,7 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
 
 
 
-    public ProduceResolutionTrace ResolveWithTrace(string choiceKey, int baseSeed)
+    internal ProduceResolutionTrace ResolveWithTrace(string choiceKey, int baseSeed)
     {
         if (string.IsNullOrWhiteSpace(choiceKey))
             return new ProduceResolutionTrace(string.Empty, baseSeed, Array.Empty<ProduceResolutionStep>(), string.Empty, CycleDetected: false);

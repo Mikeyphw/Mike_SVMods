@@ -41,7 +41,7 @@ internal sealed partial class RoosterCoordinator
                 continue;
             }
 
-            positional.Add(raw);
+            positional.Add(token);
         }
 
         return (positional, full, json);
@@ -324,14 +324,23 @@ internal sealed partial class RoosterCoordinator
             return;
         }
 
-        var buildings = plan.Buildings?.Count ?? 0;
+        var planBuildings = plan.Buildings;
+        var buildings = planBuildings?.Count ?? 0;
         var roosterCount = 0;
         var femaleCount = 0;
         var normalEggPlans = 0;
         var largeEggPlans = 0;
         var fertilizedOnlyPlans = 0;
 
-        foreach (var b in plan.Buildings.Values)
+        if (planBuildings is null)
+        {
+            sb.AppendLine($"DailyPlan: version={plan.Version} nonce={plan.Nonce} fingerprint={plan.Fingerprint}");
+            sb.AppendLine("DailyPlanCounts: buildings=0 roosters=0 females=0 eggPlans(normal=0, large=0) fertilizedOnly=0");
+            Monitor.Log(sb.ToString().TrimEnd(), LogLevel.Info);
+            return;
+        }
+
+        foreach (var b in planBuildings.Values)
         {
             roosterCount += b.Roosters.Count;
             foreach (var r in b.Roosters.Values)

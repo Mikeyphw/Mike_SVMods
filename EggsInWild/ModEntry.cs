@@ -699,6 +699,7 @@ public sealed class ModEntry : Mod
     {
         var config = _config?.Get() ?? new ModConfig();
         var log = _contentLog ?? new SmapiLog(Monitor);
+        var i18n = new I18TranslationHelper(Helper);
         var dataLoader = _contentDataLoader ?? new ModDataLoader(JsonFileReaderFactory.Create(Helper), log);
         return new ContentContext(
             helper: Helper,
