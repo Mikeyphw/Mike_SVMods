@@ -117,7 +117,7 @@ public sealed class ProduceEntry
     /// </summary>
     public string CustomItemName { get; set; } = ItemIds.CustomItems.Custom;
 
-    /// <summary>Percent (0-100).</summary>
+    /// <summary>Relative weight (0-100). Treated as a weight, not a true percent.</summary>
     public int Probability { get; set; }
 
     public static List<ProduceEntry> CreateDefaultFour()
@@ -210,3 +210,4 @@ public sealed class DebugKnobsConfig
     public float LuckAdjustmentOffset { get; set; } = 0.0f;
 }
 #endif
+

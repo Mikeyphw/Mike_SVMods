@@ -39,3 +39,9 @@
 - [x] Make `RandomGroupProduceResolver` support deterministic resolution via base seed.
 - [x] Ensure deluxe produce selection is deterministic and uses the same seed model.
 - [x] Add dev-only warnings for suspicious random-group keys (rate-limited).
+
+
+### Phase 3 — Validation + semantics cleanup (weights vs percent)
+- [x] Clarify weights vs percent semantics (UI labels + validation rules).
+- [x] Validate random-group references (missing keys, cycles) at catalog load.
+- [x] Canonicalize produce entries on save (trim, stable ordering, normalized weights).

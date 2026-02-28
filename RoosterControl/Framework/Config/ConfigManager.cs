@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using RoosterControl.Constants;
 using RoosterControl.Enums;
 using StardewModdingAPI;
 using Mikew.NestCore.Helpers.Logging;
@@ -151,7 +153,81 @@ public static class ConfigManager
         foreach (var (key, def) in RoosterControlConfig.CreateDefaultRoosters())
             cfg.Roosters.TryAdd(key, def);
 
+        foreach (var (_, settings) in cfg.Roosters)
+        {
+            if (settings is null)
+                continue;
+
+            settings.ProduceEntries = NormalizeProduceEntries(settings.ProduceEntries);
+            settings.DeluxeProduceEntries = NormalizeProduceEntries(settings.DeluxeProduceEntries);
+
+            settings.BlueEggChoice = (settings.BlueEggChoice ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(settings.BlueEggChoice))
+                settings.BlueEggChoice = ItemIds.CustomItems.MearaBlueEgg;
+        }
+
         return cfg;
     }
+
+    private static List<ProduceEntry> NormalizeProduceEntries(List<ProduceEntry>? entries)
+    {
+        entries ??= ProduceEntry.CreateDefaultFour();
+
+        while (entries.Count < 4)
+            entries.Add(new ProduceEntry());
+
+        while (entries.Count > 4)
+            entries.RemoveAt(entries.Count - 1);
+
+        for (var i = 0; i < entries.Count; i++)
+        {
+            entries[i] ??= new ProduceEntry();
+
+            entries[i].Choice = (entries[i].Choice ?? string.Empty).Trim();
+            entries[i].CustomItemName = (entries[i].CustomItemName ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(entries[i].Choice))
+                entries[i].Choice = ItemIds.CustomItems.Custom;
+
+            if (string.IsNullOrWhiteSpace(entries[i].CustomItemName))
+                entries[i].CustomItemName = ItemIds.CustomItems.Custom;
+
+            entries[i].Probability = Math.Clamp(entries[i].Probability, 0, 100);
+        }
+
+        NormalizeWeightsTo100(entries);
+        return entries;
+    }
+
+    private static void NormalizeWeightsTo100(List<ProduceEntry> entries)
+    {
+        var sum = entries.Sum(e => Math.Max(0, Math.Clamp(e?.Probability ?? 0, 0, 100)));
+        if (sum <= 0 || sum == 100)
+            return;
+
+        var exact = entries.Select(e => (e: e, exact: (double)Math.Max(0, Math.Clamp(e?.Probability ?? 0, 0, 100)) * 100.0 / sum)).ToList();
+        var floors = exact.Select(x => (x.e, floor: (int)Math.Floor(x.exact), rem: x.exact - Math.Floor(x.exact))).ToList();
+
+        var total = floors.Sum(x => x.floor);
+        var leftover = 100 - total;
+
+        foreach (var x in floors)
+            x.e.Probability = Math.Clamp(x.floor, 0, 100);
+
+        if (leftover <= 0)
+            return;
+
+        foreach (var x in floors.OrderByDescending(x => x.rem))
+        {
+            if (leftover <= 0)
+                break;
+
+            x.e.Probability = Math.Clamp(x.e.Probability + 1, 0, 100);
+            leftover--;
+        }
+    }
+
+
 }
+
 

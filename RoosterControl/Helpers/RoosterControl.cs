@@ -33,9 +33,7 @@ public sealed class RoosterHelper
     private readonly ProduceCatalog? _produceCatalog;
     private readonly RoosterCatalog? _roosterCatalog;
 
-#if RCTRL_DEV
-    private readonly HashSet<string> _determinismWarnings = new(StringComparer.OrdinalIgnoreCase);
-#endif
+    private readonly HashSet<string> _dailyOnceKeys = new(StringComparer.OrdinalIgnoreCase);
 
     public RoosterControlConfig Config { get; private set; }
     public LuckyTypes DailyLuck { private get; set; } = LuckyTypes.SuperUnlucky;
@@ -271,6 +269,9 @@ public sealed class RoosterHelper
         while (entries.Count < 4)
             entries.Add(new ProduceEntry());
 
+        while (entries.Count > 4)
+            entries.RemoveAt(entries.Count - 1);
+
         return new Dictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>>
         {
             [ProduceEntries.First] = MapProduceEntry(entries[0], seedCtx, produceType, ProduceEntries.First, slotOrdinal: 1),
@@ -350,10 +351,11 @@ public sealed class RoosterHelper
         var isKnownGroup = _produceCatalog.RandomGroups.TryGetValue(trimmed, out _);
         if (isKnownGroup && resolved.Equals(trimmed, StringComparison.OrdinalIgnoreCase))
         {
-            WarnOncePerDay(
+            LogOncePerDay(
                 seedCtx.Day,
                 $"cycle|{trimmed}",
-                $"[determinism] Random group '{trimmed}' appears cyclic/unresolvable (resolved to itself)."
+                $"[determinism] Random group '{trimmed}' appears cyclic/unresolvable (resolved to itself).",
+                LogLevel.Warn
             );
             return;
         }
@@ -363,23 +365,70 @@ public sealed class RoosterHelper
 
         if (looksRandomGroup && !isKnownGroup && !isTranslatedVar)
         {
-            WarnOncePerDay(
+            LogOncePerDay(
                 seedCtx.Day,
                 $"unknown|{trimmed}",
-                $"[determinism] Unknown random-group key '{trimmed}'. Did you forget to define it in the produce catalog?"
+                $"[determinism] Unknown random-group key '{trimmed}'. Did you forget to define it in the produce catalog?",
+                LogLevel.Warn
             );
         }
     }
+#endif
 
-    private void WarnOncePerDay(int day, string key, string message)
+    private void LogOncePerDay(int day, string key, string message, LogLevel level)
     {
         var fullKey = $"{day}|{key}";
-        if (!_determinismWarnings.Add(fullKey))
+        if (!_dailyOnceKeys.Add(fullKey))
             return;
 
-        _monitor.Log(message, LogLevel.Warn);
+        _monitor.Log(message, level);
     }
-#endif
+
+    private static int SumWeights(IReadOnlyDictionary<ProduceEntries, Dictionary<RoosterItemDataEntries, string>> entries)
+    {
+        var sum = 0;
+        foreach (var (k, v) in entries)
+        {
+            if (k == ProduceEntries.Chosen || v is null)
+                continue;
+
+            _ = v.TryGetValue(RoosterItemDataEntries.Probability, out var raw);
+            _ = int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var w);
+            sum += Math.Max(0, w);
+        }
+        return sum;
+    }
+
+    private void MaybeLogDailyProduceSummary(RoosterData rooster, int day)
+    {
+        if (!Config.General.EnableDebug)
+            return;
+
+        if (!rooster.AllProduces.TryGetValue(ProduceTypeEntries.Produce, out var produce))
+            return;
+
+        if (!rooster.AllProduces.TryGetValue(ProduceTypeEntries.Deluxe, out var deluxe))
+            return;
+
+        var chosenProduce = produce[ProduceEntries.Chosen];
+        var chosenDeluxe = deluxe[ProduceEntries.Chosen];
+
+        _ = chosenProduce.TryGetValue(RoosterItemDataEntries.Name, out var cpName);
+        _ = chosenProduce.TryGetValue(RoosterItemDataEntries.Probability, out var cpWeight);
+
+        _ = chosenDeluxe.TryGetValue(RoosterItemDataEntries.Name, out var cdName);
+        _ = chosenDeluxe.TryGetValue(RoosterItemDataEntries.Probability, out var cdWeight);
+
+        var sumProduce = SumWeights(produce);
+        var sumDeluxe = SumWeights(deluxe);
+
+        LogOncePerDay(
+            day,
+            $"produceSummary|{rooster.RoosterType}",
+            $"[produce] {rooster.RoosterType}: chosen={cpName} (w {cpWeight}), deluxe={cdName} (w {cdWeight}); tableSums produce={sumProduce}, deluxe={sumDeluxe}",
+            LogLevel.Trace
+        );
+    }
 
     private void RollChosenProduces(RoosterData rooster, in RoosterSeedKey.Context seedCtx)
     {
@@ -394,6 +443,8 @@ public sealed class RoosterHelper
 
         rooster.AllProduces[ProduceTypeEntries.Deluxe][ProduceEntries.Chosen] =
             _weighting.RollChosenProduce(rooster.AllProduces[ProduceTypeEntries.Deluxe], rngDeluxe);
+
+        MaybeLogDailyProduceSummary(rooster, seedCtx.Day);
     }
 
 #if RCTRL_DEV
@@ -685,3 +736,5 @@ public sealed class RoosterHelper
         return new List<string>();
     }
 }
+
+

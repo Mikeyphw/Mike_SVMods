@@ -47,7 +47,8 @@ internal sealed partial class RoosterCoordinator
                 fieldName: "ProduceEntries",
                 enabled: settings.ProduceOption == ProduceMode.CustomizeBelow,
                 entries: settings.ProduceEntries,
-                errors: errors
+                errors: errors,
+                warnings: warnings
             );
 
             ValidateProduceEntries(
@@ -55,7 +56,8 @@ internal sealed partial class RoosterCoordinator
                 fieldName: "DeluxeProduceEntries",
                 enabled: settings.DeluxeProduceOption == DeluxeProduceMode.CustomizeBelow,
                 entries: settings.DeluxeProduceEntries,
-                errors: errors
+                errors: errors,
+                warnings: warnings
             );
         }
 
@@ -146,7 +148,8 @@ internal sealed partial class RoosterCoordinator
         string fieldName,
         bool enabled,
         List<ProduceEntry> entries,
-        List<string> errors
+        List<string> errors,
+        List<string> warnings
     )
     {
         if (!enabled)
@@ -163,7 +166,7 @@ internal sealed partial class RoosterCoordinator
         {
             var p = entries[i].Probability;
             if (p < 0 || p > 100)
-                errors.Add($"Roosters[{roosterType}].{fieldName}[{i}].Probability must be 0..100.");
+                errors.Add($"Roosters[{roosterType}].{fieldName}[{i}].Weight must be 0..100.");
             sum += Math.Max(0, p);
 
             var choice = entries[i].Choice?.Trim() ?? string.Empty;
@@ -174,6 +177,10 @@ internal sealed partial class RoosterCoordinator
         }
 
         if (sum <= 0)
-            errors.Add($"Roosters[{roosterType}].{fieldName} probabilities sum to 0; at least one must be > 0.");
+            errors.Add($"Roosters[{roosterType}].{fieldName} weights sum to 0; at least one must be > 0.");
+        else if (sum != 100)
+            warnings.Add($"Roosters[{roosterType}].{fieldName} weights sum to {sum}; treated as relative weights (normalization implied).");
     }
 }
+
+

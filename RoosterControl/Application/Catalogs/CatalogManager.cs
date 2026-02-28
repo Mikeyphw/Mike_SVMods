@@ -68,10 +68,20 @@ internal sealed class CatalogManager
 #endif
 
         var issues = CatalogValidator.Validate(bundle);
-        if (issues.Count > 0)
+        var errors = issues.Where(i => i.Severity == CatalogIssueSeverity.Error).ToList();
+        var warnings = issues.Where(i => i.Severity == CatalogIssueSeverity.Warning).ToList();
+
+        if (warnings.Count > 0)
+        {
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Catalogs, "Catalog validation warnings:", LogLevel.Warn);
+            foreach (var issue in warnings)
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Catalogs, $"  - {issue}", LogLevel.Warn);
+        }
+
+        if (errors.Count > 0)
         {
             LogScopedHelper.Log(_log, ModRoosterControlCategory.Catalogs, "Catalog validation errors (fatal):", LogLevel.Error);
-            foreach (var issue in issues)
+            foreach (var issue in errors)
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Catalogs, $"  - {issue}", LogLevel.Error);
 
             throw new InvalidOperationException("RoosterControl catalogs are invalid. See SMAPI log for details.");

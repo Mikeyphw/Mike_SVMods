@@ -429,6 +429,9 @@ internal sealed partial class RoosterCoordinator
         {
             entries[i] ??= new ProduceEntry();
 
+            entries[i].Choice = (entries[i].Choice ?? string.Empty).Trim();
+            entries[i].CustomItemName = (entries[i].CustomItemName ?? string.Empty).Trim();
+
             if (string.IsNullOrWhiteSpace(entries[i].Choice))
                 entries[i].Choice = ItemIds.CustomItems.Custom;
 
@@ -512,3 +515,4 @@ internal sealed partial class RoosterCoordinator
         });
     }
 }
+

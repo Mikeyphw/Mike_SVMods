@@ -1,6 +1,6 @@
 # PLAN — GMCM Menu (RoosterControl)
 
-Status: Phase 8B produce tables + localized female assignment values implemented.
+Status: Phase 8B produce tables + rooster produce system Phase 3 validation/semantics implemented.
 
 ## Scope
 - Subdir: `RoosterControl`
