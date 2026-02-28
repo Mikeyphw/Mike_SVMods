@@ -162,8 +162,8 @@
       "file": "20260227T232256-0300-01",
       "title": "Phase 16: stable breeding JSON dumps + expanded invariants",
       "title_with_id": "Phase 16: stable breeding JSON dumps + expanded invariants [20260227T232256-0300-01]",
-      "created_at": "2026-02-28T09:01:11-03:00",
-      "applied_at": "2026-02-28T09:45:38-03:00",
+      "created_at": "2026-02-28T09:46:12-03:00",
+      "applied_at": "2026-02-28T09:46:52-03:00",
       "apply": {
         "method": "tar-package",
         "p": 0,
@@ -171,5 +171,5 @@
       }
     }
   ],
-  "updated_at": "2026-02-28T09:45:38-03:00"
+  "updated_at": "2026-02-28T09:46:52-03:00"
 }
