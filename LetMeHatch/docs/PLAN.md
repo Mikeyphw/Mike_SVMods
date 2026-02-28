@@ -93,6 +93,16 @@ Status: completed (tests + debug commands + validator).
 2. Add snapshot-style tests for small synthetic `Data/FarmAnimals` maps.
 3. Update `PLAN.md`, `TODO.md`, and `CHECKLIST.md` as phases complete.
 
+## Phase 16 — Deterministic debug dumps + expanded invariants
+
+Status: completed (stable dump DTOs + more tests).
+
+1. Replace debug dump JSON with stable DTO schema (no `DateOnly` serialization dependency).
+2. Ensure deterministic ordering in dumps (sorted scope keys / other-male keys / plan list).
+3. Add additional xUnit coverage:
+   - fertilized path upserts produce entries and preserves non-egg produce,
+   - LMH-managed egg tracking stays consistent and doesn’t retain cleared ids.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(

@@ -23,3 +23,9 @@
 - [x] Add tests: validator, executor invariants, coop index.
 - [x] Add breeding debug console commands (plan dump, coop index dump, validate).
 - [x] Add BreedingPlanValidator and wire validation before apply.
+
+
+## Phase 16
+- [x] Stable BreedingPlan dump DTOs + serializer (no DateOnly in JSON)
+- [x] More invariants tests: fertilized path + LMH-managed egg tracking
+- [x] Keep managed egg tracking consistent with EggItemIds

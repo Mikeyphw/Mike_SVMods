@@ -157,6 +157,10 @@ public sealed class BreedingPlanExecutor : IBreedingPlanExecutor
         // Egg-domain-only: strip egg-like produces but preserve non-egg produces.
         StripEggProduces(data, explicitEggIdToRemove: eggId);
 
+        // Keep tracking consistent: only retain managed ids that are still present on the animal.
+        var current = new HashSet<string>(data.EggItemIds.Where(id => !IsWildEgg(id)), StringComparer.OrdinalIgnoreCase);
+        managed.IntersectWith(current);
+
         managed.RemoveWhere(id => string.Equals(id, eggId, StringComparison.OrdinalIgnoreCase));
         WriteManagedEggIds(data, managed);
     }

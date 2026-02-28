@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using LetMeHatch.Core.Breeding;
+using LetMeHatch.Core.Breeding.Diagnostics;
 using LetMeHatch.Application;
 using LetMeHatch.Application.Gateways;
 using LetMeHatch.Infrastructure.Gateways;
@@ -320,8 +320,6 @@ private void InitializeAssetEditor()
     }
 
 
-
-
 public void DebugBreedingDumpPlans(string pathArg, string femaleKeyArg)
 {
     if (!Context.IsWorldReady || _assetManager is null)
@@ -340,8 +338,7 @@ public void DebugBreedingDumpPlans(string pathArg, string femaleKeyArg)
         femaleKeyFilter
     );
 
-    var dump = plans.Select(ToDump).ToList();
-    var json = JsonSerializer.Serialize(dump, new JsonSerializerOptions { WriteIndented = true });
+    var json = BreedingDumpJson.SerializePlans(plans, indented: true);
 
     var defaultName = $"breeding_plans_{Game1.Date.Year}_{Game1.Date.Season}_{Game1.Date.DayOfMonth}.json";
     var path = ResolveOutputPath(pathArg, defaultName);
@@ -349,7 +346,7 @@ public void DebugBreedingDumpPlans(string pathArg, string femaleKeyArg)
     Directory.CreateDirectory(Path.GetDirectoryName(path)!);
     File.WriteAllText(path, json);
 
-    _log.Log($"[breeding dump plans] Wrote {dump.Count} plan(s) to: {path}", LogLevel.Info);
+    _log.Log($"[breeding dump plans] Wrote {plans.Count} plan(s) to: {path}", LogLevel.Info);
 }
 
 public void DebugBreedingDumpCoopIndex(string pathArg)
@@ -361,16 +358,14 @@ public void DebugBreedingDumpCoopIndex(string pathArg)
     }
 
     var index = CoopBreedingIndex.Build(Game1.getFarm());
-    var dump = index.GetAdultCountsByCoop();
-
-    var json = JsonSerializer.Serialize(dump, new JsonSerializerOptions { WriteIndented = true });
+    var json = BreedingDumpJson.SerializeCoopIndex(index, indented: true);
     var defaultName = $"breeding_coop_index_{Game1.Date.Year}_{Game1.Date.Season}_{Game1.Date.DayOfMonth}.json";
     var path = ResolveOutputPath(pathArg, defaultName);
 
     Directory.CreateDirectory(Path.GetDirectoryName(path)!);
     File.WriteAllText(path, json);
 
-    _log.Log($"[breeding dump coop index] Wrote coop index (coops={dump.Count}) to: {path}", LogLevel.Info);
+    _log.Log($"[breeding dump coop index] Wrote coop index (coops={index.GetAdultCountsByCoop().Count}) to: {path}", LogLevel.Info);
 }
 
 public void DebugBreedingValidatePlans(string femaleKeyArg)
@@ -416,34 +411,6 @@ public void DebugBreedingValidatePlans(string femaleKeyArg)
     }
 }
 
-private static BreedingPlanDump ToDump(BreedingPlan plan)
-{
-    return new BreedingPlanDump(
-        plan.PlanId,
-        plan.InGameDate,
-        plan.Seed,
-        plan.ScopeAnimalKeys.ToList(),
-        plan.Pairs.Select(p => new BreedingPairDump(
-            p.FemaleAnimalKey,
-            p.MaleAnimalKey,
-            p.OtherMaleKeys.ToList(),
-            p.Mode.ToString(),
-            p.EggToClearItemId,
-            p.EggToAssignItemId,
-            p.FertilizedSucceeded,
-            p.MaleQuantity,
-            p.BaseFertilizedChance,
-            p.AdjustedFertilizedChance,
-            p.MaleChance,
-            p.BoostByMale,
-            p.ApplyDailyLuckBoost,
-            p.SelectedEggType
-        )).ToList(),
-        plan.Mutations.Select(m => m.ToString() ?? string.Empty).ToList(),
-        plan.Diagnostics.ToList()
-    );
-}
-
 private static string ResolveOutputPath(string pathArg, string defaultFileName)
 {
     var modDir = ModEntry.HelperInstance.DirectoryPath;
@@ -467,142 +434,5 @@ private static string ResolveOutputPath(string pathArg, string defaultFileName)
 
     return candidate;
 }
-
-private sealed record BreedingPlanDump(
-    string PlanId,
-    DateOnly InGameDate,
-    int Seed,
-    List<string> ScopeAnimalKeys,
-    List<BreedingPairDump> Pairs,
-    List<string> Mutations,
-    List<string> Diagnostics);
-
-private sealed record BreedingPairDump(
-    string FemaleAnimalKey,
-    string MaleAnimalKey,
-    List<string> OtherMaleKeys,
-    string Mode,
-    string? EggToClearItemId,
-    string? EggToAssignItemId,
-    bool FertilizedSucceeded,
-    int MaleQuantity,
-    double BaseFertilizedChance,
-    double AdjustedFertilizedChance,
-    double MaleChance,
-    double BoostByMale,
-    bool ApplyDailyLuckBoost,
-    string? SelectedEggType);
-
-public void DebugCloneTexturePreview(string cloneId)
-{
-    if (string.IsNullOrWhiteSpace(cloneId))
-    {
-        _log.Log("[clone texture preview] Usage: lmh_clone_texture_preview <cloneId>", LogLevel.Info);
-        return;
-    }
-
-    if (!Core.Cloning.CloneIdService.TryParseCloneId(cloneId, out var animalKey, out var originalItemId, out _))
-    {
-        _log.Log($"[clone texture preview] Not a recognized clone id: {cloneId}", LogLevel.Warn);
-        return;
-    }
-
-    if (!StardewValley.Game1.objectData.TryGetValue(originalItemId, out var original))
-    {
-        _log.Log($"[clone texture preview] Original object not found: {originalItemId}", LogLevel.Warn);
-        return;
-    }
-
-    StardewValley.Game1.objectData.TryGetValue(cloneId, out var cloneData);
-
-    var (tint, tintSource) = Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.ResolveTintWithSource(
-        cloneId,
-        animalKey,
-        originalItemId,
-        cloneData,
-        original);
-
-    var assetKey = $"Mods/{ModEntry.ModManifestInstance.UniqueID}/Objects/Clones/{cloneId}";
-
-    _log.Log($"[clone texture preview] cloneId={cloneId}", LogLevel.Info);
-    _log.Log($"[clone texture preview] originalItemId={originalItemId} name={original.DisplayName ?? original.Name}", LogLevel.Info);
-    _log.Log($"[clone texture preview] dynamicEnabled={ModEntry.Config.UseDynamicCloneTextures} tintMode={ModEntry.Config.DynamicCloneTintMode} tint={tint} tintSource={tintSource}", LogLevel.Info);
-    _log.Log($"[clone texture preview] assetKey={assetKey}", LogLevel.Info);
-}
-
-
-public void DebugCloneTextureHealthcheck(string countArg)
-{
-    var count = TryParsePositiveInt(countArg, defaultValue: 25, maxValue: 500);
-    if (StardewValley.Game1.objectData is null || StardewValley.Game1.objectData.Count == 0)
-    {
-        _log.Log("[clone texture healthcheck] Game1.objectData is not ready yet.", LogLevel.Warn);
-        return;
-    }
-
-    var cloneIds = new List<string>(capacity: Math.Min(count, 256));
-
-    foreach (var id in StardewValley.Game1.objectData.Keys)
-    {
-        if (!Core.Cloning.CloneIdService.IsClonedItem(id))
-            continue;
-
-        cloneIds.Add(id);
-        if (cloneIds.Count >= count)
-            break;
-    }
-if (cloneIds.Count == 0)
-    {
-        _log.Log("[clone texture healthcheck] No clone ids found in object data.", LogLevel.Info);
-        return;
-    }
-
-    var ok = 0;
-    var fail = 0;
-    var assetPrefix = $"Mods/{ModEntry.ModManifestInstance.UniqueID}/Objects/Clones/";
-
-    foreach (var cloneId in cloneIds)
-    {
-        try
-        {
-            _ = StardewValley.Game1.content.Load<Microsoft.Xna.Framework.Graphics.Texture2D>(assetPrefix + cloneId);
-            ok++;
-        }
-        catch (Exception ex)
-        {
-            fail++;
-            if (fail <= 5)
-                _log.Log($"[clone texture healthcheck] FAIL cloneId={cloneId}: {ex.Message}", LogLevel.Warn);
-        }
-    }
-
-    _log.Log($"[clone texture healthcheck] checked={cloneIds.Count} ok={ok} fail={fail} cacheCount={Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.CacheCount}", LogLevel.Info);
-}
-
-public void DebugCloneTextureStats(string maxKeysArg)
-{
-    var maxKeys = TryParsePositiveInt(maxKeysArg, defaultValue: 10, maxValue: 100);
-    var keys = Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.GetCacheKeys(maxKeys);
-
-    _log.Log($"[clone texture stats] cacheCount={Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.CacheCount} dynamicEnabled={ModEntry.Config.UseDynamicCloneTextures} tintMode={ModEntry.Config.DynamicCloneTintMode}", LogLevel.Info);
-    if (keys.Length > 0)
-        _log.Log($"[clone texture stats] keys={string.Join(", ", keys)}", LogLevel.Info);
-}
-
-public void DebugCloneTextureClearCache()
-{
-    var before = Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.CacheCount;
-    Infrastructure.Content.Loaders.DynamicCloneObjectTextureLoader.ClearCache();
-    _log.Log($"[clone texture clear cache] cleared={before}", LogLevel.Info);
-}
-
-private static int TryParsePositiveInt(string? arg, int defaultValue, int maxValue)
-{
-    if (!string.IsNullOrWhiteSpace(arg) && int.TryParse(arg, out var parsed) && parsed > 0)
-        return Math.Min(parsed, maxValue);
-
-    return defaultValue;
-}
-
 
 }

@@ -53,3 +53,10 @@
 - [x] Invariant tests: male never lays; egg-like-only replacement; deterministic plan.
 - [x] Snapshot tests added for synthetic `Data/FarmAnimals` maps.
 - [x] PLAN/TODO/CHECKLIST updated as phases complete.
+
+
+## Phase 16 — Debug dump stability + expanded invariants
+- [x] Debug JSON dumps use stable DTO schema (no DateOnly serialization dependency).
+- [x] Dump output ordering is deterministic (plan list and key lists sorted).
+- [x] Fertilized path executor test added (produce upsert, preserve non-egg).
+- [x] LMH-managed egg tracking test added (tracking shrinks as eggs are cleared).
