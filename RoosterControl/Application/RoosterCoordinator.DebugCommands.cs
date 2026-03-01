@@ -313,6 +313,7 @@ if (plan is null)
 
     private void DebugPipelineCommand(string _command, string[] args)
     {
+        var (_, _, _, seedOverride) = ParseDebugArgs(args);
         var sb = new StringBuilder();
 
         sb.AppendLine($"WorldReady={Context.IsWorldReady} MainPlayer={Context.IsMainPlayer} HasDayStarted={HasDayStarted}");
