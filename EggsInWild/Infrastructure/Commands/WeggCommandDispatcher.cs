@@ -34,6 +34,9 @@ public sealed class WeggCommandDispatcher
             "notes" => HandleNotes(args),
             "schema" => HandleSchema(args),
             "verify" => ToCommandResult(_facade.Verify(args)),
+#if WEGG_DEV
+            "tomb" => HandleTomb(args),
+#endif
             _ => new CommandResult(false, $"{T("command.wegg.error.unknownSubcommand", "Unknown subcommand '{0}'.", args[0])}\n\n{HelpText()}"),
         };
     }
@@ -228,7 +231,25 @@ public sealed class WeggCommandDispatcher
     }
 
     private string HelpText()
-        => _i18n?.GetOrDefault("command.wegg.help", DefaultHelpText()) ?? DefaultHelpText();
+    {
+        var baseHelp = _i18n?.GetOrDefault("command.wegg.help", DefaultHelpText()) ?? DefaultHelpText();
+#if WEGG_DEV
+        var devHelp = _i18n?.GetOrDefault("command.wegg.help.dev", DefaultHelpTextDev()) ?? DefaultHelpTextDev();
+        if (!string.IsNullOrWhiteSpace(devHelp))
+            return baseHelp + Environment.NewLine + devHelp;
+#endif
+        return baseHelp;
+    }
+
+#if WEGG_DEV
+    private static string DefaultHelpTextDev()
+        => string.Join(
+            Environment.NewLine,
+            "",
+            "Dev-only Tomb tools:",
+            "  wegg tomb force_patches"
+        );
+#endif
 
     private static string DefaultHelpText()
         => string.Join(

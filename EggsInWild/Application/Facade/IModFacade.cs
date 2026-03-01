@@ -37,4 +37,10 @@ public interface IModFacade
     FacadeResult Verify(string[] args);
 
     FacadeResult WipeSchemaData(bool confirmed);
+
+#if WEGG_DEV
+    /// <summary>Dev-only: force-install DesertTomb Harmony patches immediately (bypasses config gating).</summary>
+    FacadeResult ForceInstallDesertTombHarmonyPatches();
+#endif
 }
+

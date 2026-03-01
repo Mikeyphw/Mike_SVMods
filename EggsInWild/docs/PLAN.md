@@ -15,6 +15,7 @@
 1. Add dev-only config toggles to force-install DesertTomb Harmony hooks and force-run the handler regardless of other DesertTomb gates.
 2. Expose toggles under GMCM `debug` and `debug.desertTomb` pages with stable option IDs.
 3. Add always-on Harmony patch install/status logging; add hook-fired + success/error logs gated by DesertTomb debug logging or force flags.
+4. Add dev-only console command `wegg tomb force_patches` to force-install DesertTomb Harmony patches without config reload.
 
 1. Wire `GmcmConfigHost` in `GameLaunched`; if GMCM missing, return.
 2. Build pages: `root` (General), `desertTomb`, `items`, `hatching`, `prices`, `animalNotes`, `debug`.

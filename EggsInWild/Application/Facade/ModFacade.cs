@@ -33,6 +33,10 @@ public sealed class ModFacade : IModFacade
 
     private readonly WeggVerifier _verifier;
 
+#if WEGG_DEV
+    private readonly Func<FacadeResult>? _forceInstallDesertTombPatches;
+#endif
+
     private readonly ProgressionService? _progression;
     private readonly WildEggSpawnOrchestrator? _spawner;
     private readonly AnimalNotesOrchestrator? _animalNotes;
@@ -62,7 +66,11 @@ public sealed class ModFacade : IModFacade
         ITileFinder tileFinder,
         IGameObjectPlacer placer,
         ITileSearchHistogram? histogram = null,
-        WeggVerifier? verifier = null)
+        WeggVerifier? verifier = null,
+#if WEGG_DEV
+        Func<FacadeResult>? forceInstallDesertTombPatches = null
+#endif
+    )
     {
         _store = store;
         _config = config;
@@ -72,6 +80,10 @@ public sealed class ModFacade : IModFacade
         _reloadAll = reloadAll;
 
         _verifier = verifier ?? throw new ArgumentNullException(nameof(verifier));
+
+#if WEGG_DEV
+        _forceInstallDesertTombPatches = forceInstallDesertTombPatches;
+#endif
 
         _progression = progression;
         _spawner = spawner;
@@ -357,6 +369,15 @@ public FacadeResult Verify(string[] args)
             return new FacadeResult(false, "Schema wipe failed; see log.");
         }
     }
+
+#if WEGG_DEV
+    public FacadeResult ForceInstallDesertTombHarmonyPatches()
+        => _forceInstallDesertTombPatches is null
+            ? new FacadeResult(false, "DesertTomb patch installer is not available.")
+            : _forceInstallDesertTombPatches();
+#endif
+
+
 
 }
 

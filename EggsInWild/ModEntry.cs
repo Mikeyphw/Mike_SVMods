@@ -631,7 +631,7 @@ private void SyncApiBirthTextMode()
     }
 
     
-    private void TryInstallDesertTombHarmonyPatches(string reason)
+    private void TryInstallDesertTombHarmonyPatches(string reason, bool force = false)
     {
         if (_config is null)
             return;
@@ -646,10 +646,10 @@ private void SyncApiBirthTextMode()
         var debugUnrestricted = false;
 #endif
 
-        var shouldInstall = cfg.DesertTombModuleEnabled || cfg.DesertTombForcePatch || debugForce || debugUnrestricted;
+        var shouldInstall = force || cfg.DesertTombModuleEnabled || cfg.DesertTombForcePatch || debugForce || debugUnrestricted;
 
         Monitor.Log(
-            $"[DesertTomb][Harmony] shouldInstall={shouldInstall} reason={reason} enabled={cfg.DesertTombModuleEnabled} forcePatch={cfg.DesertTombForcePatch} debugForce={debugForce} debugUnrestricted={debugUnrestricted}",
+            $"[DesertTomb][Harmony] shouldInstall={shouldInstall} force={force} reason={reason} enabled={cfg.DesertTombModuleEnabled} forcePatch={cfg.DesertTombForcePatch} debugForce={debugForce} debugUnrestricted={debugUnrestricted}",
             LogLevel.Info);
 
         if (!shouldInstall)
@@ -987,6 +987,21 @@ private void InstallHarmonyBootstrap()
             tileFinder: tileFinder,
             placer: placer,
             histogram: histogram,
+#if WEGG_DEV
+            forceInstallDesertTombPatches: () =>
+            {
+                var wasInstalled = _desertTombHarmonyInstalled;
+                TryInstallDesertTombHarmonyPatches(reason: "console command wegg tomb force_patches", force: true);
+                var isInstalled = _desertTombHarmonyInstalled;
+
+                if (isInstalled && !wasInstalled)
+                    return new EggsInWild.Application.Facade.FacadeResult(true, "DesertTomb Harmony patches installed.");
+                if (isInstalled && wasInstalled)
+                    return new EggsInWild.Application.Facade.FacadeResult(true, "DesertTomb Harmony patches already installed.");
+                return new EggsInWild.Application.Facade.FacadeResult(false, "DesertTomb Harmony patches not installed (see log).");
+            },
+#endif
+
             verifier: verifier);
 
         var dispatcher = new WeggCommandDispatcher(facade, i18n);
