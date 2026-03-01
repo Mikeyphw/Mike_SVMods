@@ -10,6 +10,12 @@
 3. Keep option IDs stable forever (translation keys and field IDs depend on this).
 
 ## Phase 2 — Baseline GMCM menu via NestCore host + DSL
+
+## Phase 2.5 — DesertTomb debug force handler (WEGG_DEV)
+1. Add dev-only config toggles to force-install DesertTomb Harmony hooks and force-run the handler regardless of other DesertTomb gates.
+2. Expose toggles under GMCM `debug` and `debug.desertTomb` pages with stable option IDs.
+3. Add always-on Harmony patch install/status logging; add hook-fired + success/error logs gated by DesertTomb debug logging or force flags.
+
 1. Wire `GmcmConfigHost` in `GameLaunched`; if GMCM missing, return.
 2. Build pages: `root` (General), `desertTomb`, `items`, `hatching`, `prices`, `animalNotes`, `debug`.
 3. Bind options using stable `optionId`s; ensure debug-only fields live on `debug`.

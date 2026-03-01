@@ -51,7 +51,7 @@ internal static class DesertTombMineShaftPatches
         if (rt is null)
             return;
 
-        rt.ApplyTombMapLayoutIfNeeded(__instance);
+        rt.HookAfterLoadLevel(__instance, level);
     }
 
     
@@ -61,7 +61,7 @@ internal static class DesertTombMineShaftPatches
         if (rt is null)
             return;
 
-        rt.ApplyTombChooseLevelTypeOverrides(__instance);
+        rt.HookAfterChooseLevelType(__instance);
     }
 
 private static bool BeforePopulateLevel(MineShaft __instance)
@@ -70,14 +70,17 @@ private static bool BeforePopulateLevel(MineShaft __instance)
         if (rt is null)
             return true;
 
-        if (!rt.ShouldEdit(__instance))
-            return true;
-        rt.PopulateTombFloorFromGeneration(__instance);
-        return false;
+        return rt.HookBeforePopulateLevel(__instance);
     }
 
+
     private static void AfterMonsterDrop(MineShaft __instance, Monster monster, int x, int y, Farmer who)
+{
+    try
     {
+        var rt = Runtime;
+        rt?.TraceHook("monsterDrop", __instance, $"fired monster={monster?.Name ?? "<null>"} at=({x},{y})", StardewModdingAPI.LogLevel.Info);
+
         if (__instance is null || monster is null)
             return;
 
@@ -91,7 +94,15 @@ private static bool BeforePopulateLevel(MineShaft __instance)
         // This mirrors vanilla's infested-floor behavior but is keyed specifically to the Pharaoh.
         __instance.createLadderAt(__instance.tileBeneathLadder, "newArtifact");
         __instance.modData.Remove(DesertTombRuntime.LadderSuppressedKey);
+
+        rt?.TraceHook("monsterDrop", __instance, "ladder spawned (pharaoh defeated)", StardewModdingAPI.LogLevel.Info);
     }
+    catch (Exception ex)
+    {
+        Runtime?.TraceHook("monsterDrop", __instance, $"exception: {ex}", StardewModdingAPI.LogLevel.Error);
+    }
+}
+
 
     private static bool IsPharaoh(Monster monster)
         => monster.modData.TryGetValue(DesertTombMonsterModDataKeys.MonsterDefinitionId, out var id)

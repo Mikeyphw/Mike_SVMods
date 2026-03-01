@@ -90,6 +90,17 @@ public sealed class ModConfig
     public System.Collections.Generic.Dictionary<string, bool> AnimalProgressionMode { get; set; } = new(System.StringComparer.OrdinalIgnoreCase);
 
 #if WEGG_DEV
+
+/// <summary>
+/// Dev-only: force-enable the DesertTomb handler (including Harmony hooks) regardless of other DesertTomb config gates.
+/// </summary>
+public bool DebugForceDesertTombHandler { get; set; } = false;
+
+/// <summary>
+/// Dev-only: when forcing DesertTomb, bypass additional safety gates (main-player and mine-level bounds).
+/// </summary>
+public bool DebugForceDesertTombUnrestricted { get; set; } = false;
+
     /// <summary>
     /// Centralized tuning knobs exposed only in debug builds (GMCM Debug page).
     /// </summary>

@@ -38,3 +38,11 @@
 - [x] Normalize quest group IDs + variant keys.
 - [x] Normalize GMCM free-text keys under `config.section.*` and `config.paragraph.*`.
 - [x] Update verifiers/diagnostics to validate normalized keys only.
+
+## Phase 2.5 — DesertTomb debug force handler (WEGG_DEV)
+- [x] Add `DebugForceDesertTombHandler` (force-run) config toggle (WEGG_DEV only).
+- [x] Add `DebugForceDesertTombUnrestricted` (bypass main-player + level bounds) toggle (WEGG_DEV only).
+- [x] GMCM: expose both on `debug` and `debug.desertTomb` pages.
+- [x] Add patch install/status logs (always on).
+- [x] Add hook-fired + success/error logs (gated).
+

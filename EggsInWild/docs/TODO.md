@@ -14,3 +14,9 @@
 
 ## Localization
 - [ ] If you maintain extra locales, port key renames from `i18n/default.json` (Phase 10).
+
+- [x] (WEGG_DEV) Add debug toggle to force DesertTomb handler regardless of other config gates.
+- [x] (WEGG_DEV) Add debug toggle to bypass main-player + mine-level bounds when forcing.
+- [x] Add always-on Harmony patch install/status logging for DesertTomb patches.
+- [x] Add hook-fired + success/error logs for DesertTomb Harmony callbacks (gated by debug logging or force).
+

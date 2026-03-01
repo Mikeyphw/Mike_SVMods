@@ -50,6 +50,39 @@ public sealed class DesertTombRuntime
     private readonly DesertTombDiagnostics? _diagnostics;
     private ActiveTombFloorState? _activeFloor;
 
+
+    private static bool IsDebugForce(ModConfig cfg)
+    {
+#if WEGG_DEV
+        return cfg.DebugForceDesertTombHandler || cfg.DebugForceDesertTombUnrestricted;
+#else
+        return false;
+#endif
+    }
+
+    private static bool IsDebugUnrestricted(ModConfig cfg)
+    {
+#if WEGG_DEV
+        return cfg.DebugForceDesertTombUnrestricted;
+#else
+        return false;
+#endif
+    }
+
+    private bool IsHookLoggingEnabled(ModConfig cfg)
+        => cfg.DesertTombDebugLogging || IsDebugForce(cfg);
+
+    internal void TraceHook(string hook, MineShaft? mineShaft, string message, LogLevel level = LogLevel.Info)
+    {
+        var cfg = _config.Get();
+        if (!IsHookLoggingEnabled(cfg))
+            return;
+
+        var levelStr = mineShaft is null ? "<null>" : mineShaft.mineLevel.ToString();
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[Hook:{hook}] mineLevel={levelStr} {message}", level);
+    }
+
+
     private MineShaft? _pending;
 
     private bool _loggedTombLoadLevelVerifier;
@@ -102,38 +135,64 @@ public sealed class DesertTombRuntime
     /// Consolidated eligibility gate for Harmony patches.
     /// This is intentionally side-effect free.
     /// </summary>
-    public bool ShouldEdit(MineShaft mineShaft)
+    
+public bool ShouldEdit(MineShaft mineShaft)
+{
+    if (mineShaft is null)
+        return false;
+
+    if (mineShaft.mineLevel == 77377)
+        return false;
+
+    var cfg = _config.Get();
+    var force = IsDebugForce(cfg);
+    var unrestricted = IsDebugUnrestricted(cfg);
+
+    if (!force && !cfg.DesertTombModuleEnabled)
     {
-        if (mineShaft is null)
-            return false;
+        TraceHook("ShouldEdit", mineShaft, "skip: module disabled", LogLevel.Trace);
+        return false;
+    }
 
-        if (mineShaft.mineLevel == 77377)
-            return false;
+    if (!unrestricted && !_isMainPlayer())
+    {
+        TraceHook("ShouldEdit", mineShaft, "skip: not main player", LogLevel.Trace);
+        return false;
+    }
 
-        var cfg = _config.Get();
+    var step = _getStep();
 
-        if (!cfg.DesertTombModuleEnabled)
-            return false;
+    if (!force && !DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step))
+    {
+        TraceHook("ShouldEdit", mineShaft, $"skip: progression gate (step={step})", LogLevel.Trace);
+        return false;
+    }
 
-        if (!_isMainPlayer())
-            return false;
+    if (!unrestricted && mineShaft.mineLevel <= 120)
+    {
+        TraceHook("ShouldEdit", mineShaft, "skip: mineLevel <= 120", LogLevel.Trace);
+        return false;
+    }
 
-        var step = _getStep();
-
-        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step))
-            return false;
-
-        if (mineShaft.mineLevel <= 120)
-            return false;
-
+    if (!force)
+    {
         if (!DesertTombRuntimePolicy.RollTombChance(cfg.TombChance, mineShaft.mineLevel))
+        {
+            TraceHook("ShouldEdit", mineShaft, $"skip: tomb chance failed (tombChance={cfg.TombChance})", LogLevel.Trace);
             return false;
+        }
 
         if (AlreadyProcessedToday(mineShaft))
+        {
+            TraceHook("ShouldEdit", mineShaft, "skip: already processed", LogLevel.Trace);
             return false;
-
-        return true;
+        }
     }
+
+    TraceHook("ShouldEdit", mineShaft, $"allow: force={force} unrestricted={unrestricted} step={step}", LogLevel.Trace);
+    return true;
+}
+
 
     /// <summary>
     /// Harmony hook: force the tomb TMX map layout during MineShaft.loadLevel.
@@ -143,23 +202,28 @@ public sealed class DesertTombRuntime
         if (mineShaft is null)
             return;
 
-        var cfg = _config.Get();
-
-        if (!cfg.DesertTombModuleEnabled)
+        if (mineShaft.mineLevel == 77377)
             return;
 
-        if (!_isMainPlayer())
+        var cfg = _config.Get();
+        var force = IsDebugForce(cfg);
+        var unrestricted = IsDebugUnrestricted(cfg);
+
+        if (!force && !cfg.DesertTombModuleEnabled)
+            return;
+
+        if (!unrestricted && !_isMainPlayer())
             return;
 
         var step = _getStep();
 
-        if (!DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step))
+        if (!force && !DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step))
             return;
 
-        if (mineShaft.mineLevel <= 120 || mineShaft.mineLevel == 77377)
+        if (!unrestricted && mineShaft.mineLevel <= 120)
             return;
 
-        var chosen = ChooseTombMapPath(mineShaft, cfg.ProgressionMode, step);
+        var chosen = force ? WeggGameAssetNames.DesertTombMap : ChooseTombMapPath(mineShaft, cfg.ProgressionMode, step);
 
         var before = mineShaft.mapPath.Value;
 
@@ -188,24 +252,48 @@ public sealed class DesertTombRuntime
         if (mineShaft is null)
             return;
 
-        var cfg = _config.Get();
-
-        if (!cfg.DesertTombModuleEnabled)
+        if (mineShaft.mineLevel == 77377)
             return;
 
-        if (!_isMainPlayer())
+        var cfg = _config.Get();
+        var force = IsDebugForce(cfg);
+        var unrestricted = IsDebugUnrestricted(cfg);
+
+        if (!force && !cfg.DesertTombModuleEnabled)
+            return;
+
+        if (!unrestricted && !_isMainPlayer())
             return;
 
         var step = _getStep();
 
         var eligibleByProgression =
-            (cfg.DesertTombForcePatch && cfg.DesertTombIgnoreProgressionGate)
+            force
+            || (cfg.DesertTombForcePatch && cfg.DesertTombIgnoreProgressionGate)
             || DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step);
 
         if (!eligibleByProgression)
             return;
 
-        if (mineShaft.mineLevel <= 120 || mineShaft.mineLevel == 77377)
+        if (!unrestricted && mineShaft.mineLevel <= 120)
+            return;
+
+        if (force)
+        {
+            var chosen = WeggGameAssetNames.DesertTombMap;
+            var before = mineShaft.mapPath.Value;
+
+            if (!string.Equals(before, chosen, StringComparison.OrdinalIgnoreCase))
+            {
+                mineShaft.mapPath.Value = chosen;
+                mineShaft.loadedMapNumber = DesertTombRuntimePolicy.ParseLoadedMapNumber(chosen);
+            }
+
+            ResetVanillaSpecialFlagsForTomb(mineShaft);
+            return;
+        }
+
+        if (mineShaft.mineLevel == 77377)
             return;
 
         if (!cfg.DesertTombForcePatch)
@@ -236,6 +324,7 @@ public sealed class DesertTombRuntime
         ResetVanillaSpecialFlagsForTomb(mineShaft);
     }
 
+
     private static void ResetVanillaSpecialFlagsForTomb(MineShaft mineShaft)
     {
         mineShaft.isMonsterArea = false;
@@ -248,6 +337,72 @@ public sealed class DesertTombRuntime
         mineShaft.fogTime = 0;
     }
 
+
+
+internal bool HookBeforePopulateLevel(MineShaft mineShaft)
+{
+    TraceHook("populateLevel", mineShaft, "fired", LogLevel.Info);
+
+    try
+    {
+        if (!ShouldEdit(mineShaft))
+        {
+            TraceHook("populateLevel", mineShaft, "allow vanilla (ShouldEdit=false)", LogLevel.Info);
+            return true;
+        }
+
+        PopulateTombFloorFromGeneration(mineShaft);
+        TraceHook("populateLevel", mineShaft, "handled by DesertTomb (skip vanilla)", LogLevel.Info);
+        return false;
+    }
+    catch (Exception ex)
+    {
+        TraceHook("populateLevel", mineShaft, $"exception; allowing vanilla: {ex}", LogLevel.Error);
+        return true;
+    }
+}
+
+internal void HookAfterLoadLevel(MineShaft mineShaft, int level)
+{
+    TraceHook("loadLevel", mineShaft, $"fired levelArg={level}", LogLevel.Info);
+
+    try
+    {
+        var before = mineShaft?.mapPath?.Value;
+        ApplyTombMapLayoutIfNeeded(mineShaft);
+        var after = mineShaft?.mapPath?.Value;
+
+        if (!string.Equals(before, after, StringComparison.OrdinalIgnoreCase))
+            TraceHook("loadLevel", mineShaft, $"mapPath changed: before={before} after={after}", LogLevel.Info);
+        else
+            TraceHook("loadLevel", mineShaft, "no change", LogLevel.Info);
+    }
+    catch (Exception ex)
+    {
+        TraceHook("loadLevel", mineShaft, $"exception: {ex}", LogLevel.Error);
+    }
+}
+
+internal void HookAfterChooseLevelType(MineShaft mineShaft)
+{
+    TraceHook("chooseLevelType", mineShaft, "fired", LogLevel.Info);
+
+    try
+    {
+        var before = mineShaft?.mapPath?.Value;
+        ApplyTombChooseLevelTypeOverrides(mineShaft);
+        var after = mineShaft?.mapPath?.Value;
+
+        if (!string.Equals(before, after, StringComparison.OrdinalIgnoreCase))
+            TraceHook("chooseLevelType", mineShaft, $"mapPath changed: before={before} after={after}", LogLevel.Info);
+        else
+            TraceHook("chooseLevelType", mineShaft, "no change", LogLevel.Info);
+    }
+    catch (Exception ex)
+    {
+        TraceHook("chooseLevelType", mineShaft, $"exception: {ex}", LogLevel.Error);
+    }
+}
 
     /// <summary>
     /// Harmony hook: run DesertTomb activation during MineShaft.populateLevel and skip vanilla population.
