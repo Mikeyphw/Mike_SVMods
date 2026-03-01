@@ -36,6 +36,7 @@ public sealed class WeggCommandDispatcher
             "verify" => ToCommandResult(_facade.Verify(args)),
 #if WEGG_DEV
             "tomb" => HandleTomb(args),
+            "wildanimals" => HandleWildAnimals(args),
 #endif
             _ => new CommandResult(false, $"{T("command.wegg.error.unknownSubcommand", "Unknown subcommand '{0}'.", args[0])}\n\n{HelpText()}"),
         };
@@ -264,7 +265,8 @@ public sealed class WeggCommandDispatcher
             Environment.NewLine,
             "",
             "Dev-only Tomb tools:",
-            "  wegg tomb force_patches"
+            "  wegg tomb force_patches",
+            "  wegg wildanimals dump_effective"
         );
 #endif
 

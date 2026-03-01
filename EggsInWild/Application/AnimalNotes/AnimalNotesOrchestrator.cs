@@ -658,9 +658,9 @@ public bool TryHandleClientNoteFound(AnimalNoteFoundMessage message, long farmer
         var snapshot = _dataLoader.Load();
 
         var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var k in snapshot.WildAnimals.Keys)
+        foreach (var (k, wa) in snapshot.WildAnimals)
         {
-            if (Game1.farmAnimalData.ContainsKey(k))
+            if (wa.Enabled && Game1.farmAnimalData.ContainsKey(k))
                 keys.Add(k);
         }
 

@@ -202,7 +202,9 @@ public sealed class AnimalNotesClientObserver
         try
         {
             var snapshot = _dataLoader.Load();
-            var tokens = snapshot.WildAnimals.Keys
+            var tokens = snapshot.WildAnimals
+                .Where(kvp => kvp.Value.Enabled)
+                .Select(kvp => kvp.Key)
                 .Where(k => Game1.farmAnimalData.ContainsKey(k))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();

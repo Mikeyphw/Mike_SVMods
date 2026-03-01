@@ -110,7 +110,7 @@ public sealed class ChosenEggAssignments
 
             // Determine eligible wild-animal buckets (filtered to installed animals, then weighted by candidate key weights).
             var eligibleWild = snapshot.WildAnimals
-                .Where(kvp => farmAnimals.ContainsKey(kvp.Key) && IsEligible(kvp.Value, regionToken, kind))
+                .Where(kvp => kvp.Value.Enabled && farmAnimals.ContainsKey(kvp.Key) && IsEligible(kvp.Value, regionToken, kind))
                 .OrderBy(kvp => kvp.Key, KeyComparer)
                 .ToList();
 

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace EggsInWild.Infrastructure.Config;
 
 public sealed class ModConfig
@@ -68,6 +70,13 @@ public sealed class ModConfig
     /// </summary>
     public int AnimalNotesPlacementRadius { get; set; } = 8;
 
+
+
+/// <summary>
+/// Per-wild-animal overrides keyed by WildAnimalsList entry key (e.g. "Chicken").
+/// When Enabled is false, the animal is excluded from egg assignment and AnimalNotes progression.
+/// </summary>
+public Dictionary<string, WildAnimalOverrideConfig> WildAnimalOverrides { get; set; } = new();
 
     /// <summary>
     /// In multiplayer: only the host may add quests and queue mail for AnimalNotes.

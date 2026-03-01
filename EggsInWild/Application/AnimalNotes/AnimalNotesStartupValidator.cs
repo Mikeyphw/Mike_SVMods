@@ -36,8 +36,9 @@ public sealed class AnimalNotesStartupValidator
             return;
 
         var snapshot = _dataLoader.Load();
+        var enabledWildAnimalKeys = snapshot.WildAnimals.Where(kvp => kvp.Value.Enabled).Select(kvp => kvp.Key);
         var expectedTokens = AnimalNotesValidationRules.GetExpectedAnimalTokens(
-            wildAnimalKeys: snapshot.WildAnimals.Keys,
+            wildAnimalKeys: enabledWildAnimalKeys,
             farmAnimalKeys: Game1.farmAnimalData.Keys);
 
         var objects = SafeLoad<Dictionary<string, ObjectData>>(Strings.AssetNames.Objects) ?? new Dictionary<string, ObjectData>();

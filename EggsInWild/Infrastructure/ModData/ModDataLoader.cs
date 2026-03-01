@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EggsInWild.Infrastructure.Config;
 using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData.Models;
 using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
@@ -129,6 +130,61 @@ private void Validate(
         foreach (var (_, pack) in locationPacks)
         {
             pack.Locations ??= new Dictionary<string, List<string>>();
+        }
+    }
+}
+
+public sealed class ConfiguredModDataLoader : IModDataLoader
+{
+    private readonly IModDataLoader _inner;
+    private readonly Func<ModConfig> _getConfig;
+    private readonly ILog _log;
+
+    public ConfiguredModDataLoader(IModDataLoader inner, Func<ModConfig> getConfig, ILog log)
+    {
+        _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+        _getConfig = getConfig ?? throw new ArgumentNullException(nameof(getConfig));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+    }
+
+    public ModDataSnapshot Load()
+    {
+        var snapshot = _inner.Load();
+        ApplyWildAnimalOverrides(snapshot.WildAnimals, _getConfig().WildAnimalOverrides);
+        return snapshot;
+    }
+
+    private void ApplyWildAnimalOverrides(IDictionary<string, WildAnimalJson> wildAnimals, IDictionary<string, WildAnimalOverrideConfig> overrides)
+    {
+        if (wildAnimals is null) throw new ArgumentNullException(nameof(wildAnimals));
+        if (overrides is null || overrides.Count == 0)
+            return;
+
+        var missing = new List<string>();
+
+        foreach (var (key, ov) in overrides)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                continue;
+
+            if (!wildAnimals.TryGetValue(key, out var wa) || wa is null)
+            {
+                missing.Add(key);
+                continue;
+            }
+
+            if (ov?.Enabled is not null)
+                wa.Enabled = ov.Enabled.Value;
+        }
+
+        if (missing.Count > 0)
+        {
+            missing.Sort(StringComparer.OrdinalIgnoreCase);
+            LogScopedHelper.Log(
+                _log,
+                ScopedLogCatalog.ModWeCategory.SaveData,
+                $"Config WildAnimalOverrides contains unknown keys: {string.Join(", ", missing)}",
+                StardewModdingAPI.LogLevel.Trace);
         }
     }
 }

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using Microsoft.Xna.Framework;
 using Mikew.NestCore.Framework.Random;
 using StardewValley;
@@ -32,6 +34,9 @@ public sealed class ModFacade : IModFacade
     private readonly SmapiReloadAll _reloadAll;
 
     private readonly WeggVerifier _verifier;
+
+    private readonly IModDataLoader _dataLoader;
+    private readonly EggsInWild.Infrastructure.Mods.IModAvailability _mods;
 
 #if WEGG_DEV
     private readonly Func<FacadeResult>? _forceInstallDesertTombPatches;
@@ -66,6 +71,8 @@ public sealed class ModFacade : IModFacade
         ITileFinder tileFinder,
         IGameObjectPlacer placer,
         ITileSearchHistogram? histogram = null,
+        EggsInWild.Infrastructure.ModData.IModDataLoader dataLoader,
+        EggsInWild.Infrastructure.Mods.IModAvailability mods,
         WeggVerifier? verifier = null,
 #if WEGG_DEV
         Func<FacadeResult>? forceInstallDesertTombPatches = null
@@ -79,6 +86,8 @@ public sealed class ModFacade : IModFacade
         _isMainPlayer = isMainPlayer;
         _reloadAll = reloadAll;
 
+        _dataLoader = dataLoader ?? throw new ArgumentNullException(nameof(dataLoader));
+        _mods = mods ?? throw new ArgumentNullException(nameof(mods));
         _verifier = verifier ?? throw new ArgumentNullException(nameof(verifier));
 
 #if WEGG_DEV
@@ -375,6 +384,56 @@ public FacadeResult Verify(string[] args)
         => _forceInstallDesertTombPatches is null
             ? new FacadeResult(false, "DesertTomb patch installer is not available.")
             : _forceInstallDesertTombPatches();
+
+
+public FacadeResult DumpEffectiveWildAnimals()
+{
+    try
+    {
+        var snapshot = _dataLoader.Load();
+        var builder = new AnimalCatalogBuilder(_mods, _log);
+        var catalog = builder.Build(snapshot.WildAnimals);
+
+        var list = new List<WildAnimalEffectiveDumpEntry>();
+
+        foreach (var (key, wa) in snapshot.WildAnimals.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            var ids = new List<string>();
+            if (catalog.TryGet(key, out var def))
+                ids = def.FarmAnimalIds.ToList();
+
+            list.Add(new WildAnimalEffectiveDumpEntry(
+                WildAnimalKey: key,
+                Enabled: wa.Enabled,
+                LargeEgg: wa.LargeEgg,
+                IsMagic: wa.IsMagic,
+                Price: wa.Price,
+                FarmAnimalIds: ids
+            ));
+        }
+
+        var json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = false });
+        return new FacadeResult(true, json);
+    }
+    catch (Exception ex)
+    {
+        LogScopedHelper.Log(
+            _log,
+            ScopedLogCatalog.ModWeCategory.SaveData,
+            $"DumpEffectiveWildAnimals failed: {ex}",
+            StardewModdingAPI.LogLevel.Error);
+        return new FacadeResult(false, "Failed dumping effective wild animals (see log).");
+    }
+}
+
+private sealed record WildAnimalEffectiveDumpEntry(
+    string WildAnimalKey,
+    bool Enabled,
+    bool LargeEgg,
+    bool IsMagic,
+    int Price,
+    List<string> FarmAnimalIds
+);
 #endif
 
 

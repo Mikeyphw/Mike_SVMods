@@ -54,3 +54,11 @@
 - [x] Keep legacy JSON compatibility (merge legacy fields; ignore weight).
 - [x] Update consumers to use `GetEffectiveFarmAnimalKeys()`.
 - [x] Remove weight-based model types (`WeightedIdJson`, `WeightedFarmAnimalId`) and update any remaining code paths.
+
+## Phase 12 — WildAnimals enabled overrides + effective dump
+- [x] Add config override map `WildAnimalOverrides` with `Enabled`.
+- [x] Add `Enabled` to WildAnimalJson (default true).
+- [x] Apply overrides at ModData load (ConfiguredModDataLoader).
+- [x] Filter assignment + AnimalNotes to enabled-only.
+- [x] Add dev command `wegg wildanimals dump_effective`.
+

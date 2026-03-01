@@ -701,7 +701,7 @@ private void SyncApiBirthTextMode()
         var log = _contentLog ?? new SmapiLog(Monitor);
 
         // Ensure data loader exists for JSON-backed definitions.
-        _contentDataLoader ??= new ModDataLoader(JsonFileReaderFactory.Create(Helper), log);
+        _contentDataLoader ??= new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), log), () => _config!.Get(), log);
 
         var reader = JsonFileReaderFactory.Create(Helper);
 
@@ -827,7 +827,7 @@ private void InstallHarmonyBootstrap()
             return;
 
         _contentLog = new SmapiLog(Monitor);
-        _contentDataLoader = new ModDataLoader(JsonFileReaderFactory.Create(Helper), _contentLog);
+        _contentDataLoader = new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), _contentLog), () => _config!.Get(), _contentLog);
 
         var saveData = new SmapiSaveDataStore(Helper, Monitor);
         var game = new GameStateReader();
@@ -869,7 +869,7 @@ private void InstallHarmonyBootstrap()
         var config = _config?.Get() ?? new ModConfig();
         var log = _contentLog ?? new SmapiLog(Monitor);
         var i18n = new I18TranslationHelper(Helper);
-        var dataLoader = _contentDataLoader ?? new ModDataLoader(JsonFileReaderFactory.Create(Helper), log);
+        var dataLoader = _contentDataLoader ?? new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), log), () => _config?.Get() ?? new ModConfig(), log);
         return new ContentContext(
             helper: Helper,
             log: log,
@@ -931,12 +931,13 @@ private void InstallHarmonyBootstrap()
             log: log,
             invalidateAssets: InvalidateGameAssets);
 
-        var dataLoader = new ModDataLoader(JsonFileReaderFactory.Create(helper), log);
+        var dataLoader = new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(helper), log), () => _config!.Get(), log);
+        var mods = new EggsInWild.Infrastructure.Mods.SmapiModAvailability(helper.ModRegistry);
         var spawnWeather = new EggsInWild.Application.Spawning.SpawnWeatherHistory(saveData, log);
         var conditions = new EggsInWild.Application.Spawning.DefaultAreaConditionsEvaluator(game, spawnWeather);
         var planner = new EggsInWild.Application.Spawning.SpawnPlanner(
             world,
-            new EggsInWild.Infrastructure.Mods.SmapiModAvailability(helper.ModRegistry),
+            mods,
             conditions,
             log);
         var spawnService = new EggsInWild.Application.Spawning.EggSpawnService(world, placer, tileFinder, log, histogram);

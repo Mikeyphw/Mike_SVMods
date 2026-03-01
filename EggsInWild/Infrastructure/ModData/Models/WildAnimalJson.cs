@@ -4,6 +4,9 @@ namespace EggsInWild.Infrastructure.ModData.Models;
 
 public sealed class WildAnimalJson
 {
+    /// <summary>Whether this wild animal is eligible for assignment/progression. Defaults to enabled.</summary>
+    public bool Enabled { get; set; } = true;
+
     public bool LargeEgg { get; set; } = false;
     public int Price { get; set; } = 0;
     public bool IsMagic { get; set; } = false;

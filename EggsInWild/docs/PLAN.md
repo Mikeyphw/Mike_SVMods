@@ -58,3 +58,11 @@
 3. Keep legacy JSON compatibility in the model layer (merge legacy fields into `FarmAnimalKeys`, ignore weights).
 4. Update runtime consumers (`ChosenEggAssignments`, `WeggVerifier`, preview resolver) to use the unified key list.
 5. Ensure weight-based infrastructure types are removed or no longer referenced (compile clean).
+
+## Phase 12 — WildAnimals enabled overrides + effective dump
+1. Add `WildAnimalOverrides` to config (per wild animal key; `Enabled` override).
+2. Add `Enabled` field to WildAnimalsList model (default true).
+3. Apply config overrides at ModData load time (ConfiguredModDataLoader wrapper).
+4. Filter egg assignment + AnimalNotes progression to enabled-only animals.
+5. Add dev console command `wegg wildanimals dump_effective` (JSON).
+

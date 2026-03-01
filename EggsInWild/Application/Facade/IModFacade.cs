@@ -41,6 +41,9 @@ public interface IModFacade
 #if WEGG_DEV
     /// <summary>Dev-only: force-install DesertTomb Harmony patches immediately (bypasses config gating).</summary>
     FacadeResult ForceInstallDesertTombHarmonyPatches();
+
+    /// <summary>Dev-only: dump effective wild animals + resolved farm animal keys as JSON.</summary>
+    FacadeResult DumpEffectiveWildAnimals();
 #endif
 }
 
