@@ -1,6 +1,6 @@
 # PLAN — GMCM Menu (RoosterControl)
 
-Status: Phase 7 produce determinism/caching/tests implemented; Phase 8A.1–8A.2 produce override schema + parser/validator tests implemented (not integrated yet).
+Status: Phase 7 produce determinism/caching/tests implemented; Phase 8A.1–8A.3 produce override schema + parser/validator + applicator tests implemented (not integrated yet).
 
 ## Scope
 - Subdir: `RoosterControl`
@@ -84,3 +84,21 @@ Status: Phase 7 produce determinism/caching/tests implemented; Phase 8A.1–8A.2
 5. Add deterministic resolver caching (random-group expansion) with cache stats and invalidation hooks.
 6. Bound resolver caches using LRU eviction and expose capacity/eviction stats in `--full`/`--json`.
 7. Add regression/property tests for determinism invariants and cache behavior.
+## Phase 8A — Produce overrides rules foundation (pure)
+1. Define/maintain the rules JSON schema and precedence in docs.
+2. Implement pure parser/validator (`ProduceOverrideRules.Parse`) and unit tests.
+3. Implement pure applicator for 4-slot candidate tables (`ProduceOverrideApplicator.Apply`) and unit tests.
+
+### Matching + determinism rules
+- All `when` fields combine with AND semantics.
+- String comparisons are case-insensitive after normalization:
+  - trim
+  - treat `_`/`-` as spaces
+  - collapse repeated whitespace
+  - `roosterType` also matches with or without a trailing `Rooster` suffix.
+- Rule evaluation order is the JSON list order (`OrderIndex`).
+- Within a rule, actions apply in this fixed order:
+  1) `excludeKeys`
+  2) `replaceKeys` (then merge duplicate keys deterministically)
+  3) `weightMultipliers` (round away from zero; clamp 0..100)
+  4) `hardOverrideKey` (forces one key to 100; zeroes others)

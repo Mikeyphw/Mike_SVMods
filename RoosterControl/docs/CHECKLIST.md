@@ -74,3 +74,7 @@
 - [x] Add deterministic resolver caching (random-group expansion) with cache stats and invalidation hooks.
 - [x] Bound resolver caches using LRU eviction and expose capacity/eviction stats.
 - [x] Add regression/property tests for determinism invariants and cache behavior.
+## Phase 8A — Produce overrides rules foundation (pure)
+- [x] Document rules JSON schema + precedence + determinism guarantees.
+- [x] Add pure parser/validator (`ProduceOverrideRules`) with unit tests.
+- [x] Add pure applicator (`ProduceOverrideApplicator`) with unit tests.

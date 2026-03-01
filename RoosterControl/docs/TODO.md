@@ -35,3 +35,9 @@
 - [ ] Add GMCM page for overrides with validation feedback + i18n.
 - [ ] Add snapshot harness for `ra_debug_* --json` outputs (golden files).
 - [ ] Extend matching with ranges (`dayMin/dayMax`) and regex matchers.
+
+## Phase 8 — Produce overrides
+- [x] Phase 8A.1–8A.3: rules schema/docs + parser/validator + applicator (pure).
+- [ ] Phase 8B: integrate overrides into resolver and debug trace/JSON.
+- [ ] Phase 8C: GMCM UI (toggle + JSON editor + validation feedback) + i18n.
+- [ ] Phase 8D: snapshot harness for JSON debug outputs; ranges/dayMin/dayMax; regex matchers.
