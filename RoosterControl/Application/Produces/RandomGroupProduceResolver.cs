@@ -29,11 +29,14 @@ public interface IDeterministicProduceResolver : IProduceResolver
 /// </summary>
 public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
 {
+    internal const int DefaultResolveCacheCapacity = 2048;
+    internal const int DefaultTraceCacheCapacity = 512;
+
     private readonly IDictionary<string, List<string>> _groups;
     private readonly Random? _random;
 
-    private readonly Dictionary<CacheKey, string> _resolveCache;
-    private readonly Dictionary<CacheKey, ProduceResolutionTrace> _traceCache;
+    private readonly LruCache<CacheKey, string> _resolveCache;
+    private readonly LruCache<CacheKey, ProduceResolutionTrace> _traceCache;
 
     private long _resolveCacheHits;
     private long _resolveCacheMisses;
@@ -41,23 +44,43 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
     private long _traceCacheMisses;
 
     public RandomGroupProduceResolver(ProduceCatalog? produceCatalog)
+        : this(produceCatalog, DefaultResolveCacheCapacity, DefaultTraceCacheCapacity, random: null)
+    {
+    }
+
+    public RandomGroupProduceResolver(ProduceCatalog? produceCatalog, Random random)
+        : this(
+            produceCatalog,
+            DefaultResolveCacheCapacity,
+            DefaultTraceCacheCapacity,
+            random ?? throw new ArgumentNullException(nameof(random))
+        )
+    {
+    }
+
+    internal RandomGroupProduceResolver(ProduceCatalog? produceCatalog, int resolveCacheCapacity, int traceCacheCapacity)
+        : this(produceCatalog, resolveCacheCapacity, traceCacheCapacity, random: null)
+    {
+    }
+
+    internal RandomGroupProduceResolver(
+        ProduceCatalog? produceCatalog,
+        int resolveCacheCapacity,
+        int traceCacheCapacity,
+        Random? random
+    )
     {
         _groups =
             (produceCatalog?.RandomGroups as IDictionary<string, List<string>>)
             ?? new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
+        _random = random;
+
         var comparer = new CacheKeyComparer();
-        _resolveCache = new Dictionary<CacheKey, string>(comparer);
-        _traceCache = new Dictionary<CacheKey, ProduceResolutionTrace>(comparer);
+        _resolveCache = new LruCache<CacheKey, string>(resolveCacheCapacity, comparer);
+        _traceCache = new LruCache<CacheKey, ProduceResolutionTrace>(traceCacheCapacity, comparer);
     }
-
-    public RandomGroupProduceResolver(ProduceCatalog? produceCatalog, Random random)
-        : this(produceCatalog)
-    {
-        _random = random ?? throw new ArgumentNullException(nameof(random));
-    }
-
-    /// <summary>Clear deterministic resolution caches (safe to call any time).</summary>
+/// <summary>Clear deterministic resolution caches (safe to call any time).</summary>
     internal void ClearCaches()
     {
         _resolveCache.Clear();
@@ -72,14 +95,17 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
     internal ProduceResolverCacheStats GetCacheStats()
         => new(
             ResolveCacheEntries: _resolveCache.Count,
+            ResolveCacheCapacity: _resolveCache.Capacity,
             ResolveCacheHits: _resolveCacheHits,
             ResolveCacheMisses: _resolveCacheMisses,
+            ResolveCacheEvictions: _resolveCache.Evictions,
             TraceCacheEntries: _traceCache.Count,
+            TraceCacheCapacity: _traceCache.Capacity,
             TraceCacheHits: _traceCacheHits,
-            TraceCacheMisses: _traceCacheMisses
+            TraceCacheMisses: _traceCacheMisses,
+            TraceCacheEvictions: _traceCache.Evictions
         );
-
-    public string Resolve(string choiceKey)
+public string Resolve(string choiceKey)
     {
         if (string.IsNullOrWhiteSpace(choiceKey))
             return string.Empty;
@@ -115,7 +141,7 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
             seen: new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         );
 
-        _resolveCache[cacheKey] = resolved;
+        _resolveCache.Set(cacheKey, resolved);
         return resolved;
     }
 
@@ -144,7 +170,7 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
         var resolved = ResolveInnerDeterministicWithTrace(trimmed, baseSeed, depth: 0, seen, steps, out var cycleDetected);
         var trace = new ProduceResolutionTrace(trimmed, baseSeed, steps.ToArray(), resolved, cycleDetected);
 
-        _traceCache[cacheKey] = trace;
+        _traceCache.Set(cacheKey, trace);
         return new ProduceTraceResult(trace, CacheHit: false);
     }
 
@@ -247,13 +273,16 @@ internal readonly record struct ProduceTraceResult(ProduceResolutionTrace Trace,
 
 internal readonly record struct ProduceResolverCacheStats(
     int ResolveCacheEntries,
+    int ResolveCacheCapacity,
     long ResolveCacheHits,
     long ResolveCacheMisses,
+    long ResolveCacheEvictions,
     int TraceCacheEntries,
+    int TraceCacheCapacity,
     long TraceCacheHits,
-    long TraceCacheMisses
+    long TraceCacheMisses,
+    long TraceCacheEvictions
 );
-
 internal sealed record ProduceResolutionTrace(
     string InputKey,
     int BaseSeed,

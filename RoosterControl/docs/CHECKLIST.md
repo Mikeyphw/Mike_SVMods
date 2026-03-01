@@ -72,3 +72,5 @@
 - [x] Add reproducibility hash (`reproHash`) to JSON dumps (produce + plan/decisions).
 - [x] Add weight auditing to `--full` outputs (totals + anomalies list).
 - [x] Add deterministic resolver caching (random-group expansion) with cache stats and invalidation hooks.
+- [x] Bound resolver caches using LRU eviction and expose capacity/eviction stats.
+- [x] Add regression/property tests for determinism invariants and cache behavior.

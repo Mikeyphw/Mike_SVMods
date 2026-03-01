@@ -115,4 +115,81 @@ public sealed class RandomGroupProduceResolverTests
         Assert.Equal(a1, a2);
         Assert.Equal(b1, b2);
     }
+
+    [Fact]
+    public void ResolveWithTraceCached_ReportsCacheHit_OnSecondCall()
+    {
+        var catalog = new ProduceCatalog
+        {
+            RandomGroups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Random Gems"] = new() { ItemIds.Gemstones.Amethyst, ItemIds.Gemstones.Jade }
+            }
+        };
+
+        var resolver = new RandomGroupProduceResolver(catalog, resolveCacheCapacity: 8, traceCacheCapacity: 8);
+
+        var first = resolver.ResolveWithTraceCached(ItemIds.RandomProduces.RandomGems, baseSeed: 123);
+        var second = resolver.ResolveWithTraceCached(ItemIds.RandomProduces.RandomGems, baseSeed: 123);
+
+        Assert.False(first.CacheHit);
+        Assert.True(second.CacheHit);
+
+        var stats = resolver.GetCacheStats();
+        Assert.Equal(1, stats.TraceCacheEntries);
+        Assert.True(stats.TraceCacheHits >= 1);
+        Assert.True(stats.TraceCacheMisses >= 1);
+    }
+
+    [Fact]
+    public void ResolveDeterministic_CachesAreBounded_AndEvictLeastRecentlyUsed()
+    {
+        var resolver = new RandomGroupProduceResolver(produceCatalog: null, resolveCacheCapacity: 2, traceCacheCapacity: 2);
+
+        _ = resolver.Resolve("K1", baseSeed: 1);
+        _ = resolver.Resolve("K2", baseSeed: 1);
+        _ = resolver.Resolve("K3", baseSeed: 1);
+
+        var after3 = resolver.GetCacheStats();
+        Assert.Equal(2, after3.ResolveCacheEntries);
+        Assert.Equal(2, after3.ResolveCacheCapacity);
+        Assert.Equal(1, after3.ResolveCacheEvictions);
+
+        _ = resolver.Resolve("K2", baseSeed: 1); // should be a cache hit
+        _ = resolver.Resolve("K1", baseSeed: 1); // was evicted; should miss and cause another eviction
+
+        var after5 = resolver.GetCacheStats();
+        Assert.True(after5.ResolveCacheHits >= 1);
+        Assert.True(after5.ResolveCacheMisses >= 4);
+        Assert.Equal(2, after5.ResolveCacheEvictions);
+    }
+
+    [Fact]
+    public void ClearCaches_ResetsCountsAndEvictions()
+    {
+        var resolver = new RandomGroupProduceResolver(produceCatalog: null, resolveCacheCapacity: 2, traceCacheCapacity: 2);
+
+        _ = resolver.Resolve("K1", baseSeed: 1);
+        _ = resolver.ResolveWithTraceCached("K1", baseSeed: 1);
+
+        _ = resolver.Resolve("K2", baseSeed: 1);
+        _ = resolver.Resolve("K3", baseSeed: 1); // evict
+
+        var before = resolver.GetCacheStats();
+        Assert.True(before.ResolveCacheEntries > 0);
+        Assert.True(before.TraceCacheEntries > 0);
+        Assert.True(before.ResolveCacheEvictions >= 1);
+
+        resolver.ClearCaches();
+
+        var after = resolver.GetCacheStats();
+        Assert.Equal(0, after.ResolveCacheEntries);
+        Assert.Equal(0, after.TraceCacheEntries);
+        Assert.Equal(0, after.ResolveCacheHits);
+        Assert.Equal(0, after.ResolveCacheMisses);
+        Assert.Equal(0, after.ResolveCacheEvictions);
+        Assert.Equal(0, after.TraceCacheHits);
+        Assert.Equal(0, after.TraceCacheMisses);
+        Assert.Equal(0, after.TraceCacheEvictions);
+    }
 }

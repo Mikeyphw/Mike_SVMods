@@ -538,11 +538,15 @@ public sealed class RoosterHelper
             var s = rg.GetCacheStats();
             cacheStats = new DebugProduceCacheStats(
                 ResolveCacheEntries: s.ResolveCacheEntries,
+                ResolveCacheCapacity: s.ResolveCacheCapacity,
                 ResolveCacheHits: s.ResolveCacheHits,
                 ResolveCacheMisses: s.ResolveCacheMisses,
+                ResolveCacheEvictions: s.ResolveCacheEvictions,
                 TraceCacheEntries: s.TraceCacheEntries,
+                TraceCacheCapacity: s.TraceCacheCapacity,
                 TraceCacheHits: s.TraceCacheHits,
-                TraceCacheMisses: s.TraceCacheMisses
+                TraceCacheMisses: s.TraceCacheMisses,
+                TraceCacheEvictions: s.TraceCacheEvictions
             );
         }
 
@@ -624,8 +628,8 @@ public sealed class RoosterHelper
             if (cacheStats is not null)
             {
                 sb.AppendLine("[ra_debug_produce] CacheStats:");
-                sb.AppendLine($"  resolve: entries={cacheStats.ResolveCacheEntries} hits={cacheStats.ResolveCacheHits} misses={cacheStats.ResolveCacheMisses}");
-                sb.AppendLine($"  trace: entries={cacheStats.TraceCacheEntries} hits={cacheStats.TraceCacheHits} misses={cacheStats.TraceCacheMisses}");
+                sb.AppendLine($"  resolve: entries={cacheStats.ResolveCacheEntries}/{cacheStats.ResolveCacheCapacity} hits={cacheStats.ResolveCacheHits} misses={cacheStats.ResolveCacheMisses} evictions={cacheStats.ResolveCacheEvictions}");
+                sb.AppendLine($"  trace: entries={cacheStats.TraceCacheEntries}/{cacheStats.TraceCacheCapacity} hits={cacheStats.TraceCacheHits} misses={cacheStats.TraceCacheMisses} evictions={cacheStats.TraceCacheEvictions}");
             }
 
             if (anomaliesOrNull is not null)
@@ -734,14 +738,17 @@ public sealed class RoosterHelper
 
     private sealed record DebugProduceCacheStats(
         int ResolveCacheEntries,
+        int ResolveCacheCapacity,
         long ResolveCacheHits,
         long ResolveCacheMisses,
+        long ResolveCacheEvictions,
         int TraceCacheEntries,
+        int TraceCacheCapacity,
         long TraceCacheHits,
-        long TraceCacheMisses
+        long TraceCacheMisses,
+        long TraceCacheEvictions
     );
-
-    private sealed record DebugWeightAnomaly(
+private sealed record DebugWeightAnomaly(
         string Channel,
         int SlotOrdinal,
         string Slot,

@@ -82,3 +82,5 @@ Status: Phase 8B produce tables + rooster produce system Phase 6 implemented.
 3. Add reproducibility hash (`reproHash`) to JSON dumps (produce + plan/decisions).
 4. Add weight auditing to `--full` outputs (totals + anomalies list).
 5. Add deterministic resolver caching (random-group expansion) with cache stats and invalidation hooks.
+6. Bound resolver caches using LRU eviction and expose capacity/eviction stats in `--full`/`--json`.
+7. Add regression/property tests for determinism invariants and cache behavior.

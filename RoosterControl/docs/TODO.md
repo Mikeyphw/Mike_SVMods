@@ -24,6 +24,4 @@
 - [x] Phase 6: persist daily decisions snapshot in save state (diff across sessions).
 
 ## Phase 7 — Produce system improvements (follow-ups)
-- Consider bounded/LRU caching for resolver caches if they grow too large.
 - Expand anomaly reporting to cover missing/empty random groups and unresolved variable keys.
-- Add property/regression tests for seeding invariants and cache correctness.
