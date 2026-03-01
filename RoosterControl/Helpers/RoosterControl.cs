@@ -62,7 +62,17 @@ public sealed class RoosterHelper
     }
 
     public void UpdateConfig(RoosterControlConfig config)
-        => Config = config ?? throw new ArgumentNullException(nameof(config));
+    {
+        Config = config ?? throw new ArgumentNullException(nameof(config));
+        InvalidateProduceResolverCaches();
+    }
+
+
+    internal void InvalidateProduceResolverCaches()
+    {
+        if (_produceResolver is RandomGroupProduceResolver rg)
+            rg.ClearCaches();
+    }
 
     public static bool UpdatePercentage(int chance)
     {
@@ -155,16 +165,9 @@ public sealed class RoosterHelper
         Roosters = roosterMap;
     }
 
-    private static (ulong FarmId, int Day, string LocationName) GetWorldSeedInputs()
+        private static (ulong FarmId, int Day, string LocationName) GetWorldSeedInputs()
     {
-        if (!Context.IsWorldReady)
-            return (0UL, 0, "not-ready");
-
-        return (
-            Game1.uniqueIDForThisGame,
-            Game1.Date.TotalDays,
-            Game1.getFarm()?.NameOrUniqueName ?? "Farm"
-        );
+        return RoosterSeedPolicy.GetWorldSeedInputs();
     }
 
     private static void EnsureRoosterDefaults(RoosterControlConfig cfg)
@@ -454,6 +457,7 @@ public sealed class RoosterHelper
         int? dayOverride = null,
         string? locationNameOverride = null,
         string? buildingTypeOverride = null,
+        int? seedOverride = null,
         bool full = false,
         bool json = false
     )
@@ -464,35 +468,42 @@ public sealed class RoosterHelper
         if (!Config.Roosters.TryGetValue(roosterType, out var settings) || settings is null)
             return $"[ra_debug_produce] Missing config settings for rooster type: {roosterType}";
 
-        var farmId = 0UL;
-        var day = 0;
-        var locationName = "not-ready";
-
-        if (Context.IsWorldReady)
-        {
-            farmId = Game1.uniqueIDForThisGame;
-            day = Game1.Date.TotalDays;
-            locationName = Game1.getFarm()?.NameOrUniqueName ?? "Farm";
-        }
-
-        if (dayOverride is not null)
-            day = dayOverride.Value;
-
-        if (!string.IsNullOrWhiteSpace(locationNameOverride))
-            locationName = locationNameOverride!;
-
         var buildingType = !string.IsNullOrWhiteSpace(buildingTypeOverride)
             ? buildingTypeOverride!
             : rooster.BuildingRequired.ToString();
 
-        var seedCtx = new RoosterSeedKey.Context(
-            FarmId: farmId,
-            Day: day,
-            LocationName: locationName,
-            BuildingType: buildingType,
-            FarmAnimalName: rooster.FarmAnimalName ?? string.Empty,
-            RoosterType: rooster.RoosterType
+        var seedCtx = RoosterSeedPolicy.BuildContext(
+            roosterType: rooster.RoosterType,
+            farmAnimalName: rooster.FarmAnimalName ?? string.Empty,
+            buildingType: buildingType,
+            dayOverride: dayOverride,
+            locationNameOverride: locationNameOverride,
+            seedOverride: seedOverride
         );
+
+
+        var reproHash = RoosterSeedPolicy.ComputeReproHash("produce", seedCtx);
+        var anomalies = new List<DebugWeightAnomaly>();
+
+        static void AddWeightAnomaly(
+            List<DebugWeightAnomaly> list,
+            string channel,
+            DebugProduceSlotDump slotDump,
+            string reason
+        )
+        {
+            if (slotDump.RawWeight != slotDump.Weight)
+            {
+                list.Add(new DebugWeightAnomaly(
+                    Channel: channel,
+                    SlotOrdinal: slotDump.SlotOrdinal,
+                    Slot: slotDump.Slot,
+                    RawWeight: slotDump.RawWeight,
+                    SanitizedWeight: slotDump.Weight,
+                    Reason: reason
+                ));
+            }
+        }
 
         var produceSeed = RoosterSeedKey.ForChosenProduce(seedCtx, ProduceTypeEntries.Produce);
         var deluxeSeed = RoosterSeedKey.ForChosenProduce(seedCtx, ProduceTypeEntries.Deluxe);
@@ -502,6 +513,40 @@ public sealed class RoosterHelper
 
         var produceChosen = BuildSlotDump(seedCtx, ProduceTypeEntries.Produce, produceRoll);
         var deluxeChosen = BuildSlotDump(seedCtx, ProduceTypeEntries.Deluxe, deluxeRoll);
+        var produceCandidates = full ? BuildCandidates(seedCtx, ProduceTypeEntries.Produce, settings.ProduceEntries) : null;
+        var deluxeCandidates = full ? BuildCandidates(seedCtx, ProduceTypeEntries.Deluxe, settings.DeluxeProduceEntries) : null;
+
+        // Audit chosen weights (always) and candidates (when --full).
+        AddWeightAnomaly(anomalies, "produce:chosen", produceChosen, reason: "chosen slot weight clamped to [0..100]");
+        AddWeightAnomaly(anomalies, "deluxe:chosen", deluxeChosen, reason: "chosen slot weight clamped to [0..100]");
+
+        if (produceChosen.CycleDetected)
+            anomalies.Add(new DebugWeightAnomaly("produce:chosen", produceChosen.SlotOrdinal, produceChosen.Slot, produceChosen.RawWeight, produceChosen.Weight, "cycle detected during random-group expansion"));
+        if (deluxeChosen.CycleDetected)
+            anomalies.Add(new DebugWeightAnomaly("deluxe:chosen", deluxeChosen.SlotOrdinal, deluxeChosen.Slot, deluxeChosen.RawWeight, deluxeChosen.Weight, "cycle detected during random-group expansion"));
+
+        if (produceCandidates is not null)
+            foreach (var c in produceCandidates)
+                AddWeightAnomaly(anomalies, "produce:candidate", c, reason: "candidate weight clamped to [0..100]");
+        if (deluxeCandidates is not null)
+            foreach (var c in deluxeCandidates)
+                AddWeightAnomaly(anomalies, "deluxe:candidate", c, reason: "candidate weight clamped to [0..100]");
+
+        DebugProduceCacheStats? cacheStats = null;
+        if (full && _produceResolver is RandomGroupProduceResolver rg)
+        {
+            var s = rg.GetCacheStats();
+            cacheStats = new DebugProduceCacheStats(
+                ResolveCacheEntries: s.ResolveCacheEntries,
+                ResolveCacheHits: s.ResolveCacheHits,
+                ResolveCacheMisses: s.ResolveCacheMisses,
+                TraceCacheEntries: s.TraceCacheEntries,
+                TraceCacheHits: s.TraceCacheHits,
+                TraceCacheMisses: s.TraceCacheMisses
+            );
+        }
+
+        var anomaliesOrNull = anomalies.Count == 0 ? null : anomalies;
 
         if (json)
         {
@@ -512,12 +557,16 @@ public sealed class RoosterHelper
                 Day: seedCtx.Day,
                 LocationName: seedCtx.LocationName,
                 BuildingType: seedCtx.BuildingType,
+                SeedOverride: seedOverride,
+                ReproHash: reproHash,
                 ProduceSeed: produceSeed,
                 DeluxeSeed: deluxeSeed,
                 ChosenProduce: produceChosen,
                 ChosenDeluxe: deluxeChosen,
-                ProduceCandidates: full ? BuildCandidates(seedCtx, ProduceTypeEntries.Produce, settings.ProduceEntries) : null,
-                DeluxeCandidates: full ? BuildCandidates(seedCtx, ProduceTypeEntries.Deluxe, settings.DeluxeProduceEntries) : null
+                ProduceCandidates: produceCandidates,
+                DeluxeCandidates: deluxeCandidates,
+                WeightAnomalies: anomaliesOrNull,
+                CacheStats: cacheStats
             );
 
             return JsonSerializer.Serialize(dump, new JsonSerializerOptions { WriteIndented = false });
@@ -531,6 +580,8 @@ public sealed class RoosterHelper
         sb.AppendLine($"  day: {seedCtx.Day}");
         sb.AppendLine($"  locationName: {seedCtx.LocationName}");
         sb.AppendLine($"  buildingType: {seedCtx.BuildingType}");
+        sb.AppendLine($"  seedOverride: {(seedOverride is null ? "null" : seedOverride.Value.ToString(CultureInfo.InvariantCulture))}");
+        sb.AppendLine($"  reproHash: {reproHash}");
         sb.AppendLine("[ra_debug_produce] Seeds:");
         sb.AppendLine($"  produceSeed: {produceSeed}");
         sb.AppendLine($"  deluxeSeed: {deluxeSeed}");
@@ -538,30 +589,53 @@ public sealed class RoosterHelper
         sb.AppendLine($"  chosenProduce: {produceChosen.ResolvedId} (slot {produceChosen.Slot} weight {produceChosen.Weight})");
         sb.AppendLine($"  chosenDeluxe: {deluxeChosen.ResolvedId} (slot {deluxeChosen.Slot} weight {deluxeChosen.Weight})");
 
-        if (full)
+                if (full)
         {
+            var pList = produceCandidates ?? new List<DebugProduceSlotDump>();
+            var dList = deluxeCandidates ?? new List<DebugProduceSlotDump>();
+
+            var pTotal = pList.Sum(c => c.Weight);
+            var dTotal = dList.Sum(c => c.Weight);
+
+            sb.AppendLine("[ra_debug_produce] Sanity:");
+            sb.AppendLine($"  produceTotalWeight: {pTotal}");
+            sb.AppendLine($"  deluxeTotalWeight: {dTotal}");
+
             sb.AppendLine("[ra_debug_produce] ProduceCandidates:");
-            foreach (var c in BuildCandidates(seedCtx, ProduceTypeEntries.Produce, settings.ProduceEntries))
-                sb.AppendLine($"  {c.Slot}: key={c.ChoiceKey} resolved={c.ResolvedId} weight={c.Weight} baseSeed={c.BaseSeed} steps={c.TraceSteps?.Count ?? 0}");
+            foreach (var c in pList)
+            {
+                var norm = pTotal > 0 ? (c.Weight / (double)pTotal).ToString("0.####", CultureInfo.InvariantCulture) : "n/a";
+                sb.AppendLine(
+                    $"  {c.Slot}: key={c.ChoiceKey} resolved={c.ResolvedId} rawWeight={c.RawWeight} weight={c.Weight} norm={norm} " +
+                    $"baseSeed={c.BaseSeed} traceSteps={c.TraceSteps?.Count ?? 0} cacheHit={c.TraceCacheHit} cycle={c.CycleDetected}"
+                );
+            }
 
             sb.AppendLine("[ra_debug_produce] DeluxeCandidates:");
-            foreach (var c in BuildCandidates(seedCtx, ProduceTypeEntries.Deluxe, settings.DeluxeProduceEntries))
-                sb.AppendLine($"  {c.Slot}: key={c.ChoiceKey} resolved={c.ResolvedId} weight={c.Weight} baseSeed={c.BaseSeed} steps={c.TraceSteps?.Count ?? 0}");
-
-            if (produceChosen.TraceSteps is { Count: > 0 })
+            foreach (var c in dList)
             {
-                sb.AppendLine("[ra_debug_produce] ChosenProduceTrace:");
-                foreach (var step in produceChosen.TraceSteps)
-                    sb.AppendLine($"  depth={step.Depth} group={step.GroupKey} pickSeed={step.PickSeed} index={step.Index} picked={step.Picked}");
+                var norm = dTotal > 0 ? (c.Weight / (double)dTotal).ToString("0.####", CultureInfo.InvariantCulture) : "n/a";
+                sb.AppendLine(
+                    $"  {c.Slot}: key={c.ChoiceKey} resolved={c.ResolvedId} rawWeight={c.RawWeight} weight={c.Weight} norm={norm} " +
+                    $"baseSeed={c.BaseSeed} traceSteps={c.TraceSteps?.Count ?? 0} cacheHit={c.TraceCacheHit} cycle={c.CycleDetected}"
+                );
             }
 
-            if (deluxeChosen.TraceSteps is { Count: > 0 })
+            if (cacheStats is not null)
             {
-                sb.AppendLine("[ra_debug_produce] ChosenDeluxeTrace:");
-                foreach (var step in deluxeChosen.TraceSteps)
-                    sb.AppendLine($"  depth={step.Depth} group={step.GroupKey} pickSeed={step.PickSeed} index={step.Index} picked={step.Picked}");
+                sb.AppendLine("[ra_debug_produce] CacheStats:");
+                sb.AppendLine($"  resolve: entries={cacheStats.ResolveCacheEntries} hits={cacheStats.ResolveCacheHits} misses={cacheStats.ResolveCacheMisses}");
+                sb.AppendLine($"  trace: entries={cacheStats.TraceCacheEntries} hits={cacheStats.TraceCacheHits} misses={cacheStats.TraceCacheMisses}");
+            }
+
+            if (anomaliesOrNull is not null)
+            {
+                sb.AppendLine("[ra_debug_produce] Anomalies:");
+                foreach (var a in anomaliesOrNull)
+                    sb.AppendLine($"  {a.Channel} slot={a.Slot} raw={a.RawWeight} weight={a.SanitizedWeight} reason={a.Reason}");
             }
         }
+
 
         return sb.ToString().TrimEnd();
     }
@@ -595,9 +669,9 @@ public sealed class RoosterHelper
 
         var baseSeed = RoosterSeedKey.ForChoiceResolution(seedCtx, channel, slotOrdinal);
 
-        var (resolved, traceSteps) = ResolveWithOptionalTrace(choiceKey, baseSeed);
+        var (resolved, traceSteps, traceCacheHit, cycleDetected) = ResolveWithOptionalTrace(choiceKey, baseSeed);
 
-        return new DebugProduceSlotDump(slotOrdinal, slot.ToString(), choiceKey, resolved, entry.Probability, baseSeed, traceSteps);
+        return new DebugProduceSlotDump(slotOrdinal, slot.ToString(), choiceKey, resolved, Math.Clamp(entry.Probability, 0, 100), baseSeed, traceSteps, traceCacheHit, cycleDetected, entry.Probability);
     }
 
     private List<DebugProduceSlotDump> BuildCandidates(in RoosterSeedKey.Context seedCtx, ProduceTypeEntries produceType, IReadOnlyList<ProduceEntry> entries)
@@ -617,26 +691,28 @@ public sealed class RoosterHelper
                 : choice;
 
             var baseSeed = RoosterSeedKey.ForChoiceResolution(seedCtx, channel, slotOrdinal);
-            var (resolved, traceSteps) = ResolveWithOptionalTrace(choiceKey, baseSeed);
+            var (resolved, traceSteps, traceCacheHit, cycleDetected) = ResolveWithOptionalTrace(choiceKey, baseSeed);
 
-            list.Add(new DebugProduceSlotDump(slotOrdinal, slot.ToString(), choiceKey, resolved, entry.Probability, baseSeed, traceSteps));
+            list.Add(new DebugProduceSlotDump(slotOrdinal, slot.ToString(), choiceKey, resolved, Math.Clamp(entry.Probability, 0, 100), baseSeed, traceSteps, traceCacheHit, cycleDetected, entry.Probability));
         }
 
         return list;
     }
 
-    private (string Resolved, IReadOnlyList<DebugResolutionStep>? Steps) ResolveWithOptionalTrace(string choiceKey, int baseSeed)
+        private (string Resolved, IReadOnlyList<DebugResolutionStep>? Steps, bool TraceCacheHit, bool CycleDetected) ResolveWithOptionalTrace(
+        string choiceKey,
+        int baseSeed
+    )
     {
         if (_produceResolver is RandomGroupProduceResolver rg)
         {
-            var trace = rg.ResolveWithTrace(choiceKey, baseSeed);
-            var steps = trace.Steps.Select(s => new DebugResolutionStep(s.Depth, s.GroupKey, s.PickSeed, s.Index, s.Picked)).ToList();
-            return (trace.ResolvedKey, steps);
+            var tr = rg.ResolveWithTraceCached(choiceKey, baseSeed);
+            var steps = tr.Trace.Steps.Select(s => new DebugResolutionStep(s.Depth, s.GroupKey, s.PickSeed, s.Index, s.Picked)).ToList();
+            return (tr.Trace.ResolvedKey, steps, tr.CacheHit, tr.Trace.CycleDetected);
         }
 
-        return (_produceResolver.Resolve(choiceKey, baseSeed), null);
+        return (_produceResolver.Resolve(choiceKey, baseSeed), null, TraceCacheHit: false, CycleDetected: false);
     }
-
     private sealed record DebugProduceDump(
         string RoosterType,
         string FarmAnimalName,
@@ -644,12 +720,34 @@ public sealed class RoosterHelper
         int Day,
         string LocationName,
         string BuildingType,
+        int? SeedOverride,
+        string ReproHash,
         int ProduceSeed,
         int DeluxeSeed,
         DebugProduceSlotDump ChosenProduce,
         DebugProduceSlotDump ChosenDeluxe,
         List<DebugProduceSlotDump>? ProduceCandidates,
-        List<DebugProduceSlotDump>? DeluxeCandidates
+        List<DebugProduceSlotDump>? DeluxeCandidates,
+        List<DebugWeightAnomaly>? WeightAnomalies,
+        DebugProduceCacheStats? CacheStats
+    );
+
+    private sealed record DebugProduceCacheStats(
+        int ResolveCacheEntries,
+        long ResolveCacheHits,
+        long ResolveCacheMisses,
+        int TraceCacheEntries,
+        long TraceCacheHits,
+        long TraceCacheMisses
+    );
+
+    private sealed record DebugWeightAnomaly(
+        string Channel,
+        int SlotOrdinal,
+        string Slot,
+        int RawWeight,
+        int SanitizedWeight,
+        string Reason
     );
 
     private sealed record DebugProduceSlotDump(
@@ -659,7 +757,10 @@ public sealed class RoosterHelper
         string ResolvedId,
         int Weight,
         int BaseSeed,
-        IReadOnlyList<DebugResolutionStep>? TraceSteps
+        IReadOnlyList<DebugResolutionStep>? TraceSteps,
+        bool TraceCacheHit,
+        bool CycleDetected,
+        int RawWeight
     );
 
     private sealed record DebugResolutionStep(
@@ -670,6 +771,7 @@ public sealed class RoosterHelper
         string Picked
     );
 #endif
+
 
     private void ApplyFertilizedBoost(RoosterData rooster)
     {
@@ -886,5 +988,4 @@ public sealed class RoosterHelper
         return new List<string>();
     }
 }
-
 

@@ -65,3 +65,10 @@
 - [x] Load saved snapshots on SaveLoaded and surface them to debug commands.
 - [x] Persist snapshots on Saving.
 - [x] SchemaVersion migration 1 → 2.
+
+## Phase 7 — Produce system improvements (determinism, validation, caching)
+- [x] Centralize deterministic seed inputs via `RoosterSeedPolicy`.
+- [x] Add `--seed <int>` override for `ra_debug_produce` and `ra_debug_plan`.
+- [x] Add reproducibility hash (`reproHash`) to JSON dumps (produce + plan/decisions).
+- [x] Add weight auditing to `--full` outputs (totals + anomalies list).
+- [x] Add deterministic resolver caching (random-group expansion) with cache stats and invalidation hooks.

@@ -75,3 +75,10 @@ Status: Phase 8B produce tables + rooster produce system Phase 6 implemented.
 3. Update snapshots when computing today’s decisions; persist on <c>Saving</c>.
 4. Migrate SchemaVersion=1 → 2 without crashing (null snapshots).
 5. Keep snapshots copy/paste friendly (stable ordering for JSON dumps).
+
+## Phase 7 — Produce system improvements (determinism, validation, caching)
+1. Centralize deterministic seed inputs via `RoosterSeedPolicy`.
+2. Add `--seed <int>` override for `ra_debug_produce` and `ra_debug_plan`.
+3. Add reproducibility hash (`reproHash`) to JSON dumps (produce + plan/decisions).
+4. Add weight auditing to `--full` outputs (totals + anomalies list).
+5. Add deterministic resolver caching (random-group expansion) with cache stats and invalidation hooks.

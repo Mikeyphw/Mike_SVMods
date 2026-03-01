@@ -17,15 +17,18 @@ namespace RoosterControl.Application;
 
 internal sealed partial class RoosterCoordinator
 {
-    private static (List<string> Positional, bool Full, bool Json) ParseDebugArgs(string[] args)
+        private static (List<string> Positional, bool Full, bool Json, int? SeedOverride) ParseDebugArgs(string[] args)
     {
         var positional = new List<string>();
         var full = false;
         var json = false;
+        int? seedOverride = null;
 
-        foreach (var raw in args ?? Array.Empty<string>())
+        var tokens = args ?? Array.Empty<string>();
+        for (var i = 0; i < tokens.Length; i++)
         {
-            var token = (raw ?? string.Empty).Trim();
+            var raw = tokens[i] ?? string.Empty;
+            var token = raw.Trim();
             if (token.Length == 0)
                 continue;
 
@@ -41,13 +44,34 @@ internal sealed partial class RoosterCoordinator
                 continue;
             }
 
+            if (token.StartsWith("--seed", StringComparison.OrdinalIgnoreCase))
+            {
+                var value = string.Empty;
+
+                if (token.Equals("--seed", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (i + 1 < tokens.Length)
+                    {
+                        value = (tokens[++i] ?? string.Empty).Trim();
+                    }
+                }
+                else if (token.StartsWith("--seed=", StringComparison.OrdinalIgnoreCase))
+                {
+                    value = token.Substring("--seed=".Length).Trim();
+                }
+
+                if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seed))
+                    seedOverride = seed;
+
+                continue;
+            }
+
             positional.Add(token);
         }
 
-        return (positional, full, json);
+        return (positional, full, json, seedOverride);
     }
-
-    private static string NormalizeBuildingKey(string raw)
+private static string NormalizeBuildingKey(string raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
             return string.Empty;
@@ -70,7 +94,7 @@ internal sealed partial class RoosterCoordinator
 
     private void DebugProduceCommand(string _command, string[] args)
     {
-        var (positional, full, json) = ParseDebugArgs(args);
+        var (positional, full, json, seedOverride) = ParseDebugArgs(args);
 
         if (positional.Count == 0 || positional[0].Equals("help", StringComparison.OrdinalIgnoreCase))
         {
@@ -110,6 +134,7 @@ internal sealed partial class RoosterCoordinator
             dayOverride: dayOverride,
             locationNameOverride: locationOverride,
             buildingTypeOverride: buildingOverride,
+            seedOverride: seedOverride,
             full: full,
             json: json
         );
@@ -119,7 +144,7 @@ internal sealed partial class RoosterCoordinator
 
     private void DebugPlanCommand(string _command, string[] args)
     {
-        var (positional, full, json) = ParseDebugArgs(args);
+        var (positional, full, json, seedOverride) = ParseDebugArgs(args);
 
         if (positional.Count > 0 && positional[0].Equals("help", StringComparison.OrdinalIgnoreCase))
         {
@@ -190,13 +215,18 @@ internal sealed partial class RoosterCoordinator
         DailyHatchingPlanEnvelope? plan = null;
         var usedAdHoc = false;
 
-        if (dayOverride is null || dayOverride.Value == today)
+        var effectiveDay = dayOverride ?? today;
+
+        var shouldUseCached = seedOverride is null
+            && dayOverride is null
+            && string.IsNullOrWhiteSpace(locationOverride);
+
+        if (shouldUseCached)
         {
             plan = _dailyDecisions?.Plan ?? _dailyPlan ?? EnsureDailyPlanForToday(farmAnimalsData, forceRecompute: false, out _);
         }
         else
         {
-            // Deterministic debug plan for an arbitrary day (not persisted).
             usedAdHoc = true;
             plan = _planService.BuildPlan(
                 farmAnimalsData: farmAnimalsData,
@@ -205,12 +235,11 @@ internal sealed partial class RoosterCoordinator
                 femaleEggs: RoosterHelper.FemaleEggs,
                 dailyLuck: DailyLuck,
                 farmId: farmId,
-                day: dayOverride.Value,
+                day: effectiveDay,
                 nonce: 0
             );
         }
-
-        if (plan is null)
+if (plan is null)
         {
             Monitor.Log("[ra_debug_plan] No plan available.", LogLevel.Info);
             return;
@@ -228,7 +257,7 @@ internal sealed partial class RoosterCoordinator
 
     private void DebugDiffCommand(string _command, string[] args)
     {
-        var (positional, full, json) = ParseDebugArgs(args);
+        var (positional, full, json, seedOverride) = ParseDebugArgs(args);
 
         if (positional.Count > 0 && positional[0].Equals("help", StringComparison.OrdinalIgnoreCase))
         {
@@ -301,7 +330,7 @@ internal sealed partial class RoosterCoordinator
         }
 
         var today = SDate.Now().DaysSinceStart;
-        var farmId = unchecked((long)Game1.uniqueIDForThisGame);
+        var farmId = seedOverride is null ? unchecked((long)Game1.uniqueIDForThisGame) : seedOverride.Value;
 
         sb.AppendLine($"Day={today} FarmId={farmId} DailyLuck={DailyLuck}");
         sb.AppendLine($"DailyPlanFingerprint={_dailyPlanFingerprint}");
@@ -365,6 +394,7 @@ internal sealed partial class RoosterCoordinator
         int Day,
         long FarmId,
         string Fingerprint,
+        string ReproHash,
         DebugPlanDump? Plan
     );
 
@@ -372,6 +402,7 @@ internal sealed partial class RoosterCoordinator
         int Day,
         long FarmId,
         string Fingerprint,
+        string ReproHash,
         long Nonce,
         bool AdHoc,
         string? LocationName,
@@ -418,6 +449,7 @@ internal sealed partial class RoosterCoordinator
             Day: decisions.Day,
             FarmId: decisions.FarmId,
             Fingerprint: decisions.Fingerprint,
+            ReproHash: StableHash.Hex(StableHash.Fnv1a64($"rc|repro|decisions|{decisions.FarmId}|{decisions.Day}|{decisions.Fingerprint}")),
             Plan: decisions.Plan is null
                 ? null
                 : BuildDebugPlanDump(
@@ -483,6 +515,7 @@ internal sealed partial class RoosterCoordinator
             Day: plan.Day,
             FarmId: plan.FarmId,
             Fingerprint: plan.Fingerprint,
+            ReproHash: StableHash.Hex(StableHash.Fnv1a64($"rc|repro|plan|{plan.FarmId}|{plan.Day}|{plan.Fingerprint}|{plan.Nonce}|{(adHoc ? "adhoc" : "cached")}")),
             Nonce: plan.Nonce,
             AdHoc: adHoc,
             LocationName: locationName,

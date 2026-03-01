@@ -274,6 +274,8 @@ private NextTickScheduler _nextTick;
         InvalidateDailyPlanCache("save loaded");
 
         _previousDailyDecisions = _saveState.CurrentDailyDecisions ?? _saveState.PreviousDailyDecisions;
+        if (RoosterHelper is not null)
+            RoosterHelper.InvalidateProduceResolverCaches();
 
         RunStartupValidationV2();
 
@@ -303,6 +305,10 @@ private NextTickScheduler _nextTick;
     {
         HasDayStarted = false;
         InvalidateDailyPlanCache("returned to title");
+
+        if (RoosterHelper is not null)
+            RoosterHelper.InvalidateProduceResolverCaches();
+
 
         ResetSchedulers();
         _debugInvalidationsRequested.Clear();

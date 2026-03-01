@@ -32,11 +32,23 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
     private readonly IDictionary<string, List<string>> _groups;
     private readonly Random? _random;
 
+    private readonly Dictionary<CacheKey, string> _resolveCache;
+    private readonly Dictionary<CacheKey, ProduceResolutionTrace> _traceCache;
+
+    private long _resolveCacheHits;
+    private long _resolveCacheMisses;
+    private long _traceCacheHits;
+    private long _traceCacheMisses;
+
     public RandomGroupProduceResolver(ProduceCatalog? produceCatalog)
     {
         _groups =
             (produceCatalog?.RandomGroups as IDictionary<string, List<string>>)
             ?? new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        var comparer = new CacheKeyComparer();
+        _resolveCache = new Dictionary<CacheKey, string>(comparer);
+        _traceCache = new Dictionary<CacheKey, ProduceResolutionTrace>(comparer);
     }
 
     public RandomGroupProduceResolver(ProduceCatalog? produceCatalog, Random random)
@@ -44,6 +56,28 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
     {
         _random = random ?? throw new ArgumentNullException(nameof(random));
     }
+
+    /// <summary>Clear deterministic resolution caches (safe to call any time).</summary>
+    internal void ClearCaches()
+    {
+        _resolveCache.Clear();
+        _traceCache.Clear();
+
+        _resolveCacheHits = 0;
+        _resolveCacheMisses = 0;
+        _traceCacheHits = 0;
+        _traceCacheMisses = 0;
+    }
+
+    internal ProduceResolverCacheStats GetCacheStats()
+        => new(
+            ResolveCacheEntries: _resolveCache.Count,
+            ResolveCacheHits: _resolveCacheHits,
+            ResolveCacheMisses: _resolveCacheMisses,
+            TraceCacheEntries: _traceCache.Count,
+            TraceCacheHits: _traceCacheHits,
+            TraceCacheMisses: _traceCacheMisses
+        );
 
     public string Resolve(string choiceKey)
     {
@@ -63,29 +97,59 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
         if (string.IsNullOrWhiteSpace(choiceKey))
             return string.Empty;
 
-        return ResolveInnerDeterministic(
-            choiceKey.Trim(),
+        var trimmed = choiceKey.Trim();
+
+        var cacheKey = new CacheKey(trimmed, baseSeed);
+        if (_resolveCache.TryGetValue(cacheKey, out var cached))
+        {
+            _resolveCacheHits++;
+            return cached;
+        }
+
+        _resolveCacheMisses++;
+
+        var resolved = ResolveInnerDeterministic(
+            trimmed,
             baseSeed,
             depth: 0,
             seen: new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         );
+
+        _resolveCache[cacheKey] = resolved;
+        return resolved;
     }
 
-
-
-    internal ProduceResolutionTrace ResolveWithTrace(string choiceKey, int baseSeed)
+    internal ProduceTraceResult ResolveWithTraceCached(string choiceKey, int baseSeed)
     {
         if (string.IsNullOrWhiteSpace(choiceKey))
-            return new ProduceResolutionTrace(string.Empty, baseSeed, Array.Empty<ProduceResolutionStep>(), string.Empty, CycleDetected: false);
+            return new ProduceTraceResult(
+                new ProduceResolutionTrace(string.Empty, baseSeed, Array.Empty<ProduceResolutionStep>(), string.Empty, CycleDetected: false),
+                CacheHit: true
+            );
 
         var trimmed = choiceKey.Trim();
+        var cacheKey = new CacheKey(trimmed, baseSeed);
+
+        if (_traceCache.TryGetValue(cacheKey, out var cached))
+        {
+            _traceCacheHits++;
+            return new ProduceTraceResult(cached, CacheHit: true);
+        }
+
+        _traceCacheMisses++;
+
         var steps = new List<ProduceResolutionStep>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         var resolved = ResolveInnerDeterministicWithTrace(trimmed, baseSeed, depth: 0, seen, steps, out var cycleDetected);
+        var trace = new ProduceResolutionTrace(trimmed, baseSeed, steps.ToArray(), resolved, cycleDetected);
 
-        return new ProduceResolutionTrace(trimmed, baseSeed, steps, resolved, cycleDetected);
+        _traceCache[cacheKey] = trace;
+        return new ProduceTraceResult(trace, CacheHit: false);
     }
+
+    internal ProduceResolutionTrace ResolveWithTrace(string choiceKey, int baseSeed)
+        => ResolveWithTraceCached(choiceKey, baseSeed).Trace;
 
     private string ResolveInnerDeterministicWithTrace(
         string key,
@@ -110,7 +174,7 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
         if (_groups.TryGetValue(key, out var options) && options is { Count: > 0 })
         {
             var pickSeed = RoosterSeedKey.ForRandomGroupPick(baseSeed, key, depth);
-            var index = (options.Count <= 0) ? 0 : (int)((uint)pickSeed % (uint)options.Count);
+            var index = (int)((uint)pickSeed % (uint)options.Count);
 
             var picked = options[index]?.Trim() ?? string.Empty;
             steps.Add(new ProduceResolutionStep(depth, key, pickSeed, index, picked));
@@ -151,7 +215,7 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
         if (_groups.TryGetValue(key, out var options) && options is { Count: > 0 })
         {
             var pickSeed = RoosterSeedKey.ForRandomGroupPick(baseSeed, key, depth);
-            var index = (options.Count <= 0) ? 0 : (int)((uint)pickSeed % (uint)options.Count);
+            var index = (int)((uint)pickSeed % (uint)options.Count);
 
             var picked = options[index];
             return ResolveInnerDeterministic(picked?.Trim() ?? string.Empty, baseSeed, depth + 1, seen);
@@ -162,8 +226,33 @@ public sealed class RandomGroupProduceResolver : IDeterministicProduceResolver
 
     private static string Translate(string key)
         => ItemIds.VariableValues.TryGetValue(key, out var translated) ? translated : key;
+
+    private readonly record struct CacheKey(string Key, int BaseSeed);
+
+    private sealed class CacheKeyComparer : IEqualityComparer<CacheKey>
+    {
+        public bool Equals(CacheKey x, CacheKey y)
+            => x.BaseSeed == y.BaseSeed
+               && StringComparer.OrdinalIgnoreCase.Equals(x.Key, y.Key);
+
+        public int GetHashCode(CacheKey obj)
+            => HashCode.Combine(
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Key ?? string.Empty),
+                obj.BaseSeed
+            );
+    }
 }
 
+internal readonly record struct ProduceTraceResult(ProduceResolutionTrace Trace, bool CacheHit);
+
+internal readonly record struct ProduceResolverCacheStats(
+    int ResolveCacheEntries,
+    long ResolveCacheHits,
+    long ResolveCacheMisses,
+    int TraceCacheEntries,
+    long TraceCacheHits,
+    long TraceCacheMisses
+);
 
 internal sealed record ProduceResolutionTrace(
     string InputKey,
