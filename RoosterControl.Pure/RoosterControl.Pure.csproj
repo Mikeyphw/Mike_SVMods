@@ -21,6 +21,8 @@
 
     <Compile Include="..\RoosterControl\Application\Produces\RandomGroupProduceResolver.cs" Link="Application\Produces\RandomGroupProduceResolver.cs" />
 
+    <Compile Include="..\RoosterControl\Application\Produces\ProduceOverrideRules.cs" Link="Application\Produces\ProduceOverrideRules.cs" />
+
     <Compile Include="..\RoosterControl\Application\Planning\StableHash.cs" Link="Application\Planning\StableHash.cs" />
 
     <Compile Include="..\RoosterControl\Application\Planning\LruCache.cs" Link="Application\Planning\LruCache.cs" />

@@ -44,9 +44,16 @@ public sealed class GeneralSettings
 {
     public UpdateRateMode UpdateRate { get; set; } = UpdateRateMode.OnDayStart;
 
-    
-
     public CatalogApplyMode CatalogApplyMode { get; set; } = CatalogApplyMode.RepairInvalid;
+
+    /// <summary>Enable the Phase 8 produce override rules layer (rules are parsed from <see cref="ProduceOverrideRulesJson"/>).</summary>
+    public bool EnableProduceOverrides { get; set; } = false;
+
+    /// <summary>
+    /// Rules JSON for produce overrides. Accepts either a root array <c>[...]</c> or an object with <c>{ "rules": [...] }</c>.
+    /// See <c>docs/PLAN.md</c> for the schema.
+    /// </summary>
+    public string ProduceOverrideRulesJson { get; set; } = "[]";
 
     /// <summary>Percent (0-100).</summary>
     public int ChosenPercentageDailyLuckBonus { get; set; } = 10;

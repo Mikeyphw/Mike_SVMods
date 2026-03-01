@@ -52,7 +52,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260301T172757-0300-01",
+      "file": "20260301T172757-0300-01",
+      "title": "Phase 8A.1–8A.2: produce override schema docs + parser/validator + pure tests",
+      "title_with_id": "Phase 8A.1–8A.2: produce override schema docs + parser/validator + pure tests [20260301T172757-0300-01]",
+      "created_at": "2026-03-01T17:52:34-03:00",
+      "applied_at": "2026-03-01T17:52:54-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-02-28T18:36:22-03:00"
+  "updated_at": "2026-03-01T17:52:54-03:00"
 }

@@ -1,6 +1,6 @@
 # PLAN — GMCM Menu (RoosterControl)
 
-Status: Phase 8B produce tables + rooster produce system Phase 6 implemented.
+Status: Phase 7 produce determinism/caching/tests implemented; Phase 8A.1–8A.2 produce override schema + parser/validator tests implemented (not integrated yet).
 
 ## Scope
 - Subdir: `RoosterControl`
@@ -10,7 +10,7 @@ Status: Phase 8B produce tables + rooster produce system Phase 6 implemented.
 1. Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
 2. Keep all debug/diagnostics options on GMCM page id `debug` only.
 3. Keep option IDs stable forever (translation keys and field IDs depend on this).
-4. Gate RoosterControl dev-only code behind `RCTRL_DEV` (built via `dotnet build -c Dev`).
+4. Gate RoosterControl dev-only code behind `RCTRL_DEV`.
 
 
 ## Phase 4 — Baseline GMCM menu via NestCore host (delegate binding)

@@ -25,3 +25,13 @@
 
 ## Phase 7 — Produce system improvements (follow-ups)
 - Expand anomaly reporting to cover missing/empty random groups and unresolved variable keys.
+
+
+## Phase 8 — Produce override rules + stats + snapshots
+
+### Next: Phase 8A.3 (apply engine) / Phase 8B (integration)
+- [ ] Implement the override applicator (candidate table in-place transform) + deterministic trace model.
+- [ ] Integrate overrides into live produce resolution and debug JSON outputs.
+- [ ] Add GMCM page for overrides with validation feedback + i18n.
+- [ ] Add snapshot harness for `ra_debug_* --json` outputs (golden files).
+- [ ] Extend matching with ranges (`dayMin/dayMax`) and regex matchers.
