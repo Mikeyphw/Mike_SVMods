@@ -362,9 +362,15 @@ internal bool HookBeforePopulateLevel(MineShaft mineShaft)
     }
 }
 
-internal void HookAfterLoadLevel(MineShaft mineShaft, int level)
+internal void HookAfterLoadLevel(MineShaft? mineShaft, int level)
 {
     TraceHook("loadLevel", mineShaft, $"fired levelArg={level}", LogLevel.Info);
+
+    if (mineShaft is null)
+    {
+        TraceHook("loadLevel", null, "mineShaft is null; skipping", LogLevel.Warn);
+        return;
+    }
 
     try
     {
@@ -383,9 +389,15 @@ internal void HookAfterLoadLevel(MineShaft mineShaft, int level)
     }
 }
 
-internal void HookAfterChooseLevelType(MineShaft mineShaft)
+internal void HookAfterChooseLevelType(MineShaft? mineShaft)
 {
     TraceHook("chooseLevelType", mineShaft, "fired", LogLevel.Info);
+
+    if (mineShaft is null)
+    {
+        TraceHook("chooseLevelType", null, "mineShaft is null; skipping", LogLevel.Warn);
+        return;
+    }
 
     try
     {

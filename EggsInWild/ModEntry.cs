@@ -616,7 +616,7 @@ page.Bool(cfg => cfg.DebugForceDesertTombUnrestricted, optionId: "debug.desertTo
     }
 
     
-private void OnConfigUpdated(object? sender, EventArgs e)
+private void OnConfigUpdated(object? sender, ModConfig _)
 {
     SyncApiBirthTextMode();
     TryInstallDesertTombHarmonyPatches(reason: "config updated");

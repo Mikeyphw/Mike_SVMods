@@ -26,7 +26,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260301T163336-0300-01",
+      "file": "20260301T163336-0300-01",
+      "title": "EggsInWild: Fix build errors (config updated handler + tomb command + nullable guards)",
+      "title_with_id": "EggsInWild: Fix build errors (config updated handler + tomb command + nullable guards) [20260301T163336-0300-01]",
+      "created_at": "2026-03-01T17:52:34-03:00",
+      "applied_at": "2026-03-01T17:52:41-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-01T16:26:50-03:00"
+  "updated_at": "2026-03-01T17:52:41-03:00"
 }

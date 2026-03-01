@@ -41,6 +41,23 @@ public sealed class WeggCommandDispatcher
         };
     }
 
+
+#if WEGG_DEV
+    private CommandResult HandleTomb(string[] args)
+    {
+        // Usage: wegg tomb force_patches
+        if (args.Length < 2 || IsHelp(args[1]))
+            return new CommandResult(true, DefaultHelpTextDev());
+
+        var sub = args[1].ToLowerInvariant();
+        return sub switch
+        {
+            "force_patches" => ToCommandResult(_facade.ForceInstallDesertTombHarmonyPatches()),
+            _ => new CommandResult(false, $"{T("command.wegg.error.tomb.unknown", "Unknown tomb subcommand '{0}'.", args[1])}\n\n{DefaultHelpTextDev()}"),
+        };
+    }
+#endif
+
     private CommandResult HandleStep(string[] args)
     {
         if (args.Length < 2)
