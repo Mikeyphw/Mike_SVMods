@@ -6,12 +6,10 @@ using RoosterControl.Application.Planning;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using RoosterControl.Helpers;
-using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
-using Mikew.NestCore.Helpers;
 
 namespace RoosterControl.Application;
 

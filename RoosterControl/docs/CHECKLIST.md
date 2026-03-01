@@ -5,7 +5,7 @@
 - [x] Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
 - [x] Keep all debug/diagnostics options on GMCM page id `debug` only.
 - [x] Keep option IDs stable forever (translation keys and field IDs depend on this).
-- [x] Gate RoosterControl dev-only code behind `RCTRL_DEV`.
+- [x] Gate RoosterControl dev-only code behind `RCTRL_DEV` (built via `dotnet build -c Dev`).
 ## Phase 4 — Baseline GMCM menu via NestCore host (delegate binding)
 - [x] Wire `GmcmConfigHost` in `GameLaunched` using delegate binding (`get/reset/save`) to preserve schema handling.
 - [x] Build pages: `root`, `compat`, `probabilities`, per-rooster pages (`rooster.white` etc), `females`, `debug`.
@@ -74,7 +74,3 @@
 - [x] Add deterministic resolver caching (random-group expansion) with cache stats and invalidation hooks.
 - [x] Bound resolver caches using LRU eviction and expose capacity/eviction stats.
 - [x] Add regression/property tests for determinism invariants and cache behavior.
-## Phase 8A — Produce overrides rules foundation (pure)
-- [x] Document rules JSON schema + precedence + determinism guarantees.
-- [x] Add pure parser/validator (`ProduceOverrideRules`) with unit tests.
-- [x] Add pure applicator (`ProduceOverrideApplicator`) with unit tests.
