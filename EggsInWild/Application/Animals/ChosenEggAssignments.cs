@@ -280,12 +280,8 @@ public sealed class ChosenEggAssignments
         var ids = new HashSet<string>(KeyComparer);
         foreach (var b in blocks)
         {
-            foreach (var id in b.FarmAnimalKeysSameWeight)
+            foreach (var id in b.GetEffectiveFarmAnimalKeys())
                 AddIfValid(id);
-
-            // Ignore JSON "weights" on purpose (Phase 5A).
-            foreach (var w in b.FarmAnimalKeysWeighted)
-                AddIfValid(w.Id);
         }
 
         if (ids.Count == 0)

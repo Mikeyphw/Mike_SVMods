@@ -10,7 +10,4 @@ public sealed record WildAnimalDefinition(
     int Price,
     bool IsMagic,
     IReadOnlyDictionary<LocationType, bool> LocationTypes,
-    IReadOnlyList<string> FarmAnimalIdsSameWeight,
-    IReadOnlyList<WeightedFarmAnimalId> FarmAnimalIdsWeighted);
-
-public sealed record WeightedFarmAnimalId(string Id, double Weight);
+    IReadOnlyList<string> FarmAnimalIds);

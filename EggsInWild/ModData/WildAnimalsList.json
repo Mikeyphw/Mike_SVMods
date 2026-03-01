@@ -21,15 +21,13 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Vanilla": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "White Chicken",
           "Brown Chicken",
           "Blue Chicken"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -55,11 +53,11 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "Vanilla": {
-        "FarmAnimalKeysSameWeight": ["Void Chicken"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Void Chicken"
+        ]
       }
     }
   },
@@ -85,15 +83,17 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Vanilla": {
-        "FarmAnimalKeysSameWeight": ["Duck"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Duck"
+        ]
       },
       "JFS.GenderedDucks": {
-        "FarmAnimalKeysSameWeight": ["Duck", "Female duck"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Duck",
+          "Female duck"
+        ]
       }
     }
   },
@@ -119,11 +119,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Vanilla": {
-        "FarmAnimalKeysSameWeight": ["Dinosaur"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Dinosaur"
+        ]
       }
     }
   },
@@ -149,11 +149,11 @@
       "Clearing": true,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Arrbyte.Canaries": {
-        "FarmAnimalKeysSameWeight": ["Arrbyte.Canaries_Canary"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Arrbyte.Canaries_Canary"
+        ]
       }
     }
   },
@@ -179,11 +179,11 @@
       "Clearing": true,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "stardewforest.crows": {
-        "FarmAnimalKeysSameWeight": ["Crow"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Crow"
+        ]
       }
     }
   },
@@ -209,10 +209,9 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "cantabilechaos.BFAVChickens": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Cuckoo Bluebar",
           "Asil",
           "Black Silkiee",
@@ -232,8 +231,7 @@
           "White Crested Black Polish",
           "White Legbar",
           "White Silkie"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -259,10 +257,9 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "cantabilechaos.BFAVDucks": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Black Runner",
           "Black Swedish",
           "Blue Swedish",
@@ -271,8 +268,7 @@
           "Chocolate Duck",
           "Muscovy Duck",
           "Pekin Duck"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -298,15 +294,16 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Luzze.RegularGoose": {
-        "FarmAnimalKeysSameWeight": ["Wild Goose"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Wild Goose"
+        ]
       },
       "Otter.OttersAddCoopAnimals": {
-        "FarmAnimalKeysSameWeight": ["Goose"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Goose"
+        ]
       }
     }
   },
@@ -332,25 +329,22 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "mazzon.parrots": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Blue Parrot",
           "White Parrot",
           "Void Parrot",
           "Red Parrot"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       },
       "gizomo.TropicalBirds": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Sulfur Cockatoo",
           "Scarlet Macaw",
           "Hyacinth Macaw",
           "Palm Cockatoo"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -376,17 +370,15 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Toffee.Parrots": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "African Grey",
           "Cockatiel",
           "Cockatoo",
           "Island Parrot",
           "Void Parrot"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -412,21 +404,21 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "cantabilechaos.BFAVPeafowl": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Blue Peacock",
           "Cameo Peacock",
           "Pied Peacock",
           "Purple Peacock",
           "White Peacock"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       },
       "Otter.OttersAddCoopAnimals": {
-        "FarmAnimalKeysSameWeight": ["Peacock", "Purple Peacock"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Peacock",
+          "Purple Peacock"
+        ]
       }
     }
   },
@@ -452,17 +444,15 @@
       "Clearing": true,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "birdb.CP.Pigeons": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Racing Pigeon",
           "Pioneer Pigeon",
           "Modena Pigeon",
           "Mourning Dove",
           "White Dove"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -488,21 +478,19 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "UncleArya.ResourceChickens": {
-        "FarmAnimalKeysSameWeight": [],
-        "FarmAnimalKeysWeighted": [
-          { "Id": "UncleArya.ResourceChickens.ClayChicken", "Weight": 1.0 },
-          { "Id": "UncleArya.ResourceChickens.StoneChicken", "Weight": 1.0 },
-          { "Id": "UncleArya.ResourceChickens.CoalChicken", "Weight": 1.0 },
-          { "Id": "UncleArya.ResourceChickens.WoodChicken", "Weight": 1.0 },
-          { "Id": "UncleArya.ResourceChickens.BaitChicken", "Weight": 0.8 },
-          { "Id": "UncleArya.ResourceChickens.SapChicken", "Weight": 0.8 },
-          { "Id": "UncleArya.ResourceChickens.FiberChicken", "Weight": 0.8 },
-          { "Id": "UncleArya.ResourceChickens.MossChicken", "Weight": 0.6 },
-          { "Id": "UncleArya.ResourceChickens.GeodeChicken", "Weight": 0.6 },
-          { "Id": "UncleArya.ResourceChickens.BoneChicken", "Weight": 0.4 }
+        "FarmAnimalKeys": [
+          "UncleArya.ResourceChickens.ClayChicken",
+          "UncleArya.ResourceChickens.StoneChicken",
+          "UncleArya.ResourceChickens.CoalChicken",
+          "UncleArya.ResourceChickens.WoodChicken",
+          "UncleArya.ResourceChickens.BaitChicken",
+          "UncleArya.ResourceChickens.SapChicken",
+          "UncleArya.ResourceChickens.FiberChicken",
+          "UncleArya.ResourceChickens.MossChicken",
+          "UncleArya.ResourceChickens.GeodeChicken",
+          "UncleArya.ResourceChickens.BoneChicken"
         ]
       }
     }
@@ -529,11 +517,12 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Meara.Roosters": {
-        "FarmAnimalKeysSameWeight": ["cockwhite", "cockbrown"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "cockwhite",
+          "cockbrown"
+        ]
       }
     }
   },
@@ -559,11 +548,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "stardewforest.seagulls": {
-        "FarmAnimalKeysSameWeight": ["Seagull"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Seagull"
+        ]
       }
     }
   },
@@ -589,15 +578,16 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Paperkoopa.Tortoise": {
-        "FarmAnimalKeysSameWeight": ["Paperkoopa.Tortoise_Tortoise"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Paperkoopa.Tortoise_Tortoise"
+        ]
       },
       "Otter.OttersAddBarnAnimals": {
-        "FarmAnimalKeysSameWeight": ["Tortoise"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Tortoise"
+        ]
       }
     }
   },
@@ -623,11 +613,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Syanide23.BFAVTurkey": {
-        "FarmAnimalKeysSameWeight": ["Turkey"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Turkey"
+        ]
       }
     }
   },
@@ -653,17 +643,15 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "mazzon.Velociraptors": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Brown Velociraptor",
           "Albino Velociraptor",
           "Green Velociraptor",
           "Pink Velociraptor",
           "Tan Velociraptor"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -689,11 +677,11 @@
       "Clearing": true,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Arrbyte.Zebrafinches": {
-        "FarmAnimalKeysSameWeight": ["Arrbyte.Zebrafinches_Zebrafinch"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Arrbyte.Zebrafinches_Zebrafinch"
+        ]
       }
     }
   },
@@ -719,11 +707,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Vanilla": {
-        "FarmAnimalKeysSameWeight": ["Ostrich"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Ostrich"
+        ]
       }
     }
   },
@@ -749,11 +737,12 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "ilucie.EmuBarnAnimal": {
-        "FarmAnimalKeysSameWeight": ["Emu", "RealisticEmu"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Emu",
+          "RealisticEmu"
+        ]
       }
     }
   },
@@ -779,10 +768,9 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "Renesh.EveriaDragons": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Shadow Dragon",
           "Aqua Dragon",
           "Lavender Dragon",
@@ -795,8 +783,7 @@
           "Crimson Dragon",
           "Sea Dragon",
           "Violet Dragon"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -822,15 +809,13 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "neo.griffins": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Forest Griffin",
           "Arctic Griffin",
           "Desert Griffin"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -856,10 +841,9 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "stormdrakon.LungDragons": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "River Lung",
           "Mountain Lung",
           "Lava Lung",
@@ -879,8 +863,7 @@
           "Pygmy Lung",
           "Meadowlands Lung",
           "Dune Lung"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -906,19 +889,18 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "ilucie.PepperRexBarnAnimal": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "PepperRex",
           "RedPepperRex",
           "MintPepperRex"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       },
       "BucketList.SimplePepperRex": {
-        "FarmAnimalKeysSameWeight": ["Pepper Rex"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Pepper Rex"
+        ]
       }
     }
   },
@@ -944,11 +926,11 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "wildflour.witchfamiliars": {
-        "FarmAnimalKeysSameWeight": ["wildflour.witchfamiliars_Crow"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "wildflour.witchfamiliars_Crow"
+        ]
       }
     }
   },
@@ -974,15 +956,13 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "hiyajules98.DesertChickenCP": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "hiyajules98.DesertChickenCP_DesertChicken",
           "Purple",
           "Pink"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1008,15 +988,13 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "ilucie.smolchicken": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "SmolWhiteChicken",
           "SmolBlueChicken",
           "SmolRedChicken"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1042,11 +1020,12 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "CiriunAlleyKitsu.BFAVDodos": {
-        "FarmAnimalKeysSameWeight": ["Brown Dodo", "White Dodo"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Brown Dodo",
+          "White Dodo"
+        ]
       }
     }
   },
@@ -1072,14 +1051,12 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Thylak.GartenofBanban": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Thylak.Garten ofBanbanOpilaBird",
           "Thylak.GartenofBanbanTartaBird"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1105,15 +1082,17 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "balverines.pheasatbfav": {
-        "FarmAnimalKeysSameWeight": ["Lady Amherst's Pheasant"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Lady Amherst's Pheasant"
+        ]
       },
       "Otter.OttersAddCoopAnimals": {
-        "FarmAnimalKeysSameWeight": ["Pheasant", "Female Pheasant"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Pheasant",
+          "Female Pheasant"
+        ]
       }
     }
   },
@@ -1139,11 +1118,12 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "balverines.chabochickens": {
-        "FarmAnimalKeysSameWeight": ["Chabo Chicken", "Onadagori Chicken"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Chabo Chicken",
+          "Onadagori Chicken"
+        ]
       }
     }
   },
@@ -1169,14 +1149,12 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "balverines.mandarinbfav": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Hen Mandarin Duck",
           "Drake Mandarin Duck"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1202,15 +1180,13 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "balverines.indianbfav": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Asil Chicken",
           "White-Faced Black Spanish Chicken",
           "Kadaknath Chicken"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1236,11 +1212,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "balverines.indianbfav": {
-        "FarmAnimalKeysSameWeight": ["Domestic Guinea Fowl"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Domestic Guinea Fowl"
+        ]
       }
     }
   },
@@ -1266,11 +1242,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "balverines.indianbfav": {
-        "FarmAnimalKeysSameWeight": ["Runner Duck"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Runner Duck"
+        ]
       }
     }
   },
@@ -1296,15 +1272,13 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Mizu.Turkey": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Mizu.Turkey_BrownTurkey",
           "Mizu.Turkey_WhiteTurkey",
           "Mizu.Turkey_GrayTurkey"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1330,11 +1304,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "birdb.Goose": {
-        "FarmAnimalKeysSameWeight": ["WildGoose"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "WildGoose"
+        ]
       }
     }
   },
@@ -1360,11 +1334,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "silvermoonchan.CPLoons": {
-        "FarmAnimalKeysSameWeight": ["Loon"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Loon"
+        ]
       }
     }
   },
@@ -1390,15 +1364,13 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "gyftin.birds": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Budgie",
           "Cockatiel",
           "Green Cheeked Conure"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1424,15 +1396,13 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "jekks.Dino": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Green Bronto",
           "Orange Bronto",
           "Pink Bronto"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1458,10 +1428,9 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "livipup.Dino": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Green Spiked Stego",
           "Teal Spiked Stego",
           "Blue Spiked Stego",
@@ -1490,8 +1459,7 @@
           "Red Brachio",
           "Orange Brachio",
           "Mossy Brachio"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1517,15 +1485,13 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "starmops.puffins": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Black Puffin",
           "Gray Puffin",
           "Blue Puffin"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1551,11 +1517,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "GZhynko.Pufferfish_Chickens": {
-        "FarmAnimalKeysSameWeight": ["Pufferchick"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Pufferchick"
+        ]
       }
     }
   },
@@ -1581,11 +1547,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "NukaColaPrime.penguin": {
-        "FarmAnimalKeysSameWeight": ["Penguin"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Penguin"
+        ]
       }
     }
   },
@@ -1611,16 +1577,14 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "rowang.kiwis": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "rowang_brownkiwi",
           "rowang_albinokiwi",
           "rowang_spottedkiwi",
           "rowang_maskkiwi"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1646,11 +1610,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "ChefRude.MIM": {
-        "FarmAnimalKeysSameWeight": ["Desi Murga Chicken"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Desi Murga Chicken"
+        ]
       }
     }
   },
@@ -1676,11 +1640,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "ChefRude.MIM": {
-        "FarmAnimalKeysSameWeight": ["Gallus Varius Chicken"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Gallus Varius Chicken"
+        ]
       }
     }
   },
@@ -1706,11 +1670,12 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "ChefRude.MIM": {
-        "FarmAnimalKeysSameWeight": ["Lavender Orpington", "Blue Orpington"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Lavender Orpington",
+          "Blue Orpington"
+        ]
       }
     }
   },
@@ -1736,11 +1701,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "ChefRude.MIM": {
-        "FarmAnimalKeysSameWeight": ["Cayuga Duck"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Cayuga Duck"
+        ]
       }
     }
   },
@@ -1766,11 +1731,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "HH.Tortoise": {
-        "FarmAnimalKeysSameWeight": ["Tortoise"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Tortoise"
+        ]
       }
     }
   },
@@ -1796,11 +1761,11 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "tokiri.animals": {
-        "FarmAnimalKeysSameWeight": ["Hippogriff"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Hippogriff"
+        ]
       }
     }
   },
@@ -1826,18 +1791,16 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "murrthecat.BFAVwyverns": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Standard",
           "Batlike",
           "Devil",
           "Gargoyle",
           "Ice",
           "Starry"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1863,16 +1826,14 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "beelzebard.BFAV.turtles": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Blue Turtle",
           "Orange Turtle",
           "Purple Turtle",
           "Red Turtle"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1898,11 +1859,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "beelzebard.BFAV.RobotChicken": {
-        "FarmAnimalKeysSameWeight": ["Robot Chicken"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Robot Chicken"
+        ]
       }
     }
   },
@@ -1928,11 +1889,12 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Merc931.newducks": {
-        "FarmAnimalKeysSameWeight": ["Black Duck", "White Duck"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Black Duck",
+          "White Duck"
+        ]
       }
     }
   },
@@ -1958,10 +1920,9 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "MythicPhoenix.ThereBeDragons": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Black Mythic Dragon",
           "Blue Mythic Dragon",
           "Copper Mythic Dragon",
@@ -1971,8 +1932,7 @@
           "Iron Mythic Dragon",
           "Purple Mythic Dragon",
           "Red Mythic Dragon"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -1998,16 +1958,14 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "beelzebard.BFAV.JojaBeasts": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Bluu Beast",
           "Lite Beast",
           "Glo Beast",
           "Ziing Beast"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2033,18 +1991,16 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "relaexo.SlowlaxFarm": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Munchlax",
           "Psyduck",
           "Slowbro",
           "Slowking",
           "Slowpoke",
           "Snorlax"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2070,15 +2026,13 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Dora.GachaChickens": {
-        "FarmAnimalKeysSameWeight": [],
-        "FarmAnimalKeysWeighted": [
-          { "Id": "Dora.GachaChickens_Chicken", "Weight": 1.0 },
-          { "Id": "Dora.GachaChickens_SweetChicken", "Weight": 0.8 },
-          { "Id": "Dora.GachaChickens_HardyChicken", "Weight": 0.6 },
-          { "Id": "Dora.GachaChickens_TranquilChicken", "Weight": 0.2 }
+        "FarmAnimalKeys": [
+          "Dora.GachaChickens_Chicken",
+          "Dora.GachaChickens_SweetChicken",
+          "Dora.GachaChickens_HardyChicken",
+          "Dora.GachaChickens_TranquilChicken"
         ]
       }
     }
@@ -2105,11 +2059,11 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "Paritee.BabaYaga": {
-        "FarmAnimalKeysSameWeight": ["Baba Yaga"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Baba Yaga"
+        ]
       }
     }
   },
@@ -2135,11 +2089,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Zexu2K.BatteryRobot": {
-        "FarmAnimalKeysSameWeight": ["Zexu2K.BatteryRobot_Battery_Robot"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Zexu2K.BatteryRobot_Battery_Robot"
+        ]
       }
     }
   },
@@ -2165,16 +2119,14 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "Taelende.VoidRanch": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "White Void Chicken",
           "Brown Void Chicken",
           "Light Void Chicken",
           "Blue Void Chicken"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2200,11 +2152,11 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "Taelende.VoidRanch": {
-        "FarmAnimalKeysSameWeight": ["Void Duck"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Void Duck"
+        ]
       }
     }
   },
@@ -2230,11 +2182,11 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "Taelende.VoidRanch": {
-        "FarmAnimalKeysSameWeight": ["Void Dino"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Void Dino"
+        ]
       }
     }
   },
@@ -2260,16 +2212,14 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Fellowclown.PR": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Fellowclown.PR_PepperRex",
           "Fellowclown.PR_PepperTricera",
           "Fellowclown.PR_PepperRaptor",
           "Fellowclown.PR_PepperLongNeck"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2295,24 +2245,21 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "CiriunKitsu.BFAVSwans": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Mute Swan",
           "Black Swan",
           "Trumpeter Swan"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       },
       "DRIJUCE.Swan": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Mute Swan",
           "Black Swan",
           "Black-neck Swan",
           "Whooper Swan"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2338,28 +2285,26 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Arrbyte.Lovebird": {
-        "FarmAnimalKeysSameWeight": ["Arrbyte.Lovebirds_Lovebird"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Arrbyte.Lovebirds_Lovebird"
+        ]
       },
       "Vyranity.Lovebirds": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Green Lovebird",
           "Blue Lovebird",
           "Yellow Lovebird"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       },
       "Toffee.Parrots": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Blue Mask Lovebird",
           "Blue Peach Lovebird",
           "Green Mask Lovebird",
           "Green Peach Lovebird"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2385,31 +2330,32 @@
       "Clearing": true,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Alazdriel.Quails": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Alazdriel.Quails_CommonQuail",
           "Alazdriel.Quails_ValleyQuail"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       },
       "Stupiddullhans.BFAVquails": {
-        "FarmAnimalKeysSameWeight": ["Japanese Quail", "Button Quail"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Japanese Quail",
+          "Button Quail"
+        ]
       },
       "Mizu.Quail": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Mizu.Quail_PlumedQuail",
           "Mizu.Quail_ScaledQuail",
           "Mizu.Quail_BobwhiteQuail",
           "Mizu.Quail_CommonQuail"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       },
       "Otter.OttersAddCoopAnimals": {
-        "FarmAnimalKeysSameWeight": ["Quail", "Female Quail"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Quail",
+          "Female Quail"
+        ]
       }
     }
   },
@@ -2435,15 +2381,16 @@
       "Clearing": true,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "(wildflour.witchfamiliars && wildflour.ateliercrops)": {
-        "FarmAnimalKeysSameWeight": ["wildflour.witchfamiliars_Owl"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "wildflour.witchfamiliars_Owl"
+        ]
       },
       "Syanide23.BFAVOwl": {
-        "FarmAnimalKeysSameWeight": ["Owl"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Owl"
+        ]
       }
     }
   },
@@ -2469,15 +2416,17 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Trent.NewAnimals": {
-        "FarmAnimalKeysSameWeight": ["Blue Peacock", "Peahen"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Blue Peacock",
+          "Peahen"
+        ]
       },
       "Syanide.BFAVPeacock": {
-        "FarmAnimalKeysSameWeight": ["Peacock"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Peacock"
+        ]
       }
     }
   },
@@ -2503,10 +2452,9 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "DonValleyParkway.DigimonRanch": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Pabumon",
           "Koromon",
           "Tentomon",
@@ -2519,8 +2467,7 @@
           "Agumon",
           "Terriermon",
           "Tsumemon"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2546,10 +2493,9 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "DonValleyParkway.DigimonRanch": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Bukamon",
           "Tapirmon",
           "Bullmon",
@@ -2562,8 +2508,7 @@
           "Sheepmon",
           "Armadillomon",
           "Ankylomon"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2589,10 +2534,9 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "otohime.tamafarm": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "otohime.candypakupaku",
           "otohime.dorotchi",
           "otohime.ginjirotchi",
@@ -2610,8 +2554,7 @@
           "otohime.weeptchi",
           "otohime.woopatchi",
           "otohime.yumemitchi"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2637,16 +2580,14 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "otohime.tamafarm": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "otohime.chapitchi",
           "otohime.curltchi",
           "otohime.yumecantchi",
           "otohime.kyawatchi"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2672,11 +2613,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Letsgolilly.LillysSkitty": {
-        "FarmAnimalKeysSameWeight": ["Skitty"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Skitty"
+        ]
       }
     }
   },
@@ -2702,11 +2643,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Letsgolilly.LillysDelibird": {
-        "FarmAnimalKeysSameWeight": ["Delibird"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Delibird"
+        ]
       }
     }
   },
@@ -2732,11 +2673,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Vinchon.moogle": {
-        "FarmAnimalKeysSameWeight": ["Moogle"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Moogle"
+        ]
       }
     }
   },
@@ -2762,17 +2703,15 @@
       "Clearing": false,
       "Swamp": true
     },
-
     "ExtraModAnimalKeys": {
       "norisunine.hellchickens": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Orange Hell Chicken",
           "Green Hell Chicken",
           "Pink Hell Chicken",
           "Blue Hell Chicken",
           "Purple Hell Chicken"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2798,10 +2737,9 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "silvermoonchan.eeveefarm": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Eevee",
           "Flareon",
           "Jolteon",
@@ -2811,8 +2749,7 @@
           "Glaceon",
           "Leafeon",
           "Sylveon"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2838,11 +2775,14 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "tiakall.ancientanimals": {
-        "FarmAnimalKeysSameWeight": ["Kenwe", "Watabou", "Yacopu", "Kirby"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Kenwe",
+          "Watabou",
+          "Yacopu",
+          "Kirby"
+        ]
       }
     }
   },
@@ -2868,10 +2808,9 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Syanide23.GemBirds": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "Amethyst Bird",
           "Aquamarine Bird",
           "Diamond Bird",
@@ -2879,8 +2818,7 @@
           "Jade Bird",
           "Ruby Bird",
           "Topaz Bird"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2906,17 +2844,15 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Logophile.EggsoticCreatures": {
-        "FarmAnimalKeysSameWeight": [],
-        "FarmAnimalKeysWeighted": [
-          { "Id": "Logophile.EggsoticCreatures_ForagerEgg", "Weight": 0.9 },
-          { "Id": "Logophile.EggsoticCreatures_FarmerEgg", "Weight": 0.75 },
-          { "Id": "Logophile.EggsoticCreatures_BuffEgg", "Weight": 0.6 },
-          { "Id": "Logophile.EggsoticCreatures_ProspectorEgg", "Weight": 0.45 },
-          { "Id": "Logophile.EggsoticCreatures_UncannyEgg", "Weight": 0.3 },
-          { "Id": "Logophile.EggsoticCreatures_BenHatEgg", "Weight": 0.15 }
+        "FarmAnimalKeys": [
+          "Logophile.EggsoticCreatures_ForagerEgg",
+          "Logophile.EggsoticCreatures_FarmerEgg",
+          "Logophile.EggsoticCreatures_BuffEgg",
+          "Logophile.EggsoticCreatures_ProspectorEgg",
+          "Logophile.EggsoticCreatures_UncannyEgg",
+          "Logophile.EggsoticCreatures_BenHatEgg"
         ]
       }
     }
@@ -2943,13 +2879,11 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "InaylaLinyah.MagicalMenagerie": {
-        "FarmAnimalKeysSameWeight": [
+        "FarmAnimalKeys": [
           "InaylaLinyah.MagicalMenagerie_EnchantedChicken"
-        ],
-        "FarmAnimalKeysWeighted": []
+        ]
       }
     }
   },
@@ -2975,11 +2909,12 @@
       "Clearing": false,
       "Swamp": false
     },
-
     "ExtraModAnimalKeys": {
       "Otter.OttersAddBarnAnimals": {
-        "FarmAnimalKeysSameWeight": ["Flamingo", "White Flamingo"],
-        "FarmAnimalKeysWeighted": []
+        "FarmAnimalKeys": [
+          "Flamingo",
+          "White Flamingo"
+        ]
       }
     }
   }

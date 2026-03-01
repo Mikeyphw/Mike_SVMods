@@ -46,3 +46,11 @@
 - [x] Add patch install/status logs (always on).
 - [x] Add hook-fired + success/error logs (gated).
 
+
+
+## Phase 11 — WildAnimals ModData schema (unweighted keys)
+- [x] Replace `FarmAnimalKeysSameWeight`/`FarmAnimalKeysWeighted` with `FarmAnimalKeys` (unweighted).
+- [x] Convert shipped `ModData/WildAnimalsList.json` to the new schema (no weights).
+- [x] Keep legacy JSON compatibility (merge legacy fields; ignore weight).
+- [x] Update consumers to use `GetEffectiveFarmAnimalKeys()`.
+- [x] Remove weight-based model types (`WeightedIdJson`, `WeightedFarmAnimalId`) and update any remaining code paths.

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
-using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 using EggsInWild.Infrastructure.ModData.Models;
 
@@ -49,19 +48,12 @@ public static class WildAnimalPreviewResolver
 
     private static string? PickFarmAnimalKey(ExtraModAnimalKeysJson block, IReadOnlyDictionary<string, FarmAnimalData> farmAnimals)
     {
-        // Prefer same-weight list first (stable, matches old GMCM behavior).
-        foreach (var key in block.FarmAnimalKeysSameWeight)
+        foreach (var key in block.GetEffectiveFarmAnimalKeys())
         {
             if (farmAnimals.ContainsKey(key))
                 return key;
         }
 
-        // Otherwise pick highest weight entry whose key exists.
-        var weighted = block.FarmAnimalKeysWeighted
-            .Where(x => !string.IsNullOrWhiteSpace(x.Id) && farmAnimals.ContainsKey(x.Id))
-            .OrderByDescending(x => x.Weight)
-            .FirstOrDefault();
-
-        return weighted?.Id;
+        return null;
     }
 }

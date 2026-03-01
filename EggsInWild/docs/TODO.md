@@ -20,3 +20,9 @@
 - [x] Add always-on Harmony patch install/status logging for DesertTomb patches.
 - [x] Add hook-fired + success/error logs for DesertTomb Harmony callbacks (gated by debug logging or force).
 
+
+
+## WildAnimals GMCM follow-ups
+- [ ] Add GMCM page `wildAnimals` that lists per-wild-animal subpages.
+- [ ] Add per-wild-animal override config: `Enabled` (override) with effective merge.
+- [ ] Respect per-wild-animal `Enabled` across egg assignment and Animal Notes/progression.

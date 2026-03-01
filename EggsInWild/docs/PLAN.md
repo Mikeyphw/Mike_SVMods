@@ -51,3 +51,10 @@
 3. Normalize quest group IDs + variant keys (e.g. `quest.DesertScroll.*`, `quest.NoteDelivery.reactionText.<n>`).
 4. Normalize GMCM free-text keys under `config.section.*` and `config.paragraph.*`.
 5. Update verifiers/diagnostics to validate normalized keys only.
+
+## Phase 11 — WildAnimals ModData schema (unweighted keys)
+1. Replace per-mod mapping fields `FarmAnimalKeysSameWeight`/`FarmAnimalKeysWeighted` with a single unweighted `FarmAnimalKeys` list.
+2. Update `ModData/WildAnimalsList.json` to emit only `FarmAnimalKeys` (no weights).
+3. Keep legacy JSON compatibility in the model layer (merge legacy fields into `FarmAnimalKeys`, ignore weights).
+4. Update runtime consumers (`ChosenEggAssignments`, `WeggVerifier`, preview resolver) to use the unified key list.
+5. Ensure weight-based infrastructure types are removed or no longer referenced (compile clean).

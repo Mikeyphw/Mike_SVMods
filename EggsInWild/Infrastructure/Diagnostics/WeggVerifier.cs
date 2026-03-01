@@ -931,12 +931,8 @@ catch (Exception ex)
 
             foreach (var b in blocks)
             {
-                foreach (var id in b.FarmAnimalKeysSameWeight)
+                foreach (var id in b.GetEffectiveFarmAnimalKeys())
                     AddIfPresent(id);
-
-                // Ignore JSON weights on purpose (Phase 5A/5B).
-                foreach (var w in b.FarmAnimalKeysWeighted)
-                    AddIfPresent(w.Id);
             }
         }
 

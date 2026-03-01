@@ -3,14 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using EggsInWild.Core.Enums;
 using EggsInWild.Core.Models;
-using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Mods;
+using Mikew.NestCore.Helpers.Logging;
 using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
 using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace EggsInWild.Infrastructure.ModData;
 
+/// <summary>
+/// Builds a filtered catalog from WildAnimalsList JSON based on installed mods.
+/// This catalog is currently used for diagnostics and future UI scenarios.
+/// </summary>
 public sealed class AnimalCatalogBuilder
 {
     private readonly IModAvailability _mods;
@@ -29,8 +33,7 @@ public sealed class AnimalCatalogBuilder
         foreach (var (wildAnimalKey, wa) in json)
         {
             var locations = BuildLocationMap(wa.LocationTypes);
-
-            var (sameWeight, weighted) = FilterFarmAnimalIds(wa.ExtraModAnimalKeys);
+            var ids = FilterFarmAnimalIds(wa.ExtraModAnimalKeys);
 
             dict[wildAnimalKey] = new WildAnimalDefinition(
                 WildAnimalKey: wildAnimalKey,
@@ -38,8 +41,7 @@ public sealed class AnimalCatalogBuilder
                 Price: wa.Price,
                 IsMagic: wa.IsMagic,
                 LocationTypes: locations,
-                FarmAnimalIdsSameWeight: sameWeight,
-                FarmAnimalIdsWeighted: weighted);
+                FarmAnimalIds: ids);
         }
 
         return new AnimalCatalog(dict);
@@ -53,37 +55,36 @@ public sealed class AnimalCatalogBuilder
             var key = lt.ToString();
             map[lt] = raw.TryGetValue(key, out var allowed) && allowed;
         }
+
         return map;
     }
 
-    private (IReadOnlyList<string> sameWeight, IReadOnlyList<WeightedFarmAnimalId> weighted) FilterFarmAnimalIds(
-        Dictionary<string, ExtraModAnimalKeysJson> modGroups)
+    private IReadOnlyList<string> FilterFarmAnimalIds(Dictionary<string, ExtraModAnimalKeysJson> modGroups)
     {
-        var same = new List<string>();
-        var weighted = new List<WeightedFarmAnimalId>();
+        var ids = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (modId, keys) in modGroups)
         {
             if (!_mods.IsLoaded(modId))
                 continue;
 
-            keys.FarmAnimalKeysSameWeight ??= new List<string>();
-            keys.FarmAnimalKeysWeighted ??= new List<WeightedIdJson>();
-
-            same.AddRange(keys.FarmAnimalKeysSameWeight.Where(s => !string.IsNullOrWhiteSpace(s)));
-
-            foreach (var w in keys.FarmAnimalKeysWeighted)
+            foreach (var id in keys.GetEffectiveFarmAnimalKeys())
             {
-                if (string.IsNullOrWhiteSpace(w.Id) || w.Weight <= 0)
-                    continue;
-
-                weighted.Add(new WeightedFarmAnimalId(w.Id, w.Weight));
+                if (seen.Add(id))
+                    ids.Add(id);
             }
         }
 
-        if (same.Count == 0 && weighted.Count == 0)
-LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.SaveData, "Animal entry had no farm animal IDs for loaded mods; it will never spawn a farm animal.", StardewModdingAPI.LogLevel.Trace);
+        if (ids.Count == 0)
+        {
+            LogScopedHelper.Log(
+                _log,
+                ScopedLogCatalog.ModWeCategory.SaveData,
+                "Animal entry had no farm animal IDs for loaded mods; it will never spawn a farm animal.",
+                StardewModdingAPI.LogLevel.Trace);
+        }
 
-        return (same, weighted);
+        return ids;
     }
 }
