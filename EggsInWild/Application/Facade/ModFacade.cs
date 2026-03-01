@@ -70,10 +70,10 @@ public sealed class ModFacade : IModFacade
         IGameStateReader game,
         ITileFinder tileFinder,
         IGameObjectPlacer placer,
-        ITileSearchHistogram? histogram = null,
         EggsInWild.Infrastructure.ModData.IModDataLoader dataLoader,
         EggsInWild.Infrastructure.Mods.IModAvailability mods,
-        WeggVerifier? verifier = null,
+        WeggVerifier verifier,
+        ITileSearchHistogram? histogram = null,
 #if WEGG_DEV
         Func<FacadeResult>? forceInstallDesertTombPatches = null
 #endif
@@ -88,8 +88,7 @@ public sealed class ModFacade : IModFacade
 
         _dataLoader = dataLoader ?? throw new ArgumentNullException(nameof(dataLoader));
         _mods = mods ?? throw new ArgumentNullException(nameof(mods));
-        _verifier = verifier ?? throw new ArgumentNullException(nameof(verifier));
-
+        _verifier = verifier;
 #if WEGG_DEV
         _forceInstallDesertTombPatches = forceInstallDesertTombPatches;
 #endif

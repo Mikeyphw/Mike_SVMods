@@ -72,11 +72,11 @@ public sealed class ModConfig
 
 
 
-/// <summary>
-/// Per-wild-animal overrides keyed by WildAnimalsList entry key (e.g. "Chicken").
-/// When Enabled is false, the animal is excluded from egg assignment and AnimalNotes progression.
-/// </summary>
-public Dictionary<string, WildAnimalOverrideConfig> WildAnimalOverrides { get; set; } = new();
+    /// <summary>
+    /// Per-wild-animal overrides keyed by WildAnimalsList entry key (e.g. "Chicken").
+    /// When Enabled is false, the animal is excluded from egg assignment and AnimalNotes progression.
+    /// </summary>
+    public Dictionary<string, WildAnimalOverrideConfig> WildAnimalOverrides { get; set; } = new();
 
     /// <summary>
     /// In multiplayer: only the host may add quests and queue mail for AnimalNotes.
@@ -115,4 +115,13 @@ public bool DebugForceDesertTombUnrestricted { get; set; } = false;
     /// </summary>
     public DebugKnobsConfig DebugKnobs { get; set; } = new();
 #endif
+}
+
+public sealed class WildAnimalOverrideConfig
+{
+    /// <summary>
+    /// If set, overrides the WildAnimalsList entry Enabled flag.
+    /// When false, the animal is excluded from egg assignment and AnimalNotes progression.
+    /// </summary>
+    public bool? Enabled { get; set; }
 }

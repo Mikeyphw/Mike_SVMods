@@ -987,6 +987,9 @@ private void InstallHarmonyBootstrap()
             game: game,
             tileFinder: tileFinder,
             placer: placer,
+            dataLoader: dataLoader,
+            mods: mods,
+            verifier: verifier,
             histogram: histogram,
 #if WEGG_DEV
             forceInstallDesertTombPatches: () =>
