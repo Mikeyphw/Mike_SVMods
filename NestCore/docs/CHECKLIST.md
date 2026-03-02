@@ -27,3 +27,7 @@
 - [x] Expose `TryCreateStardewUiIntegration(...)` on `INestCoreApi` and implement in `NestCoreApi` (bump ApiVersion).
 - [x] Implement a source-sync hot reload helper (`EnableHotReloadingWithSourceSync`) on the facade.
 - [x] Update `docs/*` checklist/todo to reflect completion and add follow-ups.
+## Phase 7 — UI viewmodel base helpers
+- [x] Add `ObservableObject` (INotifyPropertyChanged) under `Helpers/UI`.
+- [x] Document intended use for StardewUI binding contexts (viewmodels) in TODO/checklist.
+- [ ] Verify `NestCore` builds (net6.0) locally/CI.

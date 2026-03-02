@@ -9,6 +9,7 @@
 - Phase 1: complete
 - Phase 5: complete
 - Phase 6: complete
+- Phase 7: in progress
 
 ## Phase 0 — Planning docs baseline
 1. Create/refresh `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md`.
@@ -38,3 +39,8 @@
 4. Expose `TryCreateStardewUiIntegration(...)` on `INestCoreApi` and implement in `NestCoreApi` (bump ApiVersion).
 5. Implement a source-sync hot reload helper (`EnableHotReloadingWithSourceSync`) on the facade.
 6. Update `docs/*` checklist/todo to reflect completion and add follow-ups.
+
+## Phase 7 — UI viewmodel base helpers
+1. Add `ObservableObject` (INotifyPropertyChanged) under `Helpers/UI`.
+2. Document intended use for StardewUI binding contexts (viewmodels) in TODO/checklist.
+3. Verify `NestCore` builds (net6.0) with implicit usings + nullable enabled.
