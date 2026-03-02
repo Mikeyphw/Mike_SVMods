@@ -59,18 +59,42 @@ public sealed class WeggCommandDispatcher
     }
 
     private CommandResult HandleWildAnimals(string[] args)
-    {
-        // Usage: wegg wildanimals dump_effective
-        if (args.Length < 2 || IsHelp(args[1]))
-            return new CommandResult(true, DefaultHelpTextDev());
+{
+    // Usage:
+    //   wegg wildanimals dump_effective
+    //   wegg wildanimals status <wildAnimalKey>
+    //   wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>
+    if (args.Length < 2 || IsHelp(args[1]))
+        return new CommandResult(true, DefaultHelpTextDev());
 
-        var sub = args[1].ToLowerInvariant();
-        return sub switch
-        {
-            "dump_effective" => ToCommandResult(_facade.DumpEffectiveWildAnimals()),
-            _ => new CommandResult(false, $"{T("command.wegg.error.wildanimals.unknown", "Unknown wildanimals subcommand '{0}'.", args[1])}\n\n{DefaultHelpTextDev()}"),
-        };
-    }
+    var sub = args[1].ToLowerInvariant();
+    return sub switch
+    {
+        "dump_effective" => ToCommandResult(_facade.DumpEffectiveWildAnimals()),
+        "status" => HandleWildAnimalsStatus(args),
+        "set_enabled" => HandleWildAnimalsSetEnabled(args),
+        _ => new CommandResult(false, $"{T("command.wegg.error.wildanimals.unknown", "Unknown wildanimals subcommand '{0}'.", args[1])}\n\n{DefaultHelpTextDev()}"),
+    };
+}
+
+private CommandResult HandleWildAnimalsStatus(string[] args)
+{
+    if (args.Length < 3 || IsHelp(args[2]))
+        return new CommandResult(false, $"{T("command.wegg.usage.wildanimals.status", "Usage: wegg wildanimals status <wildAnimalKey>")}\n\n{DefaultHelpTextDev()}");
+
+    return ToCommandResult(_facade.WildAnimalStatus(args[2]));
+}
+
+private CommandResult HandleWildAnimalsSetEnabled(string[] args)
+{
+    if (args.Length < 4 || IsHelp(args[2]) || IsHelp(args[3]))
+        return new CommandResult(false, $"{T("command.wegg.usage.wildanimals.set_enabled", "Usage: wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>")}\n\n{DefaultHelpTextDev()}");
+
+    if (!TryParseBoolArg(args[3], out var enabled))
+        return new CommandResult(false, $"{T("command.wegg.error.wildanimals.invalidBool", "Invalid boolean '{0}'. Expected true/false/1/0.", args[3])}\n\n{DefaultHelpTextDev()}");
+
+    return ToCommandResult(_facade.SetWildAnimalEnabled(args[2], enabled));
+}
 #endif
 
     private CommandResult HandleStep(string[] args)
@@ -280,7 +304,10 @@ public sealed class WeggCommandDispatcher
             "",
             "Dev-only Tomb tools:",
             "  wegg tomb force_patches",
-            "  wegg wildanimals dump_effective"
+            "Dev-only WildAnimals tools:",
+            "  wegg wildanimals dump_effective",
+            "  wegg wildanimals status <wildAnimalKey>",
+            "  wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>"
         );
 #endif
 
@@ -315,6 +342,29 @@ public sealed class WeggCommandDispatcher
         );
 
 
+    private static bool TryParseBoolArg(string raw, out bool value)
+    {
+        value = false;
+
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+
+        var s = raw.Trim().ToLowerInvariant();
+
+        if (s is "true" or "1")
+        {
+            value = true;
+            return true;
+        }
+
+        if (s is "false" or "0")
+        {
+            value = false;
+            return true;
+        }
+
+        return false;
+    }
     private static bool IsHelp(string arg)
         => arg is "-h" or "--help" or "help" or "?";
 

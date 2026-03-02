@@ -425,6 +425,134 @@ public FacadeResult DumpEffectiveWildAnimals()
     }
 }
 
+
+public FacadeResult WildAnimalStatus(string wildAnimalKey)
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(wildAnimalKey))
+            return new FacadeResult(false, "Missing wildAnimalKey.");
+
+        var snapshot = _dataLoader.Load();
+        var canonicalKey = ResolveWildAnimalKey(snapshot.WildAnimals.Keys, wildAnimalKey);
+
+        if (canonicalKey is null)
+            return new FacadeResult(false, $"Unknown wild animal '{wildAnimalKey}'. Use: wegg wildanimals dump_effective");
+
+        var wa = snapshot.WildAnimals[canonicalKey];
+
+        var builder = new AnimalCatalogBuilder(_mods, _log);
+        var catalog = builder.Build(snapshot.WildAnimals);
+
+        var ids = new List<string>();
+        if (catalog.TryGet(canonicalKey, out var def))
+            ids = def.FarmAnimalIds.ToList();
+
+        var cfg = _config.Get();
+        var ov = TryGetWildAnimalOverride(cfg, canonicalKey);
+
+        var entry = new WildAnimalStatusEntry(
+            WildAnimalKey: canonicalKey,
+            ConfigOverrideEnabled: ov?.Enabled,
+            EffectiveEnabled: wa.Enabled,
+            LargeEgg: wa.LargeEgg,
+            IsMagic: wa.IsMagic,
+            Price: wa.Price,
+            FarmAnimalIds: ids
+        );
+
+        var json = JsonSerializer.Serialize(entry, new JsonSerializerOptions { WriteIndented = false });
+        return new FacadeResult(true, json);
+    }
+    catch (Exception ex)
+    {
+        LogScopedHelper.Log(
+            _log,
+            ModWeCategory.SaveData,
+            $"WildAnimalStatus failed: {ex}",
+            StardewModdingAPI.LogLevel.Error);
+        return new FacadeResult(false, "Failed getting wild animal status (see log).");
+    }
+}
+
+public FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled)
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(wildAnimalKey))
+            return new FacadeResult(false, "Missing wildAnimalKey.");
+
+        var snapshot = _dataLoader.Load();
+        var canonicalKey = ResolveWildAnimalKey(snapshot.WildAnimals.Keys, wildAnimalKey);
+
+        if (canonicalKey is null)
+            return new FacadeResult(false, $"Unknown wild animal '{wildAnimalKey}'. Use: wegg wildanimals dump_effective");
+
+        _config.Update(cfg =>
+        {
+            cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+            if (!cfg.WildAnimalOverrides.TryGetValue(canonicalKey, out var ov) || ov is null)
+            {
+                ov = new WildAnimalOverrideConfig();
+                cfg.WildAnimalOverrides[canonicalKey] = ov;
+            }
+
+            ov.Enabled = enabled;
+        }, save: true);
+
+        return WildAnimalStatus(canonicalKey);
+    }
+    catch (Exception ex)
+    {
+        LogScopedHelper.Log(
+            _log,
+            ModWeCategory.SaveData,
+            $"SetWildAnimalEnabled failed: {ex}",
+            StardewModdingAPI.LogLevel.Error);
+        return new FacadeResult(false, "Failed setting wild animal override (see log).");
+    }
+}
+
+private static string? ResolveWildAnimalKey(IEnumerable<string> keys, string raw)
+{
+    var needle = raw.Trim();
+    foreach (var key in keys)
+    {
+        if (string.Equals(key, needle, StringComparison.OrdinalIgnoreCase))
+            return key;
+    }
+
+    return null;
+}
+
+private static WildAnimalOverrideConfig? TryGetWildAnimalOverride(ModConfig cfg, string canonicalKey)
+{
+    if (cfg.WildAnimalOverrides is null || cfg.WildAnimalOverrides.Count == 0)
+        return null;
+
+    if (cfg.WildAnimalOverrides.TryGetValue(canonicalKey, out var direct))
+        return direct;
+
+    foreach (var (k, ov) in cfg.WildAnimalOverrides)
+    {
+        if (string.Equals(k, canonicalKey, StringComparison.OrdinalIgnoreCase))
+            return ov;
+    }
+
+    return null;
+}
+
+private sealed record WildAnimalStatusEntry(
+    string WildAnimalKey,
+    bool? ConfigOverrideEnabled,
+    bool EffectiveEnabled,
+    bool LargeEgg,
+    bool IsMagic,
+    int Price,
+    List<string> FarmAnimalIds
+);
+
 private sealed record WildAnimalEffectiveDumpEntry(
     string WildAnimalKey,
     bool Enabled,

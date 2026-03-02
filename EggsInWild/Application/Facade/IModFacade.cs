@@ -44,6 +44,12 @@ public interface IModFacade
 
     /// <summary>Dev-only: dump effective wild animals + resolved farm animal keys as JSON.</summary>
     FacadeResult DumpEffectiveWildAnimals();
+
+    /// <summary>Dev-only: return JSON describing one wild animal's effective values and config overrides.</summary>
+    FacadeResult WildAnimalStatus(string wildAnimalKey);
+
+    /// <summary>Dev-only: set the Enabled override for one wild animal (persists config).</summary>
+    FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled);
 #endif
 }
 
