@@ -322,7 +322,24 @@ foreach (var key in wildAnimalKeysForGmcm)
         title: () => key,
         build: page =>
         {
-            var defaultEnabled = wildAnimalsForGmcm.TryGetValue(key, out var def) && def is not null ? def.Enabled : true;
+            var definition = wildAnimalsForGmcm.TryGetValue(key, out var def) ? def : null;
+
+            var defaultEnabled = definition?.Enabled ?? true;
+            var defaultLargeEgg = definition?.LargeEgg ?? false;
+            var defaultPrice = definition?.Price ?? 0;
+            var defaultIsMagic = definition?.IsMagic ?? false;
+
+            static bool IsEmptyOverride(WildAnimalOverrideConfig? ov)
+                => ov is null || (ov.Enabled is null && ov.LargeEgg is null && ov.Price is null && ov.IsMagic is null);
+
+            WildAnimalOverrideConfig? GetOverride(ModConfig cfg)
+            {
+                if (cfg.WildAnimalOverrides is null)
+                    return null;
+
+                cfg.WildAnimalOverrides.TryGetValue(key, out var ov);
+                return ov;
+            }
 
             page.ParagraphDynamic(
                 () =>
@@ -338,6 +355,73 @@ foreach (var key in wildAnimalKeysForGmcm)
                     return Translate(i18n, "config.paragraph.wildAnimals.status.text", $"Effective: {state} (source: {source})", state, source);
                 },
                 id: $"wildAnimals_status_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+            page.ParagraphDynamic(
+                () =>
+                {
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+
+                    var largeEggOverride = ov?.LargeEgg;
+                    var priceOverride = ov?.Price;
+                    var isMagicOverride = ov?.IsMagic;
+
+                    var effectiveLargeEgg = largeEggOverride ?? defaultLargeEgg;
+                    var effectivePrice = priceOverride ?? defaultPrice;
+                    var effectiveIsMagic = isMagicOverride ?? defaultIsMagic;
+
+                    var largeEggSource = largeEggOverride is null ? "default" : "override";
+                    var priceSource = priceOverride is null ? "default" : "override";
+                    var isMagicSource = isMagicOverride is null ? "default" : "override";
+
+                    var yes = Translate(i18n, "config.wildAnimals.bool.yes", "Yes");
+                    var no = Translate(i18n, "config.wildAnimals.bool.no", "No");
+
+                    string BoolToYesNo(bool v) => v ? yes : no;
+
+                    return Translate(
+                        i18n,
+                        "config.paragraph.wildAnimals.scalars.text",
+                        $"Effective scalars: LargeEgg={BoolToYesNo(effectiveLargeEgg)} (source: {largeEggSource}); Price={effectivePrice} (source: {priceSource}); IsMagic={BoolToYesNo(effectiveIsMagic)} (source: {isMagicSource}).",
+                        BoolToYesNo(effectiveLargeEgg),
+                        largeEggSource,
+                        effectivePrice,
+                        priceSource,
+                        BoolToYesNo(effectiveIsMagic),
+                        isMagicSource);
+                },
+                id: $"wildAnimals_scalars_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+            page.ParagraphDynamic(
+                () =>
+                {
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+
+                    var yes = Translate(i18n, "config.wildAnimals.bool.yes", "Yes");
+                    var no = Translate(i18n, "config.wildAnimals.bool.no", "No");
+                    var unset = Translate(i18n, "config.wildAnimals.value.unset", "(unset)");
+
+                    string BoolToYesNo(bool v) => v ? yes : no;
+                    string FormatOverrideBool(bool? v) => v is null ? unset : BoolToYesNo(v.Value);
+                    string FormatOverrideInt(int? v) => v is null ? unset : v.Value.ToString();
+
+                    var enabledText = FormatOverrideBool(ov?.Enabled);
+                    var largeEggText = FormatOverrideBool(ov?.LargeEgg);
+                    var priceText = FormatOverrideInt(ov?.Price);
+                    var isMagicText = FormatOverrideBool(ov?.IsMagic);
+
+                    return Translate(
+                        i18n,
+                        "config.paragraph.wildAnimals.overrides.text",
+                        $"Overrides: Enabled={enabledText}; LargeEgg={largeEggText}; Price={priceText}; IsMagic={isMagicText}.",
+                        enabledText,
+                        largeEggText,
+                        priceText,
+                        isMagicText);
+                },
+                id: $"wildAnimals_overrides_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
 
             page.Separator(simple: true);
 
@@ -367,19 +451,125 @@ foreach (var key in wildAnimalKeysForGmcm)
                     var cfg = _config!.Get();
                     cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
 
-                    if (value == defaultEnabled)
-                    {
+                    if (!cfg.WildAnimalOverrides.TryGetValue(key, out var ov) || ov is null)
+                        ov = new WildAnimalOverrideConfig();
+
+                    ov.Enabled = value == defaultEnabled ? null : value;
+
+                    if (IsEmptyOverride(ov))
                         cfg.WildAnimalOverrides.Remove(key);
-                        return;
-                    }
+                    else
+                        cfg.WildAnimalOverrides[key] = ov;
+                });
+
+            page.BoolLabel(
+                elementId: $"wildAnimals.{key}.largeEgg",
+                name: () => Translate(i18n, "config.wildAnimals.largeEgg.name", "Large egg"),
+                tooltip: () =>
+                {
+                    var yes = Translate(i18n, "config.wildAnimals.bool.yes", "Yes");
+                    var no = Translate(i18n, "config.wildAnimals.bool.no", "No");
+                    var defVal = defaultLargeEgg ? yes : no;
+
+                    return Translate(
+                        i18n,
+                        "config.wildAnimals.largeEgg.tooltip",
+                        $"Override LargeEgg flag for '{key}'. Default: {defVal}.",
+                        key,
+                        defVal);
+                },
+                getValue: () =>
+                {
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+                    return ov?.LargeEgg ?? defaultLargeEgg;
+                },
+                setValue: value =>
+                {
+                    var cfg = _config!.Get();
+                    cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
 
                     if (!cfg.WildAnimalOverrides.TryGetValue(key, out var ov) || ov is null)
-                    {
                         ov = new WildAnimalOverrideConfig();
-                        cfg.WildAnimalOverrides[key] = ov;
-                    }
 
-                    ov.Enabled = value;
+                    ov.LargeEgg = value == defaultLargeEgg ? null : value;
+
+                    if (IsEmptyOverride(ov))
+                        cfg.WildAnimalOverrides.Remove(key);
+                    else
+                        cfg.WildAnimalOverrides[key] = ov;
+                });
+
+            page.IntLabel(
+                elementId: $"wildAnimals.{key}.price",
+                name: () => Translate(i18n, "config.wildAnimals.price.name", "Price"),
+                tooltip: () => Translate(
+                    i18n,
+                    "config.wildAnimals.price.tooltip",
+                    $"Override price for '{key}'. Default: {defaultPrice}.",
+                    key,
+                    defaultPrice),
+                getValue: () =>
+                {
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+                    return ov?.Price ?? defaultPrice;
+                },
+                setValue: value =>
+                {
+                    var cfg = _config!.Get();
+                    cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                    if (!cfg.WildAnimalOverrides.TryGetValue(key, out var ov) || ov is null)
+                        ov = new WildAnimalOverrideConfig();
+
+                    ov.Price = value == defaultPrice ? null : value;
+
+                    if (IsEmptyOverride(ov))
+                        cfg.WildAnimalOverrides.Remove(key);
+                    else
+                        cfg.WildAnimalOverrides[key] = ov;
+                },
+                min: 0,
+                max: 20000,
+                interval: 25);
+
+            page.BoolLabel(
+                elementId: $"wildAnimals.{key}.isMagic",
+                name: () => Translate(i18n, "config.wildAnimals.isMagic.name", "Magic"),
+                tooltip: () =>
+                {
+                    var yes = Translate(i18n, "config.wildAnimals.bool.yes", "Yes");
+                    var no = Translate(i18n, "config.wildAnimals.bool.no", "No");
+                    var defVal = defaultIsMagic ? yes : no;
+
+                    return Translate(
+                        i18n,
+                        "config.wildAnimals.isMagic.tooltip",
+                        $"Override IsMagic flag for '{key}'. Default: {defVal}.",
+                        key,
+                        defVal);
+                },
+                getValue: () =>
+                {
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+                    return ov?.IsMagic ?? defaultIsMagic;
+                },
+                setValue: value =>
+                {
+                    var cfg = _config!.Get();
+                    cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                    if (!cfg.WildAnimalOverrides.TryGetValue(key, out var ov) || ov is null)
+                        ov = new WildAnimalOverrideConfig();
+
+                    ov.IsMagic = value == defaultIsMagic ? null : value;
+
+                    if (IsEmptyOverride(ov))
+                        cfg.WildAnimalOverrides.Remove(key);
+                    else
+                        cfg.WildAnimalOverrides[key] = ov;
                 });
 
             page.BoolLabel(
