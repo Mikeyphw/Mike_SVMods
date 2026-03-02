@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Helpers.GameStateQueries;
 using RoosterControl.Application.Hatching;
 using RoosterControl.Application.Planning;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using RoosterControl.Helpers;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;

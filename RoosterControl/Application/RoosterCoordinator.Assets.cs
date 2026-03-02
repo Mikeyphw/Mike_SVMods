@@ -34,7 +34,7 @@ internal sealed partial class RoosterCoordinator
                 {
                     e.LoadFrom(
                         () => RoosterControl.Application.Compat.CompatDefaults.CreateEggSourcesCatalog(),
-                        StardewModdingAPI.AssetLoadPriority.Exclusive
+                        AssetLoadPriority.Exclusive
                     );
                 })
         );
@@ -49,7 +49,7 @@ internal sealed partial class RoosterCoordinator
                 {
                     e.LoadFrom(
                         () => RoosterControl.Application.Compat.CompatDefaults.CreateRoosterSourcesCatalog(),
-                        StardewModdingAPI.AssetLoadPriority.Exclusive
+                        AssetLoadPriority.Exclusive
                     );
                 })
         );

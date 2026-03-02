@@ -51,9 +51,9 @@ public sealed record FarmAnimalEggRef(string FarmAnimalKey, EggSourceRefList Lis
 /// </summary>
 public sealed record EggSourceDef
 {
-    public required string SourceId { get; init; }
-    public required string DisplayName { get; init; }
-    public required EggKind EggKind { get; init; }
+    public string SourceId { get; init; } = string.Empty;
+    public string DisplayName { get; init; } = string.Empty;
+    public EggKind EggKind { get; init; }
 
     public string? ItemId { get; init; }
     public FarmAnimalEggRef? FarmAnimalRef { get; init; }
@@ -90,8 +90,8 @@ public enum EggLayerRole
 /// </summary>
 public sealed record RoosterFarmAnimalKeyDef
 {
-    public required string Key { get; init; }
-    public required BreedingRole BreedingRole { get; init; }
+    public string Key { get; init; } = string.Empty;
+    public BreedingRole BreedingRole { get; init; }
     public EggLayerRole EggLayerRole { get; init; } = EggLayerRole.InheritFromFarmAnimalData;
 }
 
@@ -100,10 +100,10 @@ public sealed record RoosterFarmAnimalKeyDef
 /// </summary>
 public sealed record RoosterSourceDef
 {
-    public required string SourceId { get; init; }
-    public required string DisplayName { get; init; }
+    public string SourceId { get; init; } = string.Empty;
+    public string DisplayName { get; init; } = string.Empty;
 
-    public required List<RoosterFarmAnimalKeyDef> FarmAnimalKeys { get; init; }
+    public List<RoosterFarmAnimalKeyDef> FarmAnimalKeys { get; init; } = new();
 
     public string? RoosterEggItemId { get; init; }
 }
@@ -114,7 +114,7 @@ public sealed record RoosterSourceDef
 public sealed record EggSourcesCatalog
 {
     public int SchemaVersion { get; init; } = 1;
-    public required List<EggSourceDef> Sources { get; init; }
+    public List<EggSourceDef> Sources { get; init; } = new();
 }
 
 /// <summary>
@@ -123,5 +123,5 @@ public sealed record EggSourcesCatalog
 public sealed record RoosterSourcesCatalog
 {
     public int SchemaVersion { get; init; } = 1;
-    public required List<RoosterSourceDef> Sources { get; init; }
+    public List<RoosterSourceDef> Sources { get; init; } = new();
 }

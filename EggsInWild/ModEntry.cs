@@ -1176,8 +1176,9 @@ private void InstallHarmonyBootstrap()
             dataLoader: dataLoader,
             mods: mods,
             verifier: verifier,
-            histogram: histogram,
+            histogram: histogram
 #if WEGG_DEV
+            ,
             forceInstallDesertTombPatches: () =>
             {
                 var wasInstalled = _desertTombHarmonyInstalled;
@@ -1189,7 +1190,7 @@ private void InstallHarmonyBootstrap()
                 if (isInstalled && wasInstalled)
                     return new EggsInWild.Application.Facade.FacadeResult(true, "DesertTomb Harmony patches already installed.");
                 return new EggsInWild.Application.Facade.FacadeResult(false, "DesertTomb Harmony patches not installed (see log).");
-            },
+            }
 #endif
 
         );

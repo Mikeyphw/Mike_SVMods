@@ -57,6 +57,20 @@ public sealed class WeggCommandDispatcher
             _ => new CommandResult(false, $"{T("command.wegg.error.tomb.unknown", "Unknown tomb subcommand '{0}'.", args[1])}\n\n{DefaultHelpTextDev()}"),
         };
     }
+
+    private CommandResult HandleWildAnimals(string[] args)
+    {
+        // Usage: wegg wildanimals dump_effective
+        if (args.Length < 2 || IsHelp(args[1]))
+            return new CommandResult(true, DefaultHelpTextDev());
+
+        var sub = args[1].ToLowerInvariant();
+        return sub switch
+        {
+            "dump_effective" => ToCommandResult(_facade.DumpEffectiveWildAnimals()),
+            _ => new CommandResult(false, $"{T("command.wegg.error.wildanimals.unknown", "Unknown wildanimals subcommand '{0}'.", args[1])}\n\n{DefaultHelpTextDev()}"),
+        };
+    }
 #endif
 
     private CommandResult HandleStep(string[] args)

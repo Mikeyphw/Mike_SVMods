@@ -73,9 +73,9 @@ public sealed class ModFacade : IModFacade
         EggsInWild.Infrastructure.ModData.IModDataLoader dataLoader,
         EggsInWild.Infrastructure.Mods.IModAvailability mods,
         WeggVerifier verifier,
-        ITileSearchHistogram? histogram = null,
+        ITileSearchHistogram? histogram = null
 #if WEGG_DEV
-        Func<FacadeResult>? forceInstallDesertTombPatches = null
+        , Func<FacadeResult>? forceInstallDesertTombPatches = null
 #endif
     )
     {
