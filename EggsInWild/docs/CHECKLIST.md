@@ -1,69 +1,34 @@
-# CHECKLIST — EggsInWild
+# CHECKLIST — EggsInWild (WildAnimals JSON Editing)
 
-## Scope
-## Phase 0 — Keep docs in sync
-- [x] Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
-- [x] Keep GMCM page id `debug` as the hub; debug/diagnostics options may live on `debug.*` subpages.
-- [x] Keep option IDs stable forever (translation keys and field IDs depend on this).
-## Phase 2 — Baseline GMCM menu via NestCore host + DSL
-- [x] Wire `GmcmConfigHost` in `GameLaunched`; if GMCM missing, return.
-- [x] Build pages: `root` (General), `desertTomb`, `items`, `hatching`, `prices`, `animalNotes`, `debug`.
-- [x] Bind options using stable `optionId`s; ensure debug-only fields live on `debug`.
-- [x] Add i18n keys for pages and options under `config.*`.
-- [x] If config changes require refresh, use `onSaved` to invalidate caches.
-## Phase 6 — Dynamic per-animal progression mode editor
-- [x] Add save-dependent page `animalProgression` populated only when world is ready.
-- [x] Enumerate animal keys from `Data/FarmAnimals` (and any mod-specific anchors, if applicable).
-- [x] Render a toggle per animal using NestCore dynamic-label overloads with stable element IDs.
-- [x] Store overrides in `AnimalProgressionMode` dictionary using default-vs-override removal (clean config).
-- [x] Rebuild menu on `SaveLoaded` and when relevant assets change.
+## Phase 0 — Docs + tracking
+- [ ] Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.
 
+## Phase 1 — Override schema + normalization (safe core)
+- [ ] Extend WildAnimal override config with scalar nullable fields (Enabled/Price/LargeEgg/IsMagic).
+- [ ] Normalize override keys (trim + case-insensitive match to known WildAnimals).
+- [ ] Remove unknown keys from overrides.
+- [ ] Remove overrides where all fields are null.
+- [ ] Apply overrides in `ConfiguredModDataLoader` to produce effective WildAnimals.
+- [ ] Add debug logs for normalization/removals.
 
-## Phase 1 — Progression console command effects
-- [x] Define a cumulative side-effect catalog for progression steps (mail/quests/orders/recipes).
-- [x] Track console-applied side effects in player modData to enable safe rollback.
-- [x] Update `wegg step set --effects` to apply cumulative effects and reconcile on rollback.
-- [x] Extend game service abstractions to support removals required by reconciliation.
-- [x] Update command help text to document the new semantics.
+## Phase 2 — GMCM per-animal editor (scalar fields)
+- [ ] Add GMCM options for Enabled/Price/LargeEgg/IsMagic on each WildAnimal page.
+- [ ] Add reset-all overrides per animal.
+- [ ] Show base/override/effective values as read-only text.
+- [ ] Add i18n keys for all UI labels/helptext (default + pt-br if present).
+- [ ] Verify config-save/invalidation behavior.
 
-## Progression console command effects
-- [x] Cumulative step-effects include mail, quests, special orders, and crafting recipes.
-- [x] Rollback-safe reconcile removes only ledger-granted state.
-- [x] Add preview command: `wegg step effects preview <step>`.
-- [x] Update test doubles for new service APIs.
+## Phase 3 — Dev commands (inspection + safe edits)
+- [ ] Add `wegg wildanimals dump_effective`.
+- [ ] Add `wegg wildanimals status <wildAnimalKey>`.
+- [ ] Add `wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>`.
+- [ ] Preserve existing `wegg tomb force_patches`.
 
-## Phase 10 — Normalize i18n key taxonomy
-- [x] Normalize UI keys under `ui.*` (HUD / HUDMessage).
-- [x] Normalize mail keys (`mail.*.body`, variant bodies as `mail.*.body.<n>`), remove legacy typos.
-- [x] Normalize quest group IDs + variant keys.
-- [x] Normalize GMCM free-text keys under `config.section.*` and `config.paragraph.*`.
-- [x] Update verifiers/diagnostics to validate normalized keys only.
+## Phase 4 — Diagnostics (raw sources + effective ids display)
+- [ ] Show `ExtraModAnimalKeys` blocks (vanilla + modded) and loaded flags.
+- [ ] Show raw farm-animal keys derived from blocks.
+- [ ] Show resolved effective farm-animal ids (post filtering + dedupe).
 
-## Phase 2.5 — DesertTomb debug force handler (WEGG_DEV)
-- [x] Add `DebugForceDesertTombHandler` (force-run) config toggle (WEGG_DEV only).
-- [x] Add `DebugForceDesertTombUnrestricted` (bypass main-player + level bounds) toggle (WEGG_DEV only).
-- [x] GMCM: expose both on `debug` and `debug.desertTomb` pages.
-- [x] Add patch install/status logs (always on).
-- [x] Add hook-fired + success/error logs (gated).
-
-
-
-## Phase 11 — WildAnimals ModData schema (unweighted keys)
-- [x] Replace `FarmAnimalKeysSameWeight`/`FarmAnimalKeysWeighted` with `FarmAnimalKeys` (unweighted).
-- [x] Convert shipped `ModData/WildAnimalsList.json` to the new schema (no weights).
-- [x] Keep legacy JSON compatibility (merge legacy fields; ignore weight).
-- [x] Update consumers to use `GetEffectiveFarmAnimalKeys()`.
-- [x] Remove weight-based model types (`WeightedIdJson`, `WeightedFarmAnimalId`) and update any remaining code paths.
-
-## Phase 12 — WildAnimals enabled overrides + effective dump
-- [x] Add config override map `WildAnimalOverrides` with `Enabled`.
-- [x] Add `Enabled` to WildAnimalJson (default true).
-- [x] Apply overrides at ModData load (ConfiguredModDataLoader).
-- [x] Filter assignment + AnimalNotes to enabled-only.
-- [x] Add dev command `wegg wildanimals dump_effective`.
-
-## Phase 13 — WildAnimals GMCM pages
-- [x] Add WildAnimals GMCM index page with enabled/total summary.
-- [x] Add per-wild-animal subpages with Enabled override toggle.
-- [x] Add reset override control.
-- [x] Add shared i18n keys/tooltips for WildAnimals GMCM.
+## Phase 5 — Polish + cleanup
+- [ ] Ensure cleanup runs consistently and config remains minimal.
+- [ ] Final docs pass.
