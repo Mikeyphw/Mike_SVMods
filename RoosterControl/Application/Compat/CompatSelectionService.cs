@@ -213,19 +213,29 @@ internal sealed class CompatSelectionService
             if (!data.TryGetValue(src.FarmAnimalRef.FarmAnimalKey, out var fa))
                 return false;
 
-            IReadOnlyList<string>? list = src.FarmAnimalRef.List switch
-            {
-                EggSourceRefList.EggItemIds => fa.EggItemIds,
-                EggSourceRefList.ProduceItemIds => fa.ProduceItemIds,
-                EggSourceRefList.DeluxeProduceItemIds => fa.DeluxeProduceItemIds,
-                _ => null,
-            };
-
-            if (list is null)
-                return false;
-
             var idx = src.FarmAnimalRef.Index;
-            return idx >= 0 && idx < list.Count && !string.IsNullOrWhiteSpace(list[idx]);
+            return src.FarmAnimalRef.List switch
+            {
+                EggSourceRefList.EggItemIds =>
+                    fa.EggItemIds is not null
+                    && idx >= 0
+                    && idx < fa.EggItemIds.Count
+                    && !string.IsNullOrWhiteSpace(fa.EggItemIds[idx]),
+
+                EggSourceRefList.ProduceItemIds =>
+                    fa.ProduceItemIds is not null
+                    && idx >= 0
+                    && idx < fa.ProduceItemIds.Count
+                    && !string.IsNullOrWhiteSpace(fa.ProduceItemIds[idx]?.ItemId),
+
+                EggSourceRefList.DeluxeProduceItemIds =>
+                    fa.DeluxeProduceItemIds is not null
+                    && idx >= 0
+                    && idx < fa.DeluxeProduceItemIds.Count
+                    && !string.IsNullOrWhiteSpace(fa.DeluxeProduceItemIds[idx]?.ItemId),
+
+                _ => false,
+            };
         }
         catch
         {
