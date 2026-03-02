@@ -29,5 +29,6 @@
 - [x] Update `docs/*` checklist/todo to reflect completion and add follow-ups.
 ## Phase 7 — UI viewmodel base helpers
 - [x] Add `ObservableObject` (INotifyPropertyChanged) under `Helpers/UI`.
-- [x] Document intended use for StardewUI binding contexts (viewmodels) in TODO/checklist.
-- [ ] Verify `NestCore` builds (net6.0) locally/CI.
+- [x] Add `RelayCommand` (ICommand) under `Helpers/UI`.
+- [x] Add `docs/stardewui.md` consumer example (acquisition + menu open + viewmodel + StarML snippet).
+- [ ] Verify `NestCore` builds (net6.0) with implicit usings + nullable enabled.

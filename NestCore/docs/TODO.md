@@ -14,3 +14,5 @@
 - [ ] Add a short `docs/stardewui.md` usage example for consumers (GameLaunched + RegisterAssets + CreateMenu).
 - [ ] Verify `NestCore` builds (net6.0) locally/CI after adding `ObservableObject`.
 
+- [x] Add StardewUI consumer doc (`docs/stardewui.md`).
+- [x] Add `RelayCommand` helper for UI viewmodels.

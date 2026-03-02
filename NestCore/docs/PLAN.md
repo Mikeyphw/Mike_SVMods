@@ -42,5 +42,7 @@
 
 ## Phase 7 — UI viewmodel base helpers
 1. Add `ObservableObject` (INotifyPropertyChanged) under `Helpers/UI`.
-2. Document intended use for StardewUI binding contexts (viewmodels) in TODO/checklist.
-3. Verify `NestCore` builds (net6.0) with implicit usings + nullable enabled.
+2. Add `RelayCommand` (ICommand) under `Helpers/UI` for reusable enable/disable logic.
+3. Add `docs/stardewui.md` with a consumer-facing example (GameLaunched acquisition + menu open + sample viewmodel + StarML snippet).
+4. Document intended use for StardewUI binding contexts and event handlers (method-first, optionally routing into commands).
+5. Verify `NestCore` builds (net6.0) with implicit usings + nullable enabled.
