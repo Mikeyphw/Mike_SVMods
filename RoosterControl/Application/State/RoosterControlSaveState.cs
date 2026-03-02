@@ -1,3 +1,4 @@
+using RoosterControl.Application.Compat;
 using RoosterControl.Application.Planning;
 using LuckyTypes = Mikew.NestCore.EnumsAndStrings.Enums.LuckyTypes;
 
@@ -9,13 +10,15 @@ namespace RoosterControl.Application.State;
 /// </summary>
 internal sealed class RoosterControlSaveState
 {
-    public int SchemaVersion { get; set; } = 2;
+    public int SchemaVersion { get; set; } = 3;
 
     public int LastRoosterSetupDay { get; set; } = -1;
 
     public int LastDebugDumpDay { get; set; } = -1;
 
     public LuckyTypes LastKnownLuck { get; set; } = LuckyTypes.Neutral;
+
+    public CompatSelectionState Compat { get; set; } = new();
 
     public DailyFarmAnimalsDecisions? CurrentDailyDecisions { get; set; }
 

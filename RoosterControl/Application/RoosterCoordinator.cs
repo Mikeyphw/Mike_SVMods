@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using RoosterControl.Application.Compat;
 using RoosterControl.Application.Hatching;
 using RoosterControl.Application.Catalogs;
 using RoosterControl.Constants;
@@ -77,6 +78,8 @@ internal ILetMeHatchApi? HatchApi;
 
     private State.RoosterControlSaveState _saveState = new();
 
+    private CompatSelectionService _compatSelection = null!;
+
     private AnimalExclusion _animalExclusions = new();
 
     
@@ -143,6 +146,12 @@ private NextTickScheduler _nextTick;
             "ra_catalog",
             "Catalog commands. Use: ra_catalog help",
             CatalogCommand
+        );
+
+        Helper.ConsoleCommands.Add(
+            "ra_compat",
+            "Compat selection commands. Use: ra_compat help",
+            CompatCommand
         );
 
         Helper.ConsoleCommands.Add(
@@ -256,6 +265,12 @@ private NextTickScheduler _nextTick;
         _nextTick.Enqueue(RefreshFarmAnimalsOnLocationChange);
     }
 
+    private void EnsureCompatInitialized()
+    {
+        if (!_compatSelection.IsInitialized)
+            _compatSelection.InitializeOrRepair(_saveState.Compat);
+    }
+
     public void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         _saveState = _saveData.Read<State.RoosterControlSaveState>(SaveStateKey) ?? new State.RoosterControlSaveState();
@@ -266,6 +281,11 @@ private NextTickScheduler _nextTick;
             _saveState.CurrentDailyDecisions = null;
             _saveState.PreviousDailyDecisions = null;
         }
+
+        if (_saveState.SchemaVersion < 3)
+            _saveState.SchemaVersion = 3;
+
+        EnsureCompatInitialized();
 
         _needsRoosterSetup = true;
         _lastRoosterSetupDay = -1;
@@ -290,7 +310,7 @@ private NextTickScheduler _nextTick;
             _femaleAssignmentsDirty = false;
         }
 
-        _saveState.SchemaVersion = 2;
+        _saveState.SchemaVersion = 3;
         _saveState.LastRoosterSetupDay = _lastRoosterSetupDay;
         _saveState.LastDebugDumpDay = _lastDebugDumpDay;
         _saveState.LastKnownLuck = DailyLuck;

@@ -1,34 +1,22 @@
-## Phase 8–12 (Compat catalogs + selection)
-- Implement Phase 8: catalogs + CP assets
-- Implement Phase 9: selection + cycling + save-state
-- Implement Phase 10: apply selections late (avoid load-order conflicts)
-- Implement Phase 11: fertilized egg strategy (native vs generated)
-- Implement Phase 12: GMCM UI
+# RoosterControl TODO
 
-# TODO — RoosterControl
+## Next: Phase 9B (cycling + apply)
+- Decide rooster provider interaction:
+  - enable/disable multiple providers (union), or single active provider for roosters.
+- Implement `ra_compat cycle-*` commands.
+- Apply egg selections to:
+  - daily plan decisions
+  - fertilized egg cloning mapping
+- Apply rooster provider keys/roles to:
+  - coop scanning
+  - breeding assignments
 
-- [x] Ensure GMCM option IDs are stable and documented.
-- [x] Verify all debug/diagnostic/logging toggles are only on the `debug` page.
-- [x] Add/verify i18n keys for all pages/options (`config.*`).
-- [x] Decide v1 scope for produce tables (minimal vs full 4-slot editor).
-- [x] Ensure dynamic female list is stable across rebuilds (consistent ordering).
-- [x] Switch RoosterControl dev symbol from `MIKE_DEV` to `RCTRL_DEV`.
+## After: Phase 10 (late apply)
+- Resolve FarmAnimalRef egg sources against final `Data/FarmAnimals` (post-CP).
+- Ensure our edits run at a safe late priority.
 
+## After: Phase 11 (fertilized egg synthesis)
+- If chosen provider has no fertilized eggs, clone fertilized variants into `Data/Objects`.
 
-
-## Rooster Produce System
-- [x] Phase 3: weight/percent semantics cleanup + validation warnings.
-- [x] Phase 3: validate random-group references (missing/cycles) on catalog load.
-- [x] Phase 4: consolidate FarmAnimals mutations into the asset editor pipeline (steps 1–2).
-
-- [x] Phase 4: batch invalidations via NestCore next-tick helpers.
-- [x] Phase 4: add dev-gated pipeline summary console command (`ra_debug_pipeline`).
-
-- [x] Phase 5: upgrade `ra_debug_produce` with `--full` + `--json` and random-group expansion trace.
-- [x] Phase 5: add `ra_debug_plan` (apply/skip reasons) with `--json`.
-- [x] Phase 5: add `ra_debug_diff` (prev vs current diff) with `--full` + `--json`.
-
-- [x] Phase 6: persist daily decisions snapshot in save state (diff across sessions).
-
-## Phase 7 — Produce system improvements (follow-ups)
-- Expand anomaly reporting to cover missing/empty random groups and unresolved variable keys.
+## After: Phase 12 (GMCM UI)
+- Add compat selection UI + validation.
