@@ -1,5 +1,10 @@
 # PLAN — WildAnimals JSON Editing via GMCM (EggsInWild)
 
+## Status
+- Phases 1–5 implemented.
+- Next work focuses on editing complex collections (`LocationTypes`, `ExtraModAnimalKeys`) within GMCM static UI constraints.
+
+
 ## Scope
 - Subdir: `EggsInWild`
 - Framework: **NestCore-first** (GMCM pages are built using NestCore GMCM integration).

@@ -395,11 +395,27 @@ public FacadeResult DumpEffectiveWildAnimals()
 
         var list = new List<WildAnimalEffectiveDumpEntry>();
 
+        var cfg = _config.Get();
+
         foreach (var (key, wa) in snapshot.WildAnimals.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
         {
             var ids = new List<string>();
             if (catalog.TryGet(key, out var def))
                 ids = def.FarmAnimalIds.ToList();
+
+            var ov = TryGetWildAnimalOverride(cfg, key);
+
+            var overrides = new WildAnimalOverridesDump(
+                Enabled: ov?.Enabled,
+                LargeEgg: ov?.LargeEgg,
+                Price: ov?.Price,
+                IsMagic: ov?.IsMagic);
+
+            var sources = new WildAnimalSourcesDump(
+                Enabled: ov?.Enabled is null ? "default" : "override",
+                LargeEgg: ov?.LargeEgg is null ? "default" : "override",
+                Price: ov?.Price is null ? "default" : "override",
+                IsMagic: ov?.IsMagic is null ? "default" : "override");
 
             list.Add(new WildAnimalEffectiveDumpEntry(
                 WildAnimalKey: key,
@@ -407,7 +423,9 @@ public FacadeResult DumpEffectiveWildAnimals()
                 LargeEgg: wa.LargeEgg,
                 IsMagic: wa.IsMagic,
                 Price: wa.Price,
-                FarmAnimalIds: ids
+                FarmAnimalIds: ids,
+                Overrides: overrides,
+                Sources: sources
             ));
         }
 
@@ -437,7 +455,7 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
         var canonicalKey = ResolveWildAnimalKey(snapshot.WildAnimals.Keys, wildAnimalKey);
 
         if (canonicalKey is null)
-            return new FacadeResult(false, $"Unknown wild animal '{wildAnimalKey}'. Use: wegg wildanimals dump_effective");
+            return new FacadeResult(false, BuildUnknownWildAnimalMessage(snapshot.WildAnimals.Keys, wildAnimalKey));
 
         var wa = snapshot.WildAnimals[canonicalKey];
 
@@ -451,14 +469,27 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
         var cfg = _config.Get();
         var ov = TryGetWildAnimalOverride(cfg, canonicalKey);
 
+        var overrides = new WildAnimalOverridesDump(
+            Enabled: ov?.Enabled,
+            LargeEgg: ov?.LargeEgg,
+            Price: ov?.Price,
+            IsMagic: ov?.IsMagic);
+
+        var sources = new WildAnimalSourcesDump(
+            Enabled: ov?.Enabled is null ? "default" : "override",
+            LargeEgg: ov?.LargeEgg is null ? "default" : "override",
+            Price: ov?.Price is null ? "default" : "override",
+            IsMagic: ov?.IsMagic is null ? "default" : "override");
+
         var entry = new WildAnimalStatusEntry(
             WildAnimalKey: canonicalKey,
-            ConfigOverrideEnabled: ov?.Enabled,
             EffectiveEnabled: wa.Enabled,
             LargeEgg: wa.LargeEgg,
             IsMagic: wa.IsMagic,
             Price: wa.Price,
-            FarmAnimalIds: ids
+            FarmAnimalIds: ids,
+            Overrides: overrides,
+            Sources: sources
         );
 
         var json = JsonSerializer.Serialize(entry, new JsonSerializerOptions { WriteIndented = false });
@@ -486,7 +517,7 @@ public FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled)
         var canonicalKey = ResolveWildAnimalKey(snapshot.WildAnimals.Keys, wildAnimalKey);
 
         if (canonicalKey is null)
-            return new FacadeResult(false, $"Unknown wild animal '{wildAnimalKey}'. Use: wegg wildanimals dump_effective");
+            return new FacadeResult(false, BuildUnknownWildAnimalMessage(snapshot.WildAnimals.Keys, wildAnimalKey));
 
         _config.Update(cfg =>
         {
@@ -512,6 +543,18 @@ public FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled)
             StardewModdingAPI.LogLevel.Error);
         return new FacadeResult(false, "Failed setting wild animal override (see log).");
     }
+}
+
+private static string BuildUnknownWildAnimalMessage(IEnumerable<string> keys, string raw)
+{
+    var known = keys
+        .Where(k => !string.IsNullOrWhiteSpace(k))
+        .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+        .Take(10)
+        .ToList();
+
+    var preview = known.Count == 0 ? "(none)" : string.Join(", ", known);
+    return $"Unknown wild animal '{raw}'. Known keys (first {known.Count}): {preview}. Use: wegg wildanimals dump_effective";
 }
 
 private static string? ResolveWildAnimalKey(IEnumerable<string> keys, string raw)
@@ -543,14 +586,29 @@ private static WildAnimalOverrideConfig? TryGetWildAnimalOverride(ModConfig cfg,
     return null;
 }
 
+private sealed record WildAnimalOverridesDump(
+    bool? Enabled,
+    bool? LargeEgg,
+    int? Price,
+    bool? IsMagic
+);
+
+private sealed record WildAnimalSourcesDump(
+    string Enabled,
+    string LargeEgg,
+    string Price,
+    string IsMagic
+);
+
 private sealed record WildAnimalStatusEntry(
     string WildAnimalKey,
-    bool? ConfigOverrideEnabled,
     bool EffectiveEnabled,
     bool LargeEgg,
     bool IsMagic,
     int Price,
-    List<string> FarmAnimalIds
+    List<string> FarmAnimalIds,
+    WildAnimalOverridesDump Overrides,
+    WildAnimalSourcesDump Sources
 );
 
 private sealed record WildAnimalEffectiveDumpEntry(
@@ -559,7 +617,9 @@ private sealed record WildAnimalEffectiveDumpEntry(
     bool LargeEgg,
     bool IsMagic,
     int Price,
-    List<string> FarmAnimalIds
+    List<string> FarmAnimalIds,
+    WildAnimalOverridesDump Overrides,
+    WildAnimalSourcesDump Sources
 );
 #endif
 

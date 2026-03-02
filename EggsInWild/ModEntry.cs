@@ -329,6 +329,8 @@ foreach (var key in wildAnimalKeysForGmcm)
             var defaultPrice = definition?.Price ?? 0;
             var defaultIsMagic = definition?.IsMagic ?? false;
 
+            var modAvailability = new EggsInWild.Infrastructure.Mods.SmapiModAvailability(Helper.ModRegistry);
+
             static bool IsEmptyOverride(WildAnimalOverrideConfig? ov)
                 => ov is null || (ov.Enabled is null && ov.LargeEgg is null && ov.Price is null && ov.IsMagic is null);
 
@@ -571,6 +573,71 @@ foreach (var key in wildAnimalKeysForGmcm)
                     else
                         cfg.WildAnimalOverrides[key] = ov;
                 });
+
+
+            page.Separator(simple: true);
+            page.SectionLabel(() => Translate(i18n, "config.section.wildAnimals.diagnostics.label", "Diagnostics"));
+
+            page.ParagraphDynamic(
+                () =>
+                {
+                    if (definition?.ExtraModAnimalKeys is null || definition.ExtraModAnimalKeys.Count == 0)
+                        return Translate(i18n, "config.paragraph.wildAnimals.diagnostics.noSources.text", "ExtraModAnimalKeys: (none)");
+
+                    var ordered = definition.ExtraModAnimalKeys
+                        .OrderBy(kvp => kvp.Key == "Vanilla" ? "" : kvp.Key, StringComparer.OrdinalIgnoreCase);
+
+                    var lines = new List<string>();
+                    foreach (var (modId, keys) in ordered)
+                    {
+                        var loaded = modAvailability.IsLoaded(modId);
+                        var raw = keys?.FarmAnimalKeys ?? new List<string>();
+                        var effective = keys?.GetEffectiveFarmAnimalKeys() ?? Array.Empty<string>();
+
+                        var rawJoined = raw.Count == 0 ? "" : string.Join(", ", raw);
+                        var effJoined = effective.Count == 0 ? "" : string.Join(", ", effective);
+
+                        var legacyNote = raw.Count == 0 && effective.Count > 0
+                            ? Translate(i18n, "config.wildAnimals.diagnostics.note.legacy", " (legacy fields)")
+                            : "";
+
+                        lines.Add($"{modId}: loaded={loaded}; FarmAnimalKeys=[{rawJoined}]{legacyNote}; effective=[{effJoined}]");
+                    }
+
+                    var joined = string.Join(Environment.NewLine, lines);
+                    return Translate(i18n, "config.paragraph.wildAnimals.diagnostics.sources.text", "ExtraModAnimalKeys sources:\n{0}", joined);
+                },
+                id: $"wildAnimals_diag_sources_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+            page.ParagraphDynamic(
+                () =>
+                {
+                    if (definition?.ExtraModAnimalKeys is null || definition.ExtraModAnimalKeys.Count == 0)
+                        return Translate(i18n, "config.paragraph.wildAnimals.diagnostics.resolvedIds.empty.text", "Resolved FarmAnimalIds: (none)");
+
+                    var ids = new List<string>();
+                    var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var (modId, keys) in definition.ExtraModAnimalKeys
+                        .OrderBy(kvp => kvp.Key == "Vanilla" ? "" : kvp.Key, StringComparer.OrdinalIgnoreCase))
+                    {
+                        if (!modAvailability.IsLoaded(modId))
+                            continue;
+
+                        foreach (var id in keys.GetEffectiveFarmAnimalKeys())
+                        {
+                            if (seen.Add(id))
+                                ids.Add(id);
+                        }
+                    }
+
+                    var joined = ids.Count == 0
+                        ? Translate(i18n, "config.wildAnimals.value.none", "(none)")
+                        : string.Join(", ", ids);
+
+                    return Translate(i18n, "config.paragraph.wildAnimals.diagnostics.resolvedIds.text", "Resolved FarmAnimalIds (loaded mods): {0}", joined);
+                },
+                id: $"wildAnimals_diag_resolved_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
 
             page.BoolLabel(
                 elementId: $"wildAnimals.{key}.reset",

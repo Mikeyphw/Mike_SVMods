@@ -1,15 +1,11 @@
 # TODO — EggsInWild (WildAnimals)
 
-## Now (next implementation work)
-- [ ] Phase 1: scalar overrides + normalization + apply during load.
-- [ ] Phase 2: GMCM per-animal editor for scalar fields.
-- [ ] Phase 3: dev commands for status/set_enabled/dump_effective.
-- [ ] Phase 4: per-animal diagnostics display (read-only sources + effective ids).
-
-## Later / optional
-- [ ] GMCM editing for complex collections (e.g. `ExtraModAnimalKeys`).
-- [ ] UI enhancements that would require dynamic menu rebuilds (search/filter) — likely not worth it.
-- [ ] Additional validation rules (range checks, richer error reporting).
+## Next (after Phases 1–5)
+- [ ] GMCM editing for complex collections:
+  - [ ] `LocationTypes` map editing (per-location allow/deny).
+  - [ ] `ExtraModAnimalKeys` editing (per mod-group list management).
+- [ ] Index-page navigation improvements that fit GMCM static-page limits (no live search).
+- [ ] Add richer validation/range checks (price bounds, empty farm-animal list warnings surfaced in GMCM).
 
 ## Notes
 - Keep changes inside `EggsInWild` and prefer NestCore helpers for GMCM plumbing.
