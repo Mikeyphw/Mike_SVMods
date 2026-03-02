@@ -259,6 +259,13 @@ var wildAnimalKeysForGmcm = wildAnimalsForGmcm.Keys
     .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
     .ToList();
 
+var locationTypeKeysForGmcm = wildAnimalsForGmcm.Values
+    .SelectMany(v => v.LocationTypes?.Keys ?? Enumerable.Empty<string>())
+    .Where(k => !string.IsNullOrWhiteSpace(k))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .OrderBy(k => string.Equals(k, "Farm", StringComparison.OrdinalIgnoreCase) ? "" : k, StringComparer.OrdinalIgnoreCase)
+    .ToList();
+
 layout.Page("wildAnimals", page =>
 {
     page.ParagraphDynamic(
@@ -332,7 +339,13 @@ foreach (var key in wildAnimalKeysForGmcm)
             var modAvailability = new EggsInWild.Infrastructure.Mods.SmapiModAvailability(Helper.ModRegistry);
 
             static bool IsEmptyOverride(WildAnimalOverrideConfig? ov)
-                => ov is null || (ov.Enabled is null && ov.LargeEgg is null && ov.Price is null && ov.IsMagic is null);
+                => ov is null
+                    || (ov.Enabled is null
+                        && ov.LargeEgg is null
+                        && ov.Price is null
+                        && ov.IsMagic is null
+                        && (ov.LocationTypes is null || ov.LocationTypes.Count == 0)
+                        && (ov.ExtraModAnimalKeys is null || ov.ExtraModAnimalKeys.Count == 0));
 
             WildAnimalOverrideConfig? GetOverride(ModConfig cfg)
             {
@@ -573,6 +586,116 @@ foreach (var key in wildAnimalKeysForGmcm)
                     else
                         cfg.WildAnimalOverrides[key] = ov;
                 });
+
+
+            page.Separator(simple: true);
+            page.SectionLabel(() => Translate(i18n, "config.section.wildAnimals.locationTypes.label", "Location types"));
+
+            page.ParagraphDynamic(
+                () => Translate(
+                    i18n,
+                    "config.paragraph.wildAnimals.locationTypes.description.text",
+                    "Override eligibility per location type. Use Default to inherit from WildAnimalsList."),
+                id: $"wildAnimals_locationTypes_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+            var allowedValues = new[] { "default", "allow", "deny" };
+
+            foreach (var locationTypeKey in locationTypeKeysForGmcm)
+            {
+                var baseAllowed = definition?.LocationTypes is not null
+                    && definition.LocationTypes.TryGetValue(locationTypeKey, out var baseVal)
+                    && baseVal;
+
+                var elementId = $"wildAnimals.{key}.locationTypes.{locationTypeKey}";
+
+                page.TextLabel(
+                    elementId: elementId,
+                    name: () =>
+                    {
+                        var typeName = Translate(
+                            i18n,
+                            $"config.wildAnimals.locationTypes.type.{locationTypeKey}.name",
+                            locationTypeKey);
+
+                        return typeName;
+                    },
+                    tooltip: () =>
+                    {
+                        var defState = baseAllowed
+                            ? Translate(i18n, "config.wildAnimals.state.enabled", "Enabled")
+                            : Translate(i18n, "config.wildAnimals.state.disabled", "Disabled");
+
+                        var typeName = Translate(
+                            i18n,
+                            $"config.wildAnimals.locationTypes.type.{locationTypeKey}.name",
+                            locationTypeKey);
+
+                        return Translate(
+                            i18n,
+                            "config.wildAnimals.locationTypes.type.tooltip",
+                            $"Override eligibility for location type '{typeName}'. Default: {defState}.",
+                            typeName,
+                            defState);
+                    },
+                    getValue: () =>
+                    {
+                        var cfg = _config!.Get();
+                        var ov = GetOverride(cfg);
+
+                        if (ov?.LocationTypes is not null && ov.LocationTypes.TryGetValue(locationTypeKey, out var o))
+                            return o ? "allow" : "deny";
+
+                        return "default";
+                    },
+                    setValue: value =>
+                    {
+                        var cfg = _config!.Get();
+                        cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                        if (!cfg.WildAnimalOverrides.TryGetValue(key, out var ov) || ov is null)
+                            ov = new WildAnimalOverrideConfig();
+
+                        ov.LocationTypes ??= new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+                        if (string.Equals(value, "default", StringComparison.OrdinalIgnoreCase)
+                            || (string.Equals(value, "allow", StringComparison.OrdinalIgnoreCase) && baseAllowed)
+                            || (string.Equals(value, "deny", StringComparison.OrdinalIgnoreCase) && !baseAllowed))
+                        {
+                            ov.LocationTypes.Remove(locationTypeKey);
+                        }
+                        else if (string.Equals(value, "allow", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ov.LocationTypes[locationTypeKey] = true;
+                        }
+                        else if (string.Equals(value, "deny", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ov.LocationTypes[locationTypeKey] = false;
+                        }
+
+                        if (ov.LocationTypes.Count == 0)
+                            ov.LocationTypes = null;
+
+                        if (IsEmptyOverride(ov))
+                            cfg.WildAnimalOverrides.Remove(key);
+                        else
+                            cfg.WildAnimalOverrides[key] = ov;
+                    },
+                    allowedValues: allowedValues,
+                    formatValue: v =>
+                    {
+                        if (string.Equals(v, "allow", StringComparison.OrdinalIgnoreCase))
+                            return Translate(i18n, "config.wildAnimals.locationTypes.choice.allow", "Allow");
+
+                        if (string.Equals(v, "deny", StringComparison.OrdinalIgnoreCase))
+                            return Translate(i18n, "config.wildAnimals.locationTypes.choice.deny", "Deny");
+
+                        var defState = baseAllowed
+                            ? Translate(i18n, "config.wildAnimals.locationTypes.choice.default.enabled", "Default (Enabled)")
+                            : Translate(i18n, "config.wildAnimals.locationTypes.choice.default.disabled", "Default (Disabled)");
+
+                        return defState;
+                    });
+            }
 
 
             page.Separator(simple: true);

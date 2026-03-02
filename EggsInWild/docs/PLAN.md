@@ -2,8 +2,9 @@
 
 ## Status
 - Phases 1–5 implemented.
-- Phase 6–7 in progress: complex collection overrides (`LocationTypes`, `ExtraModAnimalKeys`).
-- Current: override schema + loader merge/cleanup implemented; GMCM editors pending.
+- Phase 6 implemented: `LocationTypes` editor (override layer + GMCM UI).
+- Phase 7 in progress: `ExtraModAnimalKeys` editor (override layer implemented; GMCM UI pending).
+- Current: Phase 7 GMCM UI.
 
 
 ## Scope
@@ -161,8 +162,8 @@
 
 **Steps**
 1. Add override schema + normalization/cleanup + merge into effective WildAnimals on load. ✅
-2. Add per-animal GMCM controls for each LocationType (static UI, no live search).
-3. Add i18n keys + docs updates.
+2. Add per-animal GMCM controls for each LocationType (static UI, no live search). ✅
+3. Add i18n keys + docs updates. ✅
 
 **Acceptance**
 - Config stores only per-type diffs vs base JSON; casing/whitespace normalized.

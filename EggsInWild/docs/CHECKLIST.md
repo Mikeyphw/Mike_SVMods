@@ -40,8 +40,8 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Normalize LocationTypes override keys (trim + case-insensitive match to base when possible).
 - [x] Remove redundant LocationTypes overrides matching base JSON.
 - [x] Apply LocationTypes overrides in `ConfiguredModDataLoader`.
-- [ ] Add GMCM UI controls for LocationTypes.
-- [ ] Add i18n keys + docs updates.
+- [x] Add GMCM UI controls for LocationTypes.
+- [x] Add i18n keys + docs updates.
 
 ## Phase 7 — ExtraModAnimalKeys editor
 - [x] Extend WildAnimal override config with ExtraModAnimalKeys overrides.
