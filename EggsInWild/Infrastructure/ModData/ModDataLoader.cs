@@ -234,13 +234,41 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
             if (!string.Equals(trimmedKey, rawKey, StringComparison.Ordinal) || !string.Equals(canonical, trimmedKey, StringComparison.Ordinal))
                 changed = true;
 
+            if (wildAnimals.TryGetValue(canonical, out var baseWa) && baseWa is not null)
+            {
+                if (NormalizeOverrideFields(ovValue, baseWa, canonical))
+                    changed = true;
+
+                if (IsEmpty(ovValue))
+                {
+                    removedEmpty.Add(canonical);
+                    changed = true;
+                    continue;
+                }
+            }
+
             if (!normalized.TryGetValue(canonical, out var existing))
             {
                 normalized[canonical] = ovValue;
                 continue;
             }
 
-            normalized[canonical] = MergeOverrides(existing, ovValue, canonical);
+            var mergedOv = MergeOverrides(existing, ovValue, canonical);
+            if (wildAnimals.TryGetValue(canonical, out var baseWaMerged) && baseWaMerged is not null)
+            {
+                if (NormalizeOverrideFields(mergedOv, baseWaMerged, canonical))
+                    changed = true;
+
+                if (IsEmpty(mergedOv))
+                {
+                    removedEmpty.Add(canonical);
+                    normalized.Remove(canonical);
+                    changed = true;
+                    continue;
+                }
+            }
+
+            normalized[canonical] = mergedOv;
             merged.Add(canonical);
             changed = true;
         }
@@ -285,7 +313,324 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
         return true;
 
         static bool IsEmpty(WildAnimalOverrideConfig ov)
-            => ov.Enabled is null && ov.LargeEgg is null && ov.Price is null && ov.IsMagic is null;
+            => ov.Enabled is null
+                && ov.LargeEgg is null
+                && ov.Price is null
+                && ov.IsMagic is null
+                && (ov.LocationTypes is null || ov.LocationTypes.Count == 0)
+                && (ov.ExtraModAnimalKeys is null || ov.ExtraModAnimalKeys.Count == 0);
+
+        bool NormalizeOverrideFields(WildAnimalOverrideConfig ov, WildAnimalJson baseWa, string wildAnimalKey)
+        {
+            var changed = false;
+
+            changed |= NormalizeLocationTypesOverride(ov, baseWa, wildAnimalKey);
+            changed |= NormalizeExtraModAnimalKeysOverride(ov, baseWa, wildAnimalKey);
+
+            return changed;
+        }
+
+        bool NormalizeLocationTypesOverride(WildAnimalOverrideConfig ov, WildAnimalJson baseWa, string wildAnimalKey)
+        {
+            var raw = ov.LocationTypes;
+            if (raw is null)
+                return false;
+
+            if (raw.Count == 0)
+            {
+                ov.LocationTypes = null;
+                return true;
+            }
+
+            var canonical = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var k in baseWa.LocationTypes.Keys)
+            {
+                if (string.IsNullOrWhiteSpace(k))
+                    continue;
+
+                canonical.TryAdd(k, k);
+            }
+
+            var normalized = new Dictionary<string, bool>(StringComparer.Ordinal);
+
+            foreach (var (rawKey, allowed) in raw)
+            {
+                var trimmed = (rawKey ?? string.Empty).Trim();
+                if (trimmed.Length == 0)
+                    continue;
+
+                var key = canonical.TryGetValue(trimmed, out var c) ? c : trimmed;
+
+                if (baseWa.LocationTypes.TryGetValue(key, out var baseAllowed) && baseAllowed == allowed)
+                    continue;
+
+                if (normalized.TryGetValue(key, out var existing) && existing != allowed)
+                {
+                    LogScopedHelper.Log(
+                        _log,
+                        ScopedLogCatalog.ModWeCategory.SaveData,
+                        $"WildAnimalOverrides '{wildAnimalKey}' has conflicting LocationTypes override for '{key}'; using the later entry.",
+                        StardewModdingAPI.LogLevel.Warn);
+                }
+
+                normalized[key] = allowed;
+            }
+
+            if (normalized.Count == 0)
+            {
+                var wasNonNull = ov.LocationTypes is not null;
+                ov.LocationTypes = null;
+                return wasNonNull;
+            }
+
+            if (DictionaryEquals(raw, normalized))
+                return false;
+
+            ov.LocationTypes = normalized;
+            return true;
+        }
+
+        bool NormalizeExtraModAnimalKeysOverride(WildAnimalOverrideConfig ov, WildAnimalJson baseWa, string wildAnimalKey)
+        {
+            var raw = ov.ExtraModAnimalKeys;
+            if (raw is null)
+                return false;
+
+            if (raw.Count == 0)
+            {
+                ov.ExtraModAnimalKeys = null;
+                return true;
+            }
+
+            var canonicalModIds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var modId in baseWa.ExtraModAnimalKeys.Keys)
+            {
+                if (string.IsNullOrWhiteSpace(modId))
+                    continue;
+
+                canonicalModIds.TryAdd(modId, modId);
+            }
+
+            var normalized = new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.Ordinal);
+
+            foreach (var (rawModId, blockOv) in raw)
+            {
+                var trimmedModId = (rawModId ?? string.Empty).Trim();
+                if (trimmedModId.Length == 0)
+                    continue;
+
+                if (blockOv is null)
+                    continue;
+
+                var keys = NormalizeStringList(blockOv.FarmAnimalKeys);
+                if (keys.Count == 0)
+                    continue;
+
+                var modId = canonicalModIds.TryGetValue(trimmedModId, out var c) ? c : trimmedModId;
+
+                if (baseWa.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock))
+                {
+                    var baseKeys = baseBlock.GetEffectiveFarmAnimalKeys();
+                    if (SequenceEqualIgnoreCase(keys, baseKeys))
+                        continue;
+                }
+
+                if (normalized.TryGetValue(modId, out var existing) &&
+                    existing.FarmAnimalKeys is not null &&
+                    !SequenceEqualIgnoreCase(keys, existing.FarmAnimalKeys))
+                {
+                    LogScopedHelper.Log(
+                        _log,
+                        ScopedLogCatalog.ModWeCategory.SaveData,
+                        $"WildAnimalOverrides '{wildAnimalKey}' has conflicting ExtraModAnimalKeys override for '{modId}'; using the later entry.",
+                        StardewModdingAPI.LogLevel.Warn);
+                }
+
+                normalized[modId] = new ExtraModAnimalKeysOverrideConfig
+                {
+                    FarmAnimalKeys = keys,
+                };
+            }
+
+            if (normalized.Count == 0)
+            {
+                var wasNonNull = ov.ExtraModAnimalKeys is not null;
+                ov.ExtraModAnimalKeys = null;
+                return wasNonNull;
+            }
+
+            if (ExtraModAnimalKeysEquals(raw, normalized))
+                return false;
+
+            ov.ExtraModAnimalKeys = normalized;
+            return true;
+        }
+
+        static List<string> NormalizeStringList(IEnumerable<string>? raw)
+        {
+            if (raw is null)
+                return new List<string>();
+
+            var outList = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var s in raw)
+            {
+                var t = (s ?? string.Empty).Trim();
+                if (t.Length == 0)
+                    continue;
+
+                if (seen.Add(t))
+                    outList.Add(t);
+            }
+
+            return outList;
+        }
+
+        static bool SequenceEqualIgnoreCase(IReadOnlyList<string> a, IReadOnlyList<string> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+
+            for (var i = 0; i < a.Count; i++)
+            {
+                if (!string.Equals(a[i], b[i], StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            return true;
+        }
+
+        static bool DictionaryEquals(Dictionary<string, bool> a, Dictionary<string, bool> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+
+            foreach (var (key, value) in a)
+            {
+                if (!b.TryGetValue(key, out var other) || other != value)
+                    return false;
+            }
+
+            return true;
+        }
+
+        static bool ExtraModAnimalKeysEquals(
+            Dictionary<string, ExtraModAnimalKeysOverrideConfig> a,
+            Dictionary<string, ExtraModAnimalKeysOverrideConfig> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+
+            foreach (var (key, blockA) in a)
+            {
+                if (!b.TryGetValue(key, out var blockB))
+                    return false;
+
+                var listA = blockA.FarmAnimalKeys;
+                var listB = blockB.FarmAnimalKeys;
+
+                if (listA is null && listB is null)
+                    continue;
+
+                if (listA is null || listB is null)
+                    return false;
+
+                if (!SequenceEqualIgnoreCase(listA, listB))
+                    return false;
+            }
+
+            return true;
+        }
+
+        Dictionary<string, bool>? MergeLocationTypes(Dictionary<string, bool>? a, Dictionary<string, bool>? b, string wildAnimalKey)
+        {
+            if (a is null || a.Count == 0)
+                return b is null || b.Count == 0 ? null : new Dictionary<string, bool>(b, StringComparer.Ordinal);
+
+            if (b is null || b.Count == 0)
+                return new Dictionary<string, bool>(a, StringComparer.Ordinal);
+
+            var merged = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (k, v) in a)
+                merged[k] = v;
+
+            foreach (var (k, v) in b)
+            {
+                if (merged.TryGetValue(k, out var existing) && existing != v)
+                {
+                    LogScopedHelper.Log(
+                        _log,
+                        ScopedLogCatalog.ModWeCategory.SaveData,
+                        $"WildAnimalOverrides '{wildAnimalKey}' has conflicting LocationTypes override for '{k}'; using the later entry.",
+                        StardewModdingAPI.LogLevel.Warn);
+                }
+
+                merged[k] = v;
+            }
+
+            var outDict = new Dictionary<string, bool>(StringComparer.Ordinal);
+            foreach (var (k, v) in merged)
+                outDict[k] = v;
+
+            return outDict.Count == 0 ? null : outDict;
+        }
+
+        Dictionary<string, ExtraModAnimalKeysOverrideConfig>? MergeExtraModAnimalKeys(
+            Dictionary<string, ExtraModAnimalKeysOverrideConfig>? a,
+            Dictionary<string, ExtraModAnimalKeysOverrideConfig>? b,
+            string wildAnimalKey)
+        {
+            if (a is null || a.Count == 0)
+                return b is null || b.Count == 0 ? null : CloneExtraBlocks(b);
+
+            if (b is null || b.Count == 0)
+                return CloneExtraBlocks(a);
+
+            var merged = new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (modId, block) in a)
+                merged[modId] = CloneExtraBlock(block);
+
+            foreach (var (modId, block) in b)
+            {
+                if (merged.TryGetValue(modId, out var existing) &&
+                    existing.FarmAnimalKeys is not null &&
+                    block.FarmAnimalKeys is not null &&
+                    !SequenceEqualIgnoreCase(existing.FarmAnimalKeys, block.FarmAnimalKeys))
+                {
+                    LogScopedHelper.Log(
+                        _log,
+                        ScopedLogCatalog.ModWeCategory.SaveData,
+                        $"WildAnimalOverrides '{wildAnimalKey}' has conflicting ExtraModAnimalKeys override for '{modId}'; using the later entry.",
+                        StardewModdingAPI.LogLevel.Warn);
+                }
+
+                merged[modId] = CloneExtraBlock(block);
+            }
+
+            var outDict = new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.Ordinal);
+            foreach (var (k, v) in merged)
+                outDict[k] = v;
+
+            return outDict.Count == 0 ? null : outDict;
+        }
+
+        static Dictionary<string, ExtraModAnimalKeysOverrideConfig> CloneExtraBlocks(Dictionary<string, ExtraModAnimalKeysOverrideConfig> src)
+        {
+            var dict = new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.Ordinal);
+            foreach (var (k, v) in src)
+                dict[k] = CloneExtraBlock(v);
+
+            return dict;
+        }
+
+        static ExtraModAnimalKeysOverrideConfig CloneExtraBlock(ExtraModAnimalKeysOverrideConfig src)
+        {
+            return new ExtraModAnimalKeysOverrideConfig
+            {
+                FarmAnimalKeys = src.FarmAnimalKeys is null ? null : new List<string>(src.FarmAnimalKeys),
+            };
+        }
 
         WildAnimalOverrideConfig MergeOverrides(WildAnimalOverrideConfig a, WildAnimalOverrideConfig b, string key)
         {
@@ -307,6 +652,8 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
                 LargeEgg = b.LargeEgg ?? a.LargeEgg,
                 Price = b.Price ?? a.Price,
                 IsMagic = b.IsMagic ?? a.IsMagic,
+                LocationTypes = MergeLocationTypes(a.LocationTypes, b.LocationTypes, key),
+                ExtraModAnimalKeys = MergeExtraModAnimalKeys(a.ExtraModAnimalKeys, b.ExtraModAnimalKeys, key),
             };
         }
     }
@@ -337,6 +684,28 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
 
             if (ov.IsMagic is not null)
                 wa.IsMagic = ov.IsMagic.Value;
+
+            if (ov.LocationTypes is { Count: > 0 })
+            {
+                wa.LocationTypes ??= new Dictionary<string, bool>();
+                foreach (var (ltKey, allowed) in ov.LocationTypes)
+                    wa.LocationTypes[ltKey] = allowed;
+            }
+
+            if (ov.ExtraModAnimalKeys is { Count: > 0 })
+            {
+                wa.ExtraModAnimalKeys ??= new Dictionary<string, ExtraModAnimalKeysJson>();
+                foreach (var (modId, blockOv) in ov.ExtraModAnimalKeys)
+                {
+                    if (blockOv?.FarmAnimalKeys is not { Count: > 0 })
+                        continue;
+
+                    wa.ExtraModAnimalKeys[modId] = new ExtraModAnimalKeysJson
+                    {
+                        FarmAnimalKeys = new List<string>(blockOv.FarmAnimalKeys),
+                    };
+                }
+            }
         }
     }
 }

@@ -133,4 +133,27 @@ public sealed class WildAnimalOverrideConfig
 
     /// <summary>If set, overrides the WildAnimalsList entry IsMagic flag.</summary>
     public bool? IsMagic { get; set; }
+
+    /// <summary>
+    /// Optional per-location-type overrides for the WildAnimalsList entry LocationTypes map.
+    /// Only store differences vs base JSON; entries matching base are removed during normalization.
+    /// Keys are trimmed and case-normalized to match base when possible.
+    /// </summary>
+    public Dictionary<string, bool>? LocationTypes { get; set; }
+
+    /// <summary>
+    /// Optional overrides for the WildAnimalsList entry ExtraModAnimalKeys mod-group blocks.
+    /// Only store differences vs base JSON; blocks matching base are removed during normalization.
+    /// Keys are trimmed and case-normalized to match base when possible.
+    /// </summary>
+    public Dictionary<string, ExtraModAnimalKeysOverrideConfig>? ExtraModAnimalKeys { get; set; }
+}
+public sealed class ExtraModAnimalKeysOverrideConfig
+{
+    /// <summary>
+    /// Override list of farm animal keys/IDs for this mod-group.
+    /// This list is treated as unweighted; ordering is preserved.
+    /// Empty/whitespace entries are removed during normalization.
+    /// </summary>
+    public List<string>? FarmAnimalKeys { get; set; }
 }

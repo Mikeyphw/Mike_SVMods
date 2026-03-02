@@ -2,7 +2,8 @@
 
 ## Status
 - Phases 1–5 implemented.
-- Next work focuses on editing complex collections (`LocationTypes`, `ExtraModAnimalKeys`) within GMCM static UI constraints.
+- Phase 6–7 in progress: complex collection overrides (`LocationTypes`, `ExtraModAnimalKeys`).
+- Current: override schema + loader merge/cleanup implemented; GMCM editors pending.
 
 
 ## Scope
@@ -22,7 +23,7 @@
 - **Effective WildAnimal**: the post-override runtime model used by the pipeline.
 
 ## Non-goals (for this iteration)
-- Editing complex collections (e.g. `ExtraModAnimalKeys`) from GMCM.
+- Editing complex collections beyond WildAnimalsList (e.g. SpawnAreas rules) from GMCM.
 - Any UI that hides/shows options dynamically (search, disabled-only filters, etc.).
 
 ## Done when
@@ -153,3 +154,41 @@
 1. Ensure override cleanup runs on load and on config save (when reasonable).
 2. Add more i18n helptext and keep docs/checklist up to date.
 
+---
+
+## Phase 6 — LocationTypes editor
+**Goal**: allow per-wild-animal LocationTypes editing via override layer + GMCM.
+
+**Steps**
+1. Add override schema + normalization/cleanup + merge into effective WildAnimals on load. ✅
+2. Add per-animal GMCM controls for each LocationType (static UI, no live search).
+3. Add i18n keys + docs updates.
+
+**Acceptance**
+- Config stores only per-type diffs vs base JSON; casing/whitespace normalized.
+- Effective runtime LocationTypes reflect overrides.
+
+---
+
+## Phase 7 — ExtraModAnimalKeys editor
+**Goal**: allow per-wild-animal ExtraModAnimalKeys editing via override layer + GMCM.
+
+**Steps**
+1. Add override schema + normalization/cleanup + merge into effective WildAnimals on load. ✅
+2. Add per-animal GMCM UI to edit mod-group blocks and FarmAnimalKeys lists (CSV-style inputs).
+3. Update diagnostics/dev outputs to show override vs base sources.
+4. Add i18n keys + docs updates.
+
+**Acceptance**
+- Config stores only diffs vs base JSON; empty blocks removed; keys trimmed and de-duped.
+- Effective runtime ExtraModAnimalKeys reflect overrides.
+
+---
+
+## Phase 8 — Polish/hardening
+**Goal**: improve outputs + ensure cleanup is safe and stable.
+
+**Steps**
+1. Enhance dev commands (status/dump_effective) to show override sources for complex fields.
+2. Guard against accidental config churn (only save when normalization changes).
+3. Docs + checklist alignment.

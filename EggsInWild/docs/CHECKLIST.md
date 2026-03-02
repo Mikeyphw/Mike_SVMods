@@ -35,3 +35,19 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Harden dev command JSON output to include overrides + source (default/override) per scalar.
 - [x] Refresh docs to reflect Phases 1–5 completion.
 
+## Phase 6 — LocationTypes editor
+- [x] Extend WildAnimal override config with LocationTypes overrides.
+- [x] Normalize LocationTypes override keys (trim + case-insensitive match to base when possible).
+- [x] Remove redundant LocationTypes overrides matching base JSON.
+- [x] Apply LocationTypes overrides in `ConfiguredModDataLoader`.
+- [ ] Add GMCM UI controls for LocationTypes.
+- [ ] Add i18n keys + docs updates.
+
+## Phase 7 — ExtraModAnimalKeys editor
+- [x] Extend WildAnimal override config with ExtraModAnimalKeys overrides.
+- [x] Normalize ExtraModAnimalKeys override blocks and FarmAnimalKeys lists.
+- [x] Remove redundant ExtraModAnimalKeys overrides matching base JSON.
+- [x] Apply ExtraModAnimalKeys overrides in `ConfiguredModDataLoader`.
+- [ ] Add GMCM UI for mod-group blocks and FarmAnimalKeys CSV editing.
+- [ ] Update diagnostics/dev outputs to show override sources for complex fields.
+- [ ] Add i18n keys + docs updates.
