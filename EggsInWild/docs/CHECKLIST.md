@@ -62,3 +62,8 @@
 - [x] Filter assignment + AnimalNotes to enabled-only.
 - [x] Add dev command `wegg wildanimals dump_effective`.
 
+## Phase 13 — WildAnimals GMCM pages
+- [x] Add WildAnimals GMCM index page with enabled/total summary.
+- [x] Add per-wild-animal subpages with Enabled override toggle.
+- [x] Add reset override control.
+- [x] Add shared i18n keys/tooltips for WildAnimals GMCM.

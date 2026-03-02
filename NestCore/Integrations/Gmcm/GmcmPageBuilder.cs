@@ -66,6 +66,12 @@ public sealed class GmcmPageBuilder<TConfig>
     public void Link(string pageId, bool tooltip = false)
         => _menu.AddPageLink(pageId, tooltip);
 
+
+/// <summary>Add a page link with a custom label (label can be translated via i18n keys).</summary>
+public void LinkLabel(string pageId, Func<string> text, Func<string>? tooltip = null)
+    => _menu.AddPageLink(pageId, text, tooltip);
+
+
     /// <summary>
     /// Add a horizontal separator. Prefer the overload with an explicit <paramref name="id"/>
     /// if you need it to be stable across layout changes.

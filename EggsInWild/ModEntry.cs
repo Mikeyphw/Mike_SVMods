@@ -182,6 +182,7 @@ public sealed class ModEntry : Mod
                 root.Link("prices", tooltip: true);
                 root.Link("animalNotes", tooltip: true);
                 root.Link("animalProgression", tooltip: true);
+                root.Link("wildAnimals", tooltip: true);
 #if WEGG_DEV
                 root.Link("debug", tooltip: true);
 #endif
@@ -235,6 +236,167 @@ public sealed class ModEntry : Mod
                     id: "animalProgression_intro");
                 BuildAnimalProgressionPage(page, i18n);
             });
+// ============================
+// Wild Animals (GMCM editable)
+// ============================
+
+Dictionary<string, EggsInWild.Infrastructure.ModData.Models.WildAnimalJson> wildAnimalsForGmcm;
+try
+{
+    var reader = new EggsInWild.Infrastructure.ModData.SmapiJsonFileReader(Helper);
+    wildAnimalsForGmcm =
+        reader.ReadJsonFile<Dictionary<string, EggsInWild.Infrastructure.ModData.Models.WildAnimalJson>>(EggsInWild.Infrastructure.ModData.ModDataPaths.WildAnimalsList)
+        ?? new Dictionary<string, EggsInWild.Infrastructure.ModData.Models.WildAnimalJson>(StringComparer.OrdinalIgnoreCase);
+}
+catch (Exception ex)
+{
+    var smapiLog = new SmapiLog(Monitor);
+    smapiLog.LogScoped(ScopedLogCatalog.ModWeCategory.Content, $"Failed to load {EggsInWild.Infrastructure.ModData.ModDataPaths.WildAnimalsList} for GMCM: {ex}", LogLevel.Error);
+    wildAnimalsForGmcm = new Dictionary<string, EggsInWild.Infrastructure.ModData.Models.WildAnimalJson>(StringComparer.OrdinalIgnoreCase);
+}
+
+var wildAnimalKeysForGmcm = wildAnimalsForGmcm.Keys
+    .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+    .ToList();
+
+layout.Page("wildAnimals", page =>
+{
+    page.ParagraphDynamic(
+        () => Translate(i18n, "config.paragraph.wildAnimals.description.text", "Enable/disable wild animals (affects egg assignment and Animal Notes progression)."),
+        id: "wildAnimals_description");
+
+    page.ParagraphDynamic(
+        () =>
+        {
+            var cfg = _config!.Get();
+            var enabled = 0;
+            foreach (var key in wildAnimalKeysForGmcm)
+            {
+                if (!wildAnimalsForGmcm.TryGetValue(key, out var def) || def is null)
+                    continue;
+
+                var defaultEnabled = def.Enabled;
+                var effective = GetWildAnimalEffectiveEnabled(cfg, key, defaultEnabled);
+                if (effective)
+                    enabled++;
+            }
+
+            return Translate(i18n, "config.paragraph.wildAnimals.summary.text", $"Enabled: {enabled}/{wildAnimalKeysForGmcm.Count}", enabled, wildAnimalKeysForGmcm.Count);
+        },
+        id: "wildAnimals_summary");
+
+    if (wildAnimalKeysForGmcm.Count == 0)
+    {
+        page.ParagraphDynamic(
+            () => Translate(i18n, "config.paragraph.wildAnimals.empty.text", "No wild animals were found in the WildAnimalsList."),
+            id: "wildAnimals_empty");
+        return;
+    }
+
+    page.Separator(simple: true);
+
+    foreach (var key in wildAnimalKeysForGmcm)
+    {
+        var pageId = BuildWildAnimalPageId(key);
+        page.LinkLabel(
+            pageId: pageId,
+            text: () =>
+            {
+                var cfg = _config!.Get();
+                var enabled = wildAnimalsForGmcm.TryGetValue(key, out var def) && def is not null
+                    ? GetWildAnimalEffectiveEnabled(cfg, key, def.Enabled)
+                    : true;
+
+                return enabled ? key : $"{key} (disabled)";
+            },
+            tooltip: () => Translate(i18n, "config.wildAnimals.link.tooltip", "Edit enabled override for '{0}'.", key, key));
+    }
+});
+
+foreach (var key in wildAnimalKeysForGmcm)
+{
+    var pageId = BuildWildAnimalPageId(key);
+
+    layout.Page(
+        pageId: pageId,
+        title: () => key,
+        build: page =>
+        {
+            var defaultEnabled = wildAnimalsForGmcm.TryGetValue(key, out var def) && def is not null ? def.Enabled : true;
+
+            page.ParagraphDynamic(
+                () =>
+                {
+                    var cfg = _config!.Get();
+                    var source = GetWildAnimalEnabledSource(cfg, key, defaultEnabled);
+                    var effective = GetWildAnimalEffectiveEnabled(cfg, key, defaultEnabled);
+
+                    var state = effective
+                        ? Translate(i18n, "config.wildAnimals.state.enabled", "Enabled")
+                        : Translate(i18n, "config.wildAnimals.state.disabled", "Disabled");
+
+                    return Translate(i18n, "config.paragraph.wildAnimals.status.text", $"Effective: {state} (source: {source})", state, source);
+                },
+                id: $"wildAnimals_status_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+            page.Separator(simple: true);
+
+            page.BoolLabel(
+                elementId: $"wildAnimals.{key}.enabled",
+                name: () => Translate(i18n, "config.wildAnimals.enabled.name", "Enabled"),
+                tooltip: () =>
+                {
+                    var defState = defaultEnabled
+                        ? Translate(i18n, "config.wildAnimals.state.enabled", "Enabled")
+                        : Translate(i18n, "config.wildAnimals.state.disabled", "Disabled");
+
+                    return Translate(
+                        i18n,
+                        "config.wildAnimals.enabled.tooltip",
+                        $"Override enabled state for '{key}'. Default: {defState}.",
+                        key,
+                        defState);
+                },
+                getValue: () =>
+                {
+                    var cfg = _config!.Get();
+                    return GetWildAnimalEffectiveEnabled(cfg, key, defaultEnabled);
+                },
+                setValue: value =>
+                {
+                    var cfg = _config!.Get();
+                    cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                    if (value == defaultEnabled)
+                    {
+                        cfg.WildAnimalOverrides.Remove(key);
+                        return;
+                    }
+
+                    if (!cfg.WildAnimalOverrides.TryGetValue(key, out var ov) || ov is null)
+                    {
+                        ov = new WildAnimalOverrideConfig();
+                        cfg.WildAnimalOverrides[key] = ov;
+                    }
+
+                    ov.Enabled = value;
+                });
+
+            page.BoolLabel(
+                elementId: $"wildAnimals.{key}.reset",
+                name: () => Translate(i18n, "config.wildAnimals.reset.name", "Reset override"),
+                tooltip: () => Translate(i18n, "config.wildAnimals.reset.tooltip", "Clear configured override and use the JSON default for this animal."),
+                getValue: () => false,
+                setValue: value =>
+                {
+                    if (!value)
+                        return;
+
+                    var cfg = _config!.Get();
+                    cfg.WildAnimalOverrides?.Remove(key);
+                });
+        });
+}
 
  #if WEGG_DEV
 
@@ -614,6 +776,30 @@ page.Bool(cfg => cfg.DebugForceDesertTombUnrestricted, optionId: "debug.desertTo
 
         return tokens.Length == 0 ? fallback : string.Format(fallback, tokens);
     }
+
+
+private static string BuildWildAnimalPageId(string wildAnimalKey)
+    => $"wildAnimals.{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(wildAnimalKey)}";
+
+private static bool GetWildAnimalEffectiveEnabled(ModConfig cfg, string wildAnimalKey, bool defaultEnabled)
+{
+    if (cfg.WildAnimalOverrides is not null
+        && cfg.WildAnimalOverrides.TryGetValue(wildAnimalKey, out var ov)
+        && ov?.Enabled is not null)
+        return ov.Enabled.Value;
+
+    return defaultEnabled;
+}
+
+private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnimalKey, bool defaultEnabled)
+{
+    if (cfg.WildAnimalOverrides is not null
+        && cfg.WildAnimalOverrides.TryGetValue(wildAnimalKey, out var ov)
+        && ov?.Enabled is not null)
+        return "override";
+
+    return "default";
+}
 
     
 private void OnConfigUpdated(object? sender, ModConfig _)
@@ -1006,7 +1192,7 @@ private void InstallHarmonyBootstrap()
             },
 #endif
 
-            verifier: verifier);
+        );
 
         var dispatcher = new WeggCommandDispatcher(facade, i18n);
         var commands = new WeggConsoleCommands(log, i18n, dispatcher);

@@ -29,4 +29,4 @@
 - [ ] GMCM: add `wildAnimals` index page and per-wild-animal subpages.
 - [ ] GMCM: per wild animal: `Enabled` toggle (config override) + validation/status.
 - [ ] Optional: add a reset-to-default action for a wild animal override.
-
+- [x] Add WildAnimals GMCM pages (index + per-animal Enabled override).

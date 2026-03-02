@@ -154,7 +154,7 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
         return snapshot;
     }
 
-    private void ApplyWildAnimalOverrides(IDictionary<string, WildAnimalJson> wildAnimals, IDictionary<string, WildAnimalOverrideConfig> overrides)
+    private void ApplyWildAnimalOverrides(IReadOnlyDictionary<string, WildAnimalJson> wildAnimals, IDictionary<string, WildAnimalOverrideConfig> overrides)
     {
         if (wildAnimals is null) throw new ArgumentNullException(nameof(wildAnimals));
         if (overrides is null || overrides.Count == 0)

@@ -66,3 +66,9 @@
 4. Filter egg assignment + AnimalNotes progression to enabled-only animals.
 5. Add dev console command `wegg wildanimals dump_effective` (JSON).
 
+## Phase 13 — WildAnimals GMCM pages (index + per-animal Enabled override)
+1. Add GMCM root link + index page listing WildAnimals.
+2. Show enabled/total summary on index page.
+3. Add per-animal subpages with Enabled override toggle.
+4. Add a one-click reset control (clears override back to default).
+5. Add i18n keys for shared labels/tooltips (no per-animal i18n keys).

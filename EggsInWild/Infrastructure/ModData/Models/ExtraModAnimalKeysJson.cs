@@ -25,7 +25,9 @@ public sealed class ExtraModAnimalKeysJson
         var raw = FarmAnimalKeys is { Count: > 0 }
             ? FarmAnimalKeys
             : (FarmAnimalKeysSameWeight.Count > 0 || FarmAnimalKeysWeighted.Count > 0)
+#pragma warning disable CS0618
                 ? FarmAnimalKeysSameWeight.Concat(FarmAnimalKeysWeighted.Select(x => x.Id)).ToList()
+#pragma warning restore CS0618
                 : new List<string>();
 
         // De-dupe while preserving order.

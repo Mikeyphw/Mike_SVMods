@@ -374,9 +374,9 @@ internal void HookAfterLoadLevel(MineShaft? mineShaft, int level)
 
     try
     {
-        var before = mineShaft?.mapPath?.Value;
-        ApplyTombMapLayoutIfNeeded(mineShaft);
-        var after = mineShaft?.mapPath?.Value;
+        var before = mineShaft.mapPath?.Value;
+        ApplyTombMapLayoutIfNeeded(mineShaft!);
+        var after = mineShaft.mapPath?.Value;
 
         if (!string.Equals(before, after, StringComparison.OrdinalIgnoreCase))
             TraceHook("loadLevel", mineShaft, $"mapPath changed: before={before} after={after}", LogLevel.Info);
@@ -401,9 +401,9 @@ internal void HookAfterChooseLevelType(MineShaft? mineShaft)
 
     try
     {
-        var before = mineShaft?.mapPath?.Value;
-        ApplyTombChooseLevelTypeOverrides(mineShaft);
-        var after = mineShaft?.mapPath?.Value;
+        var before = mineShaft.mapPath?.Value;
+        ApplyTombChooseLevelTypeOverrides(mineShaft!);
+        var after = mineShaft.mapPath?.Value;
 
         if (!string.Equals(before, after, StringComparison.OrdinalIgnoreCase))
             TraceHook("chooseLevelType", mineShaft, $"mapPath changed: before={before} after={after}", LogLevel.Info);
