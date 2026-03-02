@@ -1,5 +1,6 @@
 using System;
 using Mikew.NestCore.Integrations.Gmcm;
+using Mikew.NestCore.Integrations.StardewUI;
 using StardewModdingAPI;
 
 namespace Mikew.NestCore.Framework;
@@ -23,7 +24,7 @@ public interface INestCoreApi
     /// <typeparam name="TConfig">The caller's config type.</typeparam>
     /// <param name="helper">SMAPI helper from the caller mod.</param>
     /// <param name="manifest">Caller mod manifest.</param>
-        /// <param name="getConfig">Returns the current config instance.</param>
+    /// <param name="getConfig">Returns the current config instance.</param>
     /// <param name="reset">Resets config to defaults.</param>
     /// <param name="save">Persists config changes.</param>
     /// <param name="define">Defines pages + options using NestCore's layout DSL.</param>
@@ -42,5 +43,11 @@ public interface INestCoreApi
         bool titleScreenOnly = false,
         bool force = true,
         bool attachLocaleHandler = true);
+
+    /// <summary>
+    /// Try to create a StardewUI integration instance.
+    /// Returns <c>null</c> when StardewUI isn't installed.
+    /// </summary>
+    StardewUiIntegration? TryCreateStardewUiIntegration(IModHelper helper, IManifest manifest);
 
 }

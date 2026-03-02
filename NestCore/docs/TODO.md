@@ -9,3 +9,6 @@
 - [x] Add GMCM Options section to GMCM_BUILDER.md (Color/Image/Separator/DynamicParagraph).
 
 - [x] Add OverrideDictionaries helper for default+overrides configs.
+
+- [ ] (Optional) Add `ObservableObject` (INotifyPropertyChanged) helper for StardewUI view models.
+- [ ] Add a short `docs/stardewui.md` usage example for consumers (GameLaunched + RegisterAssets + CreateMenu).

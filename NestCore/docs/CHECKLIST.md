@@ -20,3 +20,10 @@
 - [x] Integrate GMCM Options complex widgets (Color/Image/Separator/DynamicParagraph) behind optional API discovery.
 - [x] Document patterns: default-vs-override dictionary storage (remove key when equals default).
 - [ ] (Optional) Add unit tests for ID normalization/determinism.
+## Phase 6 — StardewUI integration facade
+- [x] Vendor StardewUI framework API interfaces (IViewEngine/IViewDrawable/IMenuController) under `Integrations/StardewUI/Framework`.
+- [x] Add `StardewUiIntegration` facade: safe API discovery + view/sprite/custom-data registration + menu/drawable helpers.
+- [x] Add `StardewUiAssetsOptions` record for convention-driven registration.
+- [x] Expose `TryCreateStardewUiIntegration(...)` on `INestCoreApi` and implement in `NestCoreApi` (bump ApiVersion).
+- [x] Implement a source-sync hot reload helper (`EnableHotReloadingWithSourceSync`) on the facade.
+- [x] Update `docs/*` checklist/todo to reflect completion and add follow-ups.

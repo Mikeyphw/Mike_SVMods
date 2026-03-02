@@ -8,6 +8,7 @@
 - Phase 0: complete
 - Phase 1: complete
 - Phase 5: complete
+- Phase 6: complete
 
 ## Phase 0 — Planning docs baseline
 1. Create/refresh `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md`.
@@ -29,3 +30,11 @@
 4. Document patterns: default-vs-override dictionary storage (remove key when equals default).
 5. (Optional) Add unit tests for ID normalization/determinism.
 6. Integrate GMCM Options complex widgets (color picker, image picker, separator, dynamic paragraph) and keep them no-op if the mod isn't installed.
+
+## Phase 6 — StardewUI integration facade
+1. Vendor StardewUI framework API interfaces (IViewEngine/IViewDrawable/IMenuController) under `Integrations/StardewUI/Framework`.
+2. Add `StardewUiIntegration` facade: safe API discovery + view/sprite/custom-data registration + menu/drawable helpers.
+3. Add `StardewUiAssetsOptions` record for convention-driven registration.
+4. Expose `TryCreateStardewUiIntegration(...)` on `INestCoreApi` and implement in `NestCoreApi` (bump ApiVersion).
+5. Implement a source-sync hot reload helper (`EnableHotReloadingWithSourceSync`) on the facade.
+6. Update `docs/*` checklist/todo to reflect completion and add follow-ups.
