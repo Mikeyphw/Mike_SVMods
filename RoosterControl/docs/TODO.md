@@ -1,3 +1,10 @@
+## Phase 8–12 (Compat catalogs + selection)
+- Implement Phase 8: catalogs + CP assets
+- Implement Phase 9: selection + cycling + save-state
+- Implement Phase 10: apply selections late (avoid load-order conflicts)
+- Implement Phase 11: fertilized egg strategy (native vs generated)
+- Implement Phase 12: GMCM UI
+
 # TODO — RoosterControl
 
 - [x] Ensure GMCM option IDs are stable and documented.

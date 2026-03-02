@@ -1,6 +1,8 @@
 using RoosterControl.Application.Assets;
 using RoosterControl.Application.Objects;
+using RoosterControl.Application.Compat;
 using Mikew.NestCore.Helpers.Content;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
 namespace RoosterControl.Application;
@@ -13,10 +15,45 @@ internal sealed partial class RoosterCoordinator
 
     private BetterTrufflesContextTagService? _betterTrufflesTags;
 
+    private string GetCompatAssetName(string suffix)
+        => $"Mods/{ModManifest.UniqueID}/{suffix}";
+
     private void InitializeAssetPipeline()
     {
         _assetPipeline = new AssetPipelineHost<RoosterCoordinator>(Helper, Monitor, () => this);
         _assetPipeline.RegisterModAssets(AssetHandler, order: -100);
+
+        // Compat catalogs (CP-patchable). These load from built-in defaults; Content Patcher can override them.
+        _assetPipeline.RegisterHandler(
+            AssetRequestRegistration<RoosterCoordinator>.FromHandler(
+                debugName: "CompatEggSourcesCatalog",
+                order: -50,
+                isMatch: e => e.NameWithoutLocale.BaseName.Equals(GetCompatAssetName(RoosterControl.Application.Compat.CompatDefaults.EggSourcesAssetSuffix), System.StringComparison.OrdinalIgnoreCase),
+                shouldApply: (_, _) => true,
+                handle: (ctx, e) =>
+                {
+                    e.LoadFrom(
+                        () => RoosterControl.Application.Compat.CompatDefaults.CreateEggSourcesCatalog(),
+                        StardewModdingAPI.AssetLoadPriority.Exclusive
+                    );
+                })
+        );
+
+        _assetPipeline.RegisterHandler(
+            AssetRequestRegistration<RoosterCoordinator>.FromHandler(
+                debugName: "CompatRoosterSourcesCatalog",
+                order: -49,
+                isMatch: e => e.NameWithoutLocale.BaseName.Equals(GetCompatAssetName(RoosterControl.Application.Compat.CompatDefaults.RoosterSourcesAssetSuffix), System.StringComparison.OrdinalIgnoreCase),
+                shouldApply: (_, _) => true,
+                handle: (ctx, e) =>
+                {
+                    e.LoadFrom(
+                        () => RoosterControl.Application.Compat.CompatDefaults.CreateRoosterSourcesCatalog(),
+                        StardewModdingAPI.AssetLoadPriority.Exclusive
+                    );
+                })
+        );
+
 
         _assetPipeline.RegisterHandler(
             AssetRequestRegistration<RoosterCoordinator>.FromHandler(

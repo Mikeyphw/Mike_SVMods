@@ -156,7 +156,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260301T222221-0300-01",
+      "file": "20260301T222221-0300-01",
+      "title": "Phase 8: compat catalogs (egg sources + rooster sources) + CP-patchable assets",
+      "title_with_id": "Phase 8: compat catalogs (egg sources + rooster sources) + CP-patchable assets [20260301T222221-0300-01]",
+      "created_at": "2026-03-01T22:27:04-03:00",
+      "applied_at": "2026-03-01T22:27:16-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-01T20:57:13-03:00"
+  "updated_at": "2026-03-01T22:27:16-03:00"
 }

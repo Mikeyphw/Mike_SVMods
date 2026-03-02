@@ -1,0 +1,73 @@
+{
+  "SchemaVersion": 1,
+  "Sources": [
+    {
+      "SourceId": "meara",
+      "DisplayName": "Meara Roosters",
+      "FarmAnimalKeys": [
+        {
+          "Key": "cockbrown",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        },
+        {
+          "Key": "cockwhite",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        },
+        {
+          "Key": "cockblue",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        },
+        {
+          "Key": "cockvoid",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        },
+        {
+          "Key": "cockgold",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        }
+      ]
+    },
+    {
+      "SourceId": "blaklyte",
+      "DisplayName": "Blaklyte Roosters",
+      "RoosterEggItemId": "Blaklyte.CP.Rooster_rooster_egg",
+      "FarmAnimalKeys": [
+        {
+          "Key": "Rooster",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        },
+        {
+          "Key": "White Rooster",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        },
+        {
+          "Key": "Blue Rooster",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        },
+        {
+          "Key": "Desert Rooster",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        },
+        {
+          "Key": "Trans Rooster",
+          "BreedingRole": "None",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        },
+        {
+          "Key": "Cockatrice",
+          "BreedingRole": "Male",
+          "EggLayerRole": "InheritFromFarmAnimalData"
+        }
+      ]
+    }
+  ]
+}

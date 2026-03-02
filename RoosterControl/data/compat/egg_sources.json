@@ -1,0 +1,165 @@
+{
+  "SchemaVersion": 1,
+  "Sources": [
+    {
+      "SourceId": "farmanimal:brown-chicken:egg0",
+      "DisplayName": "Brown Chicken (EggItemIds[0])",
+      "EggKind": "BrownEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "Brown Chicken",
+        "List": "EggItemIds",
+        "Index": 0
+      }
+    },
+    {
+      "SourceId": "farmanimal:brown-chicken:egg1",
+      "DisplayName": "Brown Chicken (EggItemIds[1])",
+      "EggKind": "LargeBrownEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "Brown Chicken",
+        "List": "EggItemIds",
+        "Index": 1
+      }
+    },
+    {
+      "SourceId": "farmanimal:white-chicken:egg0",
+      "DisplayName": "White Chicken (EggItemIds[0])",
+      "EggKind": "WhiteEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "White Chicken",
+        "List": "EggItemIds",
+        "Index": 0
+      }
+    },
+    {
+      "SourceId": "farmanimal:white-chicken:egg1",
+      "DisplayName": "White Chicken (EggItemIds[1])",
+      "EggKind": "LargeWhiteEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "White Chicken",
+        "List": "EggItemIds",
+        "Index": 1
+      }
+    },
+    {
+      "SourceId": "farmanimal:blue-chicken:egg0",
+      "DisplayName": "Blue Chicken (EggItemIds[0])",
+      "EggKind": "BlueEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "Blue Chicken",
+        "List": "EggItemIds",
+        "Index": 0
+      }
+    },
+    {
+      "SourceId": "farmanimal:blue-chicken:egg1",
+      "DisplayName": "Blue Chicken (EggItemIds[1])",
+      "EggKind": "LargeBlueEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "Blue Chicken",
+        "List": "EggItemIds",
+        "Index": 1
+      }
+    },
+    {
+      "SourceId": "farmanimal:void-chicken:egg0",
+      "DisplayName": "Void Chicken (EggItemIds[0])",
+      "EggKind": "VoidEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "Void Chicken",
+        "List": "EggItemIds",
+        "Index": 0
+      }
+    },
+    {
+      "SourceId": "farmanimal:void-chicken:egg1",
+      "DisplayName": "Void Chicken (EggItemIds[1])",
+      "EggKind": "LargeVoidEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "Void Chicken",
+        "List": "EggItemIds",
+        "Index": 1
+      }
+    },
+    {
+      "SourceId": "farmanimal:golden-chicken:egg0",
+      "DisplayName": "Golden Chicken (EggItemIds[0])",
+      "EggKind": "GoldEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "Golden Chicken",
+        "List": "EggItemIds",
+        "Index": 0
+      }
+    },
+    {
+      "SourceId": "farmanimal:golden-chicken:egg1",
+      "DisplayName": "Golden Chicken (EggItemIds[1])",
+      "EggKind": "LargeGoldEgg",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "Golden Chicken",
+        "List": "EggItemIds",
+        "Index": 1
+      }
+    },
+    {
+      "SourceId": "meara:blue-egg",
+      "DisplayName": "Meara Roosters: Blue Egg",
+      "EggKind": "BlueEgg",
+      "ItemId": "Meara.RoostersBlueEgg"
+    },
+    {
+      "SourceId": "meara:large-blue-egg",
+      "DisplayName": "Meara Roosters: Large Blue Egg",
+      "EggKind": "LargeBlueEgg",
+      "ItemId": "Meara.RoostersLargeBlueEgg"
+    },
+    {
+      "SourceId": "meara:large-void-egg",
+      "DisplayName": "Meara Roosters: Large Void Egg",
+      "EggKind": "LargeVoidEgg",
+      "ItemId": "Meara.RoostersLargevoidEgg"
+    },
+    {
+      "SourceId": "meara:large-gold-egg",
+      "DisplayName": "Meara Roosters: Large Gold Egg",
+      "EggKind": "LargeGoldEgg",
+      "ItemId": "Meara.RoostersLargegoldEgg"
+    },
+    {
+      "SourceId": "meara:fert-brown",
+      "DisplayName": "Meara Roosters: Fertilized Brown Egg",
+      "EggKind": "FertilizedBrownEgg",
+      "ItemId": "Meara.Roosters_FertEggBrown"
+    },
+    {
+      "SourceId": "meara:fert-white",
+      "DisplayName": "Meara Roosters: Fertilized White Egg",
+      "EggKind": "FertilizedWhiteEgg",
+      "ItemId": "Meara.Roosters_FertEggWhite"
+    },
+    {
+      "SourceId": "meara:fert-blue",
+      "DisplayName": "Meara Roosters: Fertilized Blue Egg",
+      "EggKind": "FertilizedBlueEgg",
+      "ItemId": "Meara.Roosters_FertEggBlue"
+    },
+    {
+      "SourceId": "meara:fert-void",
+      "DisplayName": "Meara Roosters: Fertilized Void Egg",
+      "EggKind": "FertilizedVoidEgg",
+      "ItemId": "Meara.Roosters_FertEggVoid"
+    },
+    {
+      "SourceId": "meara:fert-gold",
+      "DisplayName": "Meara Roosters: Fertilized Gold Egg",
+      "EggKind": "FertilizedGoldEgg",
+      "ItemId": "Meara.Roosters_FertEggGold"
+    },
+    {
+      "SourceId": "blaklyte:rooster-egg",
+      "DisplayName": "Blaklyte Roosters: Rooster Egg",
+      "EggKind": "RoosterEgg",
+      "ItemId": "Blaklyte.CP.Rooster_rooster_egg"
+    }
+  ]
+}

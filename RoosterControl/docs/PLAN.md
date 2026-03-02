@@ -1,6 +1,6 @@
 # PLAN — GMCM Menu (RoosterControl)
 
-Status: Phase 8B produce tables + rooster produce system Phase 6 implemented.
+Status: Phase 8 (compat catalogs: egg sources + rooster sources) planned/starting.
 
 ## Scope
 - Subdir: `RoosterControl`
@@ -84,3 +84,38 @@ Status: Phase 8B produce tables + rooster produce system Phase 6 implemented.
 5. Add deterministic resolver caching (random-group expansion) with cache stats and invalidation hooks.
 6. Bound resolver caches using LRU eviction and expose capacity/eviction stats in `--full`/`--json`.
 7. Add regression/property tests for determinism invariants and cache behavior.
+
+
+---
+
+## Phase 8–12: Compat catalogs (egg sources + rooster sources)
+
+### Design goals
+- No hard-coded per-mod branching logic: behavior is driven by catalogs.
+- Player chooses the active source instead of load-order conflicts.
+- Rooster selection is **per FarmAnimal key**.
+- Egg selection is **per EggKind** (normal vs large separate).
+- `eggLayerRole` defaults to `InheritFromFarmAnimalData`.
+- `Trans Rooster` breedingRole is `None`.
+
+### CP-patchable assets
+- Egg sources: `Mods/Mikew.roostersaddon.smapi/compat/egg_sources`
+- Rooster sources: `Mods/Mikew.roostersaddon.smapi/compat/rooster_sources`
+
+### Phase 8 (this patch family)
+1. Add catalog models + hardcoded defaults.
+2. Expose catalogs as CP-patchable assets.
+3. Seed defaults for Meara + Blaklyte.
+
+### Phase 9
+1. Selection engine + cycling, persisted in save state.
+2. Debug commands: list/cycle sources.
+
+### Phase 10
+1. Apply chosen sources late to prevent load-order conflicts.
+
+### Phase 11
+1. Fertilized egg strategy: prefer native; otherwise generate fertilized eggs.
+
+### Phase 12
+1. GMCM UI for choosing/cycling sources + validation.

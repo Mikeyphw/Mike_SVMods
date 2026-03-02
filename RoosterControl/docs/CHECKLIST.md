@@ -74,3 +74,9 @@
 - [x] Add deterministic resolver caching (random-group expansion) with cache stats and invalidation hooks.
 - [x] Bound resolver caches using LRU eviction and expose capacity/eviction stats.
 - [x] Add regression/property tests for determinism invariants and cache behavior.
+
+
+## Phase 8: Compat catalogs (egg sources + rooster sources)
+- [ ] Add catalog models + defaults
+- [ ] Expose catalogs as CP-patchable assets
+- [ ] Seed defaults for Meara + Blaklyte (Trans Rooster breedingRole=None)
