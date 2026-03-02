@@ -43,6 +43,8 @@
 ## Phase 7 — UI viewmodel base helpers
 1. Add `ObservableObject` (INotifyPropertyChanged) under `Helpers/UI`.
 2. Add `RelayCommand` (ICommand) under `Helpers/UI` for reusable enable/disable logic.
-3. Add `docs/stardewui.md` with a consumer-facing example (GameLaunched acquisition + menu open + sample viewmodel + StarML snippet).
-4. Document intended use for StardewUI binding contexts and event handlers (method-first, optionally routing into commands).
-5. Verify `NestCore` builds (net6.0) with implicit usings + nullable enabled.
+3. Add async command variants (`AsyncRelayCommand`/`AsyncRelayCommand<T>`) with built-in "is executing" gating.
+4. Add `docs/stardewui.md` with a consumer-facing example (GameLaunched acquisition + menu open + sample viewmodel + StarML snippet).
+5. Extend `docs/stardewui.md` with a HUD overlay example (create/draw/dispose `IViewDrawable`).
+6. Document intended use for StardewUI binding contexts and event handlers (method-first, optionally routing into commands).
+7. Verify `NestCore` builds (net6.0) with implicit usings + nullable enabled.

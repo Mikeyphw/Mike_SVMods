@@ -30,5 +30,7 @@
 ## Phase 7 — UI viewmodel base helpers
 - [x] Add `ObservableObject` (INotifyPropertyChanged) under `Helpers/UI`.
 - [x] Add `RelayCommand` (ICommand) under `Helpers/UI`.
+- [x] Add `AsyncRelayCommand`/`AsyncRelayCommand<T>` with built-in "is executing" gating.
+- [x] Extend `docs/stardewui.md` with a HUD overlay example (create/draw/dispose `IViewDrawable`).
 - [x] Add `docs/stardewui.md` consumer example (acquisition + menu open + viewmodel + StarML snippet).
 - [ ] Verify `NestCore` builds (net6.0) with implicit usings + nullable enabled.

@@ -99,6 +99,69 @@ With the viewmodel method:
 public void OnClose() => Close.Execute(null);
 ```
 
+## 6) HUD overlay example
+
+Create a drawable from a view asset (e.g. `assets/views/HudOverlay.sml`) and draw it in `RenderedHud`:
+
+```csharp
+using Microsoft.Xna.Framework;
+using StardewModdingAPI.Events;
+using StardewUI.Framework;
+using StardewValley;
+
+private IViewDrawable? hud;
+private readonly Vector2 hudPadding = new(16f, 16f);
+
+private void ToggleHud()
+{
+    if (ui is null)
+        return;
+
+    if (hud is not null)
+    {
+        hud.Dispose();
+        hud = null;
+        return;
+    }
+
+    hud = ui.CreateHudDrawable("HudOverlay", new HudOverlayViewModel());
+}
+
+private void OnRenderedHud(object? sender, RenderedHudEventArgs e)
+{
+    if (hud is null)
+        return;
+
+    var size = hud.ActualSize;
+    var x = Game1.uiViewport.Width - size.X - hudPadding.X;
+    var y = hudPadding.Y;
+
+    hud.Draw(e.SpriteBatch, new Vector2(x, y));
+}
+
+private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+{
+    hud?.Dispose();
+    hud = null;
+}
+```
+
+Remember to wire the events (e.g. in `Entry`):
+
+```csharp
+Helper.Events.Display.RenderedHud += OnRenderedHud;
+Helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
+```
+
+Minimal StarML (`assets/views/HudOverlay.sml`):
+
+```xml
+<panel padding="8">
+  <label text="Hello HUD" />
+</panel>
+```
+
+
 ## Notes
 
 - NestCore qualifies view asset names to `Mods/{UniqueID}/Views/{ViewName}` automatically after registration.

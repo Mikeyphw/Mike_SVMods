@@ -26,7 +26,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260302T200117-0300-01",
+      "file": "20260302T200117-0300-01",
+      "title": "NestCore: add HUD overlay example + async RelayCommand variants",
+      "title_with_id": "NestCore: add HUD overlay example + async RelayCommand variants [20260302T200117-0300-01]",
+      "created_at": "2026-03-02T19:57:30-03:00",
+      "applied_at": "2026-03-02T20:16:35-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-02T19:56:58-03:00"
+  "updated_at": "2026-03-02T20:16:35-03:00"
 }
