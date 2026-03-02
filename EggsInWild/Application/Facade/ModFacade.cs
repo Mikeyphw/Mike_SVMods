@@ -15,6 +15,7 @@ using EggsInWild.Infrastructure.Diagnostics;
 using EggsInWild.Infrastructure.Game;
 using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData;
+using EggsInWild.Infrastructure.ModData.Models;
 using Mikew.NestCore.Helpers.SaveData;
 using Mikew.NestCore.Helpers.Config;
 using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
@@ -405,17 +406,29 @@ public FacadeResult DumpEffectiveWildAnimals()
 
             var ov = TryGetWildAnimalOverride(cfg, key);
 
+            var locationResolved = BuildResolvedLocationTypes(wa.LocationTypes);
+            var locationSources = BuildResolvedLocationTypeSources(ov?.LocationTypes);
+
+            var extraEffective = BuildExtraModAnimalKeysEffective(wa.ExtraModAnimalKeys);
+            var extraLoaded = BuildExtraModAnimalKeysLoaded(wa.ExtraModAnimalKeys);
+            var resolvedByGroup = BuildResolvedFarmAnimalIdsByModGroup(wa.ExtraModAnimalKeys);
+            var extraSources = BuildExtraModAnimalKeysSources(ov?.ExtraModAnimalKeys, extraEffective.Keys);
+
             var overrides = new WildAnimalOverridesDump(
                 Enabled: ov?.Enabled,
                 LargeEgg: ov?.LargeEgg,
                 Price: ov?.Price,
-                IsMagic: ov?.IsMagic);
+                IsMagic: ov?.IsMagic,
+                LocationTypes: ov?.LocationTypes,
+                ExtraModAnimalKeys: BuildExtraModAnimalKeysOverrides(ov?.ExtraModAnimalKeys));
 
             var sources = new WildAnimalSourcesDump(
                 Enabled: ov?.Enabled is null ? "default" : "override",
                 LargeEgg: ov?.LargeEgg is null ? "default" : "override",
                 Price: ov?.Price is null ? "default" : "override",
-                IsMagic: ov?.IsMagic is null ? "default" : "override");
+                IsMagic: ov?.IsMagic is null ? "default" : "override",
+                LocationTypes: locationSources,
+                ExtraModAnimalKeys: extraSources);
 
             list.Add(new WildAnimalEffectiveDumpEntry(
                 WildAnimalKey: key,
@@ -424,6 +437,10 @@ public FacadeResult DumpEffectiveWildAnimals()
                 IsMagic: wa.IsMagic,
                 Price: wa.Price,
                 FarmAnimalIds: ids,
+                LocationTypes: locationResolved,
+                ExtraModAnimalKeys: extraEffective,
+                ExtraModAnimalKeysLoaded: extraLoaded,
+                ResolvedFarmAnimalIdsByModGroup: resolvedByGroup,
                 Overrides: overrides,
                 Sources: sources
             ));
@@ -469,17 +486,29 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
         var cfg = _config.Get();
         var ov = TryGetWildAnimalOverride(cfg, canonicalKey);
 
+        var locationResolved = BuildResolvedLocationTypes(wa.LocationTypes);
+        var locationSources = BuildResolvedLocationTypeSources(ov?.LocationTypes);
+
+        var extraEffective = BuildExtraModAnimalKeysEffective(wa.ExtraModAnimalKeys);
+        var extraLoaded = BuildExtraModAnimalKeysLoaded(wa.ExtraModAnimalKeys);
+        var resolvedByGroup = BuildResolvedFarmAnimalIdsByModGroup(wa.ExtraModAnimalKeys);
+        var extraSources = BuildExtraModAnimalKeysSources(ov?.ExtraModAnimalKeys, extraEffective.Keys);
+
         var overrides = new WildAnimalOverridesDump(
             Enabled: ov?.Enabled,
             LargeEgg: ov?.LargeEgg,
             Price: ov?.Price,
-            IsMagic: ov?.IsMagic);
+            IsMagic: ov?.IsMagic,
+            LocationTypes: ov?.LocationTypes,
+            ExtraModAnimalKeys: BuildExtraModAnimalKeysOverrides(ov?.ExtraModAnimalKeys));
 
         var sources = new WildAnimalSourcesDump(
             Enabled: ov?.Enabled is null ? "default" : "override",
             LargeEgg: ov?.LargeEgg is null ? "default" : "override",
             Price: ov?.Price is null ? "default" : "override",
-            IsMagic: ov?.IsMagic is null ? "default" : "override");
+            IsMagic: ov?.IsMagic is null ? "default" : "override",
+            LocationTypes: locationSources,
+            ExtraModAnimalKeys: extraSources);
 
         var entry = new WildAnimalStatusEntry(
             WildAnimalKey: canonicalKey,
@@ -488,6 +517,10 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
             IsMagic: wa.IsMagic,
             Price: wa.Price,
             FarmAnimalIds: ids,
+            LocationTypes: locationResolved,
+            ExtraModAnimalKeys: extraEffective,
+            ExtraModAnimalKeysLoaded: extraLoaded,
+            ResolvedFarmAnimalIdsByModGroup: resolvedByGroup,
             Overrides: overrides,
             Sources: sources
         );
@@ -586,18 +619,124 @@ private static WildAnimalOverrideConfig? TryGetWildAnimalOverride(ModConfig cfg,
     return null;
 }
 
+private static Dictionary<string, bool> BuildResolvedLocationTypes(Dictionary<string, bool> raw)
+{
+    var map = new Dictionary<string, bool>(StringComparer.Ordinal);
+    foreach (LocationType lt in Enum.GetValues(typeof(LocationType)))
+    {
+        var key = lt.ToString();
+        map[key] = raw.TryGetValue(key, out var allowed) && allowed;
+    }
+
+    return map;
+}
+
+private static Dictionary<string, string> BuildResolvedLocationTypeSources(Dictionary<string, bool>? locationTypeOverrides)
+{
+    var sources = new Dictionary<string, string>(StringComparer.Ordinal);
+    foreach (LocationType lt in Enum.GetValues(typeof(LocationType)))
+    {
+        var key = lt.ToString();
+        sources[key] = locationTypeOverrides is not null && ContainsKeyIgnoreCase(locationTypeOverrides, key) ? "override" : "default";
+    }
+
+    return sources;
+}
+
+private static Dictionary<string, List<string>> BuildExtraModAnimalKeysEffective(Dictionary<string, ExtraModAnimalKeysJson> modGroups)
+{
+    var dict = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+    foreach (var (modId, block) in modGroups.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
+        dict[modId] = block.GetEffectiveFarmAnimalKeys().ToList();
+
+    return dict;
+}
+
+private Dictionary<string, bool> BuildExtraModAnimalKeysLoaded(Dictionary<string, ExtraModAnimalKeysJson> modGroups)
+{
+    var dict = new Dictionary<string, bool>(StringComparer.Ordinal);
+
+    foreach (var modId in modGroups.Keys.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+        dict[modId] = _mods.IsLoaded(modId);
+
+    return dict;
+}
+
+private Dictionary<string, List<string>> BuildResolvedFarmAnimalIdsByModGroup(Dictionary<string, ExtraModAnimalKeysJson> modGroups)
+{
+    var dict = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+    foreach (var (modId, block) in modGroups.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
+    {
+        if (!_mods.IsLoaded(modId))
+            continue;
+
+        dict[modId] = block.GetEffectiveFarmAnimalKeys().ToList();
+    }
+
+    return dict;
+}
+
+private static Dictionary<string, string> BuildExtraModAnimalKeysSources(
+    Dictionary<string, ExtraModAnimalKeysOverrideConfig>? extraModOverrides,
+    IEnumerable<string> effectiveModIds)
+{
+    var sources = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    foreach (var modId in effectiveModIds.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+        sources[modId] = extraModOverrides is not null && ContainsKeyIgnoreCase(extraModOverrides, modId) ? "override" : "default";
+
+    return sources;
+}
+
+private static Dictionary<string, List<string>>? BuildExtraModAnimalKeysOverrides(
+    Dictionary<string, ExtraModAnimalKeysOverrideConfig>? extraModOverrides)
+{
+    if (extraModOverrides is null || extraModOverrides.Count == 0)
+        return null;
+
+    var dict = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+    foreach (var (modId, block) in extraModOverrides.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
+    {
+        var list = block.FarmAnimalKeys ?? new List<string>();
+        if (list.Count == 0)
+            continue;
+
+        dict[modId] = list;
+    }
+
+    return dict.Count == 0 ? null : dict;
+}
+
+private static bool ContainsKeyIgnoreCase<TValue>(Dictionary<string, TValue> dict, string key)
+{
+    foreach (var k in dict.Keys)
+    {
+        if (string.Equals(k, key, StringComparison.OrdinalIgnoreCase))
+            return true;
+    }
+
+    return false;
+}
+
 private sealed record WildAnimalOverridesDump(
     bool? Enabled,
     bool? LargeEgg,
     int? Price,
-    bool? IsMagic
+    bool? IsMagic,
+    Dictionary<string, bool>? LocationTypes,
+    Dictionary<string, List<string>>? ExtraModAnimalKeys
 );
 
 private sealed record WildAnimalSourcesDump(
     string Enabled,
     string LargeEgg,
     string Price,
-    string IsMagic
+    string IsMagic,
+    Dictionary<string, string> LocationTypes,
+    Dictionary<string, string> ExtraModAnimalKeys
 );
 
 private sealed record WildAnimalStatusEntry(
@@ -607,6 +746,10 @@ private sealed record WildAnimalStatusEntry(
     bool IsMagic,
     int Price,
     List<string> FarmAnimalIds,
+    Dictionary<string, bool> LocationTypes,
+    Dictionary<string, List<string>> ExtraModAnimalKeys,
+    Dictionary<string, bool> ExtraModAnimalKeysLoaded,
+    Dictionary<string, List<string>> ResolvedFarmAnimalIdsByModGroup,
     WildAnimalOverridesDump Overrides,
     WildAnimalSourcesDump Sources
 );
@@ -618,6 +761,10 @@ private sealed record WildAnimalEffectiveDumpEntry(
     bool IsMagic,
     int Price,
     List<string> FarmAnimalIds,
+    Dictionary<string, bool> LocationTypes,
+    Dictionary<string, List<string>> ExtraModAnimalKeys,
+    Dictionary<string, bool> ExtraModAnimalKeysLoaded,
+    Dictionary<string, List<string>> ResolvedFarmAnimalIdsByModGroup,
     WildAnimalOverridesDump Overrides,
     WildAnimalSourcesDump Sources
 );

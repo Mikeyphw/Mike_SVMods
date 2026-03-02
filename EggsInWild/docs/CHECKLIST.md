@@ -49,5 +49,10 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Remove redundant ExtraModAnimalKeys overrides matching base JSON.
 - [x] Apply ExtraModAnimalKeys overrides in `ConfiguredModDataLoader`.
 - [x] Add GMCM UI for mod-group blocks and FarmAnimalKeys CSV editing.
-- [ ] Update diagnostics/dev outputs to show override sources for complex fields.
+- [x] Update diagnostics/dev outputs to show override sources for complex fields.
 - [x] Add i18n keys + docs updates.
+
+## Phase 8 — Polish/hardening
+- [x] Enhance dev commands (status/dump_effective) to show override sources for complex fields.
+- [ ] Guard against accidental config churn (only save when normalization changes).
+- [x] Docs + checklist alignment.

@@ -5,6 +5,7 @@
 - Phase 6 implemented: `LocationTypes` editor (override layer + GMCM UI).
 - Phase 7 implemented: `ExtraModAnimalKeys` editor (override layer + GMCM UI).
 - Current: Phase 8 polish/hardening.
+- Phase 8 step 1 complete: dev commands now include complex-field override sources.
 
 
 ## Scope

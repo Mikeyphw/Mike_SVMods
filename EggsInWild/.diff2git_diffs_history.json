@@ -195,7 +195,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260302T190105-0300-01",
+      "file": "20260302T190105-0300-01",
+      "title": "EggsInWild: dev outputs include complex override sources (LocationTypes, ExtraModAnimalKeys)",
+      "title_with_id": "EggsInWild: dev outputs include complex override sources (LocationTypes, ExtraModAnimalKeys) [20260302T190105-0300-01]",
+      "created_at": "2026-03-02T18:29:47-03:00",
+      "applied_at": "2026-03-02T19:08:29-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-02T18:29:17-03:00"
+  "updated_at": "2026-03-02T19:08:29-03:00"
 }
