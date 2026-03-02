@@ -221,6 +221,7 @@ private NextTickScheduler _nextTick;
         }
 
         RoosterHelper = new RoosterHelper(Config, Helper, Monitor, _catalogs.Roosters, _catalogs.Produce);
+        _compatSelection = new CompatSelectionService(Helper, ModManifest, _log);
         InitializeAssetPipeline();
     }
 

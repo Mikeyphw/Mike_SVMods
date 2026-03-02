@@ -209,16 +209,16 @@ internal sealed class CompatSelectionService
 
         try
         {
-            var data = Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+            var data = _helper.GameContent.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
             if (!data.TryGetValue(src.FarmAnimalRef.FarmAnimalKey, out var fa))
                 return false;
 
-            var list = src.FarmAnimalRef.List switch
+            IReadOnlyList<string>? list = src.FarmAnimalRef.List switch
             {
                 EggSourceRefList.EggItemIds => fa.EggItemIds,
                 EggSourceRefList.ProduceItemIds => fa.ProduceItemIds,
                 EggSourceRefList.DeluxeProduceItemIds => fa.DeluxeProduceItemIds,
-                _ => null
+                _ => null,
             };
 
             if (list is null)
