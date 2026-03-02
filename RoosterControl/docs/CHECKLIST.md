@@ -19,3 +19,9 @@
 - [x] Persist changes immediately
 - [x] Wire selections into runtime (planning + edits)
 - [x] Remove remaining hardcoded rooster key detection
+
+## Phase 10 — Late apply + validation
+- [x] Late-apply FarmAnimalRef resolution against post-edit Data/FarmAnimals
+- [x] Use NestCore invalidation batching + next-tick scheduling (no direct InvalidateCache)
+- [ ] Optional: `ra_compat validate` (read-only) FarmAnimalRef report
+- [ ] Diagnostics: explain final resolved source/value

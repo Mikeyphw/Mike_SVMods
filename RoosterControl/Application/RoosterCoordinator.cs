@@ -373,7 +373,8 @@ private void RequestInvalidate(string assetName)
 }
 
 
-private void QueueRefreshFarmAnimalsAfterDailyDecisions()
+
+private void QueueRefreshFarmAnimals(string reason)
 {
     if (_farmAnimalsRefreshQueued)
         return;
@@ -385,6 +386,9 @@ private void QueueRefreshFarmAnimalsAfterDailyDecisions()
         RefreshFarmAnimalsOnLocationChange();
     });
 }
+
+private void QueueRefreshFarmAnimalsAfterDailyDecisions()
+    => QueueRefreshFarmAnimals("daily decisions applied");
 
 
     private void PrintStatus()

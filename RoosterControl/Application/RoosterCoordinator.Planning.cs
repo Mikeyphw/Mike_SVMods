@@ -451,6 +451,8 @@ internal sealed partial class RoosterCoordinator
 
         if (verb.Equals("dump", StringComparison.OrdinalIgnoreCase))
         {
+            _invalidations.Flush();
+
             Dictionary<string, FarmAnimalData> data;
             try
             {
@@ -461,6 +463,9 @@ internal sealed partial class RoosterCoordinator
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Failed to load {FarmAnimalsAssetName} for plan dump: {ex}", LogLevel.Error);
                 return;
             }
+
+            EnsureRoostersSetup();
+            ApplyCompatSelectionsToRuntime(data);
 
             _ = EnsureDailyPlanForToday(data, forceRecompute: false, out _);
 
@@ -487,6 +492,8 @@ internal sealed partial class RoosterCoordinator
                 return;
             }
 
+            _invalidations.Flush();
+
             Dictionary<string, FarmAnimalData> data;
             try
             {
@@ -497,6 +504,9 @@ internal sealed partial class RoosterCoordinator
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Failed to load {FarmAnimalsAssetName} for recompute: {ex}", LogLevel.Error);
                 return;
             }
+
+            EnsureRoostersSetup();
+            ApplyCompatSelectionsToRuntime(data);
 
             _ = EnsureDailyPlanForToday(data, forceRecompute: true, out _);
 

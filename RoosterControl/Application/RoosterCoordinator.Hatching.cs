@@ -40,8 +40,8 @@ internal sealed partial class RoosterCoordinator
 
         if (Config.General.UpdateRate == UpdateRateMode.OnDayStart)
         {
-            InvalidateRuleCaches("update rate: day start");
-            _ = Helper.GameContent.InvalidateCache(FarmAnimalsAssetName);
+            RequestInvalidate(FarmAnimalsAssetName);
+            _invalidations.Flush();
         }
 
         RunFarmAnimalsDailySystems();
@@ -58,19 +58,21 @@ internal sealed partial class RoosterCoordinator
         if (_needsRoosterSetup || _lastRoosterSetupDay != today)
         {
             RoosterHelper.SetUpRoosters();
-            ApplyCompatSelectionsToRuntime();
             _lastRoosterSetupDay = today;
             _needsRoosterSetup = false;
         }
     }
-
-
     private void ApplyCompatSelectionsToRuntime()
     {
         if (!Context.IsWorldReady)
             return;
 
+        if (!HasDayStarted)
+            return;
+
         EnsureCompatInitialized();
+
+        _invalidations.Flush();
 
         Dictionary<string, FarmAnimalData>? animalData;
         try
@@ -81,6 +83,22 @@ internal sealed partial class RoosterCoordinator
         {
             return;
         }
+
+        if (animalData is null)
+            return;
+
+        ApplyCompatSelectionsToRuntime(animalData);
+    }
+
+    private void ApplyCompatSelectionsToRuntime(IDictionary<string, FarmAnimalData> animalData)
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        if (!HasDayStarted)
+            return;
+
+        EnsureCompatInitialized();
 
         if (animalData is null || animalData.Count == 0)
             return;
@@ -243,8 +261,7 @@ internal sealed partial class RoosterCoordinator
         if (!Context.IsWorldReady)
             return;
 
-        _ = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
-        ReloadCoopRoosters();
+        RefreshFarmAnimalsOnLocationChange();
 
         try
         {
@@ -263,9 +280,24 @@ internal sealed partial class RoosterCoordinator
         if (!Context.IsWorldReady)
             return;
 
-        var data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        EnsureRoostersSetup();
+
+        _invalidations.Flush();
+
+        Dictionary<string, FarmAnimalData>? data;
+        try
+        {
+            data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        }
+        catch
+        {
+            return;
+        }
+
         if (data is null || data.Count == 0)
             return;
+
+        ApplyCompatSelectionsToRuntime(data);
 
         RoosterHelper.UpdateRoosterQuantity_All();
         GetRoostersFemales(data, RoosterHelper.Roosters);
@@ -296,7 +328,23 @@ internal sealed partial class RoosterCoordinator
         if (!Context.IsWorldReady)
             return;
 
-        _ = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        _invalidations.Flush();
+
+        Dictionary<string, FarmAnimalData>? data;
+        try
+        {
+            data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        }
+        catch
+        {
+            return;
+        }
+
+        if (data is null || data.Count == 0)
+            return;
+
+        EnsureRoostersSetup();
+        ApplyCompatSelectionsToRuntime(data);
         ReloadCoopRoosters();
     }
 

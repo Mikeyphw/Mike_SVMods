@@ -34,25 +34,21 @@ Models:
 
 - Phases 0–7: complete (GMCM foundations + deterministic produce/hatching pipeline).
 - Phase 8: complete (compat catalogs + CP-patchable assets).
-- **Phase 9A: in-progress/delivered** (per-save selection state + catalog loading + list command).
-- Phase 9B: next (cycling + apply selections to runtime).
-- Phase 10–12: next (late apply + fertilized-egg strategy + GMCM UI).
+- Phase 9A: complete (per-save selection state + catalog loading + list command).
+- Phase 9B: complete (cycling + apply selections to runtime).
+- Phase 10: in progress (late apply done; validation/diagnostics next).
 
 ---
 
 ## Phase 8 — Compat catalogs + CP-patchable assets (DONE)
 
 Steps:
-1) Add cycling commands:
-   - `ra_compat cycle-egg <EggKind> [prev]`
-   - `ra_compat cycle-rooster [prev]`
-   - `ra_compat enable-all-roosters`
-2) Persist changes immediately to save data.
-3) Apply selections to runtime:
-   - Apply selected egg IDs to in-memory rooster egg entries (Normal/Large/Fertilized) so planning + asset edits use them.
-   - Apply enabled rooster provider keys to coop rooster scanning.
-4) Replace hardcoded rooster key detection with enabled provider keys.
-5) Update PLAN/CHECKLIST/TODO to mark 9B done and outline Phase 10+.
+1) Define compat catalog models for egg sources + rooster sources.
+2) Provide in-code defaults.
+3) Expose CP-patchable mod assets:
+   - `Mods/<UniqueID>/compat/egg_sources`
+   - `Mods/<UniqueID>/compat/rooster_sources`
+4) Ship JSON reference copies under `data/compat/`.
 
 Acceptance:
 - Assets exist and can be patched by CP packs.
@@ -117,14 +113,17 @@ Acceptance:
 
 ---
 
-## Phase 10 — Apply selections late (conflict-minimizing)
+## Phase 10 — Apply selections late (conflict-minimizing) (IN PROGRESS)
 
-Goal: resolve `FarmAnimalRef` sources after all CP edits, and apply our edits in a late pass.
+Goal: resolve `FarmAnimalRef` sources after all CP edits and RoosterControl asset edits run at a safe late priority.
 
 Steps:
-1) Resolve egg refs against final `Data/FarmAnimals` state.
-2) Move sensitive edits to late asset editor priority.
-3) Add diagnostics to explain what “won” when multiple packs edit the same base animal.
+1) Late apply resolution (DONE):
+   - Always resolve `FarmAnimalRef` egg sources against the *post-edit* `Data/FarmAnimals` snapshot.
+   - Only apply compat selections to runtime after `DayStarted` so RoosterControl's late `Data/FarmAnimals` editor has run.
+   - Ensure refresh paths (plan/daily systems/location refresh) re-apply selections using the same loaded `Data/FarmAnimals`.
+2) Diagnostics (NEXT): explain what resolved value was used when multiple packs affect the same base animal.
+3) Optional validate (NEXT): add `ra_compat validate` (read-only) to report invalid `FarmAnimalRef` targets/indexes.
 
 ---
 

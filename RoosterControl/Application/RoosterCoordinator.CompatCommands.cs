@@ -162,12 +162,11 @@ internal sealed partial class RoosterCoordinator
             _saveData.Write(SaveStateKey, _saveState);
 
         InvalidateDailyPlanCache("compat selection changed");
-        EnsureRoostersSetup();
 
         RequestInvalidate(FarmAnimalsAssetName);
         if (RoosterHelper.FemaleEggs.Count > 0)
             RequestInvalidate(ObjectsAssetName);
 
-        ReloadCoopRoosters();
+        QueueRefreshFarmAnimals("compat selection changed");
     }
 }

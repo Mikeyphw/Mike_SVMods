@@ -78,7 +78,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260302T195040-0300-01",
+      "file": "20260302T195040-0300-01",
+      "title": "Phase 10D: late apply FarmAnimalRef + NestCore-first invalidation/scheduling refactor",
+      "title_with_id": "Phase 10D: late apply FarmAnimalRef + NestCore-first invalidation/scheduling refactor [20260302T195040-0300-01]",
+      "created_at": "2026-03-02T19:57:30-03:00",
+      "applied_at": "2026-03-02T19:57:43-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-02T19:08:45-03:00"
+  "updated_at": "2026-03-02T19:57:43-03:00"
 }

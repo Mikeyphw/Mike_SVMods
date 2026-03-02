@@ -182,6 +182,8 @@ internal sealed partial class RoosterCoordinator
 
         EnsureRoostersSetup();
 
+        _invalidations.Flush();
+
         Dictionary<string, FarmAnimalData> data;
         try
         {
@@ -193,6 +195,9 @@ internal sealed partial class RoosterCoordinator
             b.Paragraph("females.error");
             return;
         }
+
+
+        ApplyCompatSelectionsToRuntime(data);
 
         var plan = FemaleAssignmentService.ComputeFemaleAssignmentsPlan(
             config: Config,
