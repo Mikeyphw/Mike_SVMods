@@ -43,17 +43,16 @@ Models:
 ## Phase 8 — Compat catalogs + CP-patchable assets (DONE)
 
 Steps:
-1) Define compat catalog models.
-2) Create in-code defaults.
-3) Expose CP-patchable assets via asset handler.
-4) Provide JSON copies under `data/compat/` as reference.
-
-Code:
-- `Application/Compat/CompatCatalogModels.cs`
-- `Application/Compat/CompatDefaults.cs`
-- `Application/RoosterCoordinator.Assets.cs`
-- `data/compat/egg_sources.json`
-- `data/compat/rooster_sources.json`
+1) Add cycling commands:
+   - `ra_compat cycle-egg <EggKind> [prev]`
+   - `ra_compat cycle-rooster [prev]`
+   - `ra_compat enable-all-roosters`
+2) Persist changes immediately to save data.
+3) Apply selections to runtime:
+   - Apply selected egg IDs to in-memory rooster egg entries (Normal/Large/Fertilized) so planning + asset edits use them.
+   - Apply enabled rooster provider keys to coop rooster scanning.
+4) Replace hardcoded rooster key detection with enabled provider keys.
+5) Update PLAN/CHECKLIST/TODO to mark 9B done and outline Phase 10+.
 
 Acceptance:
 - Assets exist and can be patched by CP packs.
@@ -91,20 +90,21 @@ Acceptance:
 
 ---
 
-## Phase 9B — Cycling + apply selections to runtime (NEXT)
+## Phase 9B — Cycling + apply selections to runtime (DONE)
 
 Goal: Make selections affect gameplay and allow cycling (user choice).
 
 Steps:
 1) Add cycling commands:
    - `ra_compat cycle-egg <EggKind> [prev]`
-   - `ra_compat cycle-rooster <provider> [prev]` (or enable/disable per provider)
+   - `ra_compat cycle-rooster [prev]` (single-provider mode cycling)
+   - `ra_compat enable-all-roosters` (union mode; enable all providers)
 2) Persist changes immediately to save data.
 3) Apply selections to runtime:
-   - egg IDs used by planning + object edits
-   - which rooster farm-animal keys/roles are active
-4) Replace hardcoded rooster key detection with enabled provider keys.
-5) Validation + logging for invalid/missing targets.
+   - Apply selected egg IDs to in-memory rooster egg entries (Normal/Large/Fertilized) so planning + asset edits use them.
+   - Apply enabled rooster provider keys to coop rooster scanning (remove hardcoded rooster key list).
+4) Ensure day-start ordering sets DailyLuck before rooster setup.
+5) Update PLAN/CHECKLIST/TODO to mark 9B done and outline Phase 10+.
 
 Code touchpoints (expected):
 - `Helpers/RoosterControl.cs` (rooster scanning + egg resolution hooks)

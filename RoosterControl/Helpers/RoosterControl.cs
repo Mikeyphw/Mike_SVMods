@@ -808,6 +808,41 @@ private sealed record DebugWeightAnomaly(
         return Math.Clamp(adjusted, 0f, 100f);
     }
 
+
+    private static HashSet<string>? _coopRoosterFarmAnimalKeys;
+
+    private static readonly HashSet<string> DefaultCoopRoosterFarmAnimalKeys =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            RoosterKeys.White,
+            RoosterKeys.Void,
+            RoosterKeys.Blue,
+            RoosterKeys.Gold,
+            RoosterKeys.Brown,
+        };
+
+    /// <summary>Overrides which <see cref="FarmAnimal.type"/> keys are treated as roosters for coop scanning.</summary>
+    public static void SetCoopRoosterFarmAnimalKeys(IEnumerable<string> keys)
+    {
+        if (keys is null)
+        {
+            _coopRoosterFarmAnimalKeys = null;
+            return;
+        }
+
+        var set = keys
+            .Where(k => !string.IsNullOrWhiteSpace(k))
+            .Select(k => k.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        _coopRoosterFarmAnimalKeys = set.Count > 0 ? set : null;
+    }
+
+    private static HashSet<string> GetCoopRoosterFarmAnimalKeys()
+        => _coopRoosterFarmAnimalKeys is { Count: > 0 }
+            ? _coopRoosterFarmAnimalKeys
+            : DefaultCoopRoosterFarmAnimalKeys;
+
     public static IEnumerable<FarmAnimal> GetRoostersFromCoops()
     {
         return Game1
@@ -822,14 +857,7 @@ private sealed record DebugWeightAnomaly(
     private static IEnumerable<FarmAnimal> GetRoostersFromCoop(Building coop)
     {
         var animalHouse = (AnimalHouse)coop.indoors.Value;
-        var cockTypes = new[]
-        {
-            RoosterKeys.White,
-            RoosterKeys.Void,
-            RoosterKeys.Blue,
-            RoosterKeys.Gold,
-            RoosterKeys.Brown,
-        };
+        var cockTypes = GetCoopRoosterFarmAnimalKeys();
         return animalHouse.Animals.Values.Where(animal => cockTypes.Contains(animal.type.Value));
     }
 

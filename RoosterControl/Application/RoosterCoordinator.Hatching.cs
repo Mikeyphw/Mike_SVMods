@@ -4,6 +4,7 @@ using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Helpers.GameStateQueries;
 using RoosterControl.Application.Hatching;
 using RoosterControl.Application.Planning;
+using RoosterControl.Application.Compat;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using RoosterControl.Helpers;
@@ -29,10 +30,11 @@ internal sealed partial class RoosterCoordinator
         HasDayStarted = true;
 
         InvalidateDailyPlanCache("day started");
-        EnsureRoostersSetup();
 
         DailyLuck = DailyLuckHelper.GetDailyLuck();
         RoosterHelper.DailyLuck = DailyLuck;
+
+        EnsureRoostersSetup();
 
         isStuckInside = EvaluateStuckInsideWithGsq();
 
@@ -56,8 +58,114 @@ internal sealed partial class RoosterCoordinator
         if (_needsRoosterSetup || _lastRoosterSetupDay != today)
         {
             RoosterHelper.SetUpRoosters();
+            ApplyCompatSelectionsToRuntime();
             _lastRoosterSetupDay = today;
             _needsRoosterSetup = false;
+        }
+    }
+
+
+    private void ApplyCompatSelectionsToRuntime()
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        EnsureCompatInitialized();
+
+        Dictionary<string, FarmAnimalData>? animalData;
+        try
+        {
+            animalData = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        }
+        catch
+        {
+            return;
+        }
+
+        if (animalData is null || animalData.Count == 0)
+            return;
+
+        var enabledKeys = _compatSelection.GetEnabledRoosterFarmAnimalKeys(_saveState.Compat);
+        if (enabledKeys.Count > 0)
+            RoosterHelper.SetCoopRoosterFarmAnimalKeys(enabledKeys);
+
+        foreach (var pair in RoosterHelper.Roosters)
+        {
+            var roosterType = pair.Key;
+            var rooster = pair.Value;
+
+            if (!TryGetEggKindsForRoosterType(roosterType, out var normalKind, out var largeKind, out var fertKind))
+                continue;
+
+            if (rooster.Eggs.TryGetValue(EggTypeEntries.Normal, out var normalEgg)
+                && _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, normalKind, animalData, out var normalId, out _)
+                && !string.IsNullOrWhiteSpace(normalId))
+            {
+                normalEgg[RoosterItemDataEntries.Name] = normalId;
+            }
+
+            if (rooster.Eggs.TryGetValue(EggTypeEntries.Large, out var largeEgg)
+                && _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, largeKind, animalData, out var largeId, out _)
+                && !string.IsNullOrWhiteSpace(largeId))
+            {
+                largeEgg[RoosterItemDataEntries.Name] = largeId;
+            }
+
+            if (rooster.Eggs.TryGetValue(EggTypeEntries.Fertilized, out var fertEgg)
+                && _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, fertKind, animalData, out var fertId, out _)
+                && !string.IsNullOrWhiteSpace(fertId))
+            {
+                fertEgg[RoosterItemDataEntries.Name] = fertId;
+            }
+
+            RoosterHelper.UpdateFemaleEggs(rooster, animalData);
+        }
+    }
+
+    private static bool TryGetEggKindsForRoosterType(
+        RoosterType roosterType,
+        out EggKind normal,
+        out EggKind large,
+        out EggKind fertilized
+    )
+    {
+        switch (roosterType)
+        {
+            case RoosterType.Brown:
+                normal = EggKind.BrownEgg;
+                large = EggKind.LargeBrownEgg;
+                fertilized = EggKind.FertilizedBrownEgg;
+                return true;
+
+            case RoosterType.White:
+                normal = EggKind.WhiteEgg;
+                large = EggKind.LargeWhiteEgg;
+                fertilized = EggKind.FertilizedWhiteEgg;
+                return true;
+
+            case RoosterType.Blue:
+                normal = EggKind.BlueEgg;
+                large = EggKind.LargeBlueEgg;
+                fertilized = EggKind.FertilizedBlueEgg;
+                return true;
+
+            case RoosterType.Void:
+                normal = EggKind.VoidEgg;
+                large = EggKind.LargeVoidEgg;
+                fertilized = EggKind.FertilizedVoidEgg;
+                return true;
+
+            case RoosterType.Gold:
+                normal = EggKind.GoldEgg;
+                large = EggKind.LargeGoldEgg;
+                fertilized = EggKind.FertilizedGoldEgg;
+                return true;
+
+            default:
+                normal = default;
+                large = default;
+                fertilized = default;
+                return false;
         }
     }
 

@@ -14,8 +14,8 @@
 - [x] Docs updated (PLAN/CHECKLIST/TODO)
 
 ## Phase 9B — Cycling + apply selections to runtime
-- [ ] Cycle egg sources per EggKind
-- [ ] Enable/disable/cycle rooster providers
-- [ ] Persist changes immediately
-- [ ] Wire selections into runtime (planning + edits)
-- [ ] Remove remaining hardcoded rooster key detection
+- [x] Cycle egg sources per EggKind
+- [x] Enable/disable/cycle rooster providers
+- [x] Persist changes immediately
+- [x] Wire selections into runtime (planning + edits)
+- [x] Remove remaining hardcoded rooster key detection

@@ -242,4 +242,248 @@ internal sealed class CompatSelectionService
             return true;
         }
     }
+
+    public bool TryCycleEggSource(CompatSelectionState state, EggKind kind, bool prev, out EggSourceDef? selected, out string? error)
+    {
+        selected = null;
+        error = null;
+
+        if (!IsInitialized)
+        {
+            error = "CompatSelectionService not initialized yet.";
+            return false;
+        }
+
+        var options = EggCatalog.Sources
+            .Where(s => s.EggKind == kind && !string.IsNullOrWhiteSpace(s.SourceId) && IsEggSourceValid(s))
+            .OrderBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (options.Count == 0)
+        {
+            error = $"No valid egg sources are available for EggKind '{kind}'.";
+            return false;
+        }
+
+        state.SelectedEggSources.TryGetValue(kind, out var currentId);
+        currentId ??= string.Empty;
+
+        var currentIdx = options.FindIndex(o => o.SourceId.Equals(currentId, StringComparison.OrdinalIgnoreCase));
+        if (currentIdx < 0)
+            currentIdx = 0;
+
+        var nextIdx = options.Count == 1
+            ? 0
+            : prev
+                ? (currentIdx - 1 + options.Count) % options.Count
+                : (currentIdx + 1) % options.Count;
+
+        var next = options[nextIdx];
+        selected = next;
+
+        var changed = !next.SourceId.Equals(currentId, StringComparison.OrdinalIgnoreCase);
+        state.SelectedEggSources[kind] = next.SourceId;
+        return changed;
+    }
+
+    public bool TryCycleRoosterProviderSingle(CompatSelectionState state, bool prev, out RoosterSourceDef? selected, out string? error)
+    {
+        selected = null;
+        error = null;
+
+        if (!IsInitialized)
+        {
+            error = "CompatSelectionService not initialized yet.";
+            return false;
+        }
+
+        var options = RoosterCatalog.Sources
+            .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
+            .GroupBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .OrderBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (options.Count == 0)
+        {
+            error = "No rooster providers are available in the current rooster sources catalog.";
+            return false;
+        }
+
+        var currentId = state.EnabledRoosterSources.Count switch
+        {
+            1 => state.EnabledRoosterSources[0],
+            > 1 => options.Select(o => o.SourceId).FirstOrDefault(id => state.EnabledRoosterSources.Contains(id, StringComparer.OrdinalIgnoreCase)) ?? options[0].SourceId,
+            _ => options[0].SourceId
+        };
+
+        var currentIdx = options.FindIndex(o => o.SourceId.Equals(currentId, StringComparison.OrdinalIgnoreCase));
+        if (currentIdx < 0)
+            currentIdx = 0;
+
+        var nextIdx = options.Count == 1
+            ? 0
+            : prev
+                ? (currentIdx - 1 + options.Count) % options.Count
+                : (currentIdx + 1) % options.Count;
+
+        var next = options[nextIdx];
+        selected = next;
+
+        var changed = state.EnabledRoosterSources.Count != 1 || !state.EnabledRoosterSources[0].Equals(next.SourceId, StringComparison.OrdinalIgnoreCase);
+        state.EnabledRoosterSources = new List<string> { next.SourceId };
+        return changed;
+    }
+
+    public bool EnableAllRoosterProviders(CompatSelectionState state, out int enabledCount, out string? error)
+    {
+        enabledCount = 0;
+        error = null;
+
+        if (!IsInitialized)
+        {
+            error = "CompatSelectionService not initialized yet.";
+            return false;
+        }
+
+        var all = RoosterCatalog.Sources
+            .Select(s => s.SourceId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        enabledCount = all.Count;
+
+        var current = state.EnabledRoosterSources
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var changed = current.Count != all.Count || !current.SequenceEqual(all, StringComparer.OrdinalIgnoreCase);
+
+        state.EnabledRoosterSources = all;
+        return changed;
+    }
+
+
+    public bool TryResolveSelectedEggItemId(
+        CompatSelectionState state,
+        EggKind kind,
+        IDictionary<string, FarmAnimalData> animalData,
+        out string? itemId,
+        out string? error
+    )
+    {
+        itemId = null;
+        error = null;
+
+        if (!IsInitialized)
+        {
+            error = "CompatSelectionService not initialized yet.";
+            return false;
+        }
+
+        if (animalData is null)
+        {
+            error = "Data/FarmAnimals not loaded.";
+            return false;
+        }
+
+        state.SelectedEggSources.TryGetValue(kind, out var selectedId);
+        if (string.IsNullOrWhiteSpace(selectedId))
+        {
+            error = $"No egg source is selected for EggKind '{kind}'.";
+            return false;
+        }
+
+        var src = EggCatalog.Sources.FirstOrDefault(s =>
+            s.EggKind == kind && s.SourceId.Equals(selectedId, StringComparison.OrdinalIgnoreCase));
+
+        if (src is null)
+        {
+            error = $"Selected egg source '{selectedId}' for EggKind '{kind}' does not exist in the catalog.";
+            return false;
+        }
+
+        if (!IsEggSourceValid(src))
+        {
+            error = $"Selected egg source '{selectedId}' for EggKind '{kind}' is invalid.";
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(src.ItemId))
+        {
+            itemId = src.ItemId.Trim();
+            return true;
+        }
+
+        if (src.FarmAnimalRef is null)
+        {
+            error = $"Selected egg source '{selectedId}' for EggKind '{kind}' has no FarmAnimalRef.";
+            return false;
+        }
+
+        if (!animalData.TryGetValue(src.FarmAnimalRef.FarmAnimalKey, out var farmAnimal))
+        {
+            error = $"Farm animal key '{src.FarmAnimalRef.FarmAnimalKey}' not found in Data/FarmAnimals.";
+            return false;
+        }
+
+        var list = src.FarmAnimalRef.List switch
+        {
+            EggSourceRefList.EggItemIds => farmAnimal.EggItemIds,
+            EggSourceRefList.ProduceItemIds => farmAnimal.ProduceItemIds,
+            EggSourceRefList.DeluxeProduceItemIds => farmAnimal.DeluxeProduceItemIds,
+            _ => null
+        };
+
+        if (list is null)
+        {
+            error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' has no list '{src.FarmAnimalRef.List}'.";
+            return false;
+        }
+
+        var index = src.FarmAnimalRef.Index;
+        if (index < 0 || index >= list.Count)
+        {
+            error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' list '{src.FarmAnimalRef.List}' index {index} is out of range (count={list.Count}).";
+            return false;
+        }
+
+        var resolved = list[index];
+        if (string.IsNullOrWhiteSpace(resolved))
+        {
+            error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' list '{src.FarmAnimalRef.List}' index {index} resolved to an empty item id.";
+            return false;
+        }
+
+        itemId = resolved.Trim();
+        return true;
+    }
+
+    public HashSet<string> GetEnabledRoosterFarmAnimalKeys(CompatSelectionState state)
+    {
+        if (!IsInitialized)
+            throw new InvalidOperationException("CompatSelectionService not initialized yet.");
+
+        var enabledSources = state.EnabledRoosterSources
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var src in RoosterCatalog.Sources.Where(s => enabledSources.Contains(s.SourceId)))
+        {
+            if (src.FarmAnimalKeys is null)
+                continue;
+
+            foreach (var keyDef in src.FarmAnimalKeys.Where(k => !string.IsNullOrWhiteSpace(k.Key)))
+                keys.Add(keyDef.Key.Trim());
+        }
+
+        return keys;
+    }
+
 }
