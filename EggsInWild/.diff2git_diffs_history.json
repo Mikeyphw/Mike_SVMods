@@ -91,7 +91,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260302T004548-0300-01",
+      "file": "20260302T004548-0300-01",
+      "title": "WildAnimals scalar overrides + normalization pass",
+      "title_with_id": "WildAnimals scalar overrides + normalization pass [20260302T004548-0300-01]",
+      "created_at": "2026-03-01T23:11:28-03:00",
+      "applied_at": "2026-03-02T01:11:23-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-02T00:33:32-03:00"
+  "updated_at": "2026-03-02T01:11:23-03:00"
 }

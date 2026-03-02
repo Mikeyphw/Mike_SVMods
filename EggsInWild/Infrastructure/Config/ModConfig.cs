@@ -124,4 +124,13 @@ public sealed class WildAnimalOverrideConfig
     /// When false, the animal is excluded from egg assignment and AnimalNotes progression.
     /// </summary>
     public bool? Enabled { get; set; }
+
+    /// <summary>If set, overrides the WildAnimalsList entry LargeEgg flag.</summary>
+    public bool? LargeEgg { get; set; }
+
+    /// <summary>If set, overrides the WildAnimalsList entry Price value.</summary>
+    public int? Price { get; set; }
+
+    /// <summary>If set, overrides the WildAnimalsList entry IsMagic flag.</summary>
+    public bool? IsMagic { get; set; }
 }

@@ -887,7 +887,7 @@ private void SyncApiBirthTextMode()
         var log = _contentLog ?? new SmapiLog(Monitor);
 
         // Ensure data loader exists for JSON-backed definitions.
-        _contentDataLoader ??= new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), log), () => _config!.Get(), log);
+        _contentDataLoader ??= new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), log), _config!, log);
 
         var reader = JsonFileReaderFactory.Create(Helper);
 
@@ -1013,7 +1013,7 @@ private void InstallHarmonyBootstrap()
             return;
 
         _contentLog = new SmapiLog(Monitor);
-        _contentDataLoader = new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), _contentLog), () => _config!.Get(), _contentLog);
+        _contentDataLoader = new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), _contentLog), _config!, _contentLog);
 
         var saveData = new SmapiSaveDataStore(Helper, Monitor);
         var game = new GameStateReader();
@@ -1055,7 +1055,8 @@ private void InstallHarmonyBootstrap()
         var config = _config?.Get() ?? new ModConfig();
         var log = _contentLog ?? new SmapiLog(Monitor);
         var i18n = new I18TranslationHelper(Helper);
-        var dataLoader = _contentDataLoader ?? new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), log), () => _config?.Get() ?? new ModConfig(), log);
+        var configProvider = _config ?? new SmapiConfigProvider<ModConfig>(Helper, Monitor);
+        var dataLoader = _contentDataLoader ?? new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), log), configProvider, log);
         return new ContentContext(
             helper: Helper,
             log: log,
@@ -1117,7 +1118,7 @@ private void InstallHarmonyBootstrap()
             log: log,
             invalidateAssets: InvalidateGameAssets);
 
-        var dataLoader = new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(helper), log), () => _config!.Get(), log);
+        var dataLoader = new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(helper), log), _config!, log);
         var mods = new EggsInWild.Infrastructure.Mods.SmapiModAvailability(helper.ModRegistry);
         var spawnWeather = new EggsInWild.Application.Spawning.SpawnWeatherHistory(saveData, log);
         var conditions = new EggsInWild.Application.Spawning.DefaultAreaConditionsEvaluator(game, spawnWeather);
