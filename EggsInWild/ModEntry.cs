@@ -698,6 +698,122 @@ foreach (var key in wildAnimalKeysForGmcm)
             }
 
 
+
+            page.Separator(simple: true);
+            page.SectionLabel(() => Translate(i18n, "config.section.wildAnimals.extraModAnimalKeys.label", "Farm animal keys"));
+
+            page.ParagraphDynamic(
+                () => Translate(
+                    i18n,
+                    "config.paragraph.wildAnimals.extraModAnimalKeys.description.text",
+                    "Edit ExtraModAnimalKeys per mod group. Enter a comma-separated list of FarmAnimalKeys. Blank means default (inherit from WildAnimalsList)."),
+                id: $"wildAnimals_extraModAnimalKeys_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+            var extraModIdsForGmcm = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "Vanilla",
+            };
+
+            if (definition?.ExtraModAnimalKeys is not null)
+            {
+                foreach (var modId in definition.ExtraModAnimalKeys.Keys)
+                    extraModIdsForGmcm.Add(modId);
+            }
+
+            {
+                var cfg = _config!.Get();
+                var ov = GetOverride(cfg);
+                if (ov?.ExtraModAnimalKeys is not null)
+                {
+                    foreach (var modId in ov.ExtraModAnimalKeys.Keys)
+                        extraModIdsForGmcm.Add(modId);
+                }
+            }
+
+            var extraModIdsOrdered = extraModIdsForGmcm
+                .OrderBy(mid => mid == "Vanilla" ? "" : mid, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var modId in extraModIdsOrdered)
+            {
+                var elementId = $"wildAnimals.{key}.extraModAnimalKeys.{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(modId)}";
+
+                page.TextLabel(
+                    elementId: elementId,
+                    name: () => modId == "Vanilla"
+                        ? Translate(i18n, "config.wildAnimals.extraModAnimalKeys.modId.vanilla.name", "Vanilla")
+                        : modId,
+                    tooltip: () =>
+                    {
+                        var loaded = modAvailability.IsLoaded(modId)
+                            ? Translate(i18n, "config.wildAnimals.state.loaded", "Loaded")
+                            : Translate(i18n, "config.wildAnimals.state.notLoaded", "Not loaded");
+
+                        return Translate(
+                            i18n,
+                            "config.wildAnimals.extraModAnimalKeys.modId.tooltip",
+                            "FarmAnimalKeys for mod-group '{0}'. Mod is {1}.",
+                            modId,
+                            loaded);
+                    },
+                    getValue: () =>
+                    {
+                        var cfg = _config!.Get();
+                        var ov = GetOverride(cfg);
+
+                        if (ov?.ExtraModAnimalKeys is not null
+                            && ov.ExtraModAnimalKeys.TryGetValue(modId, out var blockOv)
+                            && blockOv?.FarmAnimalKeys is { Count: > 0 })
+                        {
+                            return string.Join(", ", blockOv.FarmAnimalKeys);
+                        }
+
+                        var baseKeys = definition?.ExtraModAnimalKeys is not null
+                            && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                            ? baseBlock.GetEffectiveFarmAnimalKeys()
+                            : Array.Empty<string>();
+
+                        return baseKeys.Count == 0 ? "" : string.Join(", ", baseKeys);
+                    },
+                    setValue: rawValue =>
+                    {
+                        var parsed = ParseCsvKeyList(rawValue);
+
+                        var baseKeys = definition?.ExtraModAnimalKeys is not null
+                            && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                            ? baseBlock.GetEffectiveFarmAnimalKeys()
+                            : Array.Empty<string>();
+
+                        var cfg = _config!.Get();
+                        cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                        if (!cfg.WildAnimalOverrides.TryGetValue(key, out var ov) || ov is null)
+                            ov = new WildAnimalOverrideConfig();
+
+                        ov.ExtraModAnimalKeys ??= new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                        if (parsed.Count == 0 || SequenceEqualIgnoreCase(parsed, baseKeys))
+                        {
+                            ov.ExtraModAnimalKeys.Remove(modId);
+                        }
+                        else
+                        {
+                            ov.ExtraModAnimalKeys[modId] = new ExtraModAnimalKeysOverrideConfig
+                            {
+                                FarmAnimalKeys = parsed.ToList(),
+                            };
+                        }
+
+                        if (ov.ExtraModAnimalKeys.Count == 0)
+                            ov.ExtraModAnimalKeys = null;
+
+                        if (IsEmptyOverride(ov))
+                            cfg.WildAnimalOverrides.Remove(key);
+                        else
+                            cfg.WildAnimalOverrides[key] = ov;
+                    });
+            }
+
             page.Separator(simple: true);
             page.SectionLabel(() => Translate(i18n, "config.section.wildAnimals.diagnostics.label", "Diagnostics"));
 

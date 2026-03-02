@@ -3,8 +3,8 @@
 ## Status
 - Phases 1–5 implemented.
 - Phase 6 implemented: `LocationTypes` editor (override layer + GMCM UI).
-- Phase 7 in progress: `ExtraModAnimalKeys` editor (override layer implemented; GMCM UI pending).
-- Current: Phase 7 GMCM UI.
+- Phase 7 implemented: `ExtraModAnimalKeys` editor (override layer + GMCM UI).
+- Current: Phase 8 polish/hardening.
 
 
 ## Scope
