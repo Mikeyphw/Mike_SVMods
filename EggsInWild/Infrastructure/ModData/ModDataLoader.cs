@@ -189,7 +189,7 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
 
         var entries = new List<(string Key, WildAnimalOverrideConfig? Override)>();
         foreach (var kvp in overrides)
-            entries.Add((kvp.Key, kvp.Value));
+            entries.Add((kvp.Key, kvp.Value is null ? null : CloneOverride(kvp.Value)));
 
         var normalized = new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.Ordinal);
         var removedUnknown = new List<string>();
@@ -303,7 +303,7 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
                 StardewModdingAPI.LogLevel.Trace);
         }
 
-        if (!changed)
+        if (WildAnimalOverridesEquals(overrides, normalized))
             return false;
 
         overrides.Clear();
@@ -466,6 +466,135 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
             return true;
         }
 
+
+        static WildAnimalOverrideConfig CloneOverride(WildAnimalOverrideConfig src)
+        {
+            return new WildAnimalOverrideConfig
+            {
+                Enabled = src.Enabled,
+                LargeEgg = src.LargeEgg,
+                Price = src.Price,
+                IsMagic = src.IsMagic,
+                LocationTypes = CloneStringBoolMap(src.LocationTypes),
+                ExtraModAnimalKeys = CloneExtraModAnimalKeys(src.ExtraModAnimalKeys),
+            };
+        }
+
+        static Dictionary<string, bool>? CloneStringBoolMap(Dictionary<string, bool>? src)
+            => src is null || src.Count == 0 ? null : new Dictionary<string, bool>(src, StringComparer.Ordinal);
+
+        static Dictionary<string, ExtraModAnimalKeysOverrideConfig>? CloneExtraModAnimalKeys(Dictionary<string, ExtraModAnimalKeysOverrideConfig>? src)
+        {
+            if (src is null || src.Count == 0)
+                return null;
+
+            var outMap = new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.Ordinal);
+            foreach (var (modId, block) in src)
+            {
+                if (block is null)
+                {
+                    outMap[modId] = null!;
+                    continue;
+                }
+
+                outMap[modId] = new ExtraModAnimalKeysOverrideConfig
+                {
+                    FarmAnimalKeys = block.FarmAnimalKeys is null ? null : new List<string>(block.FarmAnimalKeys),
+                };
+            }
+
+            return outMap;
+        }
+
+        static bool WildAnimalOverridesEquals(IDictionary<string, WildAnimalOverrideConfig> current, Dictionary<string, WildAnimalOverrideConfig> normalized)
+        {
+            if (current.Count != normalized.Count)
+                return false;
+
+            foreach (var (key, curOv) in current)
+            {
+                if (!normalized.TryGetValue(key, out var normOv))
+                    return false;
+
+                if (curOv is null && normOv is null)
+                    continue;
+
+                if (curOv is null || normOv is null)
+                    return false;
+
+                if (!WildAnimalOverrideEquals(curOv, normOv))
+                    return false;
+            }
+
+            return true;
+        }
+
+        static bool WildAnimalOverrideEquals(WildAnimalOverrideConfig a, WildAnimalOverrideConfig b)
+        {
+            if (a.Enabled != b.Enabled)
+                return false;
+            if (a.LargeEgg != b.LargeEgg)
+                return false;
+            if (a.Price != b.Price)
+                return false;
+            if (a.IsMagic != b.IsMagic)
+                return false;
+
+            if (!NullableStringBoolMapEquals(a.LocationTypes, b.LocationTypes))
+                return false;
+
+            if (!NullableExtraModAnimalKeysMapEquals(a.ExtraModAnimalKeys, b.ExtraModAnimalKeys))
+                return false;
+
+            return true;
+        }
+
+        static bool NullableStringBoolMapEquals(Dictionary<string, bool>? a, Dictionary<string, bool>? b)
+        {
+            if (a is null || a.Count == 0)
+                return b is null || b.Count == 0;
+
+            if (b is null || b.Count == 0)
+                return false;
+
+            return DictionaryEquals(a, b);
+        }
+
+        static bool NullableExtraModAnimalKeysMapEquals(Dictionary<string, ExtraModAnimalKeysOverrideConfig>? a, Dictionary<string, ExtraModAnimalKeysOverrideConfig>? b)
+        {
+            if (a is null || a.Count == 0)
+                return b is null || b.Count == 0;
+
+            if (b is null || b.Count == 0)
+                return false;
+
+            // Treat null blocks as unequal; normalization should remove them.
+            foreach (var (k, v) in a)
+            {
+                if (v is null)
+                    return false;
+
+                if (!b.TryGetValue(k, out var other) || other is null)
+                    return false;
+
+                var listA = v.FarmAnimalKeys;
+                var listB = other.FarmAnimalKeys;
+
+                if (listA is null && listB is null)
+                    continue;
+                if (listA is null || listB is null)
+                    return false;
+                if (!SequenceEqualIgnoreCase(listA, listB))
+                    return false;
+            }
+
+            if (a.Count != b.Count)
+                return false;
+
+            return true;
+        }
+
+
         static List<string> NormalizeStringList(IEnumerable<string>? raw)
         {
             if (raw is null)
@@ -525,6 +654,12 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
             foreach (var (key, blockA) in a)
             {
                 if (!b.TryGetValue(key, out var blockB))
+                    return false;
+
+                if (blockA is null && blockB is null)
+                    continue;
+
+                if (blockA is null || blockB is null)
                     return false;
 
                 var listA = blockA.FarmAnimalKeys;

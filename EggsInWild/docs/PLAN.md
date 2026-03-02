@@ -192,5 +192,5 @@
 
 **Steps**
 1. Enhance dev commands (status/dump_effective) to show override sources for complex fields.
-2. Guard against accidental config churn (only save when normalization changes).
+2. ✅ Guard against accidental config churn (only save when normalization changes).
 3. Docs + checklist alignment.

@@ -54,5 +54,5 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 
 ## Phase 8 — Polish/hardening
 - [x] Enhance dev commands (status/dump_effective) to show override sources for complex fields.
-- [ ] Guard against accidental config churn (only save when normalization changes).
+- [x] Guard against accidental config churn (only save when normalization changes).
 - [x] Docs + checklist alignment.
