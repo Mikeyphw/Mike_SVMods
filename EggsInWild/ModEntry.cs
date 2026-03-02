@@ -1697,6 +1697,38 @@ private void InstallHarmonyBootstrap()
         commands.Register(helper);
     }
 
+    private static IReadOnlyList<string> ParseCsvKeyList(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return Array.Empty<string>();
+
+        var outList = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var part in raw.Split(new[] { ',', ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var t = part.Trim();
+            if (t.Length == 0)
+                continue;
+
+            if (seen.Add(t))
+                outList.Add(t);
+        }
+
+        return outList;
+    }
+
+    private static bool SequenceEqualIgnoreCase(IEnumerable<string> left, IEnumerable<string> right)
+    {
+        if (ReferenceEquals(left, right))
+            return true;
+
+        left ??= Array.Empty<string>();
+        right ??= Array.Empty<string>();
+
+        return left.SequenceEqual(right, StringComparer.OrdinalIgnoreCase);
+    }
+
     private static void EnsureNoLocalNestCoreDuplicates(IModHelper helper)
     {
         var localNestCore = System.IO.Path.Combine(helper.DirectoryPath, "NestCore.dll");
