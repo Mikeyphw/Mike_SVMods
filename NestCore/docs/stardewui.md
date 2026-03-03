@@ -1,168 +1,121 @@
-# StardewUI in NestCore
+# StardewUI integration (NestCore)
 
-This repo uses **NestCore** as the mandatory framework layer. For StardewUI, NestCore provides a thin facade that:
-- safely detects whether StardewUI is installed;
-- registers view/sprite/custom-data asset directories by convention; and
-- creates menus/HUD drawables from **short view names**.
+NestCore provides an optional facade over the StardewUI Framework mod API so dependent mods can:
 
-## 1) Add assets in your mod
+- Discover StardewUI safely (`null` when not installed)
+- Register view/sprite/custom-data directories by convention
+- Create menus and HUD drawables from StarML views
 
-Convention (recommended):
-- `assets/views/*.sml`
-- `assets/sprites/*` (optional, if you use sprites)
-- `assets/ui/*` (optional, for custom data)
-
-## 2) Acquire the facade in `GameLaunched`
+## Quick start (consumer mod)
 
 ```csharp
-using Mikew.NestCore.Framework;
-using Mikew.NestCore.Integrations.StardewUI;
-
-private StardewUiIntegration? ui;
+private StardewUiIntegration? _ui;
 
 private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
 {
-    var nestApi = Helper.ModRegistry.GetApi<INestCoreApi>("Mikew.nestcore");
-    ui = nestApi?.TryCreateStardewUiIntegration(Helper, ModManifest);
+    var nest = Helper.ModRegistry.GetApi<INestCoreApi>("Mikew.NestCore");
+    _ui = nest?.TryCreateStardewUiIntegration(Helper, ModManifest);
 
-    if (ui is null)
-        return; // StardewUI not installed (soft dependency)
-
-    ui.RegisterAssets(new StardewUiAssetsOptions(
-        ViewsDir: "assets/views",
-        SpritesDir: "assets/sprites",
-        CustomDataDir: "assets/ui"));
-
-    ui.PreloadModels(typeof(ConfigMenuViewModel));
-    ui.PreloadAssetsOnce(); // optional
-}
-```
-
-## 3) Open a menu from a view asset
-
-Given `assets/views/ConfigMenu.sml`, open it with the short name `"ConfigMenu"`:
-
-```csharp
-using StardewValley;
-
-private void OpenConfigMenu()
-{
-    if (ui is null)
+    if (_ui is null)
         return;
 
-    Game1.activeClickableMenu = ui.CreateMenu("ConfigMenu", new ConfigMenuViewModel(CloseConfigMenu));
+    _ui.RegisterAssets(); // defaults to assets/views + assets/sprites
+    _ui.PreloadAssetsOnce(); // optional
 }
-
-private void CloseConfigMenu() => Game1.exitActiveMenu();
 ```
 
-## 4) Example viewmodel (binding context)
+### View conventions
 
-NestCore provides basic MVVM helpers in `Mikew.NestCore.Helpers.UI`:
+With default `RegisterAssets()`:
+
+- views: `assets/views/*.sml` => `Mods/{YourUniqueId}/Views/{Name}`
+- sprites: `assets/sprites/*` => `Mods/{YourUniqueId}/Sprites/{Name}`
+
+Example: `assets/views/config.sml` can be opened via:
 
 ```csharp
-using Mikew.NestCore.Helpers.UI;
+Game1.activeClickableMenu = _ui.CreateMenu("config", new ConfigViewModel());
+```
 
-internal sealed class ConfigMenuViewModel : ObservableObject
+## Viewmodels: ObservableObject + AsyncRelayCommand
+
+Use `ObservableObject` for automatic binding updates.
+
+```csharp
+internal sealed class ConfigViewModel : ObservableObject
 {
-    private bool enabled;
+    private string _message = "Hello";
 
-    public bool Enabled
+    public string Message
     {
-        get => enabled;
-        set => SetProperty(ref enabled, value);
+        get => _message;
+        set => SetProperty(ref _message, value);
     }
 
-    public RelayCommand Close { get; }
+    public AsyncRelayCommand Refresh { get; }
 
-    public ConfigMenuViewModel(Action close)
-        => Close = new RelayCommand(close);
+    public ConfigViewModel()
+    {
+        Refresh = new AsyncRelayCommand(async () =>
+        {
+            await Task.Delay(250);
+            Message = $"Updated at {DateTime.Now:T}";
+        });
+    }
 }
 ```
 
-## 5) Example StarML view (`assets/views/ConfigMenu.sml`)
-
-StardewUI event bindings typically call methods directly (pipes syntax). If you prefer commands, call them from a method.
+### Minimal StarML snippet
 
 ```xml
-<lane orientation="vertical" padding="16" horizontal-content-alignment="middle">
-    <banner text="My Mod" padding="12" />
-    <checkbox label-text="Enabled" is-checked={<>Enabled} />
-
-    <button text="Close" click=|OnClose()| />
+<lane orientation="vertical" padding="16" item-spacing="8">
+  <label text={Message} />
+  <button text="Refresh"
+          enabled={!Refresh.IsExecuting}
+          click=|Refresh.Execute()| />
 </lane>
 ```
 
-With the viewmodel method:
+## HUD overlay example (create/draw/dispose)
 
 ```csharp
-public void OnClose() => Close.Execute(null);
-```
+private IViewDrawable? _hud;
+private HudOverlayViewModel? _hudVm;
 
-## 6) HUD overlay example
-
-Create a drawable from a view asset (e.g. `assets/views/HudOverlay.sml`) and draw it in `RenderedHud`:
-
-```csharp
-using Microsoft.Xna.Framework;
-using StardewModdingAPI.Events;
-using StardewUI.Framework;
-using StardewValley;
-
-private IViewDrawable? hud;
-private readonly Vector2 hudPadding = new(16f, 16f);
-
-private void ToggleHud()
+private void EnableHud()
 {
-    if (ui is null)
+    if (_ui is null || _hud is not null)
         return;
 
-    if (hud is not null)
-    {
-        hud.Dispose();
-        hud = null;
-        return;
-    }
+    _hudVm = new HudOverlayViewModel();
+    _hud = _ui.CreateHudDrawable("hud_overlay", _hudVm);
+    Helper.Events.Display.RenderedHud += OnRenderedHud;
+    Helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
+}
 
-    hud = ui.CreateHudDrawable("HudOverlay", new HudOverlayViewModel());
+private void DisableHud()
+{
+    Helper.Events.Display.RenderedHud -= OnRenderedHud;
+    Helper.Events.GameLoop.ReturnedToTitle -= OnReturnedToTitle;
+
+    _hud?.Dispose();
+    _hud = null;
+    _hudVm = null;
 }
 
 private void OnRenderedHud(object? sender, RenderedHudEventArgs e)
-{
-    if (hud is null)
-        return;
-
-    var size = hud.ActualSize;
-    var x = Game1.uiViewport.Width - size.X - hudPadding.X;
-    var y = hudPadding.Y;
-
-    hud.Draw(e.SpriteBatch, new Vector2(x, y));
-}
+    => _hud?.Draw(e.SpriteBatch, new Vector2(16, 16));
 
 private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
-{
-    hud?.Dispose();
-    hud = null;
-}
+    => DisableHud();
 ```
 
-Remember to wire the events (e.g. in `Entry`):
+## Dev-only: hot reload gating (WEGG_DEV)
 
-```csharp
-Helper.Events.Display.RenderedHud += OnRenderedHud;
-Helper.Events.GameLoop.ReturnedToTitle += OnReturnedToTitle;
-```
+NestCore gates hot reload helpers behind `WEGG_DEV`, matching the pattern in EggsInWild.
 
-Minimal StarML (`assets/views/HudOverlay.sml`):
+- Build **NestCore** (and your mod) with configuration **Dev** to enable:
+  - `StardewUiIntegration.EnableHotReloading(...)`
+  - `StardewUiIntegration.EnableHotReloadingWithSourceSync(...)`
 
-```xml
-<panel padding="8">
-  <label text="Hello HUD" />
-</panel>
-```
-
-
-## Notes
-
-- NestCore qualifies view asset names to `Mods/{UniqueID}/Views/{ViewName}` automatically after registration.
-- For HUD overlays, use `ui.CreateHudDrawable(...)` and dispose the drawable when you no longer need it.
+In Release builds those methods are not available.

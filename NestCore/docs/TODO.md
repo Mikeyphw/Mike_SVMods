@@ -15,3 +15,7 @@
 
 - [x] Add StardewUI consumer doc (`docs/stardewui.md`).
 - [x] Add `RelayCommand` helper for UI viewmodels.
+
+- [ ] Decide whether to expand `StardewUI.Framework.IMenuController` vendored surface (currently minimal).
+- [ ] Add a tiny consumer mod example (outside NestCore) wired to a real `assets/views/*.sml` view.
+- [ ] Consider a SMAPI main-thread scheduler helper for async viewmodels that update UI-bound properties.

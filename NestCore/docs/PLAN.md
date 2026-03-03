@@ -9,7 +9,7 @@
 - Phase 1: complete
 - Phase 5: complete
 - Phase 6: complete
-- Phase 7: in progress
+- Phase 7: complete
 
 ## Phase 0 — Planning docs baseline
 1. Create/refresh `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md`.

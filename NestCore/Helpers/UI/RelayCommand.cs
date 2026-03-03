@@ -1,22 +1,33 @@
+// FILE: NestCore/Helpers/UI/RelayCommand.cs
 using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace Mikew.NestCore.Helpers.UI;
 
-/// <summary>
-/// Minimal <see cref="ICommand"/> implementation for UI binding contexts (e.g. StardewUI viewmodels).
-/// </summary>
-/// <remarks>
-/// StardewUI event bindings typically call methods directly (e.g. <c>click=|OnClick()|</c>), but a command
-/// wrapper is still useful for organizing intent and reusing enable/disable logic.
-/// </remarks>
-public sealed class RelayCommand : ICommand
+/// <summary>Shared command base with optional change notifications for nested-property binding.</summary>
+public abstract class CommandBase : ICommand, INotifyPropertyChanged
+{
+    public event EventHandler? CanExecuteChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public abstract bool CanExecute(object? parameter);
+    public abstract void Execute(object? parameter);
+
+    protected void RaiseCanExecuteChanged()
+        => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+
+    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+/// <summary>Simple synchronous command.</summary>
+public sealed class RelayCommand : CommandBase
 {
     private readonly Action _execute;
     private readonly Func<bool>? _canExecute;
-
-    public event EventHandler? CanExecuteChanged;
 
     public RelayCommand(Action execute, Func<bool>? canExecute = null)
     {
@@ -24,28 +35,21 @@ public sealed class RelayCommand : ICommand
         _canExecute = canExecute;
     }
 
-    public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
+    public override bool CanExecute(object? parameter)
+        => _canExecute?.Invoke() ?? true;
 
-    public void Execute(object? parameter)
-    {
-        if (!CanExecute(parameter))
-            return;
+    public override void Execute(object? parameter)
+        => _execute();
 
-        _execute();
-    }
-
-    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+    public void NotifyCanExecuteChanged()
+        => RaiseCanExecuteChanged();
 }
 
-/// <summary>
-/// Minimal <see cref="ICommand"/> implementation for parameterized commands.
-/// </summary>
-public sealed class RelayCommand<T> : ICommand
+/// <summary>Simple synchronous command with a parameter.</summary>
+public sealed class RelayCommand<T> : CommandBase
 {
     private readonly Action<T?> _execute;
     private readonly Func<T?, bool>? _canExecute;
-
-    public event EventHandler? CanExecuteChanged;
 
     public RelayCommand(Action<T?> execute, Func<T?, bool>? canExecute = null)
     {
@@ -53,64 +57,24 @@ public sealed class RelayCommand<T> : ICommand
         _canExecute = canExecute;
     }
 
-    public bool CanExecute(object? parameter)
-    {
-        if (!TryGetParameter(parameter, out var typed))
-            return false;
+    public override bool CanExecute(object? parameter)
+        => _canExecute?.Invoke((T?)parameter) ?? true;
 
-        return _canExecute?.Invoke(typed) ?? true;
-    }
+    public override void Execute(object? parameter)
+        => _execute((T?)parameter);
 
-    public void Execute(object? parameter)
-    {
-        if (!TryGetParameter(parameter, out var typed))
-            return;
-
-        if (!(_canExecute?.Invoke(typed) ?? true))
-            return;
-
-        _execute(typed);
-    }
-
-    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-
-    private static bool TryGetParameter(object? parameter, out T? typed)
-    {
-        if (parameter is null)
-        {
-            typed = default;
-            return true;
-        }
-
-        if (parameter is T value)
-        {
-            typed = value;
-            return true;
-        }
-
-        typed = default;
-        return false;
-    }
+    public void NotifyCanExecuteChanged()
+        => RaiseCanExecuteChanged();
 }
 
-/// <summary>
-/// Async <see cref="ICommand"/> with built-in "is executing" gating.
-/// </summary>
-/// <remarks>
-/// <see cref="Execute(object?)"/> is fire-and-forget (required by <see cref="ICommand"/>); exceptions are routed
-/// to <paramref name="onError"/> if provided and otherwise swallowed.
-/// </remarks>
-public sealed class AsyncRelayCommand : ICommand
+/// <summary>Async command with IsExecuting gating and optional error handler.</summary>
+public sealed class AsyncRelayCommand : CommandBase
 {
     private readonly Func<Task> _executeAsync;
     private readonly Func<bool>? _canExecute;
     private readonly Action<Exception>? _onError;
+
     private bool _isExecuting;
-
-    public event EventHandler? CanExecuteChanged;
-
-    /// <summary>True while the command is running.</summary>
-    public bool IsExecuting => _isExecuting;
 
     public AsyncRelayCommand(Func<Task> executeAsync, Func<bool>? canExecute = null, Action<Exception>? onError = null)
     {
@@ -119,20 +83,34 @@ public sealed class AsyncRelayCommand : ICommand
         _onError = onError;
     }
 
-    public bool CanExecute(object? parameter) => !_isExecuting && (_canExecute?.Invoke() ?? true);
+    public bool IsExecuting
+    {
+        get => _isExecuting;
+        private set
+        {
+            if (_isExecuting == value)
+                return;
 
-    public void Execute(object? parameter) => _ = ExecuteAsync();
+            _isExecuting = value;
+            OnPropertyChanged();
+            RaiseCanExecuteChanged();
+        }
+    }
 
-    public async Task ExecuteAsync()
+    public override bool CanExecute(object? parameter)
+        => !IsExecuting && (_canExecute?.Invoke() ?? true);
+
+    public override void Execute(object? parameter)
+        => _ = ExecuteCoreAsync();
+
+    private async Task ExecuteCoreAsync()
     {
         if (!CanExecute(null))
             return;
 
+        IsExecuting = true;
         try
         {
-            _isExecuting = true;
-            RaiseCanExecuteChanged();
-
             await _executeAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -141,71 +119,55 @@ public sealed class AsyncRelayCommand : ICommand
         }
         finally
         {
-            _isExecuting = false;
-            RaiseCanExecuteChanged();
+            IsExecuting = false;
         }
     }
-
-    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }
 
-/// <summary>
-/// Async parameterized <see cref="ICommand"/> with built-in "is executing" gating.
-/// </summary>
-public sealed class AsyncRelayCommand<T> : ICommand
+/// <summary>Async command with parameter, IsExecuting gating and optional error handler.</summary>
+public sealed class AsyncRelayCommand<T> : CommandBase
 {
     private readonly Func<T?, Task> _executeAsync;
     private readonly Func<T?, bool>? _canExecute;
     private readonly Action<Exception>? _onError;
+
     private bool _isExecuting;
 
-    public event EventHandler? CanExecuteChanged;
-
-    /// <summary>True while the command is running.</summary>
-    public bool IsExecuting => _isExecuting;
-
-    public AsyncRelayCommand(
-        Func<T?, Task> executeAsync,
-        Func<T?, bool>? canExecute = null,
-        Action<Exception>? onError = null)
+    public AsyncRelayCommand(Func<T?, Task> executeAsync, Func<T?, bool>? canExecute = null, Action<Exception>? onError = null)
     {
         _executeAsync = executeAsync ?? throw new ArgumentNullException(nameof(executeAsync));
         _canExecute = canExecute;
         _onError = onError;
     }
 
-    public bool CanExecute(object? parameter)
+    public bool IsExecuting
     {
-        if (_isExecuting)
-            return false;
+        get => _isExecuting;
+        private set
+        {
+            if (_isExecuting == value)
+                return;
 
-        if (!TryGetParameter(parameter, out var typed))
-            return false;
-
-        return _canExecute?.Invoke(typed) ?? true;
+            _isExecuting = value;
+            OnPropertyChanged();
+            RaiseCanExecuteChanged();
+        }
     }
 
-    public void Execute(object? parameter)
+    public override bool CanExecute(object? parameter)
+        => !IsExecuting && (_canExecute?.Invoke((T?)parameter) ?? true);
+
+    public override void Execute(object? parameter)
+        => _ = ExecuteCoreAsync((T?)parameter);
+
+    private async Task ExecuteCoreAsync(T? parameter)
     {
-        if (!TryGetParameter(parameter, out var typed))
+        if (!CanExecute(parameter))
             return;
 
-        _ = ExecuteAsync(typed);
-    }
-
-    public async Task ExecuteAsync(T? parameter)
-    {
-        if (_isExecuting)
-            return;
-
-        if (!(_canExecute?.Invoke(parameter) ?? true))
-            return;
-
+        IsExecuting = true;
         try
         {
-            _isExecuting = true;
-            RaiseCanExecuteChanged();
-
             await _executeAsync(parameter).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -214,28 +176,7 @@ public sealed class AsyncRelayCommand<T> : ICommand
         }
         finally
         {
-            _isExecuting = false;
-            RaiseCanExecuteChanged();
+            IsExecuting = false;
         }
-    }
-
-    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-
-    private static bool TryGetParameter(object? parameter, out T? typed)
-    {
-        if (parameter is null)
-        {
-            typed = default;
-            return true;
-        }
-
-        if (parameter is T value)
-        {
-            typed = value;
-            return true;
-        }
-
-        typed = default;
-        return false;
     }
 }
