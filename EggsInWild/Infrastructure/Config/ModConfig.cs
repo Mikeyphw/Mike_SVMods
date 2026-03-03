@@ -78,6 +78,23 @@ public sealed class ModConfig
     /// </summary>
     public Dictionary<string, WildAnimalOverrideConfig> WildAnimalOverrides { get; set; } = new();
 
+
+    /// <summary>
+    /// GMCM bulk apply quick-fix: trim whitespace on FarmAnimalKeys and remove blank entries.
+    /// </summary>
+    public bool GmcmExtraModAnimalKeysBulkFixTrimWhitespace { get; set; } = true;
+
+    /// <summary>
+    /// GMCM bulk apply quick-fix: remove duplicate FarmAnimalKeys (case-insensitive, order preserved).
+    /// </summary>
+    public bool GmcmExtraModAnimalKeysBulkFixRemoveDuplicates { get; set; } = true;
+
+    /// <summary>
+    /// GMCM bulk apply quick-fix: drop FarmAnimalKeys not present in Data/FarmAnimals (requires loaded save).
+    /// </summary>
+    public bool GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys { get; set; } = false;
+
+
     /// <summary>
     /// In multiplayer: only the host may add quests and queue mail for AnimalNotes.
     /// If false, clients may also add quests/mail locally (not recommended unless you understand the sync implications).

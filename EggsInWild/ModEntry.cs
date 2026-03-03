@@ -304,23 +304,105 @@ layout.Page("wildAnimals", page =>
 
     page.Separator(simple: true);
 
-    foreach (var key in wildAnimalKeysForGmcm)
-    {
-        var pageId = BuildWildAnimalPageId(key);
-        page.LinkLabel(
-            pageId: pageId,
-            text: () =>
-            {
-                var cfg = _config!.Get();
-                var enabled = wildAnimalsForGmcm.TryGetValue(key, out var def) && def is not null
-                    ? GetWildAnimalEffectiveEnabled(cfg, key, def.Enabled)
-                    : true;
+    page.ParagraphDynamic(
+        () => Translate(i18n, "config.paragraph.wildAnimals.indexGroups.note", "Pick a letter group to navigate. (GMCM pages are static; no live search.)"),
+        id: "wildAnimals_indexGroups_note");
 
-                return enabled ? key : $"{key} (disabled)";
-            },
-            tooltip: () => Translate(i18n, "config.wildAnimals.link.tooltip", "Edit enabled override for '{0}'.", key, key));
-    }
+    page.LinkLabel(
+        pageId: "wildAnimals_all",
+        text: () => Translate(i18n, "config.wildAnimals.index.group.all.name", "All (A–Z)"),
+        tooltip: () => Translate(i18n, "config.wildAnimals.index.group.all.description", "Show all wild animals (long list)."));
+
+    page.LinkLabel(
+        pageId: "wildAnimals_index_af",
+        text: () => Translate(i18n, "config.wildAnimals.index.group.af.name", "A–F"),
+        tooltip: () => Translate(i18n, "config.wildAnimals.index.group.af.description", "Wild animals starting with A–F."));
+
+    page.LinkLabel(
+        pageId: "wildAnimals_index_gl",
+        text: () => Translate(i18n, "config.wildAnimals.index.group.gl.name", "G–L"),
+        tooltip: () => Translate(i18n, "config.wildAnimals.index.group.gl.description", "Wild animals starting with G–L."));
+
+    page.LinkLabel(
+        pageId: "wildAnimals_index_mr",
+        text: () => Translate(i18n, "config.wildAnimals.index.group.mr.name", "M–R"),
+        tooltip: () => Translate(i18n, "config.wildAnimals.index.group.mr.description", "Wild animals starting with M–R."));
+
+    page.LinkLabel(
+        pageId: "wildAnimals_index_sz",
+        text: () => Translate(i18n, "config.wildAnimals.index.group.sz.name", "S–Z"),
+        tooltip: () => Translate(i18n, "config.wildAnimals.index.group.sz.description", "Wild animals starting with S–Z."));
+
+    page.LinkLabel(
+        pageId: "wildAnimals_index_other",
+        text: () => Translate(i18n, "config.wildAnimals.index.group.other.name", "Other"),
+        tooltip: () => Translate(i18n, "config.wildAnimals.index.group.other.description", "Wild animals not starting with A–Z."));
+
 });
+
+static string WildAnimalIndexBucket(string key)
+{
+    if (string.IsNullOrWhiteSpace(key))
+        return "other";
+
+    var c = char.ToUpperInvariant(key.Trim()[0]);
+    if (c is >= 'A' and <= 'F') return "af";
+    if (c is >= 'G' and <= 'L') return "gl";
+    if (c is >= 'M' and <= 'R') return "mr";
+    if (c is >= 'S' and <= 'Z') return "sz";
+    return "other";
+}
+
+var wildAnimalBuckets = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+{
+    ["af"] = new List<string>(),
+    ["gl"] = new List<string>(),
+    ["mr"] = new List<string>(),
+    ["sz"] = new List<string>(),
+    ["other"] = new List<string>(),
+};
+
+foreach (var k in wildAnimalKeysForGmcm)
+    wildAnimalBuckets[WildAnimalIndexBucket(k)].Add(k);
+
+void BuildWildAnimalIndexPage(string pageId, Func<string> title, IEnumerable<string> keys)
+{
+    layout.Page(pageId, page =>
+    {
+        page.LinkLabel(
+            pageId: "wildAnimals",
+            text: () => Translate(i18n, "config.wildAnimals.index.back.name", "Back to WildAnimals index"),
+            tooltip: () => Translate(i18n, "config.wildAnimals.index.back.description", "Return to the WildAnimals index page."));
+
+        page.Separator(simple: true);
+        page.SectionLabel(title);
+
+        foreach (var key in keys)
+        {
+            var waPageId = BuildWildAnimalPageId(key);
+            page.LinkLabel(
+                pageId: waPageId,
+                text: () =>
+                {
+                    var cfg = _config!.Get();
+                    var enabled = wildAnimalsForGmcm.TryGetValue(key, out var def) && def is not null
+                        ? GetWildAnimalEffectiveEnabled(cfg, key, def.Enabled)
+                        : true;
+
+                    return enabled ? key : $"{key} (disabled)";
+                },
+                tooltip: () => Translate(i18n, "config.wildAnimals.link.tooltip", "Edit enabled override for '{0}'.", key, key));
+        }
+    });
+}
+
+BuildWildAnimalIndexPage("wildAnimals_all", () => Translate(i18n, "config.wildAnimals.index.group.all.name", "All (A–Z)"), wildAnimalKeysForGmcm);
+BuildWildAnimalIndexPage("wildAnimals_index_af", () => Translate(i18n, "config.wildAnimals.index.group.af.name", "A–F"), wildAnimalBuckets["af"]);
+BuildWildAnimalIndexPage("wildAnimals_index_gl", () => Translate(i18n, "config.wildAnimals.index.group.gl.name", "G–L"), wildAnimalBuckets["gl"]);
+BuildWildAnimalIndexPage("wildAnimals_index_mr", () => Translate(i18n, "config.wildAnimals.index.group.mr.name", "M–R"), wildAnimalBuckets["mr"]);
+BuildWildAnimalIndexPage("wildAnimals_index_sz", () => Translate(i18n, "config.wildAnimals.index.group.sz.name", "S–Z"), wildAnimalBuckets["sz"]);
+BuildWildAnimalIndexPage("wildAnimals_index_other", () => Translate(i18n, "config.wildAnimals.index.group.other.name", "Other"), wildAnimalBuckets["other"]);
+
 
 foreach (var key in wildAnimalKeysForGmcm)
 {
@@ -941,7 +1023,15 @@ foreach (var key in wildAnimalKeysForGmcm)
                     "Toggle on to apply staged bulk changes. This writes overrides immediately and clears the staged text."),
                 id: $"wildAnimals_extraModAnimalKeys_bulkApplyNote_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
 
-            page.Bool(
+            
+            page.Separator(simple: true);
+            page.SectionLabel(() => Translate(i18n, "config.section.wildAnimals.extraModAnimalKeys.bulkFixes.label", "Bulk apply quick-fixes"));
+
+            page.Bool(cfg => cfg.GmcmExtraModAnimalKeysBulkFixTrimWhitespace, optionId: "wildAnimals.extraModAnimalKeys.bulkFixes.trim", tooltip: true);
+            page.Bool(cfg => cfg.GmcmExtraModAnimalKeysBulkFixRemoveDuplicates, optionId: "wildAnimals.extraModAnimalKeys.bulkFixes.dedupe", tooltip: true);
+            page.Bool(cfg => cfg.GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys, optionId: "wildAnimals.extraModAnimalKeys.bulkFixes.dropUnknown", tooltip: true);
+
+page.Bool(
                 optionId: Translate(i18n, "config.wildAnimals.extraModAnimalKeys.bulkApply.name", "Apply staged bulk changes"),
                 getValue: () => false,
                 setValue: v =>
@@ -979,12 +1069,60 @@ foreach (var key in wildAnimalKeysForGmcm)
                     {
                         var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
 
+                        var fixTrim = cfg.GmcmExtraModAnimalKeysBulkFixTrimWhitespace;
+                        var fixDedupe = cfg.GmcmExtraModAnimalKeysBulkFixRemoveDuplicates;
+                        var fixDropUnknown = cfg.GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys;
+
+                        HashSet<string>? knownFarmAnimalIds = null;
+                        if (fixDropUnknown && Context.IsWorldReady)
+                        {
+                            try
+                            {
+                                var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                                knownFarmAnimalIds = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
+                            }
+                            catch
+                            {
+                                knownFarmAnimalIds = null;
+                            }
+                        }
+
+                        IReadOnlyList<string> finalKeys = keys;
+                        if (fixTrim || fixDedupe || knownFarmAnimalIds is not null)
+                        {
+                            var outKeys = new List<string>(keys.Count);
+                            HashSet<string>? seen = fixDedupe ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) : null;
+
+                            foreach (var k in keys)
+                            {
+                                var t = k ?? string.Empty;
+                                if (fixTrim)
+                                    t = t.Trim();
+                                if (t.Length == 0)
+                                    continue;
+                                if (knownFarmAnimalIds is not null && !knownFarmAnimalIds.Contains(t))
+                                    continue;
+                                if (seen is not null && !seen.Add(t))
+                                    continue;
+                                outKeys.Add(t);
+                            }
+
+                            finalKeys = outKeys;
+                        }
+
+                        if (finalKeys.Count == 0)
+                        {
+                            ov.ExtraModAnimalKeys.Remove(modId);
+                            continue;
+                        }
+
+
                         var baseKeys = definition?.ExtraModAnimalKeys is not null
                             && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
                             ? baseBlock.GetEffectiveFarmAnimalKeys()
                             : Array.Empty<string>();
 
-                        if (SequenceEqualIgnoreCase(keys, baseKeys))
+                        if (SequenceEqualIgnoreCase(finalKeys, baseKeys))
                         {
                             ov.ExtraModAnimalKeys.Remove(modId);
                         }
@@ -992,7 +1130,7 @@ foreach (var key in wildAnimalKeysForGmcm)
                         {
                             ov.ExtraModAnimalKeys[modId] = new ExtraModAnimalKeysOverrideConfig
                             {
-                                FarmAnimalKeys = keys.ToList(),
+                                FarmAnimalKeys = finalKeys.ToList(),
                             };
                         }
                     }
