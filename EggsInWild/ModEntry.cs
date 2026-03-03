@@ -261,6 +261,45 @@ var wildAnimalKeysForGmcm = wildAnimalsForGmcm.Keys
     .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
     .ToList();
 
+static int CountWildAnimalKeysBucket(IReadOnlyList<string> keys, char startInclusive, char endInclusive)
+{
+    var count = 0;
+    foreach (var k in keys)
+    {
+        if (string.IsNullOrWhiteSpace(k))
+            continue;
+
+        var c = char.ToUpperInvariant(k.Trim()[0]);
+        if (c >= startInclusive && c <= endInclusive)
+            count++;
+    }
+
+    return count;
+}
+
+static int CountWildAnimalKeysOther(IReadOnlyList<string> keys)
+{
+    var count = 0;
+    foreach (var k in keys)
+    {
+        if (string.IsNullOrWhiteSpace(k))
+            continue;
+
+        var c = char.ToUpperInvariant(k.Trim()[0]);
+        if (c < 'A' || c > 'Z')
+            count++;
+    }
+
+    return count;
+}
+
+var wildAnimalsCountAll = wildAnimalKeysForGmcm.Count;
+var wildAnimalsCountAf = CountWildAnimalKeysBucket(wildAnimalKeysForGmcm, 'A', 'F');
+var wildAnimalsCountGl = CountWildAnimalKeysBucket(wildAnimalKeysForGmcm, 'G', 'L');
+var wildAnimalsCountMr = CountWildAnimalKeysBucket(wildAnimalKeysForGmcm, 'M', 'R');
+var wildAnimalsCountSz = CountWildAnimalKeysBucket(wildAnimalKeysForGmcm, 'S', 'Z');
+var wildAnimalsCountOther = CountWildAnimalKeysOther(wildAnimalKeysForGmcm);
+
 var locationTypeKeysForGmcm = wildAnimalsForGmcm.Values
     .SelectMany(v => v.LocationTypes?.Keys ?? Enumerable.Empty<string>())
     .Where(k => !string.IsNullOrWhiteSpace(k))
@@ -310,32 +349,32 @@ layout.Page("wildAnimals", page =>
 
     page.LinkLabel(
         pageId: "wildAnimals_all",
-        text: () => Translate(i18n, "config.wildAnimals.index.group.all.name", "All (A–Z)"),
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.all.name", "All (A–Z)")} (wildAnimalsCountAll)",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.all.description", "Show all wild animals (long list)."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_af",
-        text: () => Translate(i18n, "config.wildAnimals.index.group.af.name", "A–F"),
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.af.name", "A–F")} (wildAnimalsCountAf)",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.af.description", "Wild animals starting with A–F."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_gl",
-        text: () => Translate(i18n, "config.wildAnimals.index.group.gl.name", "G–L"),
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.gl.name", "G–L")} (wildAnimalsCountGl)",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.gl.description", "Wild animals starting with G–L."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_mr",
-        text: () => Translate(i18n, "config.wildAnimals.index.group.mr.name", "M–R"),
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.mr.name", "M–R")} (wildAnimalsCountMr)",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.mr.description", "Wild animals starting with M–R."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_sz",
-        text: () => Translate(i18n, "config.wildAnimals.index.group.sz.name", "S–Z"),
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.sz.name", "S–Z")} (wildAnimalsCountSz)",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.sz.description", "Wild animals starting with S–Z."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_other",
-        text: () => Translate(i18n, "config.wildAnimals.index.group.other.name", "Other"),
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.other.name", "Other")} (wildAnimalsCountOther)",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.other.description", "Wild animals not starting with A–Z."));
 
 });
@@ -850,6 +889,23 @@ foreach (var key in wildAnimalKeysForGmcm)
                     if (parsed.Count == 0)
                         return;
 
+                    var fixedKeys = parsed;
+                    if (_config!.Get().GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys && Context.IsWorldReady && parsed.Count > 0)
+                    {
+                        try
+                        {
+                            var data = Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                            var known = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
+                            fixedKeys = parsed.Where(x => known.Contains(x)).ToList();
+                        }
+                        catch
+                        {
+                        }
+                    }
+
+                    if (fixedKeys.Count == 0)
+                        return;
+
                     var modId = modIdRaw;
                     foreach (var existing in extraModIdsForGmcm)
                     {
@@ -873,7 +929,7 @@ foreach (var key in wildAnimalKeysForGmcm)
 
                     ov.ExtraModAnimalKeys ??= new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.OrdinalIgnoreCase);
 
-                    if (SequenceEqualIgnoreCase(parsed, baseKeys))
+                    if (SequenceEqualIgnoreCase(fixedKeys, baseKeys))
                     {
                         ov.ExtraModAnimalKeys.Remove(modId);
                     }
@@ -881,7 +937,7 @@ foreach (var key in wildAnimalKeysForGmcm)
                     {
                         ov.ExtraModAnimalKeys[modId] = new ExtraModAnimalKeysOverrideConfig
                         {
-                            FarmAnimalKeys = parsed.ToList(),
+                            FarmAnimalKeys = fixedKeys.ToList(),
                         };
                     }
 
@@ -1287,6 +1343,20 @@ foreach (var modId in extraModIdsOrdered)
                     setValue: rawValue =>
                     {
                         var parsed = ParseCsvKeyList(rawValue);
+                        var fixedKeys = parsed;
+                        if (_config!.Get().GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys && Context.IsWorldReady && parsed.Count > 0)
+                        {
+                            try
+                            {
+                                var data = Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                                var known = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
+                                fixedKeys = parsed.Where(x => known.Contains(x)).ToList();
+                            }
+                            catch
+                            {
+                            }
+                        }
+
 
                         var baseKeys = definition?.ExtraModAnimalKeys is not null
                             && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
@@ -1301,7 +1371,7 @@ foreach (var modId in extraModIdsOrdered)
 
                         ov.ExtraModAnimalKeys ??= new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.OrdinalIgnoreCase);
 
-                        if (parsed.Count == 0 || SequenceEqualIgnoreCase(parsed, baseKeys))
+                        if (fixedKeys.Count == 0 || SequenceEqualIgnoreCase(fixedKeys, baseKeys))
                         {
                             ov.ExtraModAnimalKeys.Remove(modId);
                         }
@@ -1309,7 +1379,7 @@ foreach (var modId in extraModIdsOrdered)
                         {
                             ov.ExtraModAnimalKeys[modId] = new ExtraModAnimalKeysOverrideConfig
                             {
-                                FarmAnimalKeys = parsed.ToList(),
+                                FarmAnimalKeys = fixedKeys.ToList(),
                             };
                         }
 
