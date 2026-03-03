@@ -515,6 +515,136 @@ switch (src.FarmAnimalRef.List)
 }
     }
 
+public bool TryResolveEggSourceItemId(
+    EggSourceDef src,
+    IDictionary<string, FarmAnimalData> animalData,
+    out string? itemId,
+    out string? error
+)
+{
+    itemId = null;
+    error = null;
+
+    if (!IsInitialized)
+    {
+        error = "CompatSelectionService not initialized yet.";
+        return false;
+    }
+
+    if (animalData is null)
+    {
+        error = "Data/FarmAnimals not loaded.";
+        return false;
+    }
+
+    if (!IsEggSourceValid(src))
+    {
+        error = $"Egg source '{src.SourceId}' is invalid.";
+        return false;
+    }
+
+    if (!string.IsNullOrWhiteSpace(src.ItemId))
+    {
+        itemId = src.ItemId.Trim();
+        return true;
+    }
+
+    if (src.FarmAnimalRef is null)
+    {
+        error = $"Egg source '{src.SourceId}' has no FarmAnimalRef.";
+        return false;
+    }
+
+    if (!animalData.TryGetValue(src.FarmAnimalRef.FarmAnimalKey, out var farmAnimal))
+    {
+        error = $"Farm animal key '{src.FarmAnimalRef.FarmAnimalKey}' not found in Data/FarmAnimals.";
+        return false;
+    }
+
+    var index = src.FarmAnimalRef.Index;
+    switch (src.FarmAnimalRef.List)
+    {
+        case EggSourceRefList.EggItemIds:
+        {
+            var list = farmAnimal.EggItemIds;
+            if (list is null)
+            {
+                error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' has no list '{src.FarmAnimalRef.List}'.";
+                return false;
+            }
+
+            if (index < 0 || index >= list.Count)
+            {
+                error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' list '{src.FarmAnimalRef.List}' index {index} is out of range (count={list.Count}).";
+                return false;
+            }
+
+            var resolved = list[index];
+            if (string.IsNullOrWhiteSpace(resolved))
+            {
+                error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' list '{src.FarmAnimalRef.List}' index {index} resolved to an empty item id.";
+                return false;
+            }
+
+            itemId = resolved.Trim();
+            return true;
+        }
+        case EggSourceRefList.ProduceItemIds:
+        {
+            var list = farmAnimal.ProduceItemIds;
+            if (list is null)
+            {
+                error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' has no list '{src.FarmAnimalRef.List}'.";
+                return false;
+            }
+
+            if (index < 0 || index >= list.Count)
+            {
+                error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' list '{src.FarmAnimalRef.List}' index {index} is out of range (count={list.Count}).";
+                return false;
+            }
+
+            var resolved = list[index]?.ItemId;
+            if (string.IsNullOrWhiteSpace(resolved))
+            {
+                error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' list '{src.FarmAnimalRef.List}' index {index} resolved to an empty item id.";
+                return false;
+            }
+
+            itemId = resolved.Trim();
+            return true;
+        }
+        case EggSourceRefList.DeluxeProduceItemIds:
+        {
+            var list = farmAnimal.DeluxeProduceItemIds;
+            if (list is null)
+            {
+                error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' has no list '{src.FarmAnimalRef.List}'.";
+                return false;
+            }
+
+            if (index < 0 || index >= list.Count)
+            {
+                error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' list '{src.FarmAnimalRef.List}' index {index} is out of range (count={list.Count}).";
+                return false;
+            }
+
+            var resolved = list[index]?.ItemId;
+            if (string.IsNullOrWhiteSpace(resolved))
+            {
+                error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' list '{src.FarmAnimalRef.List}' index {index} resolved to an empty item id.";
+                return false;
+            }
+
+            itemId = resolved.Trim();
+            return true;
+        }
+        default:
+            error = $"Farm animal '{src.FarmAnimalRef.FarmAnimalKey}' has no list '{src.FarmAnimalRef.List}'.";
+            return false;
+    }
+}
+
     public HashSet<string> GetEnabledRoosterFarmAnimalKeys(CompatSelectionState state)
     {
         if (!IsInitialized)

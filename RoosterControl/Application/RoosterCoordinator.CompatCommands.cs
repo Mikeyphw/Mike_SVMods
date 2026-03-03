@@ -5,6 +5,9 @@ using RoosterControl.Application.Compat;
 using Mikew.NestCore.Helpers.Logging;
 
 using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
+using System.Collections.Generic;
+using System.Text;
+using StardewValley.GameData.FarmAnimals;
 
 namespace RoosterControl.Application;
 
@@ -27,6 +30,8 @@ internal sealed partial class RoosterCoordinator
                 "    - cycles rooster provider in single-provider mode.\n" +
                 "  ra_compat enable-all-roosters\n" +
                 "    - enables all rooster providers (union mode).\n" +
+                "  ra_compat validate [EggKind]\n" +
+                "    - reports invalid FarmAnimalRef targets/indexes and shows resolved values.\n" +
                 "\n" +
                 "Notes:\n" +
                 "  - Mutating commands are host-only.\n" +
@@ -50,6 +55,106 @@ internal sealed partial class RoosterCoordinator
             LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, _compatSelection.BuildStatusReport(_saveState.Compat), LogLevel.Info);
             return;
         }
+
+if (verbLower == "validate")
+{
+    EggKind? filter = null;
+    if (args.Length >= 2 && !string.IsNullOrWhiteSpace(args[1]))
+    {
+        if (!Enum.TryParse<EggKind>(args[1], ignoreCase: true, out var parsed))
+        {
+            var kinds = string.Join(", ", Enum.GetNames(typeof(EggKind)));
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                $"Unknown EggKind '{args[1]}'. Valid values: {kinds}",
+                LogLevel.Info);
+            return;
+        }
+
+        filter = parsed;
+    }
+
+    Dictionary<string, FarmAnimalData> animalData;
+    try
+    {
+        animalData = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+    }
+    catch (Exception ex)
+    {
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+            $"Failed to load {FarmAnimalsAssetName}: {ex.Message}",
+            LogLevel.Warn);
+        return;
+    }
+
+    var kindsToCheck = filter.HasValue
+        ? new[] { filter.Value }
+        : Enum.GetValues(typeof(EggKind)).Cast<EggKind>().ToArray();
+
+    var sb = new StringBuilder();
+    sb.AppendLine("ra_compat validate:");
+    sb.AppendLine($"  FarmAnimals loaded: {animalData.Count}");
+    sb.AppendLine($"  EggKinds: {string.Join(", ", kindsToCheck)}");
+
+    var totalRefs = 0;
+    var totalInvalid = 0;
+    var selectedErrors = 0;
+
+    foreach (var kind in kindsToCheck)
+    {
+        sb.AppendLine();
+        sb.AppendLine($"EggKind: {kind}");
+
+        if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, kind, animalData, out var selectedItemId, out var selectedError))
+        {
+            _saveState.Compat.SelectedEggSources.TryGetValue(kind, out var selectedId);
+            sb.AppendLine($"  Selected: {selectedId} -> {selectedItemId}");
+        }
+        else
+        {
+            selectedErrors++;
+            sb.AppendLine($"  Selected: ERROR -> {selectedError}");
+        }
+
+        var sources = _compatSelection.EggCatalog.Sources
+            .Where(s => s.EggKind == kind)
+            .ToList();
+
+        var directCount = sources.Count(s => !string.IsNullOrWhiteSpace(s.ItemId));
+        var refSources = sources.Where(s => s.FarmAnimalRef is not null).ToList();
+
+        var invalidThisKind = 0;
+        foreach (var src in refSources)
+        {
+            totalRefs++;
+            if (_compatSelection.TryResolveEggSourceItemId(src, animalData, out var resolved, out var err))
+                continue;
+
+            invalidThisKind++;
+            totalInvalid++;
+            var fa = src.FarmAnimalRef!;
+            sb.AppendLine($"  INVALID: {src.SourceId} ({src.DisplayName}) -> {fa.FarmAnimalKey}.{fa.List}[{fa.Index}] :: {err}");
+        }
+
+        sb.AppendLine($"  Catalog: total={sources.Count}, directItemId={directCount}, farmAnimalRef={refSources.Count}, invalidRefs={invalidThisKind}");
+    }
+
+    var enabledProviders = _saveState.Compat.EnabledRoosterSources?
+        .Where(id => !string.IsNullOrWhiteSpace(id))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Count() ?? 0;
+
+    var roosterKeys = _compatSelection.GetEnabledRoosterFarmAnimalKeys(_saveState.Compat);
+    sb.AppendLine();
+    sb.AppendLine($"Rooster providers enabled: {enabledProviders}");
+    sb.AppendLine($"Coop rooster FarmAnimal keys: {roosterKeys.Count}");
+
+    sb.AppendLine();
+    sb.AppendLine($"Summary: refsChecked={totalRefs}, invalidRefs={totalInvalid}, selectedErrors={selectedErrors}");
+
+    var level = totalInvalid > 0 || selectedErrors > 0 ? LogLevel.Warn : LogLevel.Info;
+    LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, sb.ToString(), level);
+    return;
+}
 
         if (verbLower == "cycle-egg")
         {

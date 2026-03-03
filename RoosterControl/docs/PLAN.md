@@ -36,7 +36,7 @@ Models:
 - Phase 8: complete (compat catalogs + CP-patchable assets).
 - Phase 9A: complete (per-save selection state + catalog loading + list command).
 - Phase 9B: complete (cycling + apply selections to runtime).
-- Phase 10: in progress (late apply done; validation/diagnostics next).
+- Phase 10: DONE (late apply + validation/diagnostics).
 
 ---
 
@@ -113,7 +113,7 @@ Acceptance:
 
 ---
 
-## Phase 10 — Apply selections late (conflict-minimizing) (IN PROGRESS)
+## Phase 10 — Apply selections late (conflict-minimizing) (DONE)
 
 Goal: resolve `FarmAnimalRef` sources after all CP edits and RoosterControl asset edits run at a safe late priority.
 
@@ -122,8 +122,8 @@ Steps:
    - Always resolve `FarmAnimalRef` egg sources against the *post-edit* `Data/FarmAnimals` snapshot.
    - Only apply compat selections to runtime after `DayStarted` so RoosterControl's late `Data/FarmAnimals` editor has run.
    - Ensure refresh paths (plan/daily systems/location refresh) re-apply selections using the same loaded `Data/FarmAnimals`.
-2) Diagnostics (NEXT): explain what resolved value was used when multiple packs affect the same base animal.
-3) Optional validate (NEXT): add `ra_compat validate` (read-only) to report invalid `FarmAnimalRef` targets/indexes.
+2) Diagnostics (DONE): explain what resolved value was used and why.
+3) Optional validate (DONE): add `ra_compat validate` (read-only) FarmAnimalRef report with summary output.
 
 ---
 
