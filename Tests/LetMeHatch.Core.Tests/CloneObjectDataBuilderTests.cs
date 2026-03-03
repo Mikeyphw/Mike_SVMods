@@ -28,7 +28,7 @@ public sealed class CloneObjectDataBuilderTests
             Category: -5,
             ContextTags: new[] { "egg", "color_white" },
             CustomFields: new Dictionary<string, string> { ["originalEgg"] = "176" },
-            TextureAssetName: "Maps\springobjects",
+            TextureAssetName: "Maps\\springobjects",
             SpriteIndex: 176,
             DisplayName: "Egg",
             Type: "Egg",

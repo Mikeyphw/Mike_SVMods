@@ -55,13 +55,13 @@ public sealed class DesertTombSpawnPlannerTests
         config.MonsterSpawnRatesByArea[TombAreaType.NormalArea] = new Dictionary<TombMonsterType, MonsterSpawnStats>
         {
             [TombMonsterType.Mummy] = new MonsterSpawnStats(
-                weight: 99,
-                minPerArea: 0,
-                maxPerArea: 2,
-                packMin: 1,
-                packMax: 1,
-                difficultyAdd: 0,
-                speedAdd: 0
+                Weight: 99,
+                MinPerArea: 0,
+                MaxPerArea: 2,
+                PackMin: 1,
+                PackMax: 1,
+                DifficultyAdd: 0,
+                SpeedAdd: 0
             ),
         };
 

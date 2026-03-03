@@ -4,11 +4,16 @@ using System.Linq;
 using EggsInWild.Application.Progression;
 using EggsInWild.Application.Spawning;
 using EggsInWild.Infrastructure.Config;
+using EggsInWild.Infrastructure.Game;
+using EggsInWild.Infrastructure.SaveData;
 using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Mods;
 using Mikew.NestCore.Helpers.SaveData;
 using Mikew.NestCore.Helpers.Config;
+using StardewModdingAPI;
+using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace EggsInWild.Tests;
 
@@ -16,8 +21,17 @@ internal sealed class FakeLog : ILog
 {
     public List<string> Messages { get; } = new();
 
-    public void Log(string message, StardewModdingAPI.LogLevel level = StardewModdingAPI.LogLevel.Debug)
+    public void Log(string message, LogLevel level = LogLevel.Debug, bool enabled = true)
         => Messages.Add($"{level}:{message}");
+
+    public void VerboseLog(string message, LogLevel level = LogLevel.Debug, bool enabled = true)
+        => Messages.Add($"{level}:{message}");
+
+    public void TestingLog(string message, LogLevel level = LogLevel.Debug, bool enabled = true)
+        => Messages.Add($"{level}:{message}");
+
+    public void LogException(Exception exception, string message, LogLevel level = LogLevel.Error, bool enabled = true)
+        => Messages.Add($"{level}:{message} :: {exception.Message}");
 }
 
 internal sealed class FakeMods : IModAvailability
@@ -59,6 +73,16 @@ internal sealed class InMemorySaveDataStore : ISaveDataStore
     public void Write<T>(string key, T value) where T : class
         => _data[key] = value;
 
+    public T ReadOrCreate<T>(string key, Func<T> factory) where T : class
+    {
+        if (_data.TryGetValue(key, out var value) && value is T typed)
+            return typed;
+
+        var created = factory();
+        _data[key] = created;
+        return created;
+    }
+
     public void Delete(string key)
         => _data.Remove(key);
 
@@ -73,68 +97,41 @@ internal sealed class InMemorySaveDataStore : ISaveDataStore
 
 internal sealed class FakeConfigProvider
 {
-    private readonly FakeConfigHelper _helper;
+    private readonly ModConfig _config;
     private readonly SmapiConfigProvider<ModConfig> _provider;
 
     public FakeConfigProvider(ModConfig config)
     {
-        _helper = new FakeConfigHelper(config);
-        _provider = new SmapiConfigProvider<ModConfig>(_helper, new FakeLog());
+        _config = Clone(config);
+        _provider = CreateRawProvider(_config);
     }
 
-    public ModConfig Config => _provider.Get();
+    public ModConfig Config => _config;
 
-    public ModConfig Get() => _provider.Get();
+    public ModConfig Get() => _config;
 
     public void Reload()
-        => _provider.Reload();
+    {
+    }
 
     public void Save()
-        => _provider.Save();
+    {
+    }
 
     public void Update(Action<ModConfig> mutator, string reason)
     {
-        _provider.Update(mutator, save: false);
+        mutator(_config);
     }
 
     public static implicit operator SmapiConfigProvider<ModConfig>(FakeConfigProvider provider)
         => provider._provider;
 
-    private sealed class FakeConfigHelper : StardewModdingAPI.IModHelper
+    private static SmapiConfigProvider<ModConfig> CreateRawProvider(ModConfig config)
     {
-        private ModConfig _config;
-
-        public FakeConfigHelper(ModConfig config)
-        {
-            _config = Clone(config);
-        }
-
-        public T ReadConfig<T>() where T : new()
-            => (T)(object)Clone(_config);
-
-        public void WriteConfig<T>(T config) where T : class
-        {
-            if (config is ModConfig mc)
-                _config = Clone(mc);
-        }
-
-        public T ReadConfig<T>(string path) where T : new()
-            => ReadConfig<T>();
-
-        public void WriteConfig<T>(T config, string path) where T : class
-            => WriteConfig(config);
-
-        public StardewModdingAPI.IContentHelper Content => throw new NotImplementedException();
-        public StardewModdingAPI.IDataHelper Data => throw new NotImplementedException();
-        public StardewModdingAPI.IEventsHelper Events => throw new NotImplementedException();
-        public StardewModdingAPI.IInputHelper Input => throw new NotImplementedException();
-        public StardewModdingAPI.IModRegistry ModRegistry => throw new NotImplementedException();
-        public StardewModdingAPI.IMultiplayerHelper Multiplayer => throw new NotImplementedException();
-        public StardewModdingAPI.IReflectionHelper Reflection => throw new NotImplementedException();
-        public StardewModdingAPI.ISemanticVersioningApi SemanticVersioning => throw new NotImplementedException();
-        public StardewModdingAPI.ITranslationHelper Translation => throw new NotImplementedException();
-        public StardewModdingAPI.IModEvents ModEvents => throw new NotImplementedException();
-        public StardewModdingAPI.IModContentHelper ModContent => throw new NotImplementedException();
+        var provider = (SmapiConfigProvider<ModConfig>)FormatterServices.GetUninitializedObject(typeof(SmapiConfigProvider<ModConfig>));
+        var field = typeof(SmapiConfigProvider<ModConfig>).GetField("_config", BindingFlags.Instance | BindingFlags.NonPublic);
+        field!.SetValue(provider, config);
+        return provider;
     }
 
     private static ModConfig Clone(ModConfig config)
@@ -178,6 +175,18 @@ internal sealed class FakeMailService : IGameMailService
 
         Received.Add((mailId, noLetter));
     }
+
+    public bool RemoveReceivedMail(string mailId)
+    {
+        var removed = Received.RemoveAll(x => x.Id == mailId);
+        return removed > 0;
+    }
+
+    public bool RemoveMailForTomorrow(string mailId)
+    {
+        var removed = Tomorrow.RemoveAll(x => x.Id == mailId);
+        return removed > 0;
+    }
 }
 
 
@@ -185,6 +194,7 @@ internal sealed class FakeRecipeService : IGameRecipeService
 {
     public readonly HashSet<string> Crafting = new(StringComparer.Ordinal);
     public readonly HashSet<string> Cooking = new(StringComparer.Ordinal);
+    public IReadOnlyCollection<string> Learned => Crafting.Union(Cooking).ToArray();
 
     public bool HasCraftingRecipe(string recipeName) => Crafting.Contains(recipeName);
     public bool HasCookingRecipe(string recipeName) => Cooking.Contains(recipeName);
@@ -200,7 +210,6 @@ internal sealed class FakeRecipeService : IGameRecipeService
 
     public bool ForgetCookingRecipe(string recipeName)
         => Cooking.Remove(recipeName);
-}
 }
 
 internal sealed class FakeQuestService : IGameQuestService

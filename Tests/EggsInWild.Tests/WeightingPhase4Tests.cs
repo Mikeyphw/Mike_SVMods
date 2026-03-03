@@ -42,7 +42,7 @@ public sealed class WeightingPhase4Tests
 
         SetIntProperty(farm["Test"], 0, "DaysToMature");
         SetIntProperty(farm["Test"], 1, "DaysToProduce");
-        SetStringProperty(farm["Test"], "Egg", "HarvestedItemId", "ProduceItemId");
+        SetStringProperty(farm["Test"], "Egg", "HarvestedItemId", "ProduceItemId", "ProduceItemIds", "EggItemIds");
 
         var objects = new Dictionary<string, ObjectData>(StringComparer.OrdinalIgnoreCase)
         {
@@ -112,9 +112,11 @@ public sealed class WeightingPhase4Tests
 
     private static void SetIntProperty(object target, int value, params string[] names)
     {
+        var type = target.GetType();
+
         foreach (var name in names)
         {
-            var prop = target.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
+            var prop = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
             if (prop is null || !prop.CanWrite)
                 continue;
 
@@ -131,14 +133,35 @@ public sealed class WeightingPhase4Tests
             }
         }
 
-        throw new InvalidOperationException($"Expected a writable int property among: {string.Join(", ", names)} on {target.GetType().Name}.");
+        foreach (var name in names)
+        {
+            var field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public);
+            if (field is null)
+                continue;
+
+            if (field.FieldType == typeof(int))
+            {
+                field.SetValue(target, value);
+                return;
+            }
+
+            if (field.FieldType == typeof(long))
+            {
+                field.SetValue(target, (long)value);
+                return;
+            }
+        }
+
+        throw new InvalidOperationException($"Expected a writable int member among: {string.Join(", ", names)} on {type.Name}.");
     }
 
     private static void SetStringProperty(object target, string value, params string[] names)
     {
+        var type = target.GetType();
+
         foreach (var name in names)
         {
-            var prop = target.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
+            var prop = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
             if (prop is null || !prop.CanWrite)
                 continue;
 
@@ -147,8 +170,33 @@ public sealed class WeightingPhase4Tests
                 prop.SetValue(target, value);
                 return;
             }
+
+            if (prop.PropertyType == typeof(List<string>))
+            {
+                prop.SetValue(target, new List<string> { value });
+                return;
+            }
         }
 
-        throw new InvalidOperationException($"Expected a writable string property among: {string.Join(", ", names)} on {target.GetType().Name}.");
+        foreach (var name in names)
+        {
+            var field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public);
+            if (field is null)
+                continue;
+
+            if (field.FieldType == typeof(string))
+            {
+                field.SetValue(target, value);
+                return;
+            }
+
+            if (field.FieldType == typeof(List<string>))
+            {
+                field.SetValue(target, new List<string> { value });
+                return;
+            }
+        }
+
+        throw new InvalidOperationException($"Expected a writable string member among: {string.Join(", ", names)} on {type.Name}.");
     }
 }

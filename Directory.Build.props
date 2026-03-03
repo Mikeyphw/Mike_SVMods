@@ -17,4 +17,9 @@
     <DebugType>portable</DebugType>
     <DefineConstants>$(DefineConstants);MIKE_DEV</DefineConstants>
   </PropertyGroup>
+
+  <!-- Local fallback for Linux dev environment when GamePath isn't provided explicitly. -->
+  <PropertyGroup Condition="'$(GamePath)'=='' and Exists('/media/mike/HomeII/Games/gog/stardew-valley/game/StardewValley.dll')">
+    <GamePath>/media/mike/HomeII/Games/gog/stardew-valley/game</GamePath>
+  </PropertyGroup>
 </Project>

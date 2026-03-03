@@ -22,7 +22,7 @@ public sealed class DeepSnapshotHelperTests
         root.Children["a"] = new Node { Name = "a" };
 
         Assert.ThrowsAny<Xunit.Sdk.XunitException>(() =>
-            AssertEx.AssertNoDeepMutation(root, () => root.Children["a"].Values.Add(9)));
+            AssertEx.AssertNoDeepMutation(root, () => root.Children["a"].Values.Add(9), maxDepth: 8));
     }
 
     [Fact]

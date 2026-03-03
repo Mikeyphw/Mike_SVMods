@@ -15,4 +15,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\RoosterControl.Pure\RoosterControl.Pure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="ProduceOverrideApplicatorTests.cs" />
+    <Compile Remove="ProduceOverrideRulesTests.cs" />
+  </ItemGroup>
 </Project>

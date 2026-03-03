@@ -5,6 +5,7 @@ using System.Reflection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.NestCore.Integrations.Gmcm;
+using RoosterControl.Application.Compat;
 using RoosterControl.Application.Hatching;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
@@ -13,6 +14,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
+using StardewValley.ItemTypeDefinitions;
 using Mikew.NestCore.Helpers.Logging;
 
 using ILetMeHatchApi = Mikew.NestCore.Framework.ILetMeHatchApi;
@@ -254,7 +256,6 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
             styled: true,
             id: $"compat_egg_note_{kind}"
         );
-        );
     }
 
     var roosterProviderIds = _compatSelection.RoosterCatalog.Sources
@@ -395,8 +396,8 @@ private bool TryBuildEggSourceChoices(
 
         try
         {
-            var item = ItemRegistry.Create(itemId, 1);
-            list.Add((() => FormatEggSourceValue(sid), item.getTexture(), item.getSourceRect()));
+            var itemData = ItemRegistry.GetDataOrErrorItem(itemId);
+            list.Add((() => FormatEggSourceValue(sid), itemData.GetTexture(), itemData.GetSourceRect()));
         }
         catch
         {
@@ -892,4 +893,3 @@ private void PersistAndApplyCompatChange(string reason)
         });
     }
 }
-

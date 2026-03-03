@@ -48,7 +48,7 @@ public sealed class TileRulesTests
         IReadOnlyList<Rectangle>? excludeRects = null)
         => new(
             EggItemId: "Egg",
-            EggKind: EggKind.Normal,
+            EggKind: EggKind.Wild,
             PackId: "Vanilla",
             LocationType: "Forest",
             MapName: "Forest",

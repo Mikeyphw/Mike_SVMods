@@ -57,8 +57,7 @@ public sealed class TombDropTableCoverageTests
             var defsPath = File.Exists(candidateA) ? candidateA : (File.Exists(candidateB) ? candidateB : null);
             if (defsPath is not null)
             {
-                var root = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(defsPath)))!; // .../assets
-                var dropTablesPath = Path.Combine(root, "DesertTomb", "DropTables.json");
+                var dropTablesPath = Path.Combine(Path.GetDirectoryName(defsPath)!, "DropTables.json");
 
                 if (!File.Exists(dropTablesPath))
                     throw new FileNotFoundException($"Found MonsterDefinitions.json at '{defsPath}', but DropTables.json was missing at '{dropTablesPath}'.");

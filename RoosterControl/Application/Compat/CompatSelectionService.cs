@@ -346,6 +346,27 @@ internal sealed class CompatSelectionService
             return false;
         }
 
+        var all = RoosterCatalog.Sources
+            .Select(s => s.SourceId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        enabledCount = all.Count;
+
+        var current = state.EnabledRoosterSources
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var changed = current.Count != all.Count || !current.SequenceEqual(all, StringComparer.OrdinalIgnoreCase);
+
+        state.EnabledRoosterSources = all;
+        return changed;
+    }
+
 
 public bool TrySetEggSource(
     CompatSelectionState state,
@@ -444,27 +465,6 @@ public bool TrySetRoosterProviderSingle(
     state.EnabledRoosterSources = new List<string> { selected.SourceId };
     return changed;
 }
-
-        var all = RoosterCatalog.Sources
-            .Select(s => s.SourceId)
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        enabledCount = all.Count;
-
-        var current = state.EnabledRoosterSources
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        var changed = current.Count != all.Count || !current.SequenceEqual(all, StringComparer.OrdinalIgnoreCase);
-
-        state.EnabledRoosterSources = all;
-        return changed;
-    }
 
 
     public bool TryResolveSelectedEggItemId(

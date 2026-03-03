@@ -33,6 +33,26 @@ internal static class ObjectPriceResolver
             }
         }
 
+        foreach (var name in new[] { "Price", "SellPrice", "sellPrice" })
+        {
+            var field = obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.Public);
+            if (field is null)
+                continue;
+
+            var v = field.GetValue(obj);
+            if (v is int i)
+            {
+                price = i;
+                return true;
+            }
+
+            if (v is long l)
+            {
+                price = (int)l;
+                return true;
+            }
+        }
+
         return false;
     }
 }

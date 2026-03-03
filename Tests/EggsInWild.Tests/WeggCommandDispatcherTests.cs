@@ -134,5 +134,10 @@ public sealed class WeggCommandDispatcherTests
         public FacadeResult ValidateAnimalNotes() => new(true, "ok");
         public FacadeResult Verify(string[] args) => new(true, "verify");
         public FacadeResult WipeSchemaData(bool confirmed) => new(true, confirmed ? "wiped" : "no");
+        public FacadeResult PreviewStepEffects(ProgressionStep step) => new(true, "preview");
+        public FacadeResult ForceInstallDesertTombHarmonyPatches() => new(true, "ok");
+        public FacadeResult DumpEffectiveWildAnimals() => new(true, "[]");
+        public FacadeResult WildAnimalStatus(string wildAnimalKey) => new(true, "{}");
+        public FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled) => new(true, "ok");
     }
 }

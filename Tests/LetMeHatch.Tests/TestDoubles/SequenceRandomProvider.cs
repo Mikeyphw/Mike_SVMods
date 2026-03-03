@@ -17,6 +17,11 @@ public sealed class SequenceRandomProvider : IRandomProvider
         _bools = new Queue<bool>(bools ?? Array.Empty<bool>());
     }
 
+    public SequenceRandomProvider(params double[] doubles)
+        : this((IEnumerable<double>)doubles)
+    {
+    }
+
     public double NextDouble() => _doubles.Count > 0 ? _doubles.Dequeue() : 0.0;
 
     public int Next(int maxExclusive)

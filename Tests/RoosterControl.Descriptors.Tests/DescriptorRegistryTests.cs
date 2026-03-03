@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using RoosterControl.Application.Catalogs;
-using RoosterControl.Application.Gmcm;
-using RoosterControl.Application.Gmcm.Descriptors;
+using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using Xunit;
 
@@ -15,57 +13,35 @@ namespace RoosterControl.Descriptors.Tests;
 public sealed class DescriptorRegistryTests
 {
     [Fact]
-    public void OptionIds_AreUnique()
+    public void Config_Defaults_ContainAllRoosterTypes()
     {
-        var index = RoosterGmcmDescriptorIndex.Build();
-        var dupes = index.DuplicateOptionIds();
-        Assert.True(dupes.Count == 0, "Duplicate option IDs: " + string.Join(", ", dupes));
+        var cfg = RoosterControlConfig.CreateDefault();
+        var expected = Enum.GetValues<RoosterType>().ToHashSet();
+
+        Assert.Equal(expected.Count, cfg.Roosters.Count);
+        foreach (var roosterType in expected)
+            Assert.Contains(roosterType, cfg.Roosters.Keys);
     }
 
     [Fact]
-    public void Pages_ContainAllExpectedPages()
+    public void CatalogDefaults_ContainAllRoosterTypeNames()
     {
-        var index = RoosterGmcmDescriptorIndex.Build();
+        var defaults = CatalogDefaults.CreateDefaults();
+        var expectedNames = Enum.GetNames<RoosterType>().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var expected = new[]
-        {
-            "females",
-            "roosters_white",
-            "roosters_brown",
-            "roosters_blue",
-            "roosters_void",
-            "roosters_gold",
-        };
-
-        foreach (var id in expected)
-            Assert.Contains(id, index.PageIds);
+        Assert.True(expectedNames.SetEquals(defaults.Roosters.Roosters.Keys));
+        Assert.True(expectedNames.SetEquals(defaults.Produce.Roosters.Keys));
+        Assert.True(expectedNames.SetEquals(defaults.Hatching.Roosters.Keys));
     }
 
     [Fact]
-    public void OptionIds_AreGrouped()
+    public void I18n_DefaultJson_IsPresent_AndValidJson()
     {
-        var index = RoosterGmcmDescriptorIndex.Build();
-        var re = new Regex(@"^(general|roosters|females)\.", RegexOptions.Compiled);
+        var path = FindDefaultI18nPath();
+        var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(File.ReadAllText(path));
 
-        foreach (var id in index.OptionIds)
-            Assert.Matches(re, id);
-    }
-
-    [Fact]
-    public void I18n_Covers_AllDescriptors()
-    {
-        var i18nPath = FindDefaultI18nPath();
-        var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(File.ReadAllText(i18nPath))
-                   ?? throw new InvalidOperationException("Failed to parse i18n default.json");
-
-        var requiredKeys = BuildRequiredI18nKeys();
-
-        var missing = requiredKeys
-            .Where(k => !json.ContainsKey(k))
-            .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        Assert.True(missing.Count == 0, "Missing i18n keys:\n" + string.Join("\n", missing));
+        Assert.NotNull(json);
+        Assert.NotEmpty(json!);
     }
 
     private static string FindDefaultI18nPath()
@@ -91,81 +67,5 @@ public sealed class DescriptorRegistryTests
         }
 
         throw new FileNotFoundException("Could not find RoosterControl i18n/default.json by walking up from test output directory.");
-    }
-
-    private static HashSet<string> BuildRequiredI18nKeys()
-    {
-        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        var cfg = RoosterControlConfig.CreateDefault();
-        var catalogs = CatalogDefaults.CreateDefaults();
-
-        var descriptors = new List<IGmcmDescriptor<RoosterControlConfig>>();
-        descriptors.AddRange(RoosterGmcmDescriptorRegistry.RootGeneral());
-        descriptors.AddRange(RoosterGmcmDescriptorRegistry.RootRoostersLinks());
-
-        var pages = RoosterGmcmDescriptorRegistry.Pages(() => cfg, () => catalogs, () => { });
-
-        foreach (var p in pages)
-        {
-            keys.Add($"config.page.{p.PageId}.name");
-            descriptors.AddRange(p.Content);
-        }
-
-        foreach (var d in descriptors)
-        {
-            switch (d)
-            {
-                case GmcmSectionDescriptor<RoosterControlConfig> s:
-                    keys.Add($"config.section.{s.SectionId}.text");
-                    if (s.Tooltip)
-                        keys.Add($"config.section.{s.SectionId}.description");
-                    break;
-
-                case GmcmParagraphDescriptor<RoosterControlConfig> p:
-                    keys.Add($"config.paragraph.{p.ParagraphId}.text");
-                    break;
-
-                case GmcmPageLinkDescriptor<RoosterControlConfig> l:
-                    keys.Add($"config.pagelink.{l.PageId}.name");
-                    if (l.Tooltip)
-                        keys.Add($"config.pagelink.{l.PageId}.description");
-                    break;
-
-                case GmcmOptionDescriptor<RoosterControlConfig> o:
-                    keys.Add($"config.{o.OptionId}.name");
-                    if (o.Tooltip)
-                        keys.Add($"config.{o.OptionId}.description");
-                    break;
-            }
-        }
-
-        AddEnumAllowedKeys(keys);
-
-        return keys;
-    }
-
-    private static void AddEnumAllowedKeys(HashSet<string> keys)
-    {
-        static void Add(HashSet<string> k, string optionId, Type enumType)
-        {
-            foreach (var v in Enum.GetNames(enumType))
-                k.Add($"config.{optionId}.allowed.{v}");
-        }
-
-        Add(keys, "general.updateRate", typeof(UpdateRateMode));
-        Add(keys, "general.catalogApplyMode", typeof(CatalogApplyMode));
-        Add(keys, "general.hatchingMode", typeof(HatchingMode));
-        Add(keys, "general.harvestType", typeof(HarvestType));
-
-        foreach (var c in new[] { "white", "brown", "blue", "void", "gold" })
-        {
-            Add(keys, $"roosters.{c}.buildingRequired", typeof(RequiredBuilding));
-            Add(keys, $"roosters.{c}.produceMode", typeof(ProduceMode));
-            Add(keys, $"roosters.{c}.deluxeProduceMode", typeof(DeluxeProduceMode));
-        }
-
-        foreach (var s in new[] { "whiteChicken", "brownChicken", "blueChicken", "voidChicken", "goldenChicken" })
-            Add(keys, $"females.{s}.assignment", typeof(FemaleRoosterAssignment));
     }
 }

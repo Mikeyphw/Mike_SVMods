@@ -72,7 +72,8 @@ internal sealed class FertilizedEggsObjectEditService
                 );
             }
 
-            eggsByType[EggTypeEntries.Fertilized] = fertId;
+            if (objects.ContainsKey(fertId))
+                eggsByType[EggTypeEntries.Fertilized] = fertId;
         }
     }
 
@@ -127,6 +128,18 @@ internal sealed class FertilizedEggsObjectEditService
             catch
             {
                 // Some properties may throw due to runtime-only backing data; ignore.
+            }
+        }
+
+        foreach (var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            try
+            {
+                field.SetValue(clone, field.GetValue(baseEgg));
+            }
+            catch
+            {
+                // Some runtime fields may be immutable or incompatible in some contexts; ignore.
             }
         }
 

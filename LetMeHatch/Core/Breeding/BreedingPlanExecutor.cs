@@ -37,7 +37,7 @@ public sealed class BreedingPlanExecutor : IBreedingPlanExecutor
 
         foreach (var diag in plan.Diagnostics)
         {
-            LoggerHelper.VerboseLog(diag, LogLevel.Trace);
+            SafeVerbose(diag, LogLevel.Trace);
         }
 
         try
@@ -57,13 +57,13 @@ public sealed class BreedingPlanExecutor : IBreedingPlanExecutor
     {
         if (!farmAnimals.TryGetValue(pair.FemaleAnimalKey, out var femaleData))
         {
-            LoggerHelper.VerboseLog($"BreedingPlan skipped: missing female key '{pair.FemaleAnimalKey}'.", LogLevel.Warn);
+            SafeVerbose($"BreedingPlan skipped: missing female key '{pair.FemaleAnimalKey}'.", LogLevel.Warn);
             return;
         }
 
         if (!farmAnimals.TryGetValue(pair.MaleAnimalKey, out var maleData))
         {
-            LoggerHelper.VerboseLog($"BreedingPlan skipped: missing male key '{pair.MaleAnimalKey}'.", LogLevel.Warn);
+            SafeVerbose($"BreedingPlan skipped: missing male key '{pair.MaleAnimalKey}'.", LogLevel.Warn);
             return;
         }
 
@@ -80,7 +80,7 @@ public sealed class BreedingPlanExecutor : IBreedingPlanExecutor
             .Select(k => (Key: k, Data: farmAnimals[k]))
             .ToList();
 
-        LoggerHelper.VerboseLog(
+        SafeVerbose(
             $"BreedingPlan apply: female='{pair.FemaleAnimalKey}' male='{pair.MaleAnimalKey}' mode={pair.Mode} egg='{eggId}' sharers={sharers.Count}.",
             LogLevel.Trace);
 
@@ -95,7 +95,7 @@ public sealed class BreedingPlanExecutor : IBreedingPlanExecutor
                 AssignEggToFemale(femaleData, pair.EggToAssignItemId);
             }
 
-            LoggerHelper.VerboseLog($"BreedingPlan egg-domain diff: {before} => {SnapshotEggDomain(femaleData)}.", LogLevel.Trace);
+            SafeVerbose($"BreedingPlan egg-domain diff: {before} => {SnapshotEggDomain(femaleData)}.", LogLevel.Trace);
             return;
         }
 
@@ -104,7 +104,19 @@ public sealed class BreedingPlanExecutor : IBreedingPlanExecutor
             AssignFertilizedEggToFemale(femaleData, pair.EggToAssignItemId);
         }
 
-        LoggerHelper.VerboseLog($"BreedingPlan egg-domain diff: {before} => {SnapshotEggDomain(femaleData)}.", LogLevel.Trace);
+        SafeVerbose($"BreedingPlan egg-domain diff: {before} => {SnapshotEggDomain(femaleData)}.", LogLevel.Trace);
+    }
+
+    private static void SafeVerbose(string message, LogLevel level)
+    {
+        try
+        {
+            LoggerHelper.VerboseLog(message, level);
+        }
+        catch
+        {
+            // Unit tests can execute this class without ModEntry static initialization.
+        }
     }
 
     private void ClearEggDomain(

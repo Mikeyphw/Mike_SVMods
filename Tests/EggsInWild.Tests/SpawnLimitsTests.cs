@@ -41,6 +41,6 @@ public sealed class SpawnLimitsTests
         var ok = limits.CanSpawnInMap("Forest", EggKind.Magic, p, out var reason);
 
         Assert.False(ok);
-        Assert.Contains("world cap", reason);
+        Assert.Contains("map magic cap hit", reason);
     }
 }

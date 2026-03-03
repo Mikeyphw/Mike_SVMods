@@ -2,6 +2,7 @@ using EggsInWild.Application.Progression;
 using EggsInWild.Core.Enums;
 using EggsInWild.Core.Ids;
 using EggsInWild.Infrastructure.Config;
+using EggsInWild.Infrastructure.SaveData;
 using Mikew.NestCore.Helpers.SaveData;
 using Xunit;
 

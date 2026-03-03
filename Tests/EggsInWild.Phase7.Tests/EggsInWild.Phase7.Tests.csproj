@@ -1,12 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <IsTestProject>true</IsTestProject>
     <IsPackable>false</IsPackable>
+    <EnableModDeploy>false</EnableModDeploy>
+    <EnableModZip>false</EnableModZip>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
     <PackageReference Include="xunit" Version="2.7.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.8" />
@@ -14,5 +18,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\EggsInWild\EggsInWild.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(GamePath)'!='' and Exists('$(GamePath)/StardewModdingAPI.dll')">
+    <Reference Include="StardewModdingAPI" HintPath="$(GamePath)/StardewModdingAPI.dll" Private="true" />
+    <Reference Include="StardewValley" HintPath="$(GamePath)/Stardew Valley.dll" Private="true" />
+    <Reference Include="StardewValley.GameData" HintPath="$(GamePath)/StardewValley.GameData.dll" Private="true" />
+    <Reference Include="MonoGame.Framework" HintPath="$(GamePath)/MonoGame.Framework.dll" Private="true" />
   </ItemGroup>
 </Project>

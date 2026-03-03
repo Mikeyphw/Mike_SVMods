@@ -32,4 +32,29 @@
       <Compile Include="$(_MikeOutCs)" />
     </ItemGroup>
   </Target>
+
+  <!-- Test projects need game/SMAPI runtime DLLs available for reflection/type loading. -->
+  <Target Name="CopyGameRuntimeAssembliesForTests"
+          AfterTargets="Build"
+          Condition="'$(IsTestProject)'=='true' and '$(GamePath)'!=''">
+    <ItemGroup>
+      <_MikeGameRuntimeDll Include="$(GamePath)/StardewModdingAPI.dll" />
+      <_MikeGameRuntimeDll Include="$(GamePath)/StardewValley.GameData.dll" />
+      <_MikeGameRuntimeDll Include="$(GamePath)/MonoGame.Framework.dll" />
+      <_MikeGameRuntimeDll Include="$(GamePath)/xTile.dll" />
+      <_MikeGameRuntimeDll Include="$(GamePath)/Stardew Valley.dll" />
+      <_MikeGameRuntimeDll Include="$(GamePath)/smapi-internal/SMAPI.Toolkit.dll" />
+      <_MikeGameRuntimeDll Include="$(GamePath)/smapi-internal/SMAPI.Toolkit.CoreInterfaces.dll" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_MikeGameRuntimeDll)"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('%(Identity)')" />
+
+    <Copy SourceFiles="$(GamePath)/Stardew Valley.dll"
+          DestinationFiles="$(OutDir)StardewValley.dll"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(GamePath)/Stardew Valley.dll')" />
+  </Target>
 </Project>

@@ -129,7 +129,8 @@ public sealed class EffectiveValueCalculator
             return false;
 
         var baseProduceId = TryGetFirstString(animal,
-            "HarvestedItemId", "HarvestedItemID", "ProduceItemId", "ProduceItemID", "ProduceItemIds", "ProduceItemIDs");
+            "HarvestedItemId", "HarvestedItemID", "ProduceItemId", "ProduceItemID", "ProduceItemIds", "ProduceItemIDs",
+            "EggItemIds", "EggItemIDs");
 
         if (string.IsNullOrWhiteSpace(baseProduceId))
             return false;
@@ -180,13 +181,34 @@ public sealed class EffectiveValueCalculator
         if (obj is null)
             return false;
 
+        var type = obj.GetType();
         foreach (var name in propNames)
         {
-            var prop = obj.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
+            var prop = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
             if (prop is null)
                 continue;
 
             var v = prop.GetValue(obj);
+            if (v is int i)
+            {
+                value = i;
+                return true;
+            }
+
+            if (v is long l)
+            {
+                value = (int)l;
+                return true;
+            }
+        }
+
+        foreach (var name in propNames)
+        {
+            var field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public);
+            if (field is null)
+                continue;
+
+            var v = field.GetValue(obj);
             if (v is int i)
             {
                 value = i;
@@ -205,14 +227,20 @@ public sealed class EffectiveValueCalculator
 
     private static string? TryGetFirstString(object obj, params string[] propNames)
     {
+        var type = obj.GetType();
+
         foreach (var name in propNames)
         {
-            var prop = obj.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
-            if (prop is null)
+            var prop = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
+            var v = prop?.GetValue(obj);
+            if (v is null)
+            {
+                var field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public);
+                v = field?.GetValue(obj);
+            }
+
+            if (v is null)
                 continue;
-
-            var v = prop.GetValue(obj);
-
             if (v is string s && !string.IsNullOrWhiteSpace(s))
                 return s;
 
@@ -222,6 +250,20 @@ public sealed class EffectiveValueCalculator
                 {
                     if (item is string es && !string.IsNullOrWhiteSpace(es))
                         return es;
+
+                    if (item is not null)
+                    {
+                        var itemType = item.GetType();
+                        var idProp = itemType.GetProperty("ItemId", BindingFlags.Instance | BindingFlags.Public)
+                                     ?? itemType.GetProperty("Id", BindingFlags.Instance | BindingFlags.Public);
+                        if (idProp?.GetValue(item) is string sid && !string.IsNullOrWhiteSpace(sid))
+                            return sid;
+
+                        var idField = itemType.GetField("ItemId", BindingFlags.Instance | BindingFlags.Public)
+                                      ?? itemType.GetField("Id", BindingFlags.Instance | BindingFlags.Public);
+                        if (idField?.GetValue(item) is string sfid && !string.IsNullOrWhiteSpace(sfid))
+                            return sfid;
+                    }
                 }
             }
         }

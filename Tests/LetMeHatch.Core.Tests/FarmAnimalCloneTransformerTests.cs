@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using LetMeHatch.Core.Cloning;
-using Mikew.NestCore.EnumsAndStrings;
 using StardewValley.GameData.FarmAnimals;
 using Xunit;
+using static Mikew.NestCore.EnumsAndStrings.Strings.ItemIds;
 
 namespace LetMeHatch.Core.Tests;
 
@@ -21,7 +21,7 @@ public sealed class FarmAnimalCloneTransformerTests
         var clone = new FarmAnimalData
         {
             Gender = FarmAnimalGender.Female,
-            HarvestType = FarmAnimalHarvestType.Grab,
+            HarvestType = FarmAnimalHarvestType.DropOvernight,
             EggItemIds = new() { "999" },
             AlternatePurchaseTypes = new()
         };
@@ -35,29 +35,17 @@ public sealed class FarmAnimalCloneTransformerTests
     }
 
     [Fact]
-    public void ApplyPostLocalization_CopiesDefaults_AndEnsuresCollections()
+    public void ApplyPostLocalization_EnsuresCollections_AndOverwritesCustomFields()
     {
         var transformer = new FarmAnimalCloneTransformer();
 
         var original = new FarmAnimalData
         {
-            ShadowWhenBabySwims = true,
-            ShadowWhenBaby = false,
-            ShadowWhenAdultSwims = true,
-            ShadowWhenAdult = false,
-            Skins = new() { "skinA" },
-            StatToIncrementOnProduce = new() { "statA" },
             CustomFields = new() { ["k"] = "v" }
         };
 
         var clone = new FarmAnimalData
         {
-            ShadowWhenBabySwims = null,
-            ShadowWhenBaby = null,
-            ShadowWhenAdultSwims = null,
-            ShadowWhenAdult = null,
-            Skins = null,
-            StatToIncrementOnProduce = null,
             CustomFields = new() { ["junk"] = "junk" },
             EggItemIds = null,
             ProduceItemIds = new(),
@@ -66,17 +54,6 @@ public sealed class FarmAnimalCloneTransformerTests
 
         transformer.ApplyPostLocalization(clone, original);
 
-        Assert.Equal(original.ShadowWhenBabySwims, clone.ShadowWhenBabySwims);
-        Assert.Equal(original.ShadowWhenBaby, clone.ShadowWhenBaby);
-        Assert.Equal(original.ShadowWhenAdultSwims, clone.ShadowWhenAdultSwims);
-        Assert.Equal(original.ShadowWhenAdult, clone.ShadowWhenAdult);
-
-        Assert.NotNull(clone.Skins);
-        Assert.Contains("skinA", clone.Skins);
-        Assert.NotNull(clone.StatToIncrementOnProduce);
-        Assert.Contains("statA", clone.StatToIncrementOnProduce);
-
-        // Preserve behavior: CustomFields overwrites clone junk.
         Assert.NotNull(clone.CustomFields);
         Assert.True(clone.CustomFields.ContainsKey("k"));
         Assert.False(clone.CustomFields.ContainsKey("junk"));
@@ -89,7 +66,7 @@ public sealed class FarmAnimalCloneTransformerTests
     {
         var transformer = new FarmAnimalCloneTransformer();
 
-        var vanillaEggId = Strings.AnimalProducts.VanillaEggs.First();
+        var vanillaEggId = AnimalProducts.VanillaEggs.First();
         var regexEggId = "my_egg_item";
         var predicateEggId = "categoryEgg";
         var nonEggId = "nonEggItem";

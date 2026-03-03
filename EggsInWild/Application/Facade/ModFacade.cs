@@ -516,6 +516,7 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
 
         var cfg = _config.Get();
         var ov = TryGetWildAnimalOverride(cfg, canonicalKey);
+        var knownFarmAnimalIds = TryLoadKnownFarmAnimalIdsOrNull();
 
         var locationResolved = BuildResolvedLocationTypes(wa.LocationTypes);
         var locationSources = BuildResolvedLocationTypeSources(ov?.LocationTypes);
@@ -523,6 +524,7 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
         var extraEffective = BuildExtraModAnimalKeysEffective(wa.ExtraModAnimalKeys);
         var extraLoaded = BuildExtraModAnimalKeysLoaded(wa.ExtraModAnimalKeys);
         var resolvedByGroup = BuildResolvedFarmAnimalIdsByModGroup(wa.ExtraModAnimalKeys);
+        var validationWarnings = BuildExtraModAnimalKeysValidationWarnings(wa.ExtraModAnimalKeys, knownFarmAnimalIds);
         var extraSources = BuildExtraModAnimalKeysSources(ov?.ExtraModAnimalKeys, extraEffective.Keys);
 
         var overrides = new WildAnimalOverridesDump(
@@ -560,6 +562,7 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
             ExtraModAnimalKeys: extraEffective,
             ExtraModAnimalKeysLoaded: extraLoaded,
             ResolvedFarmAnimalIdsByModGroup: resolvedByGroup,
+            ValidationWarnings: validationWarnings,
             Diff: diff,
             DiffText: diffText,
             Overrides: overrides,
@@ -1131,6 +1134,7 @@ private sealed record WildAnimalEffectiveDumpEntry(
     Dictionary<string, List<string>> ExtraModAnimalKeys,
     Dictionary<string, bool> ExtraModAnimalKeysLoaded,
     Dictionary<string, List<string>> ResolvedFarmAnimalIdsByModGroup,
+    List<string> ValidationWarnings,
     WildAnimalDiffDump? Diff,
     string? DiffText,
     WildAnimalOverridesDump Overrides,

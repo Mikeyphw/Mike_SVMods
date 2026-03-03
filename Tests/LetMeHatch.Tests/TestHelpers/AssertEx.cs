@@ -228,6 +228,24 @@ public static class AssertEx
                 }
             }
 
+            foreach (var f in t.GetFields(Flags).Where(f => !f.IsStatic && IsScalar(f.FieldType)))
+            {
+                try
+                {
+                    var current = f.GetValue(obj);
+                    var mutated = MutateScalar(current, f.FieldType);
+                    if (mutated is not null)
+                    {
+                        f.SetValue(obj, mutated);
+                        return;
+                    }
+                }
+                catch
+                {
+                    // best-effort only
+                }
+            }
+
             // Recurse into readable nodes
             foreach (var p in t.GetProperties(Flags).Where(IsReadableValueProperty))
             {
