@@ -76,7 +76,7 @@ public sealed class GmcmPageBuilder<TConfig>
         Func<uint, string?>? imageTooltipTitle = null,
         Func<uint, string?>? imageTooltipText = null,
         int arrowLocation = (int)IGMCMOptionsAPI.ImageOptionArrowLocation.Top,
-        int labelLocation = (int)IGMCMOptionsAPI.ImageOptionLabelLocation.Right,
+        int labelLocation = (int)IGMCMOptionsAPI.ImageOptionLabelLocation.Bottom,
         string? fieldId = null)
     {
         if (!_menu.SupportsExtraOptions)

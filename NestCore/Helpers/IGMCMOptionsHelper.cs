@@ -354,7 +354,7 @@ private Func<string> GetName(string optionName)
         Func<uint, string?>? imageTooltipTitle = null,
         Func<uint, string?>? imageTooltipText = null,
         int arrowLocation = (int)ImageOptionArrowLocation.Top,
-        int labelLocation = (int)ImageOptionLabelLocation.Right,
+        int labelLocation = (int)ImageOptionLabelLocation.Bottom,
         string? fieldId = null)
     {
         if (_extraOptionsApi is null)
