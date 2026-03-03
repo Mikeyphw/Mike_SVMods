@@ -361,7 +361,10 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
 
                 var key = canonical.TryGetValue(trimmed, out var c) ? c : trimmed;
 
-                if (baseWa.LocationTypes.TryGetValue(key, out var baseAllowed) && baseAllowed == allowed)
+                var hasBase = baseWa.LocationTypes.TryGetValue(key, out var baseAllowed);
+
+                // Treat missing base key as false to keep overrides as diffs only.
+                if ((hasBase && baseAllowed == allowed) || (!hasBase && allowed == false))
                     continue;
 
                 if (normalized.TryGetValue(key, out var existing) && existing != allowed)
