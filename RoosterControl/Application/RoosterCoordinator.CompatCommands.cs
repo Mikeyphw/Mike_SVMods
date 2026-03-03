@@ -294,7 +294,7 @@ if (verbLower == "validate")
             }
 
             var prev = args.Skip(2).Any(a => a.Equals("prev", StringComparison.OrdinalIgnoreCase));
-            if (!_compatSelection.TryCycleEggSource(_saveState.Compat, kind, prev, out var selected, out var error))
+            if (!_compatSelection.TryCycleEggSource(_saveState.Compat, kind, prev, out var selected, out var changed, out var error))
             {
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
                     error ?? "Failed to cycle egg source.",
@@ -302,12 +302,15 @@ if (verbLower == "validate")
                 return;
             }
 
-            PersistCompatSelectionChange();
-            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
-                selected is null
-                    ? $"Egg source for '{kind}' updated."
-                    : $"Egg source for '{kind}' -> '{selected.SourceId}' ({selected.DisplayName})",
-                LogLevel.Info);
+            if (changed)
+                PersistCompatSelectionChange();
+
+            var msg = selected is null
+                ? $"Egg source for '{kind}' {(changed ? "updated" : "unchanged")}."
+                : changed
+                    ? $"Egg source for '{kind}' -> '{selected.SourceId}' ({selected.DisplayName})"
+                    : $"Egg source for '{kind}' unchanged -> '{selected.SourceId}' ({selected.DisplayName})";
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, msg, LogLevel.Info);
             return;
         }
 
@@ -322,7 +325,7 @@ if (verbLower == "validate")
             }
 
             var prev = args.Skip(1).Any(a => a.Equals("prev", StringComparison.OrdinalIgnoreCase));
-            if (!_compatSelection.TryCycleRoosterProviderSingle(_saveState.Compat, prev, out var selected, out var error))
+            if (!_compatSelection.TryCycleRoosterProviderSingle(_saveState.Compat, prev, out var selected, out var changed, out var error))
             {
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
                     error ?? "Failed to cycle rooster provider.",
@@ -330,12 +333,15 @@ if (verbLower == "validate")
                 return;
             }
 
-            PersistCompatSelectionChange();
-            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
-                selected is null
-                    ? "Rooster provider updated."
-                    : $"Rooster provider (single) -> '{selected.SourceId}' ({selected.DisplayName})",
-                LogLevel.Info);
+            if (changed)
+                PersistCompatSelectionChange();
+
+            var msg = selected is null
+                ? $"Rooster provider (single) {(changed ? "updated" : "unchanged")}."
+                : changed
+                    ? $"Rooster provider (single) -> '{selected.SourceId}' ({selected.DisplayName})"
+                    : $"Rooster provider (single) unchanged -> '{selected.SourceId}' ({selected.DisplayName})";
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, msg, LogLevel.Info);
             return;
         }
 
@@ -349,7 +355,7 @@ if (verbLower == "validate")
                 return;
             }
 
-            if (!_compatSelection.EnableAllRoosterProviders(_saveState.Compat, out var enabledCount, out var error))
+            if (!_compatSelection.EnableAllRoosterProviders(_saveState.Compat, out var enabledCount, out var changed, out var error))
             {
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
                     error ?? "Failed to enable all rooster providers.",
@@ -357,10 +363,13 @@ if (verbLower == "validate")
                 return;
             }
 
-            PersistCompatSelectionChange();
-            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
-                $"Rooster providers (union) enabled: {enabledCount}",
-                LogLevel.Info);
+            if (changed)
+                PersistCompatSelectionChange();
+
+            var msg = changed
+                ? $"Rooster providers (union) enabled: {enabledCount}"
+                : $"Rooster providers (union) unchanged (already all enabled): {enabledCount}";
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, msg, LogLevel.Info);
             return;
         }
 

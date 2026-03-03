@@ -5,13 +5,26 @@
   "Description": "An addon for Roosters that makes it possible to tweak and hatch them from chicken eggs.",
   "UniqueID": "Mikew.roostersaddon.smapi",
   "MinimumApiVersion": "2.5",
-  "UpdateKeys": ["22555"],
+  "UpdateKeys": [
+    "22555"
+  ],
   "Dependencies": [
-    { "UniqueID": "Mikew.nestcore", "IsRequired": true },
-    { "UniqueID": "Meara.Roosters", "IsRequired": true },
-    { "UniqueID": "Mikew.letmehatch.smapi", "IsRequired": false },
-    { "UniqueID": "6480.blueegg", "IsRequired": false }
+    {
+      "UniqueID": "Mikew.nestcore",
+      "IsRequired": true
+    },
+    {
+      "UniqueID": "Meara.Roosters",
+      "IsRequired": false
+    },
+    {
+      "UniqueID": "Mikew.letmehatch.smapi",
+      "IsRequired": false
+    },
+    {
+      "UniqueID": "6480.blueegg",
+      "IsRequired": false
+    }
   ],
   "EntryDll": "RoosterControl.dll"
 }
-

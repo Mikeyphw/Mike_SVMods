@@ -418,15 +418,19 @@ private void SetSelectedEggSourceId(EggKind kind, string sourceId)
 {
     EnsureCompatInitialized();
 
-    if (!_compatSelection.TrySetEggSource(_saveState.Compat, kind, sourceId, out _, out var error))
+    if (!_compatSelection.TrySetEggSource(_saveState.Compat, kind, sourceId, out _, out var changed, out var error))
     {
         if (!string.IsNullOrWhiteSpace(error))
             LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to set egg source '{sourceId}' for {kind}: {error}", LogLevel.Warn);
         return;
     }
 
+    if (!changed)
+        return;
+
     PersistAndApplyCompatChange($"gmcm set egg source {kind}");
 }
+
 
 private string FormatEggSourceValue(string sourceId)
 {
@@ -486,15 +490,20 @@ private void SetSelectedRoosterProvidersValue(string value)
 {
     EnsureCompatInitialized();
 
+    var changed = false;
+
     if (value.Equals(AllRoosterProvidersValue, StringComparison.OrdinalIgnoreCase))
     {
-        _compatSelection.EnableAllRoosterProviders(_saveState.Compat, out _, out var error);
-        if (!string.IsNullOrWhiteSpace(error))
-            LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to enable all rooster providers: {error}", LogLevel.Warn);
+        if (!_compatSelection.EnableAllRoosterProviders(_saveState.Compat, out _, out changed, out var error))
+        {
+            if (!string.IsNullOrWhiteSpace(error))
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to enable all rooster providers: {error}", LogLevel.Warn);
+            return;
+        }
     }
     else
     {
-        if (!_compatSelection.TrySetRoosterProviderSingle(_saveState.Compat, value, out _, out var error))
+        if (!_compatSelection.TrySetRoosterProviderSingle(_saveState.Compat, value, out _, out changed, out var error))
         {
             if (!string.IsNullOrWhiteSpace(error))
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to set rooster provider '{value}': {error}", LogLevel.Warn);
@@ -502,8 +511,12 @@ private void SetSelectedRoosterProvidersValue(string value)
         }
     }
 
+    if (!changed)
+        return;
+
     PersistAndApplyCompatChange("gmcm set rooster providers");
 }
+
 
 private string FormatRoosterProviderValue(string value)
 {

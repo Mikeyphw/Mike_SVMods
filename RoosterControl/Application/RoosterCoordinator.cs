@@ -266,11 +266,34 @@ private NextTickScheduler _nextTick;
         _nextTick.Enqueue(RefreshFarmAnimalsOnLocationChange);
     }
 
-    private void EnsureCompatInitialized()
+        private void EnsureCompatInitialized()
     {
-        if (!_compatSelection.IsInitialized)
-            _compatSelection.InitializeOrRepair(_saveState.Compat);
+        if (_compatSelection.IsInitialized)
+            return;
+
+        var changed = _compatSelection.InitializeOrRepair(_saveState.Compat, out var summary);
+
+        if (!changed)
+            return;
+
+        _needsRoosterSetup = true;
+        InvalidateDailyPlanCache("compat selection repaired");
+
+        if (!string.IsNullOrWhiteSpace(summary))
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.SaveData, $"Compat selection repaired:\n{summary}", LogLevel.Info);
+        else
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.SaveData, "Compat selection repaired.", LogLevel.Info);
+
+        if (Context.IsMainPlayer && Context.IsWorldReady)
+            _saveData.Write(SaveStateKey, _saveState);
+
+        RequestInvalidate(FarmAnimalsAssetName);
+        if (RoosterHelper.FemaleEggs.Count > 0)
+            RequestInvalidate(ObjectsAssetName);
+
+        QueueRefreshFarmAnimals("compat selection repaired");
     }
+
 
     public void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
