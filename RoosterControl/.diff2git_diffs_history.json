@@ -221,7 +221,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260303T190634-0300-01",
+      "file": "20260303T190634-0300-01",
+      "title": "Phase 13: clear coop rooster scan overrides on empty selection (avoid stale overrides)",
+      "title_with_id": "Phase 13: clear coop rooster scan overrides on empty selection (avoid stale overrides) [20260303T190634-0300-01]",
+      "created_at": "2026-03-03T19:13:13-03:00",
+      "applied_at": "2026-03-03T19:14:15-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-03T18:50:49-03:00"
+  "updated_at": "2026-03-03T19:14:15-03:00"
 }

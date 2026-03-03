@@ -1,8 +1,6 @@
 # RoosterControl TODO
 
 ## Next: Phase 13 — Release hardening
-- [ ] Fail-fast checks + actionable errors
-- [ ] Harden selection repair/persistence logs + no-op clarity
 - [ ] Performance pass (edits/invalidation batching)
 - [ ] Build/test workflow verified
 
@@ -17,5 +15,8 @@
 - [ ] Unit tests + manual QA checklist
 
 ## Done
+- [x] Phase 13: Fail-fast checks + actionable errors
+- [x] Phase 13: Harden selection repair/persistence logs + no-op clarity
+- [x] Phase 13: Clear coop rooster scan overrides on empty selection (prevents stale overrides)
 - [x] Phase 12: GMCM compat selection UI (arrow-cycle pickers when GMCMOptions is installed + inline validation notes)
 - [x] Phase 11C: fertilized egg synthesis + deterministic IDs

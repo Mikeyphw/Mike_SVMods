@@ -164,6 +164,7 @@ Steps:
 2) Harden selection repair + persistence paths (no silent fallbacks; clear logs for repairs/no-ops).
 3) Performance pass: avoid redundant invalidations/edits; ensure batching is used consistently.
 4) Add “safe defaults” for edge cases (empty catalogs, missing providers, missing assets) with clear logging.
+   - Ensure coop rooster scan overrides are always set/cleared from enabled providers (avoid stale overrides).
 5) Verify build/test workflow (solution build + unit tests); fix any lingering warnings that hide real errors.
 6) Update docs: upgrade notes + release checklist.
 
@@ -194,4 +195,3 @@ Steps:
 5) Add tests for fertilized mapping determinism across chosen egg sources (incl. “native vs synthesized”).
 6) Add smoke-test notes + manual QA checklist (save load, day start, GMCM edits, command usage).
 7) Update docs to point mod authors to the templates and the compat matrix.
-

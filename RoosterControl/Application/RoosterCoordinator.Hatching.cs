@@ -105,8 +105,7 @@ internal sealed partial class RoosterCoordinator
             return;
 
         var enabledKeys = _compatSelection.GetEnabledRoosterFarmAnimalKeys(_saveState.Compat);
-        if (enabledKeys.Count > 0)
-            RoosterHelper.SetCoopRoosterFarmAnimalKeys(enabledKeys);
+        RoosterHelper.SetCoopRoosterFarmAnimalKeys(enabledKeys);
 
         foreach (var pair in RoosterHelper.Roosters)
         {

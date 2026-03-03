@@ -39,10 +39,11 @@
 - [x] Optional: inline per-selection validation messaging
 
 ## Phase 13 — Release hardening
-- [ ] Fail-fast checks + actionable errors
-- [ ] Harden selection repair/persistence logs + no-op clarity
+- [x] Fail-fast checks + actionable errors
+- [x] Harden selection repair/persistence logs + no-op clarity
 - [ ] Performance pass (edits/invalidation batching)
 - [ ] Safe defaults for empty/missing catalogs
+  - [x] Clear coop rooster scan overrides when enabled rooster keys list is empty
 - [ ] Build/test workflow verified (warnings pass)
 - [ ] Docs: upgrade notes + release checklist
 
