@@ -1101,7 +1101,7 @@ foreach (var key in wildAnimalKeysForGmcm)
 
                     _extraModAnimalKeysBulkByWildAnimalKey.Remove(key);
                 },
-                tooltip: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.bulkClear.tooltip", "Clear the staged bulk paste text and preview for this wild animal. This does not change your config."),
+                tooltip: true,
                 fieldId: $"wildAnimals_extraModAnimalKeys_bulkClear_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
 
             page.ParagraphDynamic(
@@ -1166,6 +1166,17 @@ foreach (var key in wildAnimalKeysForGmcm)
                     var plannedSet = 0;
                     var plannedClear = 0;
                     var plannedNoop = 0;
+
+                    static string CanonicalizeModId(string modIdRaw, IEnumerable<string> known)
+                    {
+                        foreach (var existing in known)
+                        {
+                            if (string.Equals(existing, modIdRaw, StringComparison.OrdinalIgnoreCase))
+                                return existing;
+                        }
+
+                        return (modIdRaw ?? string.Empty).Trim();
+                    }
 
                     foreach (var modIdRaw in st.Resets)
                     {
@@ -1259,10 +1270,11 @@ foreach (var key in wildAnimalKeysForGmcm)
 
                         var matchesBase = fixedKeys.Count > 0 && SequenceEqualIgnoreCase(fixedKeys, baseKeys);
 
-                        var hasOv = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.TryGetValue(modId, out var existingBlock);
-                        var existingKeys = hasOv && existingBlock is not null
-                            ? (existingBlock.FarmAnimalKeys ?? new List<string>())
-                            : Array.Empty<string>();
+                        ExtraModAnimalKeysOverrideConfig? existingBlock = null;
+                        var hasOv = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.TryGetValue(modId, out existingBlock);
+                        var existingKeys = hasOv && existingBlock?.FarmAnimalKeys is { } ovKeys
+                            ? ovKeys
+                            : new List<string>();
 
                         var willClear = fixedKeys.Count == 0 || matchesBase;
 
@@ -1354,13 +1366,14 @@ foreach (var key in wildAnimalKeysForGmcm)
 
                             var matchesBase = fixedKeys.Count > 0 && SequenceEqualIgnoreCase(fixedKeys, baseKeys);
 
+                            ExtraModAnimalKeysOverrideConfig? existingBlock = null;
                             var hasOverrideNow = ovNow?.ExtraModAnimalKeys is not null
-                                && ovNow.ExtraModAnimalKeys.TryGetValue(canonicalModId, out var existingBlock)
+                                && ovNow.ExtraModAnimalKeys.TryGetValue(canonicalModId, out existingBlock)
                                 && existingBlock is not null;
 
-                            var existingKeys = hasOverrideNow
-                                ? (existingBlock!.FarmAnimalKeys ?? new List<string>())
-                                : Array.Empty<string>();
+                            var existingKeys = hasOverrideNow && existingBlock!.FarmAnimalKeys is { } ovKeys
+                                ? ovKeys
+                                : new List<string>();
 
                             var willClear = fixedKeys.Count == 0 || matchesBase;
                             var alreadySet = !willClear && hasOverrideNow && SequenceEqualIgnoreCase(existingKeys, fixedKeys);
@@ -1410,7 +1423,7 @@ foreach (var key in wildAnimalKeysForGmcm)
 
                             var willRemove = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.ContainsKey(canonicalModId);
                             lines.Add(willRemove ? $" - {displayModId}  [will remove override]" : $" - {displayModId}  [no-op; no override]");
-                        }                        }
+                        }
 
                         if (st.Resets.Count > 12)
                             lines.Add($" - ... (+{st.Resets.Count - 12} more)");
