@@ -10,6 +10,7 @@ using Mikew.NestCore.Helpers.SaveData;
 using Mikew.NestCore.Integrations.Gmcm;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 using EggsInWild.Application.Animals;
 using EggsInWild.Application.Facade;
@@ -51,6 +52,7 @@ public sealed class ModEntry : Mod
     private IModDataLoader? _contentDataLoader;
 
     private readonly Dictionary<string, ExtraModAnimalKeysBulkState> _extraModAnimalKeysBulkByWildAnimalKey = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _knownLocationTypeKeysForNormalization = new(StringComparer.OrdinalIgnoreCase);
 
     private DesertTombRuntime? _desertTombRuntime;
     private bool _desertTombHarmonyInstalled;
@@ -144,7 +146,8 @@ public sealed class ModEntry : Mod
         _gmcmHost = GmcmConfigHost<ModConfig>.TryCreate(
             helper: Helper,
             manifest: ModManifest,
-            configProvider: _config
+            configProvider: _config,
+            onSaved: OnGmcmSaved
         );
 
 #if WEGG_DEV
@@ -163,6 +166,85 @@ public sealed class ModEntry : Mod
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         _contentProgression?.OnSaveLoaded();
+    }
+
+    private void OnGmcmSaved()
+    {
+        if (_config is null)
+            return;
+
+        var cfg = _config.Get();
+        if (!NormalizeLocationTypesOverrides(cfg))
+            return;
+
+        _config.Save();
+        InvalidateGameAssets();
+    }
+
+    private bool NormalizeLocationTypesOverrides(ModConfig cfg)
+    {
+        if (cfg.WildAnimalOverrides is null || cfg.WildAnimalOverrides.Count == 0)
+            return false;
+
+        var known = _knownLocationTypeKeysForNormalization;
+        var anyChanged = false;
+
+        foreach (var (wildKey, ov) in cfg.WildAnimalOverrides.ToList())
+        {
+            if (ov is null)
+                continue;
+
+            if (ov.LocationTypes is { Count: > 0 })
+            {
+                var blockChanged = false;
+                var newDict = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var (k, v) in ov.LocationTypes)
+                {
+                    if (string.IsNullOrWhiteSpace(k))
+                    {
+                        blockChanged = true;
+                        continue;
+                    }
+
+                    var t = k.Trim();
+                    if (t.Length == 0)
+                    {
+                        blockChanged = true;
+                        continue;
+                    }
+
+                    if (known.Count > 0 && !known.Contains(t))
+                    {
+                        blockChanged = true;
+                        continue;
+                    }
+
+                    if (!newDict.TryAdd(t, v))
+                    {
+                        blockChanged = true;
+                        continue;
+                    }
+
+                    if (!string.Equals(k, t, StringComparison.Ordinal))
+                        blockChanged = true;
+                }
+
+                if (blockChanged)
+                {
+                    ov.LocationTypes = newDict.Count == 0 ? null : newDict;
+                    anyChanged = true;
+                }
+            }
+
+            if (IsEmptyOverride(ov))
+            {
+                cfg.WildAnimalOverrides.Remove(wildKey);
+                anyChanged = true;
+            }
+        }
+
+        return anyChanged;
     }
     private void RebuildGmcmLayout(bool force)
     {
@@ -306,6 +388,8 @@ var locationTypeKeysForGmcm = wildAnimalsForGmcm.Values
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .OrderBy(k => string.Equals(k, "Farm", StringComparison.OrdinalIgnoreCase) ? "" : k, StringComparer.OrdinalIgnoreCase)
     .ToList();
+
+        _knownLocationTypeKeysForNormalization = new HashSet<string>(locationTypeKeysForGmcm, StringComparer.OrdinalIgnoreCase);
 
 layout.Page("wildAnimals", page =>
 {
@@ -1035,6 +1119,32 @@ foreach (var key in wildAnimalKeysForGmcm)
                             lines.Add($" - {w}");
                         if (st.Warnings.Count > 12)
                             lines.Add($" - ... (+{st.Warnings.Count - 12} more)");
+                        lines.Add("");
+                    }
+
+                    var cfg = _config!.Get();
+                    var fixTrim = cfg.GmcmExtraModAnimalKeysBulkFixTrimWhitespace;
+                    var fixDedupe = cfg.GmcmExtraModAnimalKeysBulkFixRemoveDuplicates;
+                    var fixDropUnknown = cfg.GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys;
+
+                    HashSet<string>? knownFarmAnimalIds = null;
+                    if (fixDropUnknown && Context.IsWorldReady)
+                    {
+                        try
+                        {
+                            var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                            knownFarmAnimalIds = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
+                        }
+                        catch
+                        {
+                            knownFarmAnimalIds = null;
+                        }
+                    }
+
+                    var fixPreview = BuildExtraModAnimalKeysBulkFixPreviewLines(st.Raw, fixTrim, fixDedupe, fixDropUnknown, knownFarmAnimalIds);
+                    if (fixPreview.Count > 0)
+                    {
+                        lines.AddRange(fixPreview);
                         lines.Add("");
                     }
 
@@ -2392,6 +2502,138 @@ private void InstallHarmonyBootstrap()
         }
 
         return state;
+    }
+
+    private static IReadOnlyList<string> BuildExtraModAnimalKeysBulkFixPreviewLines(
+        string raw,
+        bool fixTrim,
+        bool fixDedupe,
+        bool fixDropUnknown,
+        ISet<string>? knownFarmAnimalIds)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return Array.Empty<string>();
+
+        var dropUnknownActive = fixDropUnknown && knownFarmAnimalIds is not null;
+        if (!fixTrim && !fixDedupe && !dropUnknownActive)
+            return Array.Empty<string>();
+
+        var whitespace = 0;
+        var blanksAfterTrim = 0;
+        var duplicateOccurrences = 0;
+        var unknownKeys = 0;
+
+        var sampleTrimmed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var sampleDuplicates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var sampleUnknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var rawLine in raw.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var line = rawLine.Trim();
+            if (line.Length == 0)
+                continue;
+
+            if (line.StartsWith("#", StringComparison.Ordinal) || line.StartsWith("//", StringComparison.Ordinal))
+                continue;
+
+            var sepIndex = line.IndexOf('|');
+            if (sepIndex < 0) sepIndex = line.IndexOf(':');
+            if (sepIndex < 0) sepIndex = line.IndexOf('=');
+
+            if (sepIndex <= 0)
+                continue;
+
+            var keysRaw = sepIndex >= line.Length - 1 ? "" : line[(sepIndex + 1)..];
+            var keysRawTrim = keysRaw.Trim();
+            var isReset = keysRawTrim.Length == 0
+                || keysRawTrim == "*"
+                || string.Equals(keysRawTrim, "reset", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(keysRawTrim, "remove", StringComparison.OrdinalIgnoreCase);
+
+            if (isReset)
+                continue;
+
+            var seen = fixDedupe ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) : null;
+
+            foreach (var part in keysRaw.Split(new[] { ',', ';' }, StringSplitOptions.None))
+            {
+                var token = part ?? string.Empty;
+                var t = token;
+
+                if (fixTrim)
+                {
+                    var trimmed = t.Trim();
+                    if (!string.Equals(t, trimmed, StringComparison.Ordinal))
+                    {
+                        whitespace++;
+                        if (trimmed.Length > 0 && sampleTrimmed.Count < 10)
+                            sampleTrimmed.Add(trimmed);
+                    }
+
+                    t = trimmed;
+                }
+
+                if (t.Length == 0)
+                {
+                    if (fixTrim)
+                        blanksAfterTrim++;
+                    continue;
+                }
+
+                if (dropUnknownActive && !knownFarmAnimalIds!.Contains(t))
+                {
+                    unknownKeys++;
+                    if (sampleUnknown.Count < 10)
+                        sampleUnknown.Add(t);
+                    continue;
+                }
+
+                if (seen is not null && !seen.Add(t))
+                {
+                    duplicateOccurrences++;
+                    if (sampleDuplicates.Count < 10)
+                        sampleDuplicates.Add(t);
+                }
+            }
+        }
+
+        if (whitespace == 0 && blanksAfterTrim == 0 && duplicateOccurrences == 0 && unknownKeys == 0)
+            return Array.Empty<string>();
+
+        var outLines = new List<string>
+        {
+            "Quick-fix preview (on apply):",
+        };
+
+        if (fixTrim)
+        {
+            outLines.Add($" - Trim whitespace: {whitespace} token(s); drop blank-after-trim: {blanksAfterTrim}.");
+            if (sampleTrimmed.Count > 0)
+                outLines.Add($"   e.g. {string.Join(", ", sampleTrimmed.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))}");
+        }
+
+        if (fixDedupe)
+        {
+            outLines.Add($" - Remove duplicates: {duplicateOccurrences} duplicate occurrence(s).");
+            if (sampleDuplicates.Count > 0)
+                outLines.Add($"   e.g. {string.Join(", ", sampleDuplicates.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))}");
+        }
+
+        if (fixDropUnknown)
+        {
+            if (knownFarmAnimalIds is null)
+            {
+                outLines.Add(" - Drop unknown FarmAnimalKeys: (requires loaded save)");
+            }
+            else
+            {
+                outLines.Add($" - Drop unknown FarmAnimalKeys: {unknownKeys} key(s).");
+                if (sampleUnknown.Count > 0)
+                    outLines.Add($"   e.g. {string.Join(", ", sampleUnknown.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))}");
+            }
+        }
+
+        return outLines;
     }
 
     private static IReadOnlyList<string> ParseCsvKeyList(string? raw)
