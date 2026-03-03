@@ -143,7 +143,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260302T233544-0300-01",
+      "file": "20260302T233544-0300-01",
+      "title": "Fix RoosterCoordinator.Assets invalid argument list syntax",
+      "title_with_id": "Fix RoosterCoordinator.Assets invalid argument list syntax [20260302T233544-0300-01]",
+      "created_at": "2026-03-02T23:06:02-03:00",
+      "applied_at": "2026-03-02T23:44:42-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-02T23:32:10-03:00"
+  "updated_at": "2026-03-02T23:44:42-03:00"
 }
