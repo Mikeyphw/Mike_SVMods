@@ -886,7 +886,7 @@ foreach (var key in wildAnimalKeysForGmcm)
                     var lines = new List<string>
                     {
                         Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.header", "Bulk preview (not applied yet):"),
-                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note", "This is a preview only. Applying staged changes will be added in the next step."),
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note", "This is a preview only. Use the toggle below to apply staged changes."),
                         "",
                     };
 
@@ -933,6 +933,84 @@ foreach (var key in wildAnimalKeysForGmcm)
                     return string.Join(Environment.NewLine, lines);
                 },
                 id: $"wildAnimals_extraModAnimalKeys_bulkPreview_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+            page.ParagraphDynamic(
+                () => Translate(
+                    i18n,
+                    "config.paragraph.wildAnimals.extraModAnimalKeys.bulkApply.note",
+                    "Toggle on to apply staged bulk changes. This writes overrides immediately and clears the staged text."),
+                id: $"wildAnimals_extraModAnimalKeys_bulkApplyNote_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+            page.Bool(
+                optionId: Translate(i18n, "config.wildAnimals.extraModAnimalKeys.bulkApply.name", "Apply staged bulk changes"),
+                getValue: () => false,
+                setValue: v =>
+                {
+                    if (!v)
+                        return;
+
+                    if (!_extraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) || string.IsNullOrWhiteSpace(st.Raw))
+                        return;
+
+                    static string CanonicalizeModId(string modIdRaw, IEnumerable<string> known)
+                    {
+                        foreach (var existing in known)
+                        {
+                            if (string.Equals(existing, modIdRaw, StringComparison.OrdinalIgnoreCase))
+                                return existing;
+                        }
+
+                        return (modIdRaw ?? string.Empty).Trim();
+                    }
+
+                    var cfg = _config!.Get();
+                    cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                    var ov = GetOverride(cfg) ?? new WildAnimalOverrideConfig();
+                    ov.ExtraModAnimalKeys ??= new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var modIdRaw in st.Resets)
+                    {
+                        var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+                        ov.ExtraModAnimalKeys.Remove(modId);
+                    }
+
+                    foreach (var (modIdRaw, keys) in st.Upserts)
+                    {
+                        var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+
+                        var baseKeys = definition?.ExtraModAnimalKeys is not null
+                            && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                            ? baseBlock.GetEffectiveFarmAnimalKeys()
+                            : Array.Empty<string>();
+
+                        if (SequenceEqualIgnoreCase(keys, baseKeys))
+                        {
+                            ov.ExtraModAnimalKeys.Remove(modId);
+                        }
+                        else
+                        {
+                            ov.ExtraModAnimalKeys[modId] = new ExtraModAnimalKeysOverrideConfig
+                            {
+                                FarmAnimalKeys = keys.ToList(),
+                            };
+                        }
+                    }
+
+                    if (ov.ExtraModAnimalKeys.Count == 0)
+                        ov.ExtraModAnimalKeys = null;
+
+                    if (IsEmptyOverride(ov))
+                        cfg.WildAnimalOverrides.Remove(key);
+                    else
+                        cfg.WildAnimalOverrides[key] = ov;
+
+                    _extraModAnimalKeysBulkByWildAnimalKey.Remove(key);
+                },
+                tooltip: false,
+                fieldId: $"wildAnimals_extraModAnimalKeys_bulkApply_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+
 
 
 

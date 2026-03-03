@@ -476,5 +476,7 @@
   "config.wildAnimals.extraModAnimalKeys.bulkInput.tooltip": "Paste one line per mod-group: modId | csvKeys. You may comma-separate modIds (A,B | Cow). Use '*' (or blank) to reset/remove a block. This only stages changes.",
   "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.empty": "Bulk preview: (none)",
   "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.header": "Bulk preview (not applied yet):",
-  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note": "This is a preview only. Applying staged changes will be added in the next step."
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note": "This is a preview only. Use the toggle below to apply staged changes.",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkApply.note": "Toggle on to apply staged bulk changes. This writes overrides immediately and clears the staged text.",
+  "config.wildAnimals.extraModAnimalKeys.bulkApply.name": "Apply staged bulk changes"
 }
