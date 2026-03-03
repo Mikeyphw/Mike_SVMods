@@ -4,6 +4,7 @@
 - [ ] Phase 7 UX improvements:
   - [ ] Bulk add/update/remove workflows that fit GMCM static-page limits.
   - [ ] Surface richer validation warnings in GMCM (unknown modIds, empty/duplicate keys, keys not present in game data when available).
+  - [x] Dev: `wegg wildanimals dump_effective` includes validation warnings (unloaded modIds + unknown FarmAnimalKeys when Data/FarmAnimals is available).
 - [ ] Index-page navigation improvements that fit GMCM static-page limits (no live search).
 - [ ] Keep build/warning budget tight (no obsolete legacy support; avoid config churn).
 

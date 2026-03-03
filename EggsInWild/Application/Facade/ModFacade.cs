@@ -6,6 +6,7 @@ using System.Text.Json;
 using Microsoft.Xna.Framework;
 using Mikew.NestCore.Framework.Random;
 using StardewValley;
+using StardewValley.GameData.FarmAnimals;
 using EggsInWild.Application.AnimalNotes;
 using EggsInWild.Application.Progression;
 using EggsInWild.Application.Spawning;
@@ -401,6 +402,8 @@ public FacadeResult DumpEffectiveWildAnimals()
 
         var cfg = _config.Get();
 
+        var knownFarmAnimalIds = TryLoadKnownFarmAnimalIdsOrNull();
+
         foreach (var (key, wa) in snapshot.WildAnimals.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
         {
             var baseWa = baseSnapshot.WildAnimals.TryGetValue(key, out var baseDefWa) ? baseDefWa : wa;
@@ -421,6 +424,7 @@ public FacadeResult DumpEffectiveWildAnimals()
             var extraEffective = BuildExtraModAnimalKeysEffective(wa.ExtraModAnimalKeys);
             var extraLoaded = BuildExtraModAnimalKeysLoaded(wa.ExtraModAnimalKeys);
             var resolvedByGroup = BuildResolvedFarmAnimalIdsByModGroup(wa.ExtraModAnimalKeys);
+            var validationWarnings = BuildExtraModAnimalKeysValidationWarnings(wa.ExtraModAnimalKeys, knownFarmAnimalIds);
             var extraSources = BuildExtraModAnimalKeysSources(ov?.ExtraModAnimalKeys, extraEffective.Keys);
 
             var overrides = new WildAnimalOverridesDump(
@@ -458,6 +462,7 @@ public FacadeResult DumpEffectiveWildAnimals()
                 ExtraModAnimalKeys: extraEffective,
                 ExtraModAnimalKeysLoaded: extraLoaded,
                 ResolvedFarmAnimalIdsByModGroup: resolvedByGroup,
+                ValidationWarnings: validationWarnings,
                 Diff: diff,
                 DiffText: diffText,
                 Overrides: overrides,
@@ -713,6 +718,96 @@ private Dictionary<string, List<string>> BuildResolvedFarmAnimalIdsByModGroup(Di
     }
 
     return dict;
+}
+
+
+
+private HashSet<string>? TryLoadKnownFarmAnimalIdsOrNull()
+{
+    try
+    {
+        if (!_isWorldReady())
+            return null;
+
+        var data = Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+        return new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
+    }
+    catch (Exception ex)
+    {
+        LogScopedHelper.Log(
+            _log,
+            ScopedLogCatalog.ModWeCategory.SaveData,
+            $"Failed loading Data/FarmAnimals for validation: {ex.Message}",
+            StardewModdingAPI.LogLevel.Trace);
+
+        return null;
+    }
+}
+
+private List<string> BuildExtraModAnimalKeysValidationWarnings(Dictionary<string, ExtraModAnimalKeysJson> modGroups, ISet<string>? knownFarmAnimalIds)
+{
+    var warnings = new List<string>();
+
+    foreach (var (modId, block) in modGroups.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
+    {
+        if (string.IsNullOrWhiteSpace(modId))
+        {
+            warnings.Add("ExtraModAnimalKeys contains a blank modId key; block will be ignored.");
+            continue;
+        }
+
+        if (!_mods.IsLoaded(modId))
+            warnings.Add($"ExtraModAnimalKeys modId '{modId}' is not loaded; its keys will be ignored.");
+
+        var raw = block.FarmAnimalKeys ?? new List<string>();
+        if (raw.Count == 0)
+        {
+            warnings.Add($"ExtraModAnimalKeys '{modId}' has no FarmAnimalKeys.");
+            continue;
+        }
+
+        var blanks = raw.Count(s => string.IsNullOrWhiteSpace(s));
+        if (blanks > 0)
+            warnings.Add($"ExtraModAnimalKeys '{modId}' has {blanks} blank FarmAnimalKeys entries.");
+
+        var trimmed = raw
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim())
+            .Where(s => s.Length > 0)
+            .ToList();
+
+        var whitespace = raw.Count(s => !string.IsNullOrWhiteSpace(s) && s != s.Trim());
+        if (whitespace > 0)
+            warnings.Add($"ExtraModAnimalKeys '{modId}' has {whitespace} keys with leading/trailing whitespace.");
+
+        var dupes = trimmed
+            .GroupBy(s => s, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+            .Take(10)
+            .ToList();
+
+        if (dupes.Count > 0)
+            warnings.Add($"ExtraModAnimalKeys '{modId}' has duplicate keys (case-insensitive): {string.Join(", ", dupes)}.");
+
+        if (knownFarmAnimalIds is not null)
+        {
+            var unknown = block.GetEffectiveFarmAnimalKeys()
+                .Where(x => !knownFarmAnimalIds.Contains(x))
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .Take(10)
+                .ToList();
+
+            if (unknown.Count > 0)
+                warnings.Add($"ExtraModAnimalKeys '{modId}' has FarmAnimalKeys not present in Data/FarmAnimals: {string.Join(", ", unknown)}.");
+        }
+
+        if (block.GetEffectiveFarmAnimalKeys().Count == 0)
+            warnings.Add($"ExtraModAnimalKeys '{modId}' has no effective FarmAnimalKeys after normalization.");
+    }
+
+    return warnings;
 }
 
 private static Dictionary<string, string> BuildExtraModAnimalKeysSources(
@@ -1018,6 +1113,7 @@ private sealed record WildAnimalStatusEntry(
     Dictionary<string, List<string>> ExtraModAnimalKeys,
     Dictionary<string, bool> ExtraModAnimalKeysLoaded,
     Dictionary<string, List<string>> ResolvedFarmAnimalIdsByModGroup,
+    List<string> ValidationWarnings,
     WildAnimalDiffDump? Diff,
     string? DiffText,
     WildAnimalOverridesDump Overrides,

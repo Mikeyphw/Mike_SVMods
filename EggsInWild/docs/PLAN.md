@@ -3,6 +3,7 @@
 ## Status
 - Phases 0–8 complete (see `docs/CHECKLIST.md`).
 - Current focus: Phase 7+ UX polish (bulk workflows, richer validation surfaced in GMCM) and maintenance fixes.
+- Validation warnings: dev diagnostics now include warnings for unloaded modIds and unknown FarmAnimalKeys (when Data/FarmAnimals is available).
 
 ## Scope
 - Subdir: `EggsInWild`
