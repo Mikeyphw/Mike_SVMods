@@ -935,6 +935,37 @@ foreach (var modId in extraModIdsOrdered)
                         else
                             cfg.WildAnimalOverrides[key] = ov;
                     });
+
+
+                page.BoolLabel(
+                    elementId: $"{elementId}.reset",
+                    name: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.resetBlock.name", "Reset block to default"),
+                    tooltip: () => Translate(
+                        i18n,
+                        "config.wildAnimals.extraModAnimalKeys.resetBlock.tooltip",
+                        "Remove the override for mod-group '{0}'. For custom blocks this deletes the block. Close and reopen this page to refresh the list.",
+                        modId),
+                    getValue: () => false,
+                    setValue: reset =>
+                    {
+                        if (!reset)
+                            return;
+
+                        var cfg = _config!.Get();
+                        var ov = GetOverride(cfg);
+                        if (ov?.ExtraModAnimalKeys is null)
+                            return;
+
+                        ov.ExtraModAnimalKeys.Remove(modId);
+
+                        if (ov.ExtraModAnimalKeys.Count == 0)
+                            ov.ExtraModAnimalKeys = null;
+
+                        if (IsEmptyOverride(ov))
+                            cfg.WildAnimalOverrides.Remove(key);
+                        else
+                            cfg.WildAnimalOverrides[key] = ov;
+                    });
             }
 
             page.Separator(simple: true);

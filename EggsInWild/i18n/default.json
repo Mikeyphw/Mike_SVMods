@@ -468,5 +468,7 @@
   "specialOrder.WildEggIncubatorII.objective.2.message": "Wild Eggs",
   "specialOrder.WildEggIncubatorII.objective.2.text": "Deliver wild eggs to the Wizard.",
   "specialOrder.WildEggIncubatorII.text": "The Wizard wants wild eggs for research.",
-  "ui.hud.animalNotes.questIssued": "You found an Animal Note!"
+  "ui.hud.animalNotes.questIssued": "You found an Animal Note!",
+  "config.wildAnimals.extraModAnimalKeys.resetBlock.name": "Reset block to default",
+  "config.wildAnimals.extraModAnimalKeys.resetBlock.tooltip": "Remove the override for mod-group '{0}'. For custom blocks this deletes the block. Close and reopen this page to refresh the list."
 }
