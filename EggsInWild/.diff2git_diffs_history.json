@@ -390,7 +390,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260303T190108-0300-01",
+      "file": "20260303T190108-0300-01",
+      "title": "EggsInWild: polish validation warnings (severity prefixes, dedupe, stable ordering)",
+      "title_with_id": "EggsInWild: polish validation warnings (severity prefixes, dedupe, stable ordering) [20260303T190108-0300-01]",
+      "created_at": "2026-03-03T19:05:21-03:00",
+      "applied_at": "2026-03-03T19:05:40-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-03T18:50:49-03:00"
+  "updated_at": "2026-03-03T19:05:40-03:00"
 }
