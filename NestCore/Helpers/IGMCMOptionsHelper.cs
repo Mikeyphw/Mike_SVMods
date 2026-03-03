@@ -345,6 +345,36 @@ private Func<string> GetName(string optionName)
     public void AddImage(Func<Texture2D> texture, Rectangle? texturePixelArea = null, int scale = Game1.pixelZoom)
         => _gmcm?.AddImage(_manifest, texture, texturePixelArea, scale);
 
+    public void AddImageOption(
+        Func<uint> getValue,
+        Action<uint> setValue,
+        Func<string> name,
+        Func<(Func<string?> label, Texture2D sheet, Rectangle? sourceRect)[]> choices,
+        Func<string>? tooltip = null,
+        Func<uint, string?>? imageTooltipTitle = null,
+        Func<uint, string?>? imageTooltipText = null,
+        int arrowLocation = (int)ImageOptionArrowLocation.Top,
+        int labelLocation = (int)ImageOptionLabelLocation.Right,
+        string? fieldId = null)
+    {
+        if (_extraOptionsApi is null)
+            return;
+
+        _extraOptionsApi.AddImageOption(
+            mod: _manifest,
+            getValue: getValue,
+            setValue: setValue,
+            name: name,
+            choices: choices,
+            tooltip: tooltip,
+            imageTooltipTitle: imageTooltipTitle,
+            imageTooltipText: imageTooltipText,
+            arrowLocation: arrowLocation,
+            labelLocation: labelLocation,
+            fieldId: fieldId
+        );
+    }
+
     public void Unregister(IManifest mod)
         => _gmcm?.Unregister(mod);
 

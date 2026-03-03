@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.NestCore.Helpers;
+using Mikew.NestCore.Framework;
 using StardewValley;
 
 namespace Mikew.NestCore.Integrations.Gmcm;
@@ -32,6 +33,8 @@ public sealed class GmcmPageBuilder<TConfig>
         _autoIdCounter = 0;
     }
 
+    public bool SupportsExtraOptions => _menu.SupportsExtraOptions;
+
     // -----------------------------
     // Page elements
     // -----------------------------
@@ -60,6 +63,36 @@ public sealed class GmcmPageBuilder<TConfig>
                 : "config.paragraph.gmcmoptions_status.disabled.text",
             styled: true,
             id: "gmcmoptions_status"
+        );
+    }
+
+    public void ImagePicker(
+        string elementId,
+        Func<string> name,
+        Func<string>? tooltip,
+        Func<uint> getValue,
+        Action<uint> setValue,
+        Func<(Func<string?> label, Texture2D sheet, Rectangle? sourceRect)[]> choices,
+        Func<uint, string?>? imageTooltipTitle = null,
+        Func<uint, string?>? imageTooltipText = null,
+        int arrowLocation = (int)IGMCMOptionsAPI.ImageOptionArrowLocation.Top,
+        int labelLocation = (int)IGMCMOptionsAPI.ImageOptionLabelLocation.Right,
+        string? fieldId = null)
+    {
+        if (!_menu.SupportsExtraOptions)
+            return;
+
+        _menu.AddImageOption(
+            getValue: getValue,
+            setValue: setValue,
+            name: name,
+            choices: choices,
+            tooltip: tooltip,
+            imageTooltipTitle: imageTooltipTitle,
+            imageTooltipText: imageTooltipText,
+            arrowLocation: arrowLocation,
+            labelLocation: labelLocation,
+            fieldId: fieldId ?? AutoFieldId(elementId)
         );
     }
 
