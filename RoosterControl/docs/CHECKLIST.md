@@ -35,5 +35,5 @@
 ## Phase 12 — GMCM UI
 - [x] Per-save compat source selection (egg sources + rooster providers)
 - [x] Validation summary/status on compat page
-- [ ] Optional: cycle buttons / improved UX (GMCMOptions)
-- [ ] Optional: inline per-selection validation messaging
+- [x] Optional: cycle buttons / improved UX (GMCMOptions)
+- [x] Optional: inline per-selection validation messaging

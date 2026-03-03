@@ -38,7 +38,7 @@ Models:
 - Phase 9B: complete (cycling + apply selections to runtime).
 - Phase 10: DONE (late apply + validation/diagnostics).
 - Phase 11: DONE (fertilized egg synthesis + tests).
-- Phase 12: IN PROGRESS (GMCM compat selection UI).
+- Phase 12: DONE (GMCM compat selection UI).
 
 ---
 
@@ -144,11 +144,11 @@ Code:
 
 ---
 
-## Phase 12 — GMCM UI for compat selections
+## Phase 12 — GMCM UI for compat selections (DONE)
 
 Goal: expose selections/cycling via GMCM with validation.
 
 Steps:
 1) GMCM “Compat” page lists egg kinds and rooster providers.
-2) Drop-down / buttons for cycling.
-3) Validation warnings and reset-to-default options.
+2) When GMCMOptions is installed, egg sources use an arrow-cycle picker (fallback to drop-down).
+3) Show validation summary + inline per-selection notes.

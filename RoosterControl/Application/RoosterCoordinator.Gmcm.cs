@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Mikew.NestCore.Integrations.Gmcm;
 using RoosterControl.Application.Hatching;
 using RoosterControl.Constants;
@@ -221,15 +223,37 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
             continue;
         }
 
-        b.TextLabel(
-            elementId: $"compat_sources_egg_{kind}",
-            name: () => _i18n.GetString($"config.compatSources.egg.{kind}.name"),
-            tooltip: () => _i18n.GetString($"config.compatSources.egg.{kind}.description"),
-            getValue: () => GetSelectedEggSourceId(kind, allowed[0]),
-            setValue: v => SetSelectedEggSourceId(kind, v),
-            allowedValues: allowed,
-            formatValue: FormatEggSourceValue,
-            fieldId: $"{ModManifest.UniqueID}.compat.sources.egg.{kind}"
+        if (b.SupportsExtraOptions && TryBuildEggSourceChoices(kind, allowed, data, out var eggChoices))
+        {
+            b.ImagePicker(
+                elementId: $"compat_sources_egg_{kind}",
+                name: () => _i18n.GetString($"config.compatSources.egg.{kind}.name"),
+                tooltip: () => _i18n.GetString($"config.compatSources.egg.{kind}.description"),
+                getValue: () => GetSelectedEggSourceIndex(kind, allowed[0], allowed),
+                setValue: v => SetSelectedEggSourceIndex(kind, allowed, v),
+                choices: () => eggChoices,
+                fieldId: $"{ModManifest.UniqueID}.compat.sources.egg.{kind}"
+            );
+        }
+        else
+        {
+            b.TextLabel(
+                elementId: $"compat_sources_egg_{kind}",
+                name: () => _i18n.GetString($"config.compatSources.egg.{kind}.name"),
+                tooltip: () => _i18n.GetString($"config.compatSources.egg.{kind}.description"),
+                getValue: () => GetSelectedEggSourceId(kind, allowed[0]),
+                setValue: v => SetSelectedEggSourceId(kind, v),
+                allowedValues: allowed,
+                formatValue: FormatEggSourceValue,
+                fieldId: $"{ModManifest.UniqueID}.compat.sources.egg.{kind}"
+            );
+        }
+
+        b.ParagraphDynamic(
+            text: () => BuildEggSelectionValidationNote(kind, data),
+            styled: true,
+            id: $"compat_egg_note_{kind}"
+        );
         );
     }
 
@@ -252,6 +276,12 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
         allowedValues: roosterAllowed.ToArray(),
         formatValue: FormatRoosterProviderValue,
         fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters"
+    );
+
+    b.ParagraphDynamic(
+        text: () => BuildRoosterProvidersValidationNote(data),
+        styled: true,
+        id: "compat_rooster_note"
     );
 }
 
@@ -283,6 +313,82 @@ private string BuildCompatSourcesSummary(IDictionary<string, FarmAnimalData> dat
         summary += $" (errors:{errors})";
 
     return summary;
+}
+
+
+private string BuildEggSelectionValidationNote(EggKind kind, IDictionary<string, FarmAnimalData> data)
+{
+    if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, kind, data, out var itemId, out var error))
+    {
+        var sourceId = _saveState.Compat.SelectedEggSources.TryGetValue(kind, out var sid) && !string.IsNullOrWhiteSpace(sid)
+            ? sid
+            : "(default)";
+        return $"{kind}: OK ({sourceId} => {itemId})";
+    }
+
+    return $"{kind}: ERR ({error ?? "unresolved"})";
+}
+
+private string BuildRoosterProvidersValidationNote(IDictionary<string, FarmAnimalData> data)
+{
+    var enabledProviders = _saveState.Compat.EnabledRoosterSources?.Count ?? 0;
+    var keys = _compatSelection.GetEnabledRoosterFarmAnimalKeys(_saveState.Compat);
+
+    var missing = keys.Where(k => !data.ContainsKey(k)).ToList();
+    if (missing.Count == 0)
+        return $"Roosters: OK (providers:{enabledProviders} keys:{keys.Count})";
+
+    return $"Roosters: WARN (providers:{enabledProviders} keys:{keys.Count} missing:{missing.Count})";
+}
+
+private uint GetSelectedEggSourceIndex(EggKind kind, string fallback, string[] allowed)
+{
+    var selected = GetSelectedEggSourceId(kind, fallback);
+    var idx = Array.FindIndex(allowed, v => v.Equals(selected, StringComparison.OrdinalIgnoreCase));
+    return (uint)(idx < 0 ? 0 : idx);
+}
+
+private void SetSelectedEggSourceIndex(EggKind kind, string[] allowed, uint index)
+{
+    var i = (int)index;
+    if (i < 0 || i >= allowed.Length)
+        i = 0;
+
+    SetSelectedEggSourceId(kind, allowed[i]);
+}
+
+private bool TryBuildEggSourceChoices(
+    EggKind kind,
+    string[] allowed,
+    IDictionary<string, FarmAnimalData> data,
+    out (Func<string?> label, Texture2D sheet, Rectangle? sourceRect)[] choices)
+{
+    var list = new List<(Func<string?> label, Texture2D sheet, Rectangle? sourceRect)>();
+
+    foreach (var sid in allowed)
+    {
+        var src = _compatSelection.EggCatalog.Sources
+            .FirstOrDefault(s => s.EggKind == kind && s.SourceId.Equals(sid, StringComparison.OrdinalIgnoreCase));
+
+        if (src is null || !_compatSelection.TryResolveEggSourceItemId(src, data, out var itemId, out _))
+        {
+            list.Add((() => FormatEggSourceValue(sid), Game1.mouseCursors, new Rectangle(0, 0, 1, 1)));
+            continue;
+        }
+
+        try
+        {
+            var item = ItemRegistry.Create(itemId, 1);
+            list.Add((() => FormatEggSourceValue(sid), item.getTexture(), item.getSourceRect()));
+        }
+        catch
+        {
+            list.Add((() => FormatEggSourceValue(sid), Game1.mouseCursors, new Rectangle(0, 0, 1, 1)));
+        }
+    }
+
+    choices = list.ToArray();
+    return choices.Length > 0;
 }
 
 private string GetSelectedEggSourceId(EggKind kind, string fallback)

@@ -169,7 +169,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260303T020838-0300-02",
+      "file": "20260303T020838-0300-02",
+      "title": "RoosterControl: Phase 12 optional polish (GMCMOptions arrow-cycle + inline validation notes + docs)",
+      "title_with_id": "RoosterControl: Phase 12 optional polish (GMCMOptions arrow-cycle + inline validation notes + docs) [20260303T020838-0300-02]",
+      "created_at": "2026-03-03T00:35:08-03:00",
+      "applied_at": "2026-03-03T02:10:59-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-03T00:14:11-03:00"
+  "updated_at": "2026-03-03T02:10:59-03:00"
 }
