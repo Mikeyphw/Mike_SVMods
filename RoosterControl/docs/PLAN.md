@@ -37,6 +37,8 @@ Models:
 - Phase 9A: complete (per-save selection state + catalog loading + list command).
 - Phase 9B: complete (cycling + apply selections to runtime).
 - Phase 10: DONE (late apply + validation/diagnostics).
+- Phase 11: DONE (fertilized egg synthesis + tests).
+- Phase 12: IN PROGRESS (GMCM compat selection UI).
 
 ---
 

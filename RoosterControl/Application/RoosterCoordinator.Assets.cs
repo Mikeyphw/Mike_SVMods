@@ -80,7 +80,7 @@ internal sealed partial class RoosterCoordinator
                         roosterHelper: ctx.RoosterHelper,
                         getFertilizedNameSuffix: () => ctx._i18n.GetString("egg.fertilized.name"),
                         getFertilizedDescription: () => ctx._i18n.GetString("egg.fertilized.description"),
-                        cloneEggsEnabled: ctx.GetHatchApiCloneEggsOption()
+                        cloneEggsEnabled: ctx.GetHatchApiCloneEggsOption
                     );
                     ctx._fertilizedEggsEditor.Edit(e);
 

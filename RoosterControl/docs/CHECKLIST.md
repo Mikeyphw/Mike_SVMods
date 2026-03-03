@@ -30,4 +30,10 @@
 - [x] Prefer native fertilized eggs when provided by the active egg source
 - [x] Otherwise synthesize fertilized variants into `Data/Objects`
 - [x] Ensure fertilized-only hatching uses the resolved fertilized IDs (rooster + female)
-- [ ] Tests/regression harness (Phase 11D follow-up)
+- [x] Tests/regression harness (Phase 11D follow-up)
+
+## Phase 12 — GMCM UI
+- [x] Per-save compat source selection (egg sources + rooster providers)
+- [x] Validation summary/status on compat page
+- [ ] Optional: cycle buttons / improved UX (GMCMOptions)
+- [ ] Optional: inline per-selection validation messaging

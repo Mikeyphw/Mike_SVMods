@@ -156,7 +156,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260303T001120-0300-01",
+      "file": "20260303T001120-0300-01",
+      "title": "Fix Assets cloneEggsEnabled delegate; Phase 11 cleanup; Phase 12 GMCM compat selection UI",
+      "title_with_id": "Fix Assets cloneEggsEnabled delegate; Phase 11 cleanup; Phase 12 GMCM compat selection UI [20260303T001120-0300-01]",
+      "created_at": "2026-03-02T23:30:29-03:00",
+      "applied_at": "2026-03-03T00:14:11-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-02T23:44:42-03:00"
+  "updated_at": "2026-03-03T00:14:11-03:00"
 }

@@ -56,7 +56,7 @@ internal sealed class CompatSelectionService
 
         var sb = new StringBuilder();
 
-        sb.AppendLine("RoosterControl compat status (Phase 9A: selections + catalog loading)");
+        sb.AppendLine("RoosterControl compat status");
         sb.AppendLine();
         sb.AppendLine($"Egg sources catalog: {GetEggCatalogAssetName()} (schema v{EggCatalog.SchemaVersion})");
         sb.AppendLine($"Rooster sources catalog: {GetRoosterCatalogAssetName()} (schema v{RoosterCatalog.SchemaVersion})");
@@ -103,7 +103,7 @@ internal sealed class CompatSelectionService
         }
 
         sb.AppendLine();
-        sb.AppendLine("Note: cycling/apply behavior is Phase 9B (not yet enabled).");
+        sb.AppendLine("Note: selections are applied at runtime; use ra_compat validate for detailed diagnostics.");
         return sb.ToString();
     }
 
@@ -345,6 +345,105 @@ internal sealed class CompatSelectionService
             error = "CompatSelectionService not initialized yet.";
             return false;
         }
+
+
+public bool TrySetEggSource(
+    CompatSelectionState state,
+    EggKind kind,
+    string sourceId,
+    out EggSourceDef? selected,
+    out string? error)
+{
+    selected = null;
+    error = null;
+
+    if (!IsInitialized)
+    {
+        error = "CompatSelectionService not initialized yet.";
+        return false;
+    }
+
+    if (string.IsNullOrWhiteSpace(sourceId))
+    {
+        error = "SourceId is required.";
+        return false;
+    }
+
+    var options = EggCatalog.Sources
+        .Where(s => s.EggKind == kind && !string.IsNullOrWhiteSpace(s.SourceId) && IsEggSourceValid(s))
+        .OrderBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    if (options.Count == 0)
+    {
+        error = $"No valid egg sources were found for EggKind={kind}.";
+        return false;
+    }
+
+    selected = options.FirstOrDefault(o => o.SourceId.Equals(sourceId, StringComparison.OrdinalIgnoreCase));
+    if (selected is null)
+    {
+        error = $"Unknown egg source '{sourceId}' for EggKind={kind}.";
+        return false;
+    }
+
+    state.SelectedEggSources.TryGetValue(kind, out var current);
+    var changed = current is null || !current.Equals(selected.SourceId, StringComparison.OrdinalIgnoreCase);
+
+    state.SelectedEggSources[kind] = selected.SourceId;
+    return changed;
+}
+
+public bool TrySetRoosterProviderSingle(
+    CompatSelectionState state,
+    string sourceId,
+    out RoosterSourceDef? selected,
+    out string? error)
+{
+    selected = null;
+    error = null;
+
+    if (!IsInitialized)
+    {
+        error = "CompatSelectionService not initialized yet.";
+        return false;
+    }
+
+    if (string.IsNullOrWhiteSpace(sourceId))
+    {
+        error = "SourceId is required.";
+        return false;
+    }
+
+    var options = RoosterCatalog.Sources
+        .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
+        .OrderBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    if (options.Count == 0)
+    {
+        error = "No rooster providers were found in the catalog.";
+        return false;
+    }
+
+    selected = options.FirstOrDefault(o => o.SourceId.Equals(sourceId, StringComparison.OrdinalIgnoreCase));
+    if (selected is null)
+    {
+        error = $"Unknown rooster provider '{sourceId}'.";
+        return false;
+    }
+
+    var current = state.EnabledRoosterSources
+        .Where(id => !string.IsNullOrWhiteSpace(id))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    var changed = current.Count != 1 || !current[0].Equals(selected.SourceId, StringComparison.OrdinalIgnoreCase);
+
+    state.EnabledRoosterSources = new List<string> { selected.SourceId };
+    return changed;
+}
 
         var all = RoosterCatalog.Sources
             .Select(s => s.SourceId)

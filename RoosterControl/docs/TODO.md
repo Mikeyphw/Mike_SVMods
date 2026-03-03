@@ -1,10 +1,8 @@
 # RoosterControl TODO
 
-## Next: Phase 11D (tests/regression safety)
-- [ ] Add unit tests in `RoosterControl.Tests` for:
-  - synthesized fertilized ID scheme
-  - native vs synthesized selection behavior
-  - `Data/Objects` injection results (golden snapshot style)
+## Next: Phase 12 (GMCM UI)
+- [ ] Improve compat page UX (optional cycle buttons when GMCMOptions is installed)
+- [ ] Inline per-selection validation notes
 
 ## After: Phase 12 (GMCM UI)
 - [ ] Add compat selection UI + validation messaging.

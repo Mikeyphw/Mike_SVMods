@@ -22,6 +22,7 @@ internal sealed partial class RoosterCoordinator
 {
     private GmcmConfigHost<RoosterControlConfig>? _gmcmHost;
     private bool _gmcmRebuildQueued;
+    private string _compatSourcesSummary = string.Empty;
 
     public void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
@@ -114,12 +115,7 @@ internal sealed partial class RoosterCoordinator
             b.Link("rooster.gold", tooltip: true);
         });
 
-        layout.Page("compat", b =>
-        {
-            b.Section("compat.settings");
-            b.Bool(cfg => cfg.General.BetterTrufflesCompat, optionId: "compat.betterTrufflesCompat", tooltip: true);
-            b.Bool(cfg => cfg.General.EnableStuckInside, optionId: "compat.enableStuckInside", tooltip: true);
-        });
+        layout.Page("compat", BuildCompatPage);
 
         layout.Page("probabilities", b =>
         {
@@ -170,6 +166,226 @@ internal sealed partial class RoosterCoordinator
 
         AddRoosterPages(layout);
     }
+
+private const string AllRoosterProvidersValue = "__ALL__";
+
+private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
+{
+    b.Section("compat.settings");
+    b.Bool(cfg => cfg.General.BetterTrufflesCompat, optionId: "compat.betterTrufflesCompat", tooltip: true);
+    b.Bool(cfg => cfg.General.EnableStuckInside, optionId: "compat.enableStuckInside", tooltip: true);
+
+    b.Separator(simple: true);
+
+    b.Section("compat.sources");
+
+    if (!Context.IsWorldReady)
+    {
+        b.Paragraph("compat.sources.not_ready");
+        return;
+    }
+
+    EnsureCompatInitialized();
+    EnsureRoostersSetup();
+
+    _invalidations.Flush();
+
+    Dictionary<string, FarmAnimalData> data;
+    try
+    {
+        data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+    }
+    catch (Exception ex)
+    {
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"Failed to load {FarmAnimalsAssetName} for GMCM compat sources page: {ex}", LogLevel.Error);
+        b.Paragraph("compat.sources.error");
+        return;
+    }
+
+    _compatSourcesSummary = BuildCompatSourcesSummary(data);
+    b.ParagraphDynamic(() => _compatSourcesSummary, styled: true, id: "compat_sources_summary");
+
+    foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+    {
+        var allowed = _compatSelection.EggCatalog.Sources
+            .Where(s => s.EggKind == kind && !string.IsNullOrWhiteSpace(s.SourceId))
+            .Where(s => _compatSelection.TryResolveEggSourceItemId(s, data, out _, out _))
+            .Select(s => s.SourceId)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (allowed.Length == 0)
+        {
+            b.ParagraphDynamic(() => $"{kind}: (no valid sources found)");
+            continue;
+        }
+
+        b.TextLabel(
+            elementId: $"compat_sources_egg_{kind}",
+            name: () => _i18n.GetString($"config.compatSources.egg.{kind}.name"),
+            tooltip: () => _i18n.GetString($"config.compatSources.egg.{kind}.description"),
+            getValue: () => GetSelectedEggSourceId(kind, allowed[0]),
+            setValue: v => SetSelectedEggSourceId(kind, v),
+            allowedValues: allowed,
+            formatValue: FormatEggSourceValue,
+            fieldId: $"{ModManifest.UniqueID}.compat.sources.egg.{kind}"
+        );
+    }
+
+    var roosterProviderIds = _compatSelection.RoosterCatalog.Sources
+        .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
+        .Select(s => s.SourceId)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    var roosterAllowed = new List<string> { AllRoosterProvidersValue };
+    roosterAllowed.AddRange(roosterProviderIds);
+
+    b.TextLabel(
+        elementId: "compat_sources_roosters",
+        name: () => _i18n.GetString("config.compatSources.roosters.name"),
+        tooltip: () => _i18n.GetString("config.compatSources.roosters.description"),
+        getValue: GetSelectedRoosterProvidersValue,
+        setValue: SetSelectedRoosterProvidersValue,
+        allowedValues: roosterAllowed.ToArray(),
+        formatValue: FormatRoosterProviderValue,
+        fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters"
+    );
+}
+
+private string BuildCompatSourcesSummary(IDictionary<string, FarmAnimalData> data)
+{
+    var errors = 0;
+    var parts = new List<string>();
+
+    foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+    {
+        if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, kind, data, out var itemId, out var err))
+        {
+            parts.Add($"{kind}={itemId}");
+        }
+        else
+        {
+            errors++;
+            parts.Add($"{kind}=ERR");
+        }
+    }
+
+    var enabledProviders = _saveState.Compat.EnabledRoosterSources?.Count ?? 0;
+    var roosterKeys = _compatSelection.GetEnabledRoosterFarmAnimalKeys(_saveState.Compat);
+    var roosterPart = $"roosters=providers:{enabledProviders} keys:{roosterKeys.Count}";
+    parts.Add(roosterPart);
+
+    var summary = $"Compat sources: {string.Join(", ", parts)}";
+    if (errors > 0)
+        summary += $" (errors:{errors})";
+
+    return summary;
+}
+
+private string GetSelectedEggSourceId(EggKind kind, string fallback)
+    => _saveState.Compat.SelectedEggSources.TryGetValue(kind, out var sid) && !string.IsNullOrWhiteSpace(sid)
+        ? sid
+        : fallback;
+
+private void SetSelectedEggSourceId(EggKind kind, string sourceId)
+{
+    EnsureCompatInitialized();
+
+    if (!_compatSelection.TrySetEggSource(_saveState.Compat, kind, sourceId, out _, out var error))
+    {
+        if (!string.IsNullOrWhiteSpace(error))
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to set egg source '{sourceId}' for {kind}: {error}", LogLevel.Warn);
+        return;
+    }
+
+    PersistAndApplyCompatChange($"gmcm set egg source {kind}");
+}
+
+private string FormatEggSourceValue(string sourceId)
+{
+    var src = _compatSelection.EggCatalog.Sources
+        .FirstOrDefault(s => s.SourceId.Equals(sourceId, StringComparison.OrdinalIgnoreCase));
+
+    if (src is null)
+        return sourceId;
+
+    return $"{src.DisplayName} ({src.SourceId})";
+}
+
+private string GetSelectedRoosterProvidersValue()
+{
+    var enabled = _saveState.Compat.EnabledRoosterSources
+        .Where(id => !string.IsNullOrWhiteSpace(id))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    return enabled.Count > 1 ? AllRoosterProvidersValue : enabled.Count == 1 ? enabled[0] : AllRoosterProvidersValue;
+}
+
+private void SetSelectedRoosterProvidersValue(string value)
+{
+    EnsureCompatInitialized();
+
+    if (value.Equals(AllRoosterProvidersValue, StringComparison.OrdinalIgnoreCase))
+    {
+        _compatSelection.EnableAllRoosterProviders(_saveState.Compat, out _, out var error);
+        if (!string.IsNullOrWhiteSpace(error))
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to enable all rooster providers: {error}", LogLevel.Warn);
+    }
+    else
+    {
+        if (!_compatSelection.TrySetRoosterProviderSingle(_saveState.Compat, value, out _, out var error))
+        {
+            if (!string.IsNullOrWhiteSpace(error))
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to set rooster provider '{value}': {error}", LogLevel.Warn);
+            return;
+        }
+    }
+
+    PersistAndApplyCompatChange("gmcm set rooster providers");
+}
+
+private string FormatRoosterProviderValue(string value)
+{
+    if (value.Equals(AllRoosterProvidersValue, StringComparison.OrdinalIgnoreCase))
+        return _i18n.GetString("config.compatSources.roosters.allowed.all");
+
+    var src = _compatSelection.RoosterCatalog.Sources
+        .FirstOrDefault(s => s.SourceId.Equals(value, StringComparison.OrdinalIgnoreCase));
+
+    return src is null ? value : $"{src.DisplayName} ({src.SourceId})";
+}
+
+private void PersistAndApplyCompatChange(string reason)
+{
+    _saveData.Write(SaveStateKey, _saveState);
+
+    InvalidateDailyPlanCache(reason);
+    _needsRoosterSetup = true;
+
+    RequestInvalidate(FarmAnimalsAssetName);
+    RequestInvalidate(ObjectsAssetName);
+
+    EnsureRoostersSetup();
+    _invalidations.Flush();
+
+    try
+    {
+        var data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+        ApplyCompatSelectionsToRuntime(data);
+        _compatSourcesSummary = BuildCompatSourcesSummary(data);
+    }
+    catch (Exception ex)
+    {
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to apply compat selections after change: {ex}", LogLevel.Error);
+    }
+
+    RequestGmcmRebuild();
+}
+
 
 
     private void BuildFemalesPage(GmcmPageBuilder<RoosterControlConfig> b)
