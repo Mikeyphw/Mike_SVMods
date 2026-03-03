@@ -267,16 +267,33 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
     var roosterAllowed = new List<string> { AllRoosterProvidersValue };
     roosterAllowed.AddRange(roosterProviderIds);
 
-    b.TextLabel(
-        elementId: "compat_sources_roosters",
-        name: () => _i18n.GetString("config.compatSources.roosters.name"),
-        tooltip: () => _i18n.GetString("config.compatSources.roosters.description"),
-        getValue: GetSelectedRoosterProvidersValue,
-        setValue: SetSelectedRoosterProvidersValue,
-        allowedValues: roosterAllowed.ToArray(),
-        formatValue: FormatRoosterProviderValue,
-        fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters"
-    );
+    var roosterAllowedArray = roosterAllowed.ToArray();
+
+    if (b.SupportsExtraOptions && TryBuildRoosterProviderChoices(roosterAllowedArray, out var roosterChoices))
+    {
+        b.ImagePicker(
+            elementId: "compat_sources_roosters",
+            name: () => _i18n.GetString("config.compatSources.roosters.name"),
+            tooltip: () => _i18n.GetString("config.compatSources.roosters.description"),
+            getValue: () => GetSelectedRoosterProvidersIndex(roosterAllowedArray),
+            setValue: v => SetSelectedRoosterProvidersIndex(roosterAllowedArray, v),
+            choices: () => roosterChoices,
+            fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters"
+        );
+    }
+    else
+    {
+        b.TextLabel(
+            elementId: "compat_sources_roosters",
+            name: () => _i18n.GetString("config.compatSources.roosters.name"),
+            tooltip: () => _i18n.GetString("config.compatSources.roosters.description"),
+            getValue: GetSelectedRoosterProvidersValue,
+            setValue: SetSelectedRoosterProvidersValue,
+            allowedValues: roosterAllowedArray,
+            formatValue: FormatRoosterProviderValue,
+            fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters"
+        );
+    }
 
     b.ParagraphDynamic(
         text: () => BuildRoosterProvidersValidationNote(data),
@@ -419,6 +436,39 @@ private string FormatEggSourceValue(string sourceId)
         return sourceId;
 
     return $"{src.DisplayName} ({src.SourceId})";
+}
+
+private uint GetSelectedRoosterProvidersIndex(string[] allowed)
+{
+    var selected = GetSelectedRoosterProvidersValue();
+    var idx = Array.FindIndex(allowed, v => v.Equals(selected, StringComparison.OrdinalIgnoreCase));
+    return (uint)(idx < 0 ? 0 : idx);
+}
+
+private void SetSelectedRoosterProvidersIndex(string[] allowed, uint index)
+{
+    var i = (int)index;
+    if (i < 0 || i >= allowed.Length)
+        i = 0;
+
+    SetSelectedRoosterProvidersValue(allowed[i]);
+}
+
+private bool TryBuildRoosterProviderChoices(
+    string[] allowed,
+    out (Func<string?> label, Texture2D sheet, Rectangle? sourceRect)[] choices)
+{
+    var list = new List<(Func<string?> label, Texture2D sheet, Rectangle? sourceRect)>();
+    var icon = new Rectangle(0, 0, 16, 16);
+
+    foreach (var value in allowed)
+    {
+        var captured = value;
+        list.Add((() => FormatRoosterProviderValue(captured), Game1.mouseCursors, icon));
+    }
+
+    choices = list.ToArray();
+    return choices.Length > 0;
 }
 
 private string GetSelectedRoosterProvidersValue()
