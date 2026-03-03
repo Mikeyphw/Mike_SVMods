@@ -4,6 +4,7 @@
 - Phases 0–8 complete (see `docs/CHECKLIST.md`).
 - Current focus: Phase 7+ UX polish (bulk workflows, richer validation surfaced in GMCM) and maintenance fixes.
 - Validation warnings: dev diagnostics now include warnings for unloaded modIds and unknown FarmAnimalKeys (when Data/FarmAnimals is available).
+- Validation warnings: GMCM displays ExtraModAnimalKeys warnings inline (shared validator with dev dump).
 - Bulk UX: GMCM ExtraModAnimalKeys supports stage + preview + apply bulk edits (export pending).
 
 ## Scope

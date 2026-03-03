@@ -1011,6 +1011,97 @@ foreach (var key in wildAnimalKeysForGmcm)
                 fieldId: $"wildAnimals_extraModAnimalKeys_bulkApply_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
 
 
+            page.Separator(simple: true);
+            page.SectionLabel(() => Translate(i18n, "config.section.wildAnimals.extraModAnimalKeys.validation.label", "Validation warnings"));
+
+            page.ParagraphDynamic(
+                () =>
+                {
+                    static HashSet<string>? TryLoadKnownFarmAnimalIdsOrNull()
+                    {
+                        try
+                        {
+                            if (!Context.IsWorldReady)
+                                return null;
+
+                            var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                            return new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
+                        }
+                        catch
+                        {
+                            return null;
+                        }
+                    }
+
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+
+                    var groups = new Dictionary<string, ExtraModAnimalKeysJson>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var modId in extraModIdsForGmcm)
+                    {
+                        List<string> raw;
+
+                        if (ov?.ExtraModAnimalKeys is not null
+                            && ov.ExtraModAnimalKeys.TryGetValue(modId, out var blockOv)
+                            && blockOv?.FarmAnimalKeys is { Count: > 0 })
+                        {
+                            raw = blockOv.FarmAnimalKeys;
+                        }
+                        else if (definition?.ExtraModAnimalKeys is not null
+                            && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                            && baseBlock?.FarmAnimalKeys is { Count: > 0 })
+                        {
+                            raw = baseBlock.FarmAnimalKeys;
+                        }
+                        else
+                        {
+                            raw = new List<string>();
+                        }
+
+                        groups[modId] = new ExtraModAnimalKeysJson { FarmAnimalKeys = raw.ToList() };
+                    }
+
+                    var knownIds = TryLoadKnownFarmAnimalIdsOrNull();
+                    var warnings = ExtraModAnimalKeysWarnings.Build(groups, modAvailability, knownIds);
+
+                    if (warnings.Count == 0)
+                    {
+                        var none = Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.validation.none", "Validation warnings: (none)");
+                        if (knownIds is null)
+                        {
+                            var note = Translate(
+                                i18n,
+                                "config.paragraph.wildAnimals.extraModAnimalKeys.validation.noteFarmAnimalsUnavailable",
+                                "Note: FarmAnimalKeys validation against Data/FarmAnimals is only available when a save is loaded.");
+                            return $"{none}{Environment.NewLine}{note}";
+                        }
+
+                        return none;
+                    }
+
+                    var lines = new List<string>
+                    {
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.validation.header", "Validation warnings:"),
+                    };
+
+                    foreach (var w in warnings.Take(12))
+                        lines.Add($" - {w}");
+
+                    if (warnings.Count > 12)
+                        lines.Add($" - ... (+{warnings.Count - 12} more)");
+
+                    if (knownIds is null)
+                        lines.Add(Translate(
+                            i18n,
+                            "config.paragraph.wildAnimals.extraModAnimalKeys.validation.noteFarmAnimalsUnavailable",
+                            "Note: FarmAnimalKeys validation against Data/FarmAnimals is only available when a save is loaded."));
+
+                    return string.Join(Environment.NewLine, lines);
+                },
+                id: $"wildAnimals_extraModAnimalKeys_validation_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+
+
 
 
 

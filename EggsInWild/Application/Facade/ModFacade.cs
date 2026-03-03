@@ -749,68 +749,7 @@ private HashSet<string>? TryLoadKnownFarmAnimalIdsOrNull()
 
 private List<string> BuildExtraModAnimalKeysValidationWarnings(Dictionary<string, ExtraModAnimalKeysJson> modGroups, ISet<string>? knownFarmAnimalIds)
 {
-    var warnings = new List<string>();
-
-    foreach (var (modId, block) in modGroups.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
-    {
-        if (string.IsNullOrWhiteSpace(modId))
-        {
-            warnings.Add("ExtraModAnimalKeys contains a blank modId key; block will be ignored.");
-            continue;
-        }
-
-        if (!_mods.IsLoaded(modId))
-            warnings.Add($"ExtraModAnimalKeys modId '{modId}' is not loaded; its keys will be ignored.");
-
-        var raw = block.FarmAnimalKeys ?? new List<string>();
-        if (raw.Count == 0)
-        {
-            warnings.Add($"ExtraModAnimalKeys '{modId}' has no FarmAnimalKeys.");
-            continue;
-        }
-
-        var blanks = raw.Count(s => string.IsNullOrWhiteSpace(s));
-        if (blanks > 0)
-            warnings.Add($"ExtraModAnimalKeys '{modId}' has {blanks} blank FarmAnimalKeys entries.");
-
-        var trimmed = raw
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .Select(s => s.Trim())
-            .Where(s => s.Length > 0)
-            .ToList();
-
-        var whitespace = raw.Count(s => !string.IsNullOrWhiteSpace(s) && s != s.Trim());
-        if (whitespace > 0)
-            warnings.Add($"ExtraModAnimalKeys '{modId}' has {whitespace} keys with leading/trailing whitespace.");
-
-        var dupes = trimmed
-            .GroupBy(s => s, StringComparer.OrdinalIgnoreCase)
-            .Where(g => g.Count() > 1)
-            .Select(g => g.Key)
-            .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
-            .Take(10)
-            .ToList();
-
-        if (dupes.Count > 0)
-            warnings.Add($"ExtraModAnimalKeys '{modId}' has duplicate keys (case-insensitive): {string.Join(", ", dupes)}.");
-
-        if (knownFarmAnimalIds is not null)
-        {
-            var unknown = block.GetEffectiveFarmAnimalKeys()
-                .Where(x => !knownFarmAnimalIds.Contains(x))
-                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                .Take(10)
-                .ToList();
-
-            if (unknown.Count > 0)
-                warnings.Add($"ExtraModAnimalKeys '{modId}' has FarmAnimalKeys not present in Data/FarmAnimals: {string.Join(", ", unknown)}.");
-        }
-
-        if (block.GetEffectiveFarmAnimalKeys().Count == 0)
-            warnings.Add($"ExtraModAnimalKeys '{modId}' has no effective FarmAnimalKeys after normalization.");
-    }
-
-    return warnings;
+    return ExtraModAnimalKeysWarnings.Build(modGroups, _mods, knownFarmAnimalIds);
 }
 
 private static Dictionary<string, string> BuildExtraModAnimalKeysSources(

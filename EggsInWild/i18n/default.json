@@ -478,5 +478,9 @@
   "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.header": "Bulk preview (not applied yet):",
   "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note": "This is a preview only. Use the toggle below to apply staged changes.",
   "config.paragraph.wildAnimals.extraModAnimalKeys.bulkApply.note": "Toggle on to apply staged bulk changes. This writes overrides immediately and clears the staged text.",
-  "config.wildAnimals.extraModAnimalKeys.bulkApply.name": "Apply staged bulk changes"
+  "config.wildAnimals.extraModAnimalKeys.bulkApply.name": "Apply staged bulk changes",
+  "config.section.wildAnimals.extraModAnimalKeys.validation.label": "Validation warnings",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.validation.header": "Validation warnings:",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.validation.none": "Validation warnings: (none)",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.validation.noteFarmAnimalsUnavailable": "Note: FarmAnimalKeys validation against Data/FarmAnimals is only available when a save is loaded."
 }

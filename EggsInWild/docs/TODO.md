@@ -6,6 +6,7 @@
     - [x] Bulk stage + preview + apply (Paste: `modId | csvKeys`; `*` to reset/remove).
     - [ ] Export current effective blocks as `modId | csvKeys` for round-trip editing.
   - [ ] Surface richer validation warnings in GMCM (unknown modIds, empty/duplicate keys, keys not present in game data when available).
+    - [x] ExtraModAnimalKeys: GMCM shows inline validation warnings (unloaded modIds, blank/whitespace/dupes, unknown FarmAnimalKeys when Data/FarmAnimals is available).
   - [x] Dev: `wegg wildanimals dump_effective` includes validation warnings (unloaded modIds + unknown FarmAnimalKeys when Data/FarmAnimals is available).
 - [ ] Index-page navigation improvements that fit GMCM static-page limits (no live search).
 - [ ] Keep build/warning budget tight (no obsolete legacy support; avoid config churn).
