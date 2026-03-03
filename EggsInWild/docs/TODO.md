@@ -5,6 +5,7 @@
   - [ ] Bulk add/update/remove workflows that fit GMCM static-page limits.
     - [x] Bulk stage + preview + apply (Paste: `modId | csvKeys`; `*` to reset/remove).
     - [x] Bulk apply quick-fix toggles (trim/dedupe/drop unknown; also applied to per-block edits).
+    - [x] Bulk preview shows before/after and what quick-fixes will change (trim/dedupe/drop unknown).
     - [ ] Export current effective blocks as `modId | csvKeys` for round-trip editing.
   - [ ] Surface richer validation warnings in GMCM (unknown modIds, empty/duplicate keys, keys not present in game data when available).
     - [x] ExtraModAnimalKeys: GMCM shows inline validation warnings (unloaded modIds, blank/whitespace/dupes, unknown FarmAnimalKeys when Data/FarmAnimals is available).

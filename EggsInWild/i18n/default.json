@@ -504,5 +504,7 @@
   "config.wildAnimals.index.group.sz.name": "S–Z",
   "config.wildAnimals.index.group.sz.description": "Wild animals starting with S–Z.",
   "config.wildAnimals.index.group.other.name": "Other",
-  "config.wildAnimals.index.group.other.description": "Wild animals not starting with A–Z."
+  "config.wildAnimals.index.group.other.description": "Wild animals not starting with A–Z.",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.summary": "Staged: {0} upserts, {1} resets, {2} parse warnings.",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.fixes": "Quick-fixes enabled for apply: {0}."
 }

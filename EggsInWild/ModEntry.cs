@@ -181,6 +181,15 @@ public sealed class ModEntry : Mod
         InvalidateGameAssets();
     }
 
+    private static bool IsEmptyOverride(WildAnimalOverrideConfig? ov)
+        => ov is null
+            || (ov.Enabled is null
+                && ov.LargeEgg is null
+                && ov.Price is null
+                && ov.IsMagic is null
+                && (ov.LocationTypes is null || ov.LocationTypes.Count == 0)
+                && (ov.ExtraModAnimalKeys is null || ov.ExtraModAnimalKeys.Count == 0));
+
     private bool NormalizeLocationTypesOverrides(ModConfig cfg)
     {
         if (cfg.WildAnimalOverrides is null || cfg.WildAnimalOverrides.Count == 0)
@@ -978,7 +987,7 @@ foreach (var key in wildAnimalKeysForGmcm)
                     {
                         try
                         {
-                            var data = Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                            var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
                             var known = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
                             fixedKeys = parsed.Where(x => known.Contains(x)).ToList();
                         }
@@ -1105,24 +1114,8 @@ foreach (var key in wildAnimalKeysForGmcm)
                     if (!_extraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) || string.IsNullOrWhiteSpace(st.Raw))
                         return Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.empty", "Bulk preview: (none)");
 
-                    var lines = new List<string>
-                    {
-                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.header", "Bulk preview (not applied yet):"),
-                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note", "This is a preview only. Use the toggle below to apply staged changes."),
-                        "",
-                    };
-
-                    if (st.Warnings.Count > 0)
-                    {
-                        lines.Add("Warnings:");
-                        foreach (var w in st.Warnings.Take(12))
-                            lines.Add($" - {w}");
-                        if (st.Warnings.Count > 12)
-                            lines.Add($" - ... (+{st.Warnings.Count - 12} more)");
-                        lines.Add("");
-                    }
-
                     var cfg = _config!.Get();
+
                     var fixTrim = cfg.GmcmExtraModAnimalKeysBulkFixTrimWhitespace;
                     var fixDedupe = cfg.GmcmExtraModAnimalKeysBulkFixRemoveDuplicates;
                     var fixDropUnknown = cfg.GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys;
@@ -1141,6 +1134,95 @@ foreach (var key in wildAnimalKeysForGmcm)
                         }
                     }
 
+                    var enabledFixes = new List<string>();
+                    if (fixTrim) enabledFixes.Add("trim");
+                    if (fixDedupe) enabledFixes.Add("dedupe");
+                    if (fixDropUnknown) enabledFixes.Add("drop-unknown");
+                    var enabledFixesText = enabledFixes.Count == 0 ? "(none)" : string.Join(", ", enabledFixes);
+
+                    static IReadOnlyList<string> ApplyFixes(
+                        IReadOnlyList<string> rawKeys,
+                        bool fixTrim,
+                        bool fixDedupe,
+                        ISet<string>? knownIds,
+                        out int blanksRemoved,
+                        out int trimmedCount,
+                        out int dupesRemoved,
+                        out int unknownRemoved)
+                    {
+                        blanksRemoved = 0;
+                        trimmedCount = 0;
+                        dupesRemoved = 0;
+                        unknownRemoved = 0;
+
+                        var outKeys = new List<string>(rawKeys.Count);
+                        HashSet<string>? seen = fixDedupe ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) : null;
+
+                        foreach (var raw in rawKeys)
+                        {
+                            var t = raw ?? string.Empty;
+
+                            if (fixTrim)
+                            {
+                                var tt = t.Trim();
+                                if (!string.Equals(t, tt, StringComparison.Ordinal))
+                                    trimmedCount++;
+                                t = tt;
+                            }
+
+                            if (t.Length == 0)
+                            {
+                                blanksRemoved++;
+                                continue;
+                            }
+
+                            if (knownIds is not null && !knownIds.Contains(t))
+                            {
+                                unknownRemoved++;
+                                continue;
+                            }
+
+                            if (seen is not null && !seen.Add(t))
+                            {
+                                dupesRemoved++;
+                                continue;
+                            }
+
+                            outKeys.Add(t);
+                        }
+
+                        return outKeys;
+                    }
+
+                    static string FormatKeySample(IReadOnlyList<string> keys, int cap = 8)
+                    {
+                        if (keys.Count == 0)
+                            return "(empty)";
+
+                        var sample = keys.Take(cap).ToList();
+                        var joined = string.Join(", ", sample);
+                        return keys.Count > cap ? $"{joined}, ... (+{keys.Count - cap} more)" : joined;
+                    }
+
+                    var lines = new List<string>
+                    {
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.header", "Bulk preview (not applied yet):"),
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note", "This is a preview only. Use the toggle below to apply staged changes."),
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.summary", "Staged: {0} upserts, {1} resets, {2} parse warnings.", st.Upserts.Count, st.Resets.Count, st.Warnings.Count),
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.fixes", "Quick-fixes enabled for apply: {0}.", enabledFixesText),
+                        "",
+                    };
+
+                    if (st.Warnings.Count > 0)
+                    {
+                        lines.Add("Parse warnings:");
+                        foreach (var w in st.Warnings.Take(10))
+                            lines.Add($" - {w}");
+                        if (st.Warnings.Count > 10)
+                            lines.Add($" - ... (+{st.Warnings.Count - 10} more)");
+                        lines.Add("");
+                    }
+
                     var fixPreview = BuildExtraModAnimalKeysBulkFixPreviewLines(st.Raw, fixTrim, fixDedupe, fixDropUnknown, knownFarmAnimalIds);
                     if (fixPreview.Count > 0)
                     {
@@ -1151,12 +1233,49 @@ foreach (var key in wildAnimalKeysForGmcm)
                     if (st.Upserts.Count > 0)
                     {
                         lines.Add("Upserts:");
-                        foreach (var (modId, keys) in st.Upserts
+                        foreach (var (modId, rawKeys) in st.Upserts
                             .OrderBy(kvp => kvp.Key == "Vanilla" ? "" : kvp.Key, StringComparer.OrdinalIgnoreCase)
                             .Take(12))
                         {
-                            var joined = keys.Count == 0 ? "" : string.Join(", ", keys);
-                            lines.Add($" - {modId}: [{joined}]");
+                            var fixedKeys = ApplyFixes(
+                                rawKeys,
+                                fixTrim,
+                                fixDedupe,
+                                knownFarmAnimalIds,
+                                out var blanksRemoved,
+                                out var trimmedCount,
+                                out var dupesRemoved,
+                                out var unknownRemoved);
+
+                            var deltaParts = new List<string>();
+                            if (fixTrim && trimmedCount > 0) deltaParts.Add($"trim:{trimmedCount}");
+                            if (blanksRemoved > 0) deltaParts.Add($"blank:{blanksRemoved}");
+                            if (fixDedupe && dupesRemoved > 0) deltaParts.Add($"dupe:{dupesRemoved}");
+                            if (fixDropUnknown && unknownRemoved > 0) deltaParts.Add($"unknown:{unknownRemoved}");
+
+                            var delta = deltaParts.Count == 0 ? "" : $" ({string.Join(", ", deltaParts)})";
+
+                            var baseKeys = definition?.ExtraModAnimalKeys is not null
+                                && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                                ? baseBlock.GetEffectiveFarmAnimalKeys()
+                                : Array.Empty<string>();
+
+                            var matchesBase = fixedKeys.Count > 0 && SequenceEqualIgnoreCase(fixedKeys, baseKeys);
+
+                            if (fixedKeys.Count == 0)
+                            {
+                                lines.Add($" - {modId}: {rawKeys.Count} -> 0 keys{delta}  [will remove override]");
+                            }
+                            else if (matchesBase)
+                            {
+                                lines.Add($" - {modId}: {rawKeys.Count} -> {fixedKeys.Count} keys{delta}  [matches base; will remove override]");
+                                lines.Add($"   final: [{FormatKeySample(fixedKeys)}]");
+                            }
+                            else
+                            {
+                                lines.Add($" - {modId}: {rawKeys.Count} -> {fixedKeys.Count} keys{delta}");
+                                lines.Add($"   final: [{FormatKeySample(fixedKeys)}]");
+                            }
                         }
 
                         if (st.Upserts.Count > 12)
@@ -1167,11 +1286,14 @@ foreach (var key in wildAnimalKeysForGmcm)
                     if (st.Resets.Count > 0)
                     {
                         lines.Add("Resets:");
+                        var ovNow = GetOverride(cfg);
+
                         foreach (var modId in st.Resets
                             .OrderBy(mid => mid == "Vanilla" ? "" : mid, StringComparer.OrdinalIgnoreCase)
                             .Take(12))
                         {
-                            lines.Add($" - {modId}");
+                            var willRemove = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.ContainsKey(modId);
+                            lines.Add(willRemove ? $" - {modId}  [will remove override]" : $" - {modId}  [no override to remove]");
                         }
 
                         if (st.Resets.Count > 12)
@@ -1181,8 +1303,7 @@ foreach (var key in wildAnimalKeysForGmcm)
                     return string.Join(Environment.NewLine, lines);
                 },
                 id: $"wildAnimals_extraModAnimalKeys_bulkPreview_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
-
-            page.ParagraphDynamic(
+page.ParagraphDynamic(
                 () => Translate(
                     i18n,
                     "config.paragraph.wildAnimals.extraModAnimalKeys.bulkApply.note",
@@ -1458,7 +1579,7 @@ foreach (var modId in extraModIdsOrdered)
                         {
                             try
                             {
-                                var data = Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                                var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
                                 var known = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
                                 fixedKeys = parsed.Where(x => known.Contains(x)).ToList();
                             }
