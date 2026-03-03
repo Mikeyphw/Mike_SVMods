@@ -8,6 +8,9 @@ using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 using System.Collections.Generic;
 using System.Text;
 using StardewValley.GameData.FarmAnimals;
+using RoosterControl.Enums;
+using RoosterControl.Application.FertilizedEggs;
+using StardewValley.GameData.Objects;
 
 namespace RoosterControl.Application;
 
@@ -136,6 +139,113 @@ if (verbLower == "validate")
         }
 
         sb.AppendLine($"  Catalog: total={sources.Count}, directItemId={directCount}, farmAnimalRef={refSources.Count}, invalidRefs={invalidThisKind}");
+    }
+
+
+    var fertilizedKinds = new HashSet<EggKind>(
+        kindsToCheck.Where(k => k.ToString().StartsWith("Fertilized", StringComparison.OrdinalIgnoreCase))
+    );
+
+    if (fertilizedKinds.Count > 0)
+    {
+        Dictionary<string, ObjectData> objects;
+        try
+        {
+            objects = Helper.GameContent.Load<Dictionary<string, ObjectData>>(ObjectsAssetName);
+        }
+        catch (Exception ex)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"Fertilized synthesis (planned): ERROR -> failed to load {ObjectsAssetName}: {ex.Message}");
+            objects = null!;
+        }
+
+        if (objects is not null)
+        {
+            var synthPlanned = 0;
+            var missingBase = 0;
+
+            sb.AppendLine();
+            sb.AppendLine("Fertilized synthesis (planned):");
+
+            foreach (var roosterType in Enum.GetValues(typeof(RoosterType)).Cast<RoosterType>())
+            {
+                if (!TryMapRoosterTypeToEggKinds(roosterType, out var normalKind, out var largeKind, out var fertilizedKind))
+                    continue;
+
+                if (!fertilizedKinds.Contains(fertilizedKind))
+                    continue;
+
+                var resolvedNormalId = _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, normalKind, animalData, out var normalId, out _)
+                    ? normalId
+                    : null;
+
+                var resolvedLargeId = _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, largeKind, animalData, out var largeId, out _)
+                    ? largeId
+                    : null;
+
+                if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, fertilizedKind, animalData, out _, out _))
+                    continue;
+
+                var baseEggId = !string.IsNullOrWhiteSpace(resolvedLargeId) ? resolvedLargeId : resolvedNormalId;
+                if (string.IsNullOrWhiteSpace(baseEggId))
+                {
+                    missingBase++;
+                    continue;
+                }
+
+                var synthId = FertilizedEggsObjectEditService.GetSynthesizedFertilizedId(baseEggId);
+                sb.AppendLine($"  {roosterType}: {baseEggId} -> {synthId} (exists={objects.ContainsKey(synthId)})");
+                synthPlanned++;
+            }
+
+            if (synthPlanned == 0 && missingBase == 0)
+                sb.AppendLine("  (none)");
+
+            sb.AppendLine($"  Synthesis summary: planned={synthPlanned}, missingBase={missingBase}");
+        }
+    }
+
+    static bool TryMapRoosterTypeToEggKinds(RoosterType roosterType, out EggKind normal, out EggKind large, out EggKind fertilized)
+    {
+        switch (roosterType)
+        {
+            case RoosterType.Brown:
+                normal = EggKind.BrownEgg;
+                large = EggKind.LargeBrownEgg;
+                fertilized = EggKind.FertilizedBrownEgg;
+                return true;
+
+            case RoosterType.White:
+                normal = EggKind.WhiteEgg;
+                large = EggKind.LargeWhiteEgg;
+                fertilized = EggKind.FertilizedWhiteEgg;
+                return true;
+
+            case RoosterType.Blue:
+                normal = EggKind.BlueEgg;
+                large = EggKind.LargeBlueEgg;
+                fertilized = EggKind.FertilizedBlueEgg;
+                return true;
+
+            case RoosterType.Void:
+                normal = EggKind.VoidEgg;
+                large = EggKind.LargeVoidEgg;
+                fertilized = EggKind.FertilizedVoidEgg;
+                return true;
+
+            case RoosterType.Gold:
+                normal = EggKind.GoldEgg;
+                large = EggKind.LargeGoldEgg;
+                fertilized = EggKind.FertilizedGoldEgg;
+                return true;
+
+            default:
+                normal = default;
+                large = default;
+                fertilized = default;
+                return false;
+        }
     }
 
     var enabledProviders = _saveState.Compat.EnabledRoosterSources?
