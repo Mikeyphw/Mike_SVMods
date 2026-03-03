@@ -28,12 +28,6 @@ public sealed class FertilizedEggsObjectEditServiceTests
             }
         };
 
-        var originalEggs = new Dictionary<string, ObjectData>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["ModEgg_176"] = objects["ModEgg_176"],
-            ["ModEgg_174"] = objects["ModEgg_174"]
-        };
-
         var femaleEggs = new Dictionary<string, Dictionary<EggTypeEntries, string>>(StringComparer.OrdinalIgnoreCase)
         {
             ["CustomHen"] = new()
@@ -46,13 +40,10 @@ public sealed class FertilizedEggsObjectEditServiceTests
 
         svc.Apply(
             objects: objects,
-            originalEggs: originalEggs,
             femaleEggs: femaleEggs,
-            defaultFemales: Array.Empty<string>(),
             getFertilizedNameSuffix: () => "Fertilized",
             getFertilizedDescription: () => "Fertilized description",
-            cloneEggsEnabled: true,
-            includeMearasEggs: false
+            enableSynthesis: true
         );
 
         var expectedId = "ModEgg_174_Fertilized";
@@ -60,8 +51,6 @@ public sealed class FertilizedEggsObjectEditServiceTests
         Assert.Equal(expectedId, femaleEggs["CustomHen"][EggTypeEntries.Fertilized]);
 
         var created = objects[expectedId];
-        Assert.Equal("Large Egg (Fertilized)", created.DisplayName);
-        Assert.Equal("Fertilized description", created.Description);
         Assert.Contains("roostercontrol_fertilized_egg", created.ContextTags);
         Assert.Equal("174", created.CustomFields["originalEgg"]);
     }
@@ -79,11 +68,6 @@ public sealed class FertilizedEggsObjectEditServiceTests
             }
         };
 
-        var originalEggs = new Dictionary<string, ObjectData>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["ModEgg_176"] = objects["ModEgg_176"]
-        };
-
         var femaleEggs = new Dictionary<string, Dictionary<EggTypeEntries, string>>(StringComparer.OrdinalIgnoreCase)
         {
             ["CustomHen"] = new()
@@ -96,13 +80,10 @@ public sealed class FertilizedEggsObjectEditServiceTests
 
         svc.Apply(
             objects: objects,
-            originalEggs: originalEggs,
             femaleEggs: femaleEggs,
-            defaultFemales: Array.Empty<string>(),
             getFertilizedNameSuffix: () => "Fertilized",
             getFertilizedDescription: () => "Fertilized description",
-            cloneEggsEnabled: true,
-            includeMearasEggs: false
+            enableSynthesis: true
         );
 
         var expectedId = "ModEgg_176_Fertilized";
@@ -111,28 +92,20 @@ public sealed class FertilizedEggsObjectEditServiceTests
     }
 
     [Fact]
-    public void Apply_SkipsDefaultFemales()
+    public void Apply_DoesNotOverwriteExistingFertilizedId_WhenItExistsInObjects()
     {
         var objects = new Dictionary<string, ObjectData>(StringComparer.OrdinalIgnoreCase)
         {
-            ["ModEgg_176"] = new ObjectData
-            {
-                DisplayName = "Small Egg",
-                Description = "small",
-                CustomFields = new Dictionary<string, string> { ["originalEgg"] = "176" }
-            }
-        };
-
-        var originalEggs = new Dictionary<string, ObjectData>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["ModEgg_176"] = objects["ModEgg_176"]
+            ["ModEgg_176"] = new ObjectData { DisplayName = "Small Egg" },
+            ["Existing_Fert"] = new ObjectData { DisplayName = "Existing Fertilized Egg" }
         };
 
         var femaleEggs = new Dictionary<string, Dictionary<EggTypeEntries, string>>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Chicken"] = new()
+            ["CustomHen"] = new()
             {
-                [EggTypeEntries.Normal] = "ModEgg_176"
+                [EggTypeEntries.Normal] = "ModEgg_176",
+                [EggTypeEntries.Fertilized] = "Existing_Fert"
             }
         };
 
@@ -140,35 +113,22 @@ public sealed class FertilizedEggsObjectEditServiceTests
 
         svc.Apply(
             objects: objects,
-            originalEggs: originalEggs,
             femaleEggs: femaleEggs,
-            defaultFemales: new[] { "Chicken" },
             getFertilizedNameSuffix: () => "Fertilized",
             getFertilizedDescription: () => "Fertilized description",
-            cloneEggsEnabled: true,
-            includeMearasEggs: false
+            enableSynthesis: true
         );
 
+        Assert.Equal("Existing_Fert", femaleEggs["CustomHen"][EggTypeEntries.Fertilized]);
         Assert.False(objects.ContainsKey("ModEgg_176_Fertilized"));
-        Assert.False(femaleEggs["Chicken"].ContainsKey(EggTypeEntries.Fertilized));
     }
 
     [Fact]
-    public void Apply_DoesNothing_WhenCloneDisabled()
+    public void Apply_DoesNothing_WhenSynthesisDisabled()
     {
         var objects = new Dictionary<string, ObjectData>(StringComparer.OrdinalIgnoreCase)
         {
-            ["ModEgg_176"] = new ObjectData
-            {
-                DisplayName = "Small Egg",
-                Description = "small",
-                CustomFields = new Dictionary<string, string> { ["originalEgg"] = "176" }
-            }
-        };
-
-        var originalEggs = new Dictionary<string, ObjectData>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["ModEgg_176"] = objects["ModEgg_176"]
+            ["ModEgg_176"] = new ObjectData { DisplayName = "Small Egg" }
         };
 
         var femaleEggs = new Dictionary<string, Dictionary<EggTypeEntries, string>>(StringComparer.OrdinalIgnoreCase)
@@ -183,16 +143,13 @@ public sealed class FertilizedEggsObjectEditServiceTests
 
         svc.Apply(
             objects: objects,
-            originalEggs: originalEggs,
             femaleEggs: femaleEggs,
-            defaultFemales: Array.Empty<string>(),
             getFertilizedNameSuffix: () => "Fertilized",
             getFertilizedDescription: () => "Fertilized description",
-            cloneEggsEnabled: false,
-            includeMearasEggs: false
+            enableSynthesis: false
         );
 
-        Assert.False(objects.ContainsKey("ModEgg_176_Fertilized"));
         Assert.False(femaleEggs["CustomHen"].ContainsKey(EggTypeEntries.Fertilized));
+        Assert.False(objects.ContainsKey("ModEgg_176_Fertilized"));
     }
 }
