@@ -17,3 +17,6 @@ dotnet test
 ```
 
 > Note: `Pathoschild.Stardew.ModBuildConfig` expects your local SDV + SMAPI references (same as building the mod).
+
+## Coverage
+- Fertilized egg synthesis: verifies exact synthesized IDs (<base>_Fertilized) and cloned object attributes.
