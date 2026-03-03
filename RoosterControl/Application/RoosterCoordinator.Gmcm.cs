@@ -536,12 +536,13 @@ private void PersistAndApplyCompatChange(string reason)
     InvalidateDailyPlanCache(reason);
     _needsRoosterSetup = true;
 
-    RequestInvalidate(FarmAnimalsAssetName);
-    RequestInvalidate(ObjectsAssetName);
-
     EnsureRoostersSetup();
-    _invalidations.Flush();
 
+    RequestInvalidate(FarmAnimalsAssetName);
+    if (RoosterHelper.FemaleEggs.Count > 0)
+        RequestInvalidate(ObjectsAssetName);
+
+    _invalidations.Flush();
     try
     {
         var data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);

@@ -163,6 +163,8 @@ Steps:
 1) Audit fail-fast checks (NestCore presence, required integrations) and ensure errors are actionable.
 2) Harden selection repair + persistence paths (no silent fallbacks; clear logs for repairs/no-ops).
 3) Performance pass: avoid redundant invalidations/edits; ensure batching is used consistently.
+   - Use NestCore invalidation batching + refresh coalescing on location change (avoid per-warp invalidation spam).
+   - Avoid invalidating Data/Objects on compat changes unless fertilized egg edits are active (FemaleEggs present).
 4) Add “safe defaults” for edge cases (empty catalogs, missing providers, missing assets) with clear logging.
    - Ensure coop rooster scan overrides are always set/cleared from enabled providers (avoid stale overrides).
 5) Verify build/test workflow (solution build + unit tests); fix any lingering warnings that hide real errors.

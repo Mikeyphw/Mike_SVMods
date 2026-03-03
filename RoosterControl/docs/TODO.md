@@ -1,7 +1,7 @@
 # RoosterControl TODO
 
 ## Next: Phase 13 — Release hardening
-- [ ] Performance pass (edits/invalidation batching)
+- [x] Performance pass (edits/invalidation batching)
 - [ ] Build/test workflow verified
 
 ## Upcoming: Phase 14 — UX polish (non-optional)

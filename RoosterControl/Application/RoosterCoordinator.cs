@@ -259,12 +259,11 @@ private NextTickScheduler _nextTick;
         if (Config.General.UpdateRate != UpdateRateMode.OnLocationChange)
             return;
 
-        InvalidateRuleCaches("update rate: location change");
-        _ = Helper.GameContent.InvalidateCache(FarmAnimalsAssetName);
+        RequestInvalidate(FarmAnimalsAssetName);
 
         // Avoid side effects in AssetRequested; refresh and reload after the cache invalidation.
-        _nextTick.Enqueue(RefreshFarmAnimalsOnLocationChange);
-    }
+        QueueRefreshFarmAnimals("update rate: location change");
+}
 
         private void EnsureCompatInitialized()
     {
