@@ -146,7 +146,7 @@ public sealed class StardewUiIntegration
 
     private static string QualifyAsset(string prefix, string name, string stripExtension)
     {
-        var normalized = (name ?? string.Empty).Replace('\', '/').TrimStart('/');
+        var normalized = (name ?? string.Empty).Replace('\\', '/').TrimStart('/');
         if (normalized.EndsWith(stripExtension, StringComparison.OrdinalIgnoreCase))
             normalized = normalized[..^stripExtension.Length];
 
