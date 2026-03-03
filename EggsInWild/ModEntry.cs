@@ -50,6 +50,8 @@ public sealed class ModEntry : Mod
     private ILog? _contentLog;
     private IModDataLoader? _contentDataLoader;
 
+    private readonly Dictionary<string, ExtraModAnimalKeysBulkState> _extraModAnimalKeysBulkByWildAnimalKey = new(StringComparer.OrdinalIgnoreCase);
+
     private DesertTombRuntime? _desertTombRuntime;
     private bool _desertTombHarmonyInstalled;
 
@@ -856,6 +858,83 @@ foreach (var key in wildAnimalKeysForGmcm)
                     "config.wildAnimals.extraModAnimalKeys.customRefreshNote.text",
                     "After adding/removing blocks, close and reopen this page to refresh the list."),
                 id: $"wildAnimals_extraModAnimalKeys_customRefresh_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+            page.Separator(simple: true);
+            page.SectionLabel(() => Translate(i18n, "config.section.wildAnimals.extraModAnimalKeys.bulk.label", "Bulk edit (stage)"));
+
+            page.TextLabel(
+                elementId: $"wildAnimals.{key}.extraModAnimalKeys.bulkInput",
+                name: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.bulkInput.name", "Bulk paste (stage)"),
+                tooltip: () => Translate(
+                    i18n,
+                    "config.wildAnimals.extraModAnimalKeys.bulkInput.tooltip",
+                    "Paste one line per mod-group: modId | csvKeys. You may comma-separate modIds (A,B | Cow). Use '*' (or blank) to reset/remove a block. This only stages changes."),
+                getValue: () =>
+                    _extraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) ? st.Raw : "",
+                setValue: rawValue =>
+                {
+                    var st = ParseExtraModAnimalKeysBulk(rawValue);
+                    _extraModAnimalKeysBulkByWildAnimalKey[key] = st;
+                });
+
+            page.ParagraphDynamic(
+                () =>
+                {
+                    if (!_extraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) || string.IsNullOrWhiteSpace(st.Raw))
+                        return Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.empty", "Bulk preview: (none)");
+
+                    var lines = new List<string>
+                    {
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.header", "Bulk preview (not applied yet):"),
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note", "This is a preview only. Applying staged changes will be added in the next step."),
+                        "",
+                    };
+
+                    if (st.Warnings.Count > 0)
+                    {
+                        lines.Add("Warnings:");
+                        foreach (var w in st.Warnings.Take(12))
+                            lines.Add($" - {w}");
+                        if (st.Warnings.Count > 12)
+                            lines.Add($" - ... (+{st.Warnings.Count - 12} more)");
+                        lines.Add("");
+                    }
+
+                    if (st.Upserts.Count > 0)
+                    {
+                        lines.Add("Upserts:");
+                        foreach (var (modId, keys) in st.Upserts
+                            .OrderBy(kvp => kvp.Key == "Vanilla" ? "" : kvp.Key, StringComparer.OrdinalIgnoreCase)
+                            .Take(12))
+                        {
+                            var joined = keys.Count == 0 ? "" : string.Join(", ", keys);
+                            lines.Add($" - {modId}: [{joined}]");
+                        }
+
+                        if (st.Upserts.Count > 12)
+                            lines.Add($" - ... (+{st.Upserts.Count - 12} more)");
+                        lines.Add("");
+                    }
+
+                    if (st.Resets.Count > 0)
+                    {
+                        lines.Add("Resets:");
+                        foreach (var modId in st.Resets
+                            .OrderBy(mid => mid == "Vanilla" ? "" : mid, StringComparer.OrdinalIgnoreCase)
+                            .Take(12))
+                        {
+                            lines.Add($" - {modId}");
+                        }
+
+                        if (st.Resets.Count > 12)
+                            lines.Add($" - ... (+{st.Resets.Count - 12} more)");
+                    }
+
+                    return string.Join(Environment.NewLine, lines);
+                },
+                id: $"wildAnimals_extraModAnimalKeys_bulkPreview_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+
 
 foreach (var modId in extraModIdsOrdered)
             {
@@ -1849,6 +1928,93 @@ private void InstallHarmonyBootstrap()
         var dispatcher = new WeggCommandDispatcher(facade, i18n);
         var commands = new WeggConsoleCommands(log, i18n, dispatcher);
         commands.Register(helper);
+    }
+
+
+    private sealed class ExtraModAnimalKeysBulkState
+    {
+        public string Raw { get; init; } = "";
+        public Dictionary<string, IReadOnlyList<string>> Upserts { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> Resets { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+        public List<string> Warnings { get; init; } = new();
+    }
+
+    private static ExtraModAnimalKeysBulkState ParseExtraModAnimalKeysBulk(string? raw)
+    {
+        var state = new ExtraModAnimalKeysBulkState
+        {
+            Raw = raw ?? string.Empty,
+        };
+
+        if (string.IsNullOrWhiteSpace(raw))
+            return state;
+
+        var lines = raw.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (line.Length == 0)
+                continue;
+
+            if (line.StartsWith("#", StringComparison.Ordinal) || line.StartsWith("//", StringComparison.Ordinal))
+                continue;
+
+            var sepIndex = line.IndexOf('|');
+            if (sepIndex < 0) sepIndex = line.IndexOf(':');
+            if (sepIndex < 0) sepIndex = line.IndexOf('=');
+
+            if (sepIndex <= 0)
+            {
+                state.Warnings.Add($"Bulk line ignored (missing separator): '{line}'. Expected: modId | csvKeys");
+                continue;
+            }
+
+            var modIdsRaw = line[..sepIndex].Trim();
+            var keysRaw = sepIndex >= line.Length - 1 ? "" : line[(sepIndex + 1)..].Trim();
+
+            if (modIdsRaw.Length == 0)
+            {
+                state.Warnings.Add($"Bulk line ignored (blank modId): '{line}'.");
+                continue;
+            }
+
+            var modIds = modIdsRaw
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .Where(x => x.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (modIds.Count == 0)
+            {
+                state.Warnings.Add($"Bulk line ignored (no valid modIds): '{line}'.");
+                continue;
+            }
+
+            var isReset = keysRaw.Length == 0
+                || keysRaw == "*"
+                || string.Equals(keysRaw, "reset", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(keysRaw, "remove", StringComparison.OrdinalIgnoreCase);
+
+            var parsedKeys = isReset ? Array.Empty<string>() : ParseCsvKeyList(keysRaw);
+
+            foreach (var modId in modIds)
+            {
+                if (isReset || parsedKeys.Count == 0)
+                {
+                    state.Upserts.Remove(modId);
+                    state.Resets.Add(modId);
+                }
+                else
+                {
+                    state.Resets.Remove(modId);
+                    state.Upserts[modId] = parsedKeys;
+                }
+            }
+        }
+
+        return state;
     }
 
     private static IReadOnlyList<string> ParseCsvKeyList(string? raw)

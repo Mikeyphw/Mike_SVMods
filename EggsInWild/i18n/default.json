@@ -470,5 +470,11 @@
   "specialOrder.WildEggIncubatorII.text": "The Wizard wants wild eggs for research.",
   "ui.hud.animalNotes.questIssued": "You found an Animal Note!",
   "config.wildAnimals.extraModAnimalKeys.resetBlock.name": "Reset block to default",
-  "config.wildAnimals.extraModAnimalKeys.resetBlock.tooltip": "Remove the override for mod-group '{0}'. For custom blocks this deletes the block. Close and reopen this page to refresh the list."
+  "config.wildAnimals.extraModAnimalKeys.resetBlock.tooltip": "Remove the override for mod-group '{0}'. For custom blocks this deletes the block. Close and reopen this page to refresh the list.",
+  "config.section.wildAnimals.extraModAnimalKeys.bulk.label": "Bulk edit (stage)",
+  "config.wildAnimals.extraModAnimalKeys.bulkInput.name": "Bulk paste (stage)",
+  "config.wildAnimals.extraModAnimalKeys.bulkInput.tooltip": "Paste one line per mod-group: modId | csvKeys. You may comma-separate modIds (A,B | Cow). Use '*' (or blank) to reset/remove a block. This only stages changes.",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.empty": "Bulk preview: (none)",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.header": "Bulk preview (not applied yet):",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note": "This is a preview only. Applying staged changes will be added in the next step."
 }
