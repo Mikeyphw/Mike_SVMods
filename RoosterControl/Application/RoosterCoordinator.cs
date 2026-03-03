@@ -272,6 +272,16 @@ private NextTickScheduler _nextTick;
 
         var changed = _compatSelection.InitializeOrRepair(_saveState.Compat, out var summary);
 
+        if (_compatSelection.EggCatalog.Sources.Count == 0)
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Assets,
+                $"Compat egg sources catalog is empty (asset: Mods/{ModManifest.UniqueID}/compat/egg_sources). Egg resolution will be disabled until a pack provides sources.",
+                LogLevel.Warn);
+
+        if (_compatSelection.RoosterCatalog.Sources.Count == 0)
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Assets,
+                $"Compat rooster sources catalog is empty (asset: Mods/{ModManifest.UniqueID}/compat/rooster_sources). Coop rooster scan overrides will be cleared and provider-based roles disabled until a pack provides sources.",
+                LogLevel.Warn);
+
         if (!changed)
             return;
 

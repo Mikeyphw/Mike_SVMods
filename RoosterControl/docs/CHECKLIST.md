@@ -42,8 +42,11 @@
 - [x] Fail-fast checks + actionable errors
 - [x] Harden selection repair/persistence logs + no-op clarity
 - [x] Performance pass (edits/invalidation batching)
-- [ ] Safe defaults for empty/missing catalogs
+- [x] Safe defaults for empty/missing catalogs
   - [x] Clear coop rooster scan overrides when enabled rooster keys list is empty
+  - [x] Clear invalid egg selections when a catalog has no valid sources (prefer (unset) over stale IDs)
+  - [x] Normalize null save-state fields (SelectedEggSources/EnabledRoosterSources) to empty collections
+  - [x] Warn once when compat catalogs are empty (actionable asset names)
 - [ ] Build/test workflow verified (warnings pass)
 - [ ] Docs: upgrade notes + release checklist
 

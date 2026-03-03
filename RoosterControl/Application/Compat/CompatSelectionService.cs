@@ -36,13 +36,33 @@ internal sealed class CompatSelectionService
         _log = log;
     }
 
+    private static bool NormalizeState(CompatSelectionState state)
+    {
+        var changed = false;
+
+        if (state.SelectedEggSources is null)
+        {
+            state.SelectedEggSources = new Dictionary<EggKind, string>();
+            changed = true;
+        }
+
+        if (state.EnabledRoosterSources is null)
+        {
+            state.EnabledRoosterSources = new List<string>();
+            changed = true;
+        }
+
+        return changed;
+    }
+
+
         public bool InitializeOrRepair(CompatSelectionState state, out string? repairSummary)
     {
         _eggCatalog = LoadCatalog<EggSourcesCatalog>(GetEggCatalogAssetName());
         _roosterCatalog = LoadCatalog<RoosterSourcesCatalog>(GetRoosterCatalogAssetName());
 
         var notes = new List<string>();
-        var changed = false;
+        var changed = NormalizeState(state);
 
         changed |= RepairEggSelections(state, notes);
         changed |= RepairRoosterSelections(state, notes);
@@ -144,7 +164,16 @@ internal sealed class CompatSelectionService
                 .ToList();
 
             if (options.Count == 0)
+            {
+                if (state.SelectedEggSources.TryGetValue(kind, out var existing) && !string.IsNullOrWhiteSpace(existing))
+                {
+                    state.SelectedEggSources.Remove(kind);
+                    notes?.Add($"EggKind {kind}: '{existing}' removed (no valid sources available)");
+                    changed = true;
+                }
+
                 continue;
+            }
 
             if (!state.SelectedEggSources.TryGetValue(kind, out var selected) || string.IsNullOrWhiteSpace(selected))
             {
@@ -178,12 +207,22 @@ internal sealed class CompatSelectionService
             .ToList();
 
         // Default behavior: enable all providers so multiple rooster mods can coexist.
-        if (state.EnabledRoosterSources is null || state.EnabledRoosterSources.Count == 0)
+        if (state.EnabledRoosterSources is null)
         {
             state.EnabledRoosterSources = allSourceIds.ToList();
             notes?.Add(allSourceIds.Count == 0
                 ? "Rooster providers: (unset) -> (none available)"
                 : $"Rooster providers: (unset) -> all ({allSourceIds.Count})");
+            return true;
+        }
+
+        if (state.EnabledRoosterSources.Count == 0)
+        {
+            if (allSourceIds.Count == 0)
+                return false; // nothing to enable
+
+            state.EnabledRoosterSources = allSourceIds.ToList();
+            notes?.Add($"Rooster providers: empty -> all ({allSourceIds.Count})");
             return true;
         }
 
@@ -283,6 +322,8 @@ internal sealed class CompatSelectionService
         changed = false;
         error = null;
 
+        NormalizeState(state);
+
         if (!IsInitialized)
         {
             error = "CompatSelectionService not initialized yet.";
@@ -333,6 +374,8 @@ internal sealed class CompatSelectionService
         selected = null;
         changed = false;
         error = null;
+
+        NormalizeState(state);
 
         if (!IsInitialized)
         {
@@ -392,6 +435,8 @@ internal sealed class CompatSelectionService
         changed = false;
         error = null;
 
+        NormalizeState(state);
+
         if (!IsInitialized)
         {
             error = "CompatSelectionService not initialized yet.";
@@ -433,6 +478,8 @@ internal sealed class CompatSelectionService
         selected = null;
         changed = false;
         error = null;
+
+        NormalizeState(state);
 
         if (!IsInitialized)
         {
@@ -483,6 +530,8 @@ internal sealed class CompatSelectionService
         selected = null;
         changed = false;
         error = null;
+
+        NormalizeState(state);
 
         if (!IsInitialized)
         {
@@ -539,6 +588,8 @@ internal sealed class CompatSelectionService
     {
         itemId = null;
         error = null;
+
+        NormalizeState(state);
 
         if (!IsInitialized)
         {
@@ -811,8 +862,8 @@ public bool TryResolveEggSourceItemId(
         if (!IsInitialized)
             throw new InvalidOperationException("CompatSelectionService not initialized yet.");
 
-        var enabledSources = state.EnabledRoosterSources
-            .Where(id => !string.IsNullOrWhiteSpace(id))
+        var enabledList = state.EnabledRoosterSources ?? new List<string>();
+        var enabledSources = enabledList
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

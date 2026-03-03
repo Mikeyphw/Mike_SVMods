@@ -2,6 +2,7 @@
 
 ## Next: Phase 13 — Release hardening
 - [x] Performance pass (edits/invalidation batching)
+- [x] Safe defaults for empty/missing catalogs
 - [ ] Build/test workflow verified
 
 ## Upcoming: Phase 14 — UX polish (non-optional)
@@ -15,6 +16,7 @@
 - [ ] Unit tests + manual QA checklist
 
 ## Done
+- [x] Phase 13: Safe defaults for empty/missing catalogs (empty catalogs, null fields, actionable warnings)
 - [x] Phase 13: Fail-fast checks + actionable errors
 - [x] Phase 13: Harden selection repair/persistence logs + no-op clarity
 - [x] Phase 13: Clear coop rooster scan overrides on empty selection (prevents stale overrides)
