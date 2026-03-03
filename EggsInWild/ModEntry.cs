@@ -442,32 +442,32 @@ layout.Page("wildAnimals", page =>
 
     page.LinkLabel(
         pageId: "wildAnimals_all",
-        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.all.name", "All (A–Z)")} (wildAnimalsCountAll)",
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.all.name", "All (A–Z)")} ({wildAnimalsCountAll})",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.all.description", "Show all wild animals (long list)."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_af",
-        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.af.name", "A–F")} (wildAnimalsCountAf)",
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.af.name", "A–F")} ({wildAnimalsCountAf})",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.af.description", "Wild animals starting with A–F."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_gl",
-        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.gl.name", "G–L")} (wildAnimalsCountGl)",
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.gl.name", "G–L")} ({wildAnimalsCountGl})",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.gl.description", "Wild animals starting with G–L."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_mr",
-        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.mr.name", "M–R")} (wildAnimalsCountMr)",
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.mr.name", "M–R")} ({wildAnimalsCountMr})",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.mr.description", "Wild animals starting with M–R."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_sz",
-        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.sz.name", "S–Z")} (wildAnimalsCountSz)",
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.sz.name", "S–Z")} ({wildAnimalsCountSz})",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.sz.description", "Wild animals starting with S–Z."));
 
     page.LinkLabel(
         pageId: "wildAnimals_index_other",
-        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.other.name", "Other")} (wildAnimalsCountOther)",
+        text: () => $"{Translate(i18n, "config.wildAnimals.index.group.other.name", "Other")} ({wildAnimalsCountOther})",
         tooltip: () => Translate(i18n, "config.wildAnimals.index.group.other.description", "Wild animals not starting with A–Z."));
 
 });
@@ -521,7 +521,15 @@ void BuildWildAnimalIndexPage(string pageId, Func<string> title, IEnumerable<str
                         ? GetWildAnimalEffectiveEnabled(cfg, key, def.Enabled)
                         : true;
 
-                    return enabled ? key : $"{key} (disabled)";
+                    var label = enabled ? key : $"{key} (disabled)";
+
+                    if (_extraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) && !string.IsNullOrWhiteSpace(st.Raw))
+                    {
+                        var warnCount = st.Warnings.Count;
+                        label += warnCount > 0 ? $" [staged, warn:{warnCount}]" : " [staged]";
+                    }
+
+                    return label;
                 },
                 tooltip: () => Translate(i18n, "config.wildAnimals.link.tooltip", "Edit enabled override for '{0}'.", key, key));
         }
@@ -1083,6 +1091,19 @@ foreach (var key in wildAnimalKeysForGmcm)
                         cfg.WildAnimalOverrides[key] = ov;
                 });
 
+            page.Bool(
+                optionId: Translate(i18n, "config.wildAnimals.extraModAnimalKeys.bulkClear.name", "Clear staged bulk input"),
+                getValue: () => false,
+                setValue: v =>
+                {
+                    if (!v)
+                        return;
+
+                    _extraModAnimalKeysBulkByWildAnimalKey.Remove(key);
+                },
+                tooltip: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.bulkClear.tooltip", "Clear the staged bulk paste text and preview for this wild animal. This does not change your config."),
+                fieldId: $"wildAnimals_extraModAnimalKeys_bulkClear_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
             page.ParagraphDynamic(
                 () => Translate(
                     i18n,
@@ -1139,6 +1160,20 @@ foreach (var key in wildAnimalKeysForGmcm)
                     if (fixDedupe) enabledFixes.Add("dedupe");
                     if (fixDropUnknown) enabledFixes.Add("drop-unknown");
                     var enabledFixesText = enabledFixes.Count == 0 ? "(none)" : string.Join(", ", enabledFixes);
+
+                    var ovNow = GetOverride(cfg);
+
+                    var plannedSet = 0;
+                    var plannedClear = 0;
+                    var plannedNoop = 0;
+
+                    foreach (var modIdRaw in st.Resets)
+                    {
+                        var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+                        var hasOv = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.ContainsKey(modId);
+                        if (hasOv) plannedClear++;
+                        else plannedNoop++;
+                    }
 
                     static IReadOnlyList<string> ApplyFixes(
                         IReadOnlyList<string> rawKeys,
@@ -1203,15 +1238,67 @@ foreach (var key in wildAnimalKeysForGmcm)
                         var joined = string.Join(", ", sample);
                         return keys.Count > cap ? $"{joined}, ... (+{keys.Count - cap} more)" : joined;
                     }
+                    foreach (var (modIdRaw, rawKeys) in st.Upserts)
+                    {
+                        var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+
+                        var fixedKeys = ApplyFixes(
+                            rawKeys,
+                            fixTrim,
+                            fixDedupe,
+                            knownFarmAnimalIds,
+                            out _,
+                            out _,
+                            out _,
+                            out _);
+
+                        var baseKeys = definition?.ExtraModAnimalKeys is not null
+                            && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                            ? baseBlock.GetEffectiveFarmAnimalKeys()
+                            : Array.Empty<string>();
+
+                        var matchesBase = fixedKeys.Count > 0 && SequenceEqualIgnoreCase(fixedKeys, baseKeys);
+
+                        var hasOv = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.TryGetValue(modId, out var existingBlock);
+                        var existingKeys = hasOv && existingBlock is not null
+                            ? (existingBlock.FarmAnimalKeys ?? new List<string>())
+                            : Array.Empty<string>();
+
+                        var willClear = fixedKeys.Count == 0 || matchesBase;
+
+                        if (willClear)
+                        {
+                            if (hasOv) plannedClear++;
+                            else plannedNoop++;
+                        }
+                        else
+                        {
+                            if (hasOv && SequenceEqualIgnoreCase(existingKeys, fixedKeys))
+                                plannedNoop++;
+                            else
+                                plannedSet++;
+                        }
+                    }
+
+                    var plannedSummary = Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.plan", "Planned: set {0}, clear {1}, no-op {2}.", plannedSet, plannedClear, plannedNoop);
+                    var plannedIsNoop = plannedSet == 0 && plannedClear == 0;
+
 
                     var lines = new List<string>
                     {
                         Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.header", "Bulk preview (not applied yet):"),
                         Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note", "This is a preview only. Use the toggle below to apply staged changes."),
                         Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.summary", "Staged: {0} upserts, {1} resets, {2} parse warnings.", st.Upserts.Count, st.Resets.Count, st.Warnings.Count),
+                        plannedSummary,
                         Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.fixes", "Quick-fixes enabled for apply: {0}.", enabledFixesText),
                         "",
                     };
+
+                    if (plannedIsNoop)
+                    {
+                        lines.Add(Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.noop", "No config changes would be applied by Bulk Apply."));
+                        lines.Add("");
+                    }
 
                     if (st.Warnings.Count > 0)
                     {
@@ -1237,6 +1324,11 @@ foreach (var key in wildAnimalKeysForGmcm)
                             .OrderBy(kvp => kvp.Key == "Vanilla" ? "" : kvp.Key, StringComparer.OrdinalIgnoreCase)
                             .Take(12))
                         {
+                            var canonicalModId = CanonicalizeModId(modId, extraModIdsForGmcm);
+                            var displayModId = string.Equals(modId, canonicalModId, StringComparison.OrdinalIgnoreCase)
+                                ? modId
+                                : $"{modId} => {canonicalModId}";
+
                             var fixedKeys = ApplyFixes(
                                 rawKeys,
                                 fixTrim,
@@ -1256,24 +1348,44 @@ foreach (var key in wildAnimalKeysForGmcm)
                             var delta = deltaParts.Count == 0 ? "" : $" ({string.Join(", ", deltaParts)})";
 
                             var baseKeys = definition?.ExtraModAnimalKeys is not null
-                                && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                                && definition.ExtraModAnimalKeys.TryGetValue(canonicalModId, out var baseBlock)
                                 ? baseBlock.GetEffectiveFarmAnimalKeys()
                                 : Array.Empty<string>();
 
                             var matchesBase = fixedKeys.Count > 0 && SequenceEqualIgnoreCase(fixedKeys, baseKeys);
 
-                            if (fixedKeys.Count == 0)
+                            var hasOverrideNow = ovNow?.ExtraModAnimalKeys is not null
+                                && ovNow.ExtraModAnimalKeys.TryGetValue(canonicalModId, out var existingBlock)
+                                && existingBlock is not null;
+
+                            var existingKeys = hasOverrideNow
+                                ? (existingBlock!.FarmAnimalKeys ?? new List<string>())
+                                : Array.Empty<string>();
+
+                            var willClear = fixedKeys.Count == 0 || matchesBase;
+                            var alreadySet = !willClear && hasOverrideNow && SequenceEqualIgnoreCase(existingKeys, fixedKeys);
+
+                            if (willClear)
                             {
-                                lines.Add($" - {modId}: {rawKeys.Count} -> 0 keys{delta}  [will remove override]");
+                                var action = hasOverrideNow ? "[will remove override]" : "[no-op; no override]";
+                                if (matchesBase)
+                                {
+                                    lines.Add($" - {displayModId}: {rawKeys.Count} -> {fixedKeys.Count} keys{delta}  [matches base] {action}");
+                                    lines.Add($"   final: [{FormatKeySample(fixedKeys)}]");
+                                }
+                                else
+                                {
+                                    lines.Add($" - {displayModId}: {rawKeys.Count} -> 0 keys{delta}  {action}");
+                                }
                             }
-                            else if (matchesBase)
+                            else if (alreadySet)
                             {
-                                lines.Add($" - {modId}: {rawKeys.Count} -> {fixedKeys.Count} keys{delta}  [matches base; will remove override]");
+                                lines.Add($" - {displayModId}: {rawKeys.Count} -> {fixedKeys.Count} keys{delta}  [no-op; already set]");
                                 lines.Add($"   final: [{FormatKeySample(fixedKeys)}]");
                             }
                             else
                             {
-                                lines.Add($" - {modId}: {rawKeys.Count} -> {fixedKeys.Count} keys{delta}");
+                                lines.Add($" - {displayModId}: {rawKeys.Count} -> {fixedKeys.Count} keys{delta}  [will set override]");
                                 lines.Add($"   final: [{FormatKeySample(fixedKeys)}]");
                             }
                         }
@@ -1286,15 +1398,19 @@ foreach (var key in wildAnimalKeysForGmcm)
                     if (st.Resets.Count > 0)
                     {
                         lines.Add("Resets:");
-                        var ovNow = GetOverride(cfg);
 
-                        foreach (var modId in st.Resets
+                        foreach (var modIdRaw in st.Resets
                             .OrderBy(mid => mid == "Vanilla" ? "" : mid, StringComparer.OrdinalIgnoreCase)
                             .Take(12))
                         {
-                            var willRemove = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.ContainsKey(modId);
-                            lines.Add(willRemove ? $" - {modId}  [will remove override]" : $" - {modId}  [no override to remove]");
-                        }
+                            var canonicalModId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+                            var displayModId = string.Equals(modIdRaw, canonicalModId, StringComparison.OrdinalIgnoreCase)
+                                ? modIdRaw
+                                : $"{modIdRaw} => {canonicalModId}";
+
+                            var willRemove = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.ContainsKey(canonicalModId);
+                            lines.Add(willRemove ? $" - {displayModId}  [will remove override]" : $" - {displayModId}  [no-op; no override]");
+                        }                        }
 
                         if (st.Resets.Count > 12)
                             lines.Add($" - ... (+{st.Resets.Count - 12} more)");

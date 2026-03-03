@@ -4,6 +4,7 @@
 - Phases 0–8 complete (see `docs/CHECKLIST.md`).
 - Current focus: Phase 7+ UX polish (bulk workflows, richer validation surfaced in GMCM) and maintenance fixes.
 - Index navigation: GMCM WildAnimals index provides grouped page links with counts (All, A–F, G–L, M–R, S–Z, Other).
+- Bulk UX: staged bulk entries are indicated in index links; bulk preview includes planned set/clear/no-op summary; staging can be cleared.
 - Validation warnings: dev diagnostics now include warnings for unloaded modIds and unknown FarmAnimalKeys (when Data/FarmAnimals is available).
 - Validation warnings: GMCM displays ExtraModAnimalKeys warnings inline (shared validator with dev dump).
 - Bulk UX: GMCM ExtraModAnimalKeys supports stage + preview + apply bulk edits (export pending).

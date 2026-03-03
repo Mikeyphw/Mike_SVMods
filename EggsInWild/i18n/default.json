@@ -506,5 +506,9 @@
   "config.wildAnimals.index.group.other.name": "Other",
   "config.wildAnimals.index.group.other.description": "Wild animals not starting with A–Z.",
   "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.summary": "Staged: {0} upserts, {1} resets, {2} parse warnings.",
-  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.fixes": "Quick-fixes enabled for apply: {0}."
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.fixes": "Quick-fixes enabled for apply: {0}.",
+  "config.wildAnimals.extraModAnimalKeys.bulkClear.name": "Clear staged bulk input",
+  "config.wildAnimals.extraModAnimalKeys.bulkClear.tooltip": "Clear the staged bulk paste text and preview for this wild animal. This does not change your config.",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.plan": "Planned: set {0}, clear {1}, no-op {2}.",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.noop": "No config changes would be applied by Bulk Apply."
 }

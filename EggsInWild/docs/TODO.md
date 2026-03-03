@@ -6,6 +6,9 @@
     - [x] Bulk stage + preview + apply (Paste: `modId | csvKeys`; `*` to reset/remove).
     - [x] Bulk apply quick-fix toggles (trim/dedupe/drop unknown; also applied to per-block edits).
     - [x] Bulk preview shows before/after and what quick-fixes will change (trim/dedupe/drop unknown).
+    - [x] Bulk preview includes planned action summary (set/clear/no-op) + clearer per-modId actions.
+    - [x] WildAnimals index shows group counts and flags staged bulk entries (with warn count).
+    - [x] Clear staged bulk input toggle.
     - [ ] Export current effective blocks as `modId | csvKeys` for round-trip editing.
   - [ ] Surface richer validation warnings in GMCM (unknown modIds, empty/duplicate keys, keys not present in game data when available).
     - [x] ExtraModAnimalKeys: GMCM shows inline validation warnings (unloaded modIds, blank/whitespace/dupes, unknown FarmAnimalKeys when Data/FarmAnimals is available).
