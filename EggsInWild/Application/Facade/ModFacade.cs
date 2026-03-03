@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Xna.Framework;
 using Mikew.NestCore.Framework.Random;
@@ -390,8 +391,10 @@ public FacadeResult DumpEffectiveWildAnimals()
 {
     try
     {
+        var baseSnapshot = _dataLoader.LoadBase();
         var snapshot = _dataLoader.Load();
         var builder = new AnimalCatalogBuilder(_mods, _log);
+        var baseCatalog = builder.Build(baseSnapshot.WildAnimals);
         var catalog = builder.Build(snapshot.WildAnimals);
 
         var list = new List<WildAnimalEffectiveDumpEntry>();
@@ -400,6 +403,12 @@ public FacadeResult DumpEffectiveWildAnimals()
 
         foreach (var (key, wa) in snapshot.WildAnimals.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
         {
+            var baseWa = baseSnapshot.WildAnimals.TryGetValue(key, out var baseDefWa) ? baseDefWa : wa;
+
+            var baseIds = new List<string>();
+            if (baseCatalog.TryGet(key, out var baseDef))
+                baseIds = baseDef.FarmAnimalIds.ToList();
+
             var ids = new List<string>();
             if (catalog.TryGet(key, out var def))
                 ids = def.FarmAnimalIds.ToList();
@@ -430,6 +439,14 @@ public FacadeResult DumpEffectiveWildAnimals()
                 LocationTypes: locationSources,
                 ExtraModAnimalKeys: extraSources);
 
+            var diff = BuildWildAnimalDiffOrNull(
+                baseWa: baseWa,
+                effectiveWa: wa,
+                baseFarmAnimalIds: baseIds,
+                effectiveFarmAnimalIds: ids);
+
+            var diffText = diff is null ? null : BuildWildAnimalDiffText(key, diff);
+
             list.Add(new WildAnimalEffectiveDumpEntry(
                 WildAnimalKey: key,
                 Enabled: wa.Enabled,
@@ -441,6 +458,8 @@ public FacadeResult DumpEffectiveWildAnimals()
                 ExtraModAnimalKeys: extraEffective,
                 ExtraModAnimalKeysLoaded: extraLoaded,
                 ResolvedFarmAnimalIdsByModGroup: resolvedByGroup,
+                Diff: diff,
+                DiffText: diffText,
                 Overrides: overrides,
                 Sources: sources
             ));
@@ -468,6 +487,7 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
         if (string.IsNullOrWhiteSpace(wildAnimalKey))
             return new FacadeResult(false, "Missing wildAnimalKey.");
 
+        var baseSnapshot = _dataLoader.LoadBase();
         var snapshot = _dataLoader.Load();
         var canonicalKey = ResolveWildAnimalKey(snapshot.WildAnimals.Keys, wildAnimalKey);
 
@@ -475,9 +495,15 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
             return new FacadeResult(false, BuildUnknownWildAnimalMessage(snapshot.WildAnimals.Keys, wildAnimalKey));
 
         var wa = snapshot.WildAnimals[canonicalKey];
+        var baseWa = baseSnapshot.WildAnimals.TryGetValue(canonicalKey, out var baseDefWa) ? baseDefWa : wa;
 
         var builder = new AnimalCatalogBuilder(_mods, _log);
+        var baseCatalog = builder.Build(baseSnapshot.WildAnimals);
         var catalog = builder.Build(snapshot.WildAnimals);
+
+        var baseIds = new List<string>();
+        if (baseCatalog.TryGet(canonicalKey, out var baseDef))
+            baseIds = baseDef.FarmAnimalIds.ToList();
 
         var ids = new List<string>();
         if (catalog.TryGet(canonicalKey, out var def))
@@ -510,6 +536,14 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
             LocationTypes: locationSources,
             ExtraModAnimalKeys: extraSources);
 
+        var diff = BuildWildAnimalDiffOrNull(
+            baseWa: baseWa,
+            effectiveWa: wa,
+            baseFarmAnimalIds: baseIds,
+            effectiveFarmAnimalIds: ids);
+
+        var diffText = diff is null ? null : BuildWildAnimalDiffText(canonicalKey, diff);
+
         var entry = new WildAnimalStatusEntry(
             WildAnimalKey: canonicalKey,
             EffectiveEnabled: wa.Enabled,
@@ -521,6 +555,8 @@ public FacadeResult WildAnimalStatus(string wildAnimalKey)
             ExtraModAnimalKeys: extraEffective,
             ExtraModAnimalKeysLoaded: extraLoaded,
             ResolvedFarmAnimalIdsByModGroup: resolvedByGroup,
+            Diff: diff,
+            DiffText: diffText,
             Overrides: overrides,
             Sources: sources
         );
@@ -546,6 +582,7 @@ public FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled)
         if (string.IsNullOrWhiteSpace(wildAnimalKey))
             return new FacadeResult(false, "Missing wildAnimalKey.");
 
+        var baseSnapshot = _dataLoader.LoadBase();
         var snapshot = _dataLoader.Load();
         var canonicalKey = ResolveWildAnimalKey(snapshot.WildAnimals.Keys, wildAnimalKey);
 
@@ -739,6 +776,237 @@ private sealed record WildAnimalSourcesDump(
     Dictionary<string, string> ExtraModAnimalKeys
 );
 
+
+private sealed record ValueDiff<T>(T Base, T Effective);
+
+private sealed record ListDiffDump(List<string> Added, List<string> Removed);
+
+private sealed record WildAnimalDiffDump(
+    ValueDiff<bool>? Enabled,
+    ValueDiff<bool>? LargeEgg,
+    ValueDiff<int>? Price,
+    ValueDiff<bool>? IsMagic,
+    Dictionary<string, ValueDiff<bool>> LocationTypes,
+    Dictionary<string, ListDiffDump> ExtraModAnimalKeys,
+    ListDiffDump FarmAnimalIds,
+    Dictionary<string, ListDiffDump> ResolvedFarmAnimalIdsByModGroup
+);
+
+private static WildAnimalDiffDump? BuildWildAnimalDiffOrNull(
+    WildAnimalJson baseWa,
+    WildAnimalJson effectiveWa,
+    IReadOnlyList<string> baseFarmAnimalIds,
+    IReadOnlyList<string> effectiveFarmAnimalIds)
+{
+    var enabled = baseWa.Enabled == effectiveWa.Enabled ? null : new ValueDiff<bool>(baseWa.Enabled, effectiveWa.Enabled);
+    var largeEgg = baseWa.LargeEgg == effectiveWa.LargeEgg ? null : new ValueDiff<bool>(baseWa.LargeEgg, effectiveWa.LargeEgg);
+    var price = baseWa.Price == effectiveWa.Price ? null : new ValueDiff<int>(baseWa.Price, effectiveWa.Price);
+    var isMagic = baseWa.IsMagic == effectiveWa.IsMagic ? null : new ValueDiff<bool>(baseWa.IsMagic, effectiveWa.IsMagic);
+
+    var locationDiff = BuildLocationTypesDiff(baseWa.LocationTypes, effectiveWa.LocationTypes);
+
+    var baseExtra = BuildExtraModAnimalKeysEffective(baseWa.ExtraModAnimalKeys);
+    var effectiveExtra = BuildExtraModAnimalKeysEffective(effectiveWa.ExtraModAnimalKeys);
+    var extraDiff = BuildExtraModAnimalKeysDiff(baseExtra, effectiveExtra);
+
+    var farmIdsDiff = DiffListIgnoreCase(baseFarmAnimalIds, effectiveFarmAnimalIds);
+
+    var baseResolvedByGroup = BuildResolvedFarmAnimalIdsByModGroup(baseWa.ExtraModAnimalKeys);
+    var effectiveResolvedByGroup = BuildResolvedFarmAnimalIdsByModGroup(effectiveWa.ExtraModAnimalKeys);
+    var resolvedByGroupDiff = BuildResolvedByGroupDiff(baseResolvedByGroup, effectiveResolvedByGroup);
+
+    var any =
+        enabled is not null
+        || largeEgg is not null
+        || price is not null
+        || isMagic is not null
+        || locationDiff.Count > 0
+        || extraDiff.Count > 0
+        || farmIdsDiff.Added.Count > 0
+        || farmIdsDiff.Removed.Count > 0
+        || resolvedByGroupDiff.Count > 0;
+
+    if (!any)
+        return null;
+
+    return new WildAnimalDiffDump(
+        Enabled: enabled,
+        LargeEgg: largeEgg,
+        Price: price,
+        IsMagic: isMagic,
+        LocationTypes: locationDiff,
+        ExtraModAnimalKeys: extraDiff,
+        FarmAnimalIds: farmIdsDiff,
+        ResolvedFarmAnimalIdsByModGroup: resolvedByGroupDiff);
+}
+
+private static string BuildWildAnimalDiffText(string wildAnimalKey, WildAnimalDiffDump diff)
+{
+    var sb = new StringBuilder();
+    sb.AppendLine($"Diff for '{wildAnimalKey}' (base -> effective):");
+
+    if (diff.Enabled is not null)
+        sb.AppendLine($"- Enabled: {diff.Enabled.Base} -> {diff.Enabled.Effective}");
+    if (diff.LargeEgg is not null)
+        sb.AppendLine($"- LargeEgg: {diff.LargeEgg.Base} -> {diff.LargeEgg.Effective}");
+    if (diff.Price is not null)
+        sb.AppendLine($"- Price: {diff.Price.Base} -> {diff.Price.Effective}");
+    if (diff.IsMagic is not null)
+        sb.AppendLine($"- IsMagic: {diff.IsMagic.Base} -> {diff.IsMagic.Effective}");
+
+    if (diff.LocationTypes.Count > 0)
+    {
+        sb.AppendLine("- LocationTypes:");
+        foreach (var (k, v) in diff.LocationTypes.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
+            sb.AppendLine($"  - {k}: {v.Base} -> {v.Effective}");
+    }
+
+    if (diff.ExtraModAnimalKeys.Count > 0)
+    {
+        sb.AppendLine("- ExtraModAnimalKeys:");
+        foreach (var (modId, d) in diff.ExtraModAnimalKeys.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
+            AppendListDiff(sb, $"  - {modId}", d);
+    }
+
+    if (diff.FarmAnimalIds.Added.Count > 0 || diff.FarmAnimalIds.Removed.Count > 0)
+        AppendListDiff(sb, "- FarmAnimalIds", diff.FarmAnimalIds);
+
+    if (diff.ResolvedFarmAnimalIdsByModGroup.Count > 0)
+    {
+        sb.AppendLine("- ResolvedFarmAnimalIdsByModGroup:");
+        foreach (var (modId, d) in diff.ResolvedFarmAnimalIdsByModGroup.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
+            AppendListDiff(sb, $"  - {modId}", d);
+    }
+
+    return sb.ToString().TrimEnd();
+}
+
+private static void AppendListDiff(StringBuilder sb, string label, ListDiffDump d)
+{
+    if (d.Added.Count == 0 && d.Removed.Count == 0)
+        return;
+
+    sb.AppendLine($"{label}:");
+    if (d.Added.Count > 0)
+        sb.AppendLine($"    + {string.Join(", ", d.Added)}");
+    if (d.Removed.Count > 0)
+        sb.AppendLine($"    - {string.Join(", ", d.Removed)}");
+}
+
+private static Dictionary<string, ValueDiff<bool>> BuildLocationTypesDiff(
+    IDictionary<string, bool> baseTypes,
+    IDictionary<string, bool> effectiveTypes)
+{
+    var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var k in baseTypes.Keys)
+        keys.Add(k);
+    foreach (var k in effectiveTypes.Keys)
+        keys.Add(k);
+
+    var diff = new Dictionary<string, ValueDiff<bool>>(StringComparer.OrdinalIgnoreCase);
+    foreach (var key in keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
+    {
+        var b = baseTypes.TryGetValue(key, out var bv) && bv;
+        var e = effectiveTypes.TryGetValue(key, out var ev) && ev;
+        if (b != e)
+            diff[key] = new ValueDiff<bool>(b, e);
+    }
+
+    return diff;
+}
+
+private static Dictionary<string, ListDiffDump> BuildExtraModAnimalKeysDiff(
+    IReadOnlyDictionary<string, List<string>> baseKeys,
+    IReadOnlyDictionary<string, List<string>> effectiveKeys)
+{
+    var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var k in baseKeys.Keys)
+        keys.Add(k);
+    foreach (var k in effectiveKeys.Keys)
+        keys.Add(k);
+
+    var diff = new Dictionary<string, ListDiffDump>(StringComparer.OrdinalIgnoreCase);
+    foreach (var modId in keys.OrderBy(k => k == "Vanilla" ? "" : k, StringComparer.OrdinalIgnoreCase))
+    {
+        var b = baseKeys.TryGetValue(modId, out var bv) ? bv : new List<string>();
+        var e = effectiveKeys.TryGetValue(modId, out var ev) ? ev : new List<string>();
+        var d = DiffListIgnoreCase(b, e);
+        if (d.Added.Count > 0 || d.Removed.Count > 0)
+            diff[modId] = d;
+    }
+
+    return diff;
+}
+
+private static Dictionary<string, ListDiffDump> BuildResolvedByGroupDiff(
+    IReadOnlyDictionary<string, List<string>> baseResolved,
+    IReadOnlyDictionary<string, List<string>> effectiveResolved)
+{
+    var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var k in baseResolved.Keys)
+        keys.Add(k);
+    foreach (var k in effectiveResolved.Keys)
+        keys.Add(k);
+
+    var diff = new Dictionary<string, ListDiffDump>(StringComparer.OrdinalIgnoreCase);
+    foreach (var modId in keys.OrderBy(k => k == "Vanilla" ? "" : k, StringComparer.OrdinalIgnoreCase))
+    {
+        var b = baseResolved.TryGetValue(modId, out var bv) ? bv : new List<string>();
+        var e = effectiveResolved.TryGetValue(modId, out var ev) ? ev : new List<string>();
+        var d = DiffListIgnoreCase(b, e);
+        if (d.Added.Count > 0 || d.Removed.Count > 0)
+            diff[modId] = d;
+    }
+
+    return diff;
+}
+
+private static ListDiffDump DiffListIgnoreCase(IEnumerable<string> baseList, IEnumerable<string> effectiveList)
+{
+    baseList ??= Array.Empty<string>();
+    effectiveList ??= Array.Empty<string>();
+
+    var baseSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var s in baseList)
+    {
+        var t = s?.Trim();
+        if (!string.IsNullOrWhiteSpace(t))
+            baseSet.Add(t);
+    }
+
+    var effSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var s in effectiveList)
+    {
+        var t = s?.Trim();
+        if (!string.IsNullOrWhiteSpace(t))
+            effSet.Add(t);
+    }
+
+    var added = new List<string>();
+    foreach (var s in effectiveList)
+    {
+        var t = s?.Trim();
+        if (string.IsNullOrWhiteSpace(t))
+            continue;
+        if (!baseSet.Contains(t) && !added.Contains(t, StringComparer.OrdinalIgnoreCase))
+            added.Add(t);
+    }
+
+    var removed = new List<string>();
+    foreach (var s in baseList)
+    {
+        var t = s?.Trim();
+        if (string.IsNullOrWhiteSpace(t))
+            continue;
+        if (!effSet.Contains(t) && !removed.Contains(t, StringComparer.OrdinalIgnoreCase))
+            removed.Add(t);
+    }
+
+    added.Sort(StringComparer.OrdinalIgnoreCase);
+    removed.Sort(StringComparer.OrdinalIgnoreCase);
+    return new ListDiffDump(Added: added, Removed: removed);
+}
+
 private sealed record WildAnimalStatusEntry(
     string WildAnimalKey,
     bool EffectiveEnabled,
@@ -750,6 +1018,8 @@ private sealed record WildAnimalStatusEntry(
     Dictionary<string, List<string>> ExtraModAnimalKeys,
     Dictionary<string, bool> ExtraModAnimalKeysLoaded,
     Dictionary<string, List<string>> ResolvedFarmAnimalIdsByModGroup,
+    WildAnimalDiffDump? Diff,
+    string? DiffText,
     WildAnimalOverridesDump Overrides,
     WildAnimalSourcesDump Sources
 );
@@ -765,6 +1035,8 @@ private sealed record WildAnimalEffectiveDumpEntry(
     Dictionary<string, List<string>> ExtraModAnimalKeys,
     Dictionary<string, bool> ExtraModAnimalKeysLoaded,
     Dictionary<string, List<string>> ResolvedFarmAnimalIdsByModGroup,
+    WildAnimalDiffDump? Diff,
+    string? DiffText,
     WildAnimalOverridesDump Overrides,
     WildAnimalSourcesDump Sources
 );

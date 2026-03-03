@@ -19,6 +19,9 @@ public sealed class ModDataLoader : IModDataLoader
         _log = log;
     }
 
+        public ModDataSnapshot LoadBase()
+        => Load();
+
     public ModDataSnapshot Load()
     {
         var wildAnimals = ReadOrDefault<Dictionary<string, WildAnimalJson>>(
@@ -147,6 +150,9 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _log = log ?? throw new ArgumentNullException(nameof(log));
     }
+
+        public ModDataSnapshot LoadBase()
+        => _inner.Load();
 
     public ModDataSnapshot Load()
     {
