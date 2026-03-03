@@ -2,115 +2,109 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using RoosterControl.Constants;
 using RoosterControl.Enums;
 using StardewValley.GameData.Objects;
 
 namespace RoosterControl.Application.FertilizedEggs;
 
 /// <summary>
-/// Creates and assigns fertilized egg object variants based on existing egg entries.
+/// Creates fertilized egg object variants and ensures <see cref="RoosterControl.Helpers.RoosterHelper.FemaleEggs"/>
+/// has a fertilized mapping for each known female.
 /// </summary>
 internal sealed class FertilizedEggsObjectEditService
 {
-    private static readonly Regex EggSuffixRegex = new(@"(^.*_)(\d+)$", RegexOptions.Compiled);
+    private static readonly Regex TrailingNumberRegex = new(@"^(.*?)(\d+)$", RegexOptions.Compiled);
+
+    public static string GetSynthesizedFertilizedId(string baseEggId)
+    {
+        if (string.IsNullOrWhiteSpace(baseEggId))
+            throw new ArgumentException("Base egg ID is required.", nameof(baseEggId));
+
+        return baseEggId.EndsWith("_Fertilized", StringComparison.OrdinalIgnoreCase)
+            ? baseEggId
+            : $"{baseEggId}_Fertilized";
+    }
 
     public void Apply(
         Dictionary<string, ObjectData> objects,
-        Dictionary<string, ObjectData> originalEggs,
         IDictionary<string, Dictionary<EggTypeEntries, string>> femaleEggs,
-        IEnumerable<string> defaultFemales,
         Func<string> getFertilizedNameSuffix,
         Func<string> getFertilizedDescription,
-        bool cloneEggsEnabled,
-        bool includeMearasEggs = false
+        bool enableSynthesis
     )
     {
         if (objects is null)
             throw new ArgumentNullException(nameof(objects));
-        if (originalEggs is null)
-            throw new ArgumentNullException(nameof(originalEggs));
         if (femaleEggs is null)
             throw new ArgumentNullException(nameof(femaleEggs));
-        if (defaultFemales is null)
-            throw new ArgumentNullException(nameof(defaultFemales));
+        if (getFertilizedNameSuffix is null)
+            throw new ArgumentNullException(nameof(getFertilizedNameSuffix));
+        if (getFertilizedDescription is null)
+            throw new ArgumentNullException(nameof(getFertilizedDescription));
 
-        var defaultFemaleSet = defaultFemales.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (!enableSynthesis)
+            return;
 
-        if (cloneEggsEnabled)
+        foreach (var (femaleKey, eggsByType) in femaleEggs)
         {
-            foreach (var (female, eggsByType) in femaleEggs.Where(p => !defaultFemaleSet.Contains(p.Key)))
+            if (eggsByType is null)
+                continue;
+
+            if (eggsByType.TryGetValue(EggTypeEntries.Fertilized, out var existingFert)
+                && !string.IsNullOrWhiteSpace(existingFert)
+                && objects.ContainsKey(existingFert))
             {
-                var eggEntries = eggsByType
-                    .Where(e => e.Key != EggTypeEntries.Fertilized)
-                    .ToDictionary(x => x.Key, x => x.Value);
-
-                var fertilizedMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var (_, eggFullId) in eggEntries)
-                {
-                    if (!objects.TryGetValue(eggFullId, out var eggObj))
-                        continue;
-
-                    if (eggObj.CustomFields is null || !eggObj.CustomFields.ContainsKey("originalEgg"))
-                        continue;
-
-                    var resolvedEggFullId = ResolveLargeEggIfNeeded(eggFullId, objects);
-                    if (includeMearasEggs)
-                        resolvedEggFullId = GetFertilizedEggId(resolvedEggFullId);
-
-                    if (!originalEggs.TryGetValue(resolvedEggFullId, out var baseEgg))
-                        continue;
-
-                    var newId = $"{resolvedEggFullId}_Fertilized";
-                    objects[newId] = CreateFertilizedEgg(
-                        baseEgg,
-                        nameSuffix: getFertilizedNameSuffix(),
-                        description: getFertilizedDescription()
-                    );
-
-                    fertilizedMap[resolvedEggFullId] = newId;
-                }
-
-                foreach (var (baseEggId, fertId) in fertilizedMap)
-                    femaleEggs[female][EggTypeEntries.Fertilized] = fertId;
+                continue;
             }
+
+            var baseEggId = ResolveBaseEggId(eggsByType, objects);
+            if (string.IsNullOrWhiteSpace(baseEggId))
+                continue;
+
+            var fertId = GetSynthesizedFertilizedId(baseEggId);
+
+            if (!objects.ContainsKey(fertId) && objects.TryGetValue(baseEggId, out var baseEgg))
+            {
+                objects[fertId] = CreateFertilizedEgg(
+                    baseEgg,
+                    nameSuffix: getFertilizedNameSuffix(),
+                    description: getFertilizedDescription()
+                );
+            }
+
+            eggsByType[EggTypeEntries.Fertilized] = fertId;
         }
     }
 
-    private static string ResolveLargeEggIfNeeded(string eggFullId, Dictionary<string, ObjectData> objects)
+    private static string? ResolveBaseEggId(
+        IDictionary<EggTypeEntries, string> eggsByType,
+        Dictionary<string, ObjectData> objects
+    )
     {
-        var match = EggSuffixRegex.Match(eggFullId);
-        if (!match.Success)
-            return eggFullId;
+        if (eggsByType.TryGetValue(EggTypeEntries.Large, out var large) && !string.IsNullOrWhiteSpace(large))
+            return ResolveLargeEggIfNeeded(large, objects);
 
-        var id = match.Groups[2].Value;
-        var isSmall = id is "176" or "180";
-        if (!isSmall)
-            return eggFullId;
+        if (eggsByType.TryGetValue(EggTypeEntries.Normal, out var normal) && !string.IsNullOrWhiteSpace(normal))
+            return ResolveLargeEggIfNeeded(normal, objects);
 
-        var largeId = id == "176" ? "174" : "182";
-        var largeEggFullId = match.Groups[1].Value + largeId;
-        return objects.ContainsKey(largeEggFullId) ? largeEggFullId : eggFullId;
+        return null;
     }
 
-    private static string GetFertilizedEggId(string eggFullId)
+    private static string ResolveLargeEggIfNeeded(string eggId, Dictionary<string, ObjectData> objects)
     {
-        var eggId = EggSuffixRegex.Replace(eggFullId, "$2");
-        return eggId switch
-        {
-            ItemIds.AnimalProducts.BrownEgg
-            or ItemIds.AnimalProducts.LargeBrownEgg => ItemIds.CustomItems.FertilizedBrownEgg,
+        var match = TrailingNumberRegex.Match(eggId);
+        if (!match.Success)
+            return eggId;
 
-            ItemIds.AnimalProducts.WhiteEgg
-            or ItemIds.AnimalProducts.LargeWhiteEgg => ItemIds.CustomItems.FertilizedWhiteEgg,
+        var prefix = match.Groups[1].Value;
+        var id = match.Groups[2].Value;
 
-            ItemIds.AnimalProducts.VoidEgg => ItemIds.CustomItems.FertilizedVoidEgg,
+        if (id is not ("176" or "180"))
+            return eggId;
 
-            ItemIds.AnimalProducts.GoldenEgg => ItemIds.CustomItems.FertilizedGoldEgg,
-
-            _ => ItemIds.CustomItems.FertilizedWhiteEgg
-        };
+        var largeId = id == "176" ? "174" : "182";
+        var largeEggId = prefix + largeId;
+        return objects.ContainsKey(largeEggId) ? largeEggId : eggId;
     }
 
     private static ObjectData CreateFertilizedEgg(ObjectData baseEgg, string nameSuffix, string description)
@@ -134,15 +128,6 @@ internal sealed class FertilizedEggsObjectEditService
             {
                 // Some properties may throw due to runtime-only backing data; ignore.
             }
-        }
-
-        clone.CustomFields ??= new Dictionary<string, string>();
-
-        if (!clone.CustomFields.ContainsKey("originalEgg")
-            && baseEgg.CustomFields is not null
-            && baseEgg.CustomFields.TryGetValue("originalEgg", out var originalEgg))
-        {
-            clone.CustomFields["originalEgg"] = originalEgg;
         }
 
         if (!string.IsNullOrWhiteSpace(clone.DisplayName))

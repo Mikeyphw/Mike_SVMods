@@ -5,6 +5,7 @@ using Mikew.NestCore.Helpers.GameStateQueries;
 using RoosterControl.Application.Hatching;
 using RoosterControl.Application.Planning;
 using RoosterControl.Application.Compat;
+using RoosterControl.Application.FertilizedEggs;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
 using RoosterControl.Helpers;
@@ -115,28 +116,57 @@ internal sealed partial class RoosterCoordinator
             if (!TryGetEggKindsForRoosterType(roosterType, out var normalKind, out var largeKind, out var fertKind))
                 continue;
 
+            string? resolvedNormalId = null;
             if (rooster.Eggs.TryGetValue(EggTypeEntries.Normal, out var normalEgg)
                 && _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, normalKind, animalData, out var normalId, out _)
                 && !string.IsNullOrWhiteSpace(normalId))
             {
+                resolvedNormalId = normalId;
                 normalEgg[RoosterItemDataEntries.Name] = normalId;
             }
 
+            string? resolvedLargeId = null;
             if (rooster.Eggs.TryGetValue(EggTypeEntries.Large, out var largeEgg)
                 && _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, largeKind, animalData, out var largeId, out _)
                 && !string.IsNullOrWhiteSpace(largeId))
             {
+                resolvedLargeId = largeId;
                 largeEgg[RoosterItemDataEntries.Name] = largeId;
             }
 
-            if (rooster.Eggs.TryGetValue(EggTypeEntries.Fertilized, out var fertEgg)
-                && _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, fertKind, animalData, out var fertId, out _)
-                && !string.IsNullOrWhiteSpace(fertId))
+            if (rooster.Eggs.TryGetValue(EggTypeEntries.Fertilized, out var fertilizedEgg))
             {
-                fertEgg[RoosterItemDataEntries.Name] = fertId;
+                var fertSourceId = _saveState.Compat.SelectedEggSources.TryGetValue(fertKind, out var fs) ? fs : null;
+                var normalSourceId = _saveState.Compat.SelectedEggSources.TryGetValue(normalKind, out var ns) ? ns : null;
+                var largeSourceId = _saveState.Compat.SelectedEggSources.TryGetValue(largeKind, out var ls) ? ls : null;
+
+                var useNativeFertilized = !string.IsNullOrWhiteSpace(fertSourceId)
+                    && ((!string.IsNullOrWhiteSpace(largeSourceId) && fertSourceId.Equals(largeSourceId, StringComparison.OrdinalIgnoreCase))
+                        || (!string.IsNullOrWhiteSpace(normalSourceId) && fertSourceId.Equals(normalSourceId, StringComparison.OrdinalIgnoreCase)));
+
+                if (useNativeFertilized
+                    && _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, fertKind, animalData, out var fertId, out _)
+                    && !string.IsNullOrWhiteSpace(fertId))
+                {
+                    fertilizedEgg[RoosterItemDataEntries.Name] = fertId;
+                }
+                else
+                {
+                    var baseEggId = !string.IsNullOrWhiteSpace(resolvedLargeId) ? resolvedLargeId : resolvedNormalId;
+                    if (!string.IsNullOrWhiteSpace(baseEggId))
+                        fertilizedEgg[RoosterItemDataEntries.Name] = FertilizedEggsObjectEditService.GetSynthesizedFertilizedId(baseEggId);
+                }
             }
 
             RoosterHelper.UpdateFemaleEggs(rooster, animalData);
+
+            if (rooster.Eggs.TryGetValue(EggTypeEntries.Fertilized, out var fertEggEntry)
+                && fertEggEntry.TryGetValue(RoosterItemDataEntries.Name, out var fertEggId)
+                && !string.IsNullOrWhiteSpace(fertEggId))
+            {
+                RoosterHelper.FemaleEggs.TryAdd(rooster.Female, new Dictionary<EggTypeEntries, string>());
+                RoosterHelper.FemaleEggs[rooster.Female][EggTypeEntries.Fertilized] = fertEggId;
+            }
         }
     }
 
