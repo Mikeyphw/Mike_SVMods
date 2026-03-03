@@ -734,7 +734,130 @@ foreach (var key in wildAnimalKeysForGmcm)
                 .OrderBy(mid => mid == "Vanilla" ? "" : mid, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            foreach (var modId in extraModIdsOrdered)
+            
+            page.TextLabel(
+                elementId: $"wildAnimals.{key}.extraModAnimalKeys.customUpsert",
+                name: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.customUpsert.name", "Add/update custom modId block"),
+                tooltip: () => Translate(
+                    i18n,
+                    "config.wildAnimals.extraModAnimalKeys.customUpsert.tooltip",
+                    "Create or update a custom mod-group block not present in WildAnimalsList. Format: modId | csvKeys (example: Author.ModName | Pig, Cow). Close and reopen this page to refresh the list."),
+                getValue: () => "",
+                setValue: rawValue =>
+                {
+                    var input = (rawValue ?? string.Empty).Trim();
+                    if (input.Length == 0)
+                        return;
+
+                    var sepIndex = input.IndexOf('|');
+                    if (sepIndex < 0) sepIndex = input.IndexOf(':');
+                    if (sepIndex < 0) sepIndex = input.IndexOf('=');
+
+                    if (sepIndex <= 0 || sepIndex >= input.Length - 1)
+                        return;
+
+                    var modIdRaw = input[..sepIndex].Trim();
+                    var keysRaw = input[(sepIndex + 1)..].Trim();
+
+                    if (modIdRaw.Length == 0 || string.Equals(modIdRaw, "Vanilla", StringComparison.OrdinalIgnoreCase))
+                        return;
+
+                    var parsed = ParseCsvKeyList(keysRaw);
+                    if (parsed.Count == 0)
+                        return;
+
+                    var modId = modIdRaw;
+                    foreach (var existing in extraModIdsForGmcm)
+                    {
+                        if (string.Equals(existing, modIdRaw, StringComparison.OrdinalIgnoreCase))
+                        {
+                            modId = existing;
+                            break;
+                        }
+                    }
+
+                    var baseKeys = definition?.ExtraModAnimalKeys is not null
+                        && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                        ? baseBlock.GetEffectiveFarmAnimalKeys()
+                        : Array.Empty<string>();
+
+                    var cfg = _config!.Get();
+                    cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                    if (!cfg.WildAnimalOverrides.TryGetValue(key, out var ov) || ov is null)
+                        ov = new WildAnimalOverrideConfig();
+
+                    ov.ExtraModAnimalKeys ??= new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.OrdinalIgnoreCase);
+
+                    if (SequenceEqualIgnoreCase(parsed, baseKeys))
+                    {
+                        ov.ExtraModAnimalKeys.Remove(modId);
+                    }
+                    else
+                    {
+                        ov.ExtraModAnimalKeys[modId] = new ExtraModAnimalKeysOverrideConfig
+                        {
+                            FarmAnimalKeys = parsed.ToList(),
+                        };
+                    }
+
+                    if (ov.ExtraModAnimalKeys.Count == 0)
+                        ov.ExtraModAnimalKeys = null;
+
+                    if (IsEmptyOverride(ov))
+                        cfg.WildAnimalOverrides.Remove(key);
+                    else
+                        cfg.WildAnimalOverrides[key] = ov;
+                });
+
+            page.TextLabel(
+                elementId: $"wildAnimals.{key}.extraModAnimalKeys.customRemove",
+                name: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.customRemove.name", "Remove modId override block"),
+                tooltip: () => Translate(
+                    i18n,
+                    "config.wildAnimals.extraModAnimalKeys.customRemove.tooltip",
+                    "Remove an ExtraModAnimalKeys override block by modId. This resets to default for base blocks, and deletes custom blocks. Enter: modId. Close and reopen this page to refresh the list."),
+                getValue: () => "",
+                setValue: rawValue =>
+                {
+                    var modIdRaw = (rawValue ?? string.Empty).Trim();
+                    if (modIdRaw.Length == 0 || string.Equals(modIdRaw, "Vanilla", StringComparison.OrdinalIgnoreCase))
+                        return;
+
+                    var modId = modIdRaw;
+                    foreach (var existing in extraModIdsForGmcm)
+                    {
+                        if (string.Equals(existing, modIdRaw, StringComparison.OrdinalIgnoreCase))
+                        {
+                            modId = existing;
+                            break;
+                        }
+                    }
+
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+                    if (ov?.ExtraModAnimalKeys is null)
+                        return;
+
+                    ov.ExtraModAnimalKeys.Remove(modId);
+
+                    if (ov.ExtraModAnimalKeys.Count == 0)
+                        ov.ExtraModAnimalKeys = null;
+
+                    if (IsEmptyOverride(ov))
+                        cfg.WildAnimalOverrides.Remove(key);
+                    else
+                        cfg.WildAnimalOverrides[key] = ov;
+                });
+
+            page.ParagraphDynamic(
+                () => Translate(
+                    i18n,
+                    "config.wildAnimals.extraModAnimalKeys.customRefreshNote.text",
+                    "After adding/removing blocks, close and reopen this page to refresh the list."),
+                id: $"wildAnimals_extraModAnimalKeys_customRefresh_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+foreach (var modId in extraModIdsOrdered)
             {
                 var elementId = $"wildAnimals.{key}.extraModAnimalKeys.{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(modId)}";
 

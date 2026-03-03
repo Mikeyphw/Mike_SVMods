@@ -177,7 +177,8 @@
 
 **Steps**
 1. Add override schema + normalization/cleanup + merge into effective WildAnimals on load. ✅
-2. Add per-animal GMCM UI to edit mod-group blocks and FarmAnimalKeys lists (CSV-style inputs).
+2. Add per-animal GMCM UI to edit mod-group blocks and FarmAnimalKeys lists (CSV-style inputs). ✅
+   - Add static helper controls to add/remove custom modId override blocks (no dynamic search). ✅
 3. Update diagnostics/dev outputs to show override vs base sources.
 4. Add i18n keys + docs updates.
 

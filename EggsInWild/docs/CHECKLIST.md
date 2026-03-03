@@ -49,6 +49,7 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Remove redundant ExtraModAnimalKeys overrides matching base JSON.
 - [x] Apply ExtraModAnimalKeys overrides in `ConfiguredModDataLoader`.
 - [x] Add GMCM UI for mod-group blocks and FarmAnimalKeys CSV editing.
+- [x] Add static GMCM helper to add/remove custom modId override blocks (no dynamic search).
 - [x] Update diagnostics/dev outputs to show override sources for complex fields.
 - [x] Add i18n keys + docs updates.
 
