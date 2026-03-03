@@ -37,3 +37,27 @@
 - [x] Validation summary/status on compat page
 - [x] Optional: cycle buttons / improved UX (GMCMOptions)
 - [x] Optional: inline per-selection validation messaging
+
+## Phase 13 — Release hardening
+- [ ] Fail-fast checks + actionable errors
+- [ ] Harden selection repair/persistence logs + no-op clarity
+- [ ] Performance pass (edits/invalidation batching)
+- [ ] Safe defaults for empty/missing catalogs
+- [ ] Build/test workflow verified (warnings pass)
+- [ ] Docs: upgrade notes + release checklist
+
+## Phase 14 — UX polish (non-optional)
+- [ ] GMCM Compat page layout pass (grouping/headings/spacing)
+- [ ] Picker affordances (icons/labels) + robust fallback without GMCMOptions
+- [ ] Reset affordances (all/per-egg-kind/roosters)
+- [ ] Actionable validation messaging
+- [ ] QoL toggles (e.g., dedicated All providers toggle)
+
+## Phase 15 — Compat test matrix + content-pack examples
+- [ ] Compat matrix doc (known mods + expected outcomes)
+- [ ] Example content packs/templates + schema notes
+- [ ] Reference patterns (match types + gating)
+- [ ] Unit tests: catalog loading + deterministic repair
+- [ ] Unit tests: fertilized mapping determinism (native vs synthesized)
+- [ ] Manual QA checklist + smoke-test notes
+- [ ] Docs wired to templates + matrix

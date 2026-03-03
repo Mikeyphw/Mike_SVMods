@@ -152,3 +152,46 @@ Steps:
 1) GMCM “Compat” page lists egg kinds and rooster providers.
 2) When GMCMOptions is installed, egg sources use an arrow-cycle picker (fallback to drop-down).
 3) Show validation summary + inline per-selection notes.
+
+---
+
+## Phase 13 — Release hardening
+
+Goal: stabilize behavior and error handling for a clean release.
+
+Steps:
+1) Audit fail-fast checks (NestCore presence, required integrations) and ensure errors are actionable.
+2) Harden selection repair + persistence paths (no silent fallbacks; clear logs for repairs/no-ops).
+3) Performance pass: avoid redundant invalidations/edits; ensure batching is used consistently.
+4) Add “safe defaults” for edge cases (empty catalogs, missing providers, missing assets) with clear logging.
+5) Verify build/test workflow (solution build + unit tests); fix any lingering warnings that hide real errors.
+6) Update docs: upgrade notes + release checklist.
+
+---
+
+## Phase 14 — UX polish (non-optional)
+
+Goal: make GMCM compat UX clearer and more discoverable without adding new core mechanics.
+
+Steps:
+1) Reorganize GMCM “Compat” page layout (grouping, headings, spacing).
+2) Improve picker affordances (icons/labels) and ensure consistent fallback when GMCMOptions is absent.
+3) Add reset affordances (reset all compat selections; reset per-egg-kind; reset rooster providers).
+4) Make validation messaging more actionable (what changed, what to do next), while keeping it non-spammy.
+5) Add small quality-of-life toggles where they reduce friction (e.g., “All providers” as a dedicated toggle instead of a cycle entry).
+
+---
+
+## Phase 15 — Compat test matrix + content-pack examples
+
+Goal: document and regression-test compat behaviors, and provide “known-good” templates for contributors.
+
+Steps:
+1) Write a compat matrix doc listing known egg/rooster-related mods and expected integration outcomes.
+2) Add example content packs/templates for egg sources + rooster providers (JSON templates + schema notes).
+3) Add reference examples for common patterns (exact match, prefix/regex routing, gating predicates).
+4) Add unit tests for catalog loading + deterministic selection repair (no game runtime required).
+5) Add tests for fertilized mapping determinism across chosen egg sources (incl. “native vs synthesized”).
+6) Add smoke-test notes + manual QA checklist (save load, day start, GMCM edits, command usage).
+7) Update docs to point mod authors to the templates and the compat matrix.
+
