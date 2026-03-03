@@ -309,7 +309,7 @@ public sealed class ConfiguredModDataLoader : IModDataLoader
                 StardewModdingAPI.LogLevel.Trace);
         }
 
-        if (WildAnimalOverridesEquals(overrides, normalized))
+        if (!changed || WildAnimalOverridesEquals(overrides, normalized))
             return false;
 
         overrides.Clear();

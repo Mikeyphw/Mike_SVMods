@@ -1,12 +1,11 @@
 # TODO — EggsInWild (WildAnimals)
 
-## Next (after Phases 1–5)
-- [ ] GMCM editing for complex collections:
-  - [x] `LocationTypes` editor UI (override schema+loader merge is done).
-  - [x] `ExtraModAnimalKeys` editor UI (override schema+loader merge is done).
-- [x] Phase 8: guard against accidental config churn (only save config when normalization changes).
+## Next (after Phase 8)
+- [ ] Phase 7 UX improvements:
+  - [ ] Bulk add/update/remove workflows that fit GMCM static-page limits.
+  - [ ] Surface richer validation warnings in GMCM (unknown modIds, empty/duplicate keys, keys not present in game data when available).
 - [ ] Index-page navigation improvements that fit GMCM static-page limits (no live search).
-- [ ] Add richer validation/range checks (price bounds, empty farm-animal list warnings surfaced in GMCM).
+- [ ] Keep build/warning budget tight (no obsolete legacy support; avoid config churn).
 
 ## Notes
 - Keep changes inside `EggsInWild` and prefer NestCore helpers for GMCM plumbing.

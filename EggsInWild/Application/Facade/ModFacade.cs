@@ -792,7 +792,7 @@ private sealed record WildAnimalDiffDump(
     Dictionary<string, ListDiffDump> ResolvedFarmAnimalIdsByModGroup
 );
 
-private static WildAnimalDiffDump? BuildWildAnimalDiffOrNull(
+private WildAnimalDiffDump? BuildWildAnimalDiffOrNull(
     WildAnimalJson baseWa,
     WildAnimalJson effectiveWa,
     IReadOnlyList<string> baseFarmAnimalIds,
