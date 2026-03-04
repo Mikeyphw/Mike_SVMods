@@ -9,7 +9,7 @@
     - [x] Bulk preview includes planned action summary (set/clear/no-op) + clearer per-modId actions.
     - [x] WildAnimals index shows group counts and flags staged bulk entries (with warn count).
     - [x] Clear staged bulk input toggle.
-    - [ ] Export current effective blocks as `modId | csvKeys` for round-trip editing.
+    - [x] Export current effective blocks as `modId | csvKeys` for round-trip editing.
   - [ ] Surface richer validation warnings in GMCM (unknown modIds, empty/duplicate keys, keys not present in game data when available).
     - [x] ExtraModAnimalKeys: GMCM shows inline validation warnings (unloaded modIds, blank/whitespace/dupes, unknown FarmAnimalKeys when Data/FarmAnimals is available).
   - [x] Dev: `wegg wildanimals dump_effective` includes validation warnings (unloaded modIds + unknown FarmAnimalKeys when Data/FarmAnimals is available).

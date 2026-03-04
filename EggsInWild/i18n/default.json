@@ -514,5 +514,7 @@
   "config.paragraph.wildAnimals.extraModAnimalKeys.bulkHeader.empty": "Bulk: (none staged).",
   "config.paragraph.wildAnimals.extraModAnimalKeys.bulkHeader.text": "Bulk staged: {0} upserts, {1} resets, {2} warnings | Planned: set {3}, clear {4}, no-op {5} | Fixes: {6}.",
   "config.wildAnimals.extraModAnimalKeys.bulkSkipNoop.name": "Skip Bulk Apply when no changes",
-  "config.wildAnimals.extraModAnimalKeys.bulkSkipNoop.description": "If enabled, Bulk Apply does nothing (and keeps staged text) when the planned result is a no-op."
+  "config.wildAnimals.extraModAnimalKeys.bulkSkipNoop.description": "If enabled, Bulk Apply does nothing (and keeps staged text) when the planned result is a no-op.",
+  "config.wildAnimals.extraModAnimalKeys.exportEffective.name": "Export effective blocks to SMAPI log",
+  "config.wildAnimals.extraModAnimalKeys.exportEffective.tooltip": "Write one line per mod-group to SMAPI log: modId | csvKeys (effective after overrides)."
 }

@@ -1104,6 +1104,58 @@ foreach (var key in wildAnimalKeysForGmcm)
                 tooltip: true,
                 fieldId: $"wildAnimals_extraModAnimalKeys_bulkClear_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
 
+            page.BoolLabel(
+                elementId: $"wildAnimals.{key}.extraModAnimalKeys.exportEffective",
+                name: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.exportEffective.name", "Export effective blocks to SMAPI log"),
+                tooltip: () => Translate(
+                    i18n,
+                    "config.wildAnimals.extraModAnimalKeys.exportEffective.tooltip",
+                    "Write one line per mod-group to SMAPI log: modId | csvKeys (effective after overrides)."),
+                getValue: () => false,
+                setValue: v =>
+                {
+                    if (!v)
+                        return;
+
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+
+                    var outLines = new List<string>
+                    {
+                        $"[GMCM][ExtraModAnimalKeys] Export effective blocks for '{key}':",
+                    };
+
+                    foreach (var modId in extraModIdsOrdered)
+                    {
+                        IReadOnlyList<string> effectiveKeys;
+
+                        if (ov?.ExtraModAnimalKeys is not null
+                            && ov.ExtraModAnimalKeys.TryGetValue(modId, out var blockOv)
+                            && blockOv?.FarmAnimalKeys is { Count: > 0 } ovKeys)
+                        {
+                            effectiveKeys = ovKeys;
+                        }
+                        else
+                        {
+                            effectiveKeys = definition?.ExtraModAnimalKeys is not null
+                                && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                                ? baseBlock.GetEffectiveFarmAnimalKeys()
+                                : Array.Empty<string>();
+                        }
+
+                        if (effectiveKeys.Count == 0)
+                            continue;
+
+                        outLines.Add($"{modId} | {string.Join(", ", effectiveKeys)}");
+                    }
+
+                    if (outLines.Count == 1)
+                        outLines.Add(Translate(i18n, "config.wildAnimals.value.none", "(none)"));
+
+                    Monitor.Log(string.Join(Environment.NewLine, outLines), LogLevel.Info);
+                });
+
+
             page.ParagraphDynamic(
                 () => Translate(
                     i18n,

@@ -7,7 +7,8 @@
 - Bulk UX: staged bulk entries are indicated in index links; bulk preview includes planned set/clear/no-op summary; staging can be cleared.
 - Validation warnings: dev diagnostics now include warnings for unloaded modIds and unknown FarmAnimalKeys (when Data/FarmAnimals is available).
 - Validation warnings: GMCM displays ExtraModAnimalKeys warnings inline (shared validator with dev dump).
-- Bulk UX: GMCM ExtraModAnimalKeys supports stage + preview + apply bulk edits (export pending).
+- Bulk UX: GMCM ExtraModAnimalKeys supports stage + preview + apply bulk edits (export to SMAPI log available).
+- Export: GMCM action writes effective blocks as `modId | csvKeys` to the SMAPI log for round-trip editing.
 - Quick-fixes: bulk fix toggles also apply to per-block edits (drop unknown FarmAnimalKeys when available).
 
 ## Scope
@@ -197,3 +198,19 @@
 1. Enhance dev commands (status/dump_effective) to show override sources for complex fields.
 2. ✅ Guard against accidental config churn (only save when normalization changes).
 3. Docs + checklist alignment.
+
+---
+
+## Phase 9 — GMCM bulk UX polish (post-Phase 8)
+**Goal**: make bulk workflows fast and round-trip friendly within GMCM static-page limits.
+
+**Steps**
+1. Add a per-animal bulk header summary (staged counts + planned set/clear/no-op). ✅
+2. Add a Skip-noop Bulk Apply toggle (default on) so no-op apply keeps staged text. ✅
+3. Add an export action to write effective blocks as `modId | csvKeys` to SMAPI log. ✅
+4. Expand validation warnings surfaced in GMCM (unknown modIds, empty/duplicate keys, missing FarmAnimalKeys when available).
+
+**Acceptance**
+- Bulk preview/plan remains readable without scrolling.
+- No-op bulk applies do not clear staged text (unless user disables skip-noop).
+- User can export effective blocks and paste back into bulk stage to reproduce state.

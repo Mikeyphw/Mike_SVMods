@@ -429,7 +429,20 @@
         "p": 0,
         "dir": ""
       }
+    },
+    {
+      "id": "20260304T005302-0300-01",
+      "file": "20260304T005302-0300-01",
+      "title": "Phase 9B: export effective blocks to SMAPI log",
+      "title_with_id": "Phase 9B: export effective blocks to SMAPI log [20260304T005302-0300-01]",
+      "created_at": "2026-03-03T23:16:13-03:00",
+      "applied_at": "2026-03-04T01:02:10-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
     }
   ],
-  "updated_at": "2026-03-04T00:41:07-03:00"
+  "updated_at": "2026-03-04T01:02:10-03:00"
 }
