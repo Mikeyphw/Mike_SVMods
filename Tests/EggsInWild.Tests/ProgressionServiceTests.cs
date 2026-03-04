@@ -91,7 +91,7 @@ public sealed class ProgressionServiceTests
 
         // Replay-safe: multiple evaluations in the same day shouldn't advance again or duplicate mail.
         svc.OnDayStarted();
-        Assert.Equal(1, mail.Tomorrow.FindAll(x => x.Id == ProgressionIds.Mail.MarnieThanks).Count);
+        Assert.Single(mail.Tomorrow.FindAll(x => x.Id == ProgressionIds.Mail.MarnieThanks));
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public sealed class ProgressionServiceTests
         Assert.True(svc.TryForceSetStep(ProgressionStep.PartII, applySideEffects: true, reason: "test", out var msg2));
         Assert.Contains("No-op", msg2);
 
-        Assert.Equal(1, mail.Tomorrow.FindAll(x => x.Id == ProgressionIds.Mail.MarnieThanks).Count);
+        Assert.Single(mail.Tomorrow.FindAll(x => x.Id == ProgressionIds.Mail.MarnieThanks));
     }
 
     [Fact]
@@ -233,6 +233,6 @@ public sealed class ProgressionServiceTests
         Assert.True(svc.TryForceSetStep(ProgressionStep.PartII, applySideEffects: false, reason: "rollback", out _));
         Assert.True(svc.TryForceSetStep(ProgressionStep.PartIII, applySideEffects: true, reason: "reapply", out _));
 
-        Assert.Equal(1, mail.Received.FindAll(x => x.Id == ProgressionIds.Mail.WizardDone).Count);
+        Assert.Single(mail.Received.FindAll(x => x.Id == ProgressionIds.Mail.WizardDone));
     }
 }

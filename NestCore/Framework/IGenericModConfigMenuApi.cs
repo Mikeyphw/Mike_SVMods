@@ -36,7 +36,7 @@ public interface IGenericModConfigMenuApi : IGenericModConfigMenuApiWithObsolete
     ****/
 
     /// <summary>Add a section title at the current position in the form.</summary>
-    void AddSectionTitle(IManifest mod, Func<string> text, Func<string> tooltip = null);
+    void AddSectionTitle(IManifest mod, Func<string> text, Func<string>? tooltip = null);
 
     /// <summary>Add a subheader at the current position in the form.</summary>
     /// <remarks>Larger than paragraph, smaller than title.</remarks>
@@ -49,32 +49,32 @@ public interface IGenericModConfigMenuApi : IGenericModConfigMenuApiWithObsolete
     void AddImage(IManifest mod, Func<Texture2D> texture, Rectangle? texturePixelArea = null, int scale = Game1.pixelZoom);
 
     /// <summary>Add a boolean option at the current position in the form.</summary>
-    void AddBoolOption(IManifest mod, Func<bool> getValue, Action<bool> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
+    void AddBoolOption(IManifest mod, Func<bool> getValue, Action<bool> setValue, Func<string> name, Func<string>? tooltip = null, string? fieldId = null);
 
     /// <summary>Add an integer option at the current position in the form.</summary>
-    void AddNumberOption(IManifest mod, Func<int> getValue, Action<int> setValue, Func<string> name, Func<string> tooltip = null, int? min = null, int? max = null, int? interval = null, Func<int, string> formatValue = null, string fieldId = null);
+    void AddNumberOption(IManifest mod, Func<int> getValue, Action<int> setValue, Func<string> name, Func<string>? tooltip = null, int? min = null, int? max = null, int? interval = null, Func<int, string>? formatValue = null, string? fieldId = null);
 
     /// <summary>Add a float option at the current position in the form.</summary>
-    void AddNumberOption(IManifest mod, Func<float> getValue, Action<float> setValue, Func<string> name, Func<string> tooltip = null, float? min = null, float? max = null, float? interval = null, Func<float, string> formatValue = null, string fieldId = null);
+    void AddNumberOption(IManifest mod, Func<float> getValue, Action<float> setValue, Func<string> name, Func<string>? tooltip = null, float? min = null, float? max = null, float? interval = null, Func<float, string>? formatValue = null, string? fieldId = null);
 
     /// <summary>Add a string option at the current position in the form.</summary>
-    void AddTextOption(IManifest mod, Func<string> getValue, Action<string> setValue, Func<string> name, Func<string> tooltip = null, string[] allowedValues = null, Func<string, string> formatAllowedValue = null, string fieldId = null);
+    void AddTextOption(IManifest mod, Func<string> getValue, Action<string> setValue, Func<string> name, Func<string>? tooltip = null, string[]? allowedValues = null, Func<string, string>? formatAllowedValue = null, string? fieldId = null);
 
     /// <summary>Add a keybind at the current position in the form.</summary>
-    void AddKeybind(IManifest mod, Func<SButton> getValue, Action<SButton> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
+    void AddKeybind(IManifest mod, Func<SButton> getValue, Action<SButton> setValue, Func<string> name, Func<string>? tooltip = null, string? fieldId = null);
 
     /// <summary>Add a keybind list at the current position in the form.</summary>
-    void AddKeybindList(IManifest mod, Func<KeybindList> getValue, Action<KeybindList> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
+    void AddKeybindList(IManifest mod, Func<KeybindList> getValue, Action<KeybindList> setValue, Func<string> name, Func<string>? tooltip = null, string? fieldId = null);
 
     /****
     ** Multi-page management
     ****/
 
     /// <summary>Start a new page in the mod's config UI, or switch to that page if it already exists.</summary>
-    void AddPage(IManifest mod, string pageId, Func<string> pageTitle = null);
+    void AddPage(IManifest mod, string pageId, Func<string>? pageTitle = null);
 
     /// <summary>Add a link to a page added via <see cref="AddPage"/> at the current position in the form.</summary>
-    void AddPageLink(IManifest mod, string pageId, Func<string> text, Func<string> tooltip = null);
+    void AddPageLink(IManifest mod, string pageId, Func<string> text, Func<string>? tooltip = null);
 
     /****
     ** Advanced
@@ -85,15 +85,15 @@ public interface IGenericModConfigMenuApi : IGenericModConfigMenuApiWithObsolete
         IManifest mod,
         Func<string> name,
         Action<SpriteBatch, Vector2> draw,
-        Func<string> tooltip = null,
-        Action beforeMenuOpened = null,
-        Action beforeSave = null,
-        Action afterSave = null,
-        Action beforeReset = null,
-        Action afterReset = null,
-        Action beforeMenuClosed = null,
-        Func<int> height = null,
-        string fieldId = null);
+        Func<string>? tooltip = null,
+        Action? beforeMenuOpened = null,
+        Action? beforeSave = null,
+        Action? afterSave = null,
+        Action? beforeReset = null,
+        Action? afterReset = null,
+        Action? beforeMenuClosed = null,
+        Func<int>? height = null,
+        string? fieldId = null);
 
     /// <summary>Set whether the options registered after this point can only be edited from the title screen.</summary>
     void SetTitleScreenOnlyForNextOptions(IManifest mod, bool titleScreenOnly);
@@ -139,8 +139,8 @@ public interface IGenericModConfigMenuApiWithObsoleteMethods
         Func<string> tooltip,
         Action<SpriteBatch, Vector2> draw,
         Action saveChanges,
-        Func<int> height = null,
-        string fieldId = null);
+        Func<int>? height = null,
+        string? fieldId = null);
 
     [Obsolete("Use " + nameof(IGenericModConfigMenuApi.AddNumberOption) + " with the formatValue callback instead.")]
     void AddNumberOption(
@@ -148,11 +148,11 @@ public interface IGenericModConfigMenuApiWithObsoleteMethods
         Func<int> getValue,
         Action<int> setValue,
         Func<string> name,
-        Func<string> tooltip = null,
+        Func<string>? tooltip = null,
         int? min = null,
         int? max = null,
         int? interval = null,
-        string fieldId = null);
+        string? fieldId = null);
 
     [Obsolete("Use " + nameof(IGenericModConfigMenuApi.AddNumberOption) + " with the formatValue callback instead.")]
     void AddNumberOption(
@@ -160,11 +160,11 @@ public interface IGenericModConfigMenuApiWithObsoleteMethods
         Func<float> getValue,
         Action<float> setValue,
         Func<string> name,
-        Func<string> tooltip = null,
+        Func<string>? tooltip = null,
         float? min = null,
         float? max = null,
         float? interval = null,
-        string fieldId = null);
+        string? fieldId = null);
 
     // Obsolete since 1.7.0
     [Obsolete("Use " + nameof(IGenericModConfigMenuApi.AddComplexOption) + " with more callback arguments instead.")]
@@ -172,13 +172,13 @@ public interface IGenericModConfigMenuApiWithObsoleteMethods
         IManifest mod,
         Func<string> name,
         Action<SpriteBatch, Vector2> draw,
-        Func<string> tooltip = null,
-        Action beforeSave = null,
-        Action afterSave = null,
-        Action beforeReset = null,
-        Action afterReset = null,
-        Func<int> height = null,
-        string fieldId = null);
+        Func<string>? tooltip = null,
+        Action? beforeSave = null,
+        Action? afterSave = null,
+        Action? beforeReset = null,
+        Action? afterReset = null,
+        Func<int>? height = null,
+        string? fieldId = null);
 
     // obsolete since 1.6.0
     [Obsolete("Use " + nameof(IGenericModConfigMenuApi.AddTextOption) + " with the formatAllowedValue argument instead.")]
@@ -187,9 +187,9 @@ public interface IGenericModConfigMenuApiWithObsoleteMethods
         Func<string> getValue,
         Action<string> setValue,
         Func<string> name,
-        Func<string> tooltip = null,
-        string[] allowedValues = null,
-        string fieldId = null);
+        Func<string>? tooltip = null,
+        string[]? allowedValues = null,
+        string? fieldId = null);
 
     // obsolete since 1.5.0
     [Obsolete("Use " + nameof(IGenericModConfigMenuApi.Register) + " instead.")]

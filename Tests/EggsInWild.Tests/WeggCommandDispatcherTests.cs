@@ -139,5 +139,7 @@ public sealed class WeggCommandDispatcherTests
         public FacadeResult DumpEffectiveWildAnimals() => new(true, "[]");
         public FacadeResult WildAnimalStatus(string wildAnimalKey) => new(true, "{}");
         public FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled) => new(true, "ok");
+        public FacadeResult ExportWildAnimalEffectiveBulk(string wildAnimalKey) => new(true, "");
+        public FacadeResult ValidateWildAnimalBulk(string wildAnimalKey, string rawOrPath) => new(true, "");
     }
 }

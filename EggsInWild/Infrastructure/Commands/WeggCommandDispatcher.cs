@@ -99,7 +99,6 @@ private CommandResult HandleWildAnimalsSetEnabled(string[] args)
 
     return ToCommandResult(_facade.SetWildAnimalEnabled(args[2], enabled));
 }
-#endif
 
 private CommandResult HandleWildAnimalsExportEffectiveBulk(string[] args)
 {
@@ -121,6 +120,7 @@ private CommandResult HandleWildAnimalsValidateBulk(string[] args)
     var raw = string.Join(" ", args, 3, args.Length - 3);
     return ToCommandResult(_facade.ValidateWildAnimalBulk(args[2], raw));
 }
+#endif
 
 
     private CommandResult HandleStep(string[] args)

@@ -112,7 +112,11 @@ private Func<string> GetName(string optionName)
         => _gmcm?.Register(_manifest, reset, save, titleScreenOnly);
 
     public void RegisterImage(string texPath, Rectangle? texRect = null, int scale = 4)
-        => _gmcm?.RegisterImage(_manifest, texPath, texRect, scale);
+    {
+#pragma warning disable CS0618 // Back-compat wrapper intentionally uses GMCM obsolete API.
+        _gmcm?.RegisterImage(_manifest, texPath, texRect, scale);
+#pragma warning restore CS0618
+    }
 
     public void AddBoolOption(
         Func<bool> getValue,
