@@ -401,4 +401,9 @@ if (verbLower == "validate")
 
         QueueRefreshFarmAnimals("compat selection changed");
     }
+
+    private string BuildCompatStatusSummary()
+    {
+        return _compatSelection.BuildStatusReport(_saveState.Compat);
+    }
 }
