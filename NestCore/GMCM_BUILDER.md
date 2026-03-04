@@ -487,3 +487,61 @@ private static void SetEnabled(ModConfig cfg, string key, bool enabled)
 ```
 
 This keeps configs smaller and avoids "redundant overrides" drift over time.
+
+
+---
+
+## Raw GMCM API
+
+The builder DSL covers the full GMCM API surface.
+
+When you need a method that isn't wrapped with a higher-level helper, you can use:
+
+- `page.Raw` → the full upstream `IGenericModConfigMenuApi` (direct calls).
+- `page.Legacy` → manifest-bound wrappers for the obsolete GMCM surface (no need to pass `IManifest`).
+
+### Stable field IDs
+
+NestCore generates stable `fieldId`s as:
+
+`{ModUniqueId}.gmcm.{pageId}.{elementId}` (normalized, hash-shortened if needed).
+
+All bound options (`Bool/Int/Float/Text/...`) and DSL helpers default to stable IDs.
+For raw calls, prefer passing `fieldId: page.FieldId("myElement")` (see below) or reuse the DSL helpers.
+
+### Complex option (custom rendering)
+
+```csharp
+page.Complex(
+    elementId: "my_widget",
+    name: () => I18n.Get("config.my_widget.name"),
+    tooltip: () => I18n.Get("config.my_widget.description"),
+    draw: (b, pos) =>
+    {
+        // draw at pos.X/pos.Y
+    },
+    height: () => 64
+);
+
+// optional: react to changes (requires stable fieldId for options you care about)
+page.OnFieldChanged((fieldId, value) =>
+{
+    if (fieldId.EndsWith(".my_widget"))
+    {
+        // ...
+    }
+});
+```
+
+### Obsolete GMCM methods (if you need them)
+
+```csharp
+#pragma warning disable CS0618
+page.Legacy.RegisterSimpleOption(
+    optionName: "Legacy bool",
+    optionDesc: "Old API example",
+    optionGet: () => true,
+    optionSet: _ => { }
+);
+#pragma warning restore CS0618
+```

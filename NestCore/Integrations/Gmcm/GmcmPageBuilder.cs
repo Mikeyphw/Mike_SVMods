@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Framework;
+using StardewModdingAPI;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 
 namespace Mikew.NestCore.Integrations.Gmcm;
@@ -35,12 +37,26 @@ public sealed class GmcmPageBuilder<TConfig>
 
     public bool SupportsExtraOptions => _menu.SupportsExtraOptions;
 
+    /// <summary>Direct access to GMCM's full upstream API surface (if installed).</summary>
+    public IGenericModConfigMenuApi? Raw => _menu.Raw;
+
+    /// <summary>Manifest-bound wrappers for GMCM's obsolete method surface.</summary>
+    public IGMCMOptionsHelper.GmcmLegacyFacade Legacy => _menu.Legacy;
+
+
     // -----------------------------
     // Page elements
     // -----------------------------
 
     public void Section(string sectionName, bool tooltip = false)
         => _menu.AddSectionTitle(sectionName, tooltip);
+
+    public void SubHeader(string subHeaderName)
+        => _menu.AddSubHeader(subHeaderName);
+
+    public void SubHeaderLabel(Func<string> text)
+        => _menu.AddSubHeader(text);
+
 
     public void SectionLabel(Func<string> text, Func<string>? tooltip = null)
         => _menu.AddSectionTitle(text, tooltip);
@@ -167,6 +183,13 @@ public void LinkLabel(string pageId, Func<string> text, Func<string>? tooltip = 
         string? fieldId = null)
         => Bind(member, optionId, (get, set, id) => _menu.AddTextOption(get, set, id, tooltip, allowedValues, formatAllowedValue, fieldId ?? AutoFieldId(id)));
 
+    public void Keybind(Expression<Func<TConfig, SButton>> member, string? optionId = null, bool tooltip = false, string? fieldId = null)
+        => Bind(member, optionId, (get, set, id) => _menu.AddKeybindOption(get, set, id, tooltip, fieldId ?? AutoFieldId(id)));
+
+    public void KeybindList(Expression<Func<TConfig, KeybindList>> member, string? optionId = null, bool tooltip = false, string? fieldId = null)
+        => Bind(member, optionId, (get, set, id) => _menu.AddKeybindListOption(get, set, id, tooltip, fieldId ?? AutoFieldId(id)));
+
+
     public void Enum<TEnum>(Expression<Func<TConfig, TEnum>> member, string? optionId = null, bool tooltip = false)
         where TEnum : struct, Enum
         => Bind(member, optionId, (get, set, id) => _menu.AddEnumOption(id, get, set, tooltip));
@@ -241,6 +264,13 @@ public void LinkLabel(string pageId, Func<string> text, Func<string>? tooltip = 
         string? fieldId = null)
         => _menu.AddTextOption(getValue, setValue, optionId, tooltip, allowedValues, formatAllowedValue, fieldId ?? AutoFieldId(optionId));
 
+    public void Keybind(string optionId, Func<SButton> getValue, Action<SButton> setValue, bool tooltip = false, string? fieldId = null)
+        => _menu.AddKeybindOption(getValue, setValue, optionId, tooltip, fieldId ?? AutoFieldId(optionId));
+
+    public void KeybindList(string optionId, Func<KeybindList> getValue, Action<KeybindList> setValue, bool tooltip = false, string? fieldId = null)
+        => _menu.AddKeybindListOption(getValue, setValue, optionId, tooltip, fieldId ?? AutoFieldId(optionId));
+
+
     public void Color(
         string optionId,
         Func<Color> getValue,
@@ -270,9 +300,60 @@ public void LinkLabel(string pageId, Func<string> text, Func<string>? tooltip = 
         => _menu.AddImageOption(getValue, setValue, optionId, getMaxValue, maxImageHeight, maxImageWidth, drawImage,
             tooltip, label, imageTooltipTitle, imageTooltipText, arrowLocation, labelLocation, fieldId ?? AutoFieldId(optionId));
 
+
+    // -----------------------------
+    // Advanced
+    // -----------------------------
+
+    public void Complex(
+        string elementId,
+        Func<string> name,
+        Action<SpriteBatch, Vector2> draw,
+        Func<string>? tooltip = null,
+        Action? beforeMenuOpened = null,
+        Action? beforeSave = null,
+        Action? afterSave = null,
+        Action? beforeReset = null,
+        Action? afterReset = null,
+        Action? beforeMenuClosed = null,
+        Func<int>? height = null,
+        string? fieldId = null)
+        => _menu.AddComplexOption(
+            elementId: elementId,
+            name: name,
+            draw: draw,
+            tooltip: tooltip,
+            beforeMenuOpened: beforeMenuOpened,
+            beforeSave: beforeSave,
+            afterSave: afterSave,
+            beforeReset: beforeReset,
+            afterReset: afterReset,
+            beforeMenuClosed: beforeMenuClosed,
+            height: height,
+            fieldId: fieldId ?? AutoFieldId(elementId)
+        );
+
+    public void TitleScreenOnlyForNextOptions(bool titleScreenOnly)
+        => _menu.SetTitleScreenOnlyForNextOptions(titleScreenOnly);
+
+    public void OnFieldChanged(Action<string, object> onChange)
+        => _menu.OnFieldChanged(onChange);
+
+    public void OpenModMenu()
+        => _menu.OpenModMenu();
+
+    public void OpenModMenuAsChildMenu()
+        => _menu.OpenModMenuAsChildMenu();
+
+    public bool TryGetCurrentMenu(out IManifest mod, out string page)
+        => _menu.TryGetCurrentMenu(out mod, out page);
+
     // -----------------------------
     // Internals
     // -----------------------------
+
+    public string FieldId(string elementId)
+        => AutoFieldId(elementId);
 
     private string AutoFieldId(string elementId)
         => GmcmFieldIds.Build(_fieldIdPrefix, _pageId, elementId);

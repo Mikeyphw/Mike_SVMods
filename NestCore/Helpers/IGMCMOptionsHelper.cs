@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Mikew.NestCore.Framework;
 using StardewModdingAPI;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using static Mikew.NestCore.Framework.IGMCMOptionsAPI;
 
@@ -19,13 +20,13 @@ namespace Mikew.NestCore.Helpers;
 public sealed class IGMCMOptionsHelper
 {
     private readonly IGMCMOptionsAPI? _extraOptionsApi;
-    private readonly IGenericModConfigMenuAPI? _gmcm;
+    private readonly IGenericModConfigMenuApi? _gmcm;
     private readonly I18TranslationHelper _i18n;
     private readonly IManifest _manifest;
 
     public IGMCMOptionsHelper(
         IGMCMOptionsAPI? extraOptionsAPI,
-        IGenericModConfigMenuAPI? configMenuAPI,
+        IGenericModConfigMenuApi? configMenuAPI,
         I18TranslationHelper translationHelper,
         IManifest manifest)
     {
@@ -33,10 +34,25 @@ public sealed class IGMCMOptionsHelper
         _gmcm = configMenuAPI;
         _i18n = translationHelper;
         _manifest = manifest;
+
+        Legacy = new GmcmLegacyFacade(_gmcm, _manifest);
     }
 
 
     public bool SupportsExtraOptions => _extraOptionsApi is not null;
+
+    /// <summary>Direct access to GMCM's full upstream API surface, if GMCM is installed.</summary>
+    public IGenericModConfigMenuApi? Raw => _gmcm;
+
+    /// <summary>
+    /// Manifest-bound wrappers for GMCM's obsolete API surface.
+    /// Keeps all legacy methods reachable without having to pass <see cref="IManifest"/>.
+    /// </summary>
+    public GmcmLegacyFacade Legacy { get; }
+
+    /// <summary>Direct access to the raw obsolete GMCM interface (you must pass <see cref="IManifest"/> yourself).</summary>
+    public IGenericModConfigMenuApiWithObsoleteMethods? LegacyRaw => _gmcm;
+
 
     private static string Key(params string?[] parts)
         => string.Join(".", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
@@ -297,7 +313,116 @@ private Func<string> GetName(string optionName)
         );
     }
 
-    public void AddSectionTitle(string sectionName, bool tooltip = false)
+    
+    // -----------------------------
+    // GMCM advanced / full API surface
+    // -----------------------------
+
+    public void AddKeybindOption(
+        Func<SButton> getValue,
+        Action<SButton> setValue,
+        string optionName,
+        bool tooltip = false,
+        string? fieldId = null)
+    {
+        _gmcm?.AddKeybind(
+            _manifest,
+            getValue,
+            setValue,
+            name: GetName(optionName),
+            tooltip: tooltip ? GetDescription(optionName) : null,
+            fieldId
+        );
+    }
+
+    public void AddKeybindOption(
+        Func<SButton> getValue,
+        Action<SButton> setValue,
+        Func<string> name,
+        Func<string>? tooltip = null,
+        string? fieldId = null)
+        => _gmcm?.AddKeybind(_manifest, getValue, setValue, name, tooltip, fieldId);
+
+    public void AddKeybindListOption(
+        Func<KeybindList> getValue,
+        Action<KeybindList> setValue,
+        string optionName,
+        bool tooltip = false,
+        string? fieldId = null)
+    {
+        _gmcm?.AddKeybindList(
+            _manifest,
+            getValue,
+            setValue,
+            name: GetName(optionName),
+            tooltip: tooltip ? GetDescription(optionName) : null,
+            fieldId
+        );
+    }
+
+    public void AddKeybindListOption(
+        Func<KeybindList> getValue,
+        Action<KeybindList> setValue,
+        Func<string> name,
+        Func<string>? tooltip = null,
+        string? fieldId = null)
+        => _gmcm?.AddKeybindList(_manifest, getValue, setValue, name, tooltip, fieldId);
+
+    public void AddComplexOption(
+        string elementId,
+        Func<string> name,
+        Action<SpriteBatch, Vector2> draw,
+        Func<string>? tooltip = null,
+        Action? beforeMenuOpened = null,
+        Action? beforeSave = null,
+        Action? afterSave = null,
+        Action? beforeReset = null,
+        Action? afterReset = null,
+        Action? beforeMenuClosed = null,
+        Func<int>? height = null,
+        string? fieldId = null)
+    {
+        _gmcm?.AddComplexOption(
+            _manifest,
+            name: name,
+            draw: draw,
+            tooltip: tooltip,
+            beforeMenuOpened: beforeMenuOpened,
+            beforeSave: beforeSave,
+            afterSave: afterSave,
+            beforeReset: beforeReset,
+            afterReset: afterReset,
+            beforeMenuClosed: beforeMenuClosed,
+            height: height,
+            fieldId: fieldId ?? elementId
+        );
+    }
+
+    public void SetTitleScreenOnlyForNextOptions(bool titleScreenOnly)
+        => _gmcm?.SetTitleScreenOnlyForNextOptions(_manifest, titleScreenOnly);
+
+    public void OnFieldChanged(Action<string, object> onChange)
+        => _gmcm?.OnFieldChanged(_manifest, onChange);
+
+    public void OpenModMenu()
+        => _gmcm?.OpenModMenu(_manifest);
+
+    public void OpenModMenuAsChildMenu()
+        => _gmcm?.OpenModMenuAsChildMenu(_manifest);
+
+    public bool TryGetCurrentMenu(out IManifest mod, out string page)
+    {
+        if (_gmcm is null)
+        {
+            mod = null!;
+            page = null!;
+            return false;
+        }
+
+        return _gmcm.TryGetCurrentMenu(out mod, out page);
+    }
+
+public void AddSectionTitle(string sectionName, bool tooltip = false)
     {
         _gmcm?.AddSectionTitle(
             _manifest,
@@ -308,6 +433,13 @@ private Func<string> GetName(string optionName)
 
     public void AddSectionTitle(Func<string> text, Func<string>? tooltip = null)
         => _gmcm?.AddSectionTitle(_manifest, text, tooltip);
+
+    public void AddSubHeader(string subHeaderName)
+        => _gmcm?.AddSubHeader(_manifest, GetText(subHeaderName, "subheader"));
+
+    public void AddSubHeader(Func<string> text)
+        => _gmcm?.AddSubHeader(_manifest, text);
+
 
     public void AddParagraph(string paragraphName)
         => _gmcm?.AddParagraph(_manifest, GetText(paragraphName, "paragraph"));
@@ -573,4 +705,138 @@ public void AddDynamicParagraph(string logName, string textOrKey, bool isStyledT
             }
         );
     }
+
+    /// <summary>Manifest-bound wrappers for GMCM's obsolete API surface.</summary>
+    public sealed class GmcmLegacyFacade
+    {
+        private readonly IGenericModConfigMenuApiWithObsoleteMethods? _legacy;
+        private readonly IManifest _manifest;
+
+        internal GmcmLegacyFacade(IGenericModConfigMenuApiWithObsoleteMethods? legacy, IManifest manifest)
+        {
+            _legacy = legacy;
+            _manifest = manifest;
+        }
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddComplexOption with more callback arguments instead.")]
+        public void AddComplexOption(Func<string> name, Func<string> tooltip, Action<SpriteBatch, Vector2> draw, Action saveChanges, Func<int>? height = null, string? fieldId = null)
+            => _legacy?.AddComplexOption(_manifest, name, tooltip, draw, saveChanges, height, fieldId);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddComplexOption with more callback arguments instead.")]
+        public void AddComplexOption(Func<string> name, Action<SpriteBatch, Vector2> draw, Func<string>? tooltip = null, Action? beforeSave = null, Action? afterSave = null, Action? beforeReset = null, Action? afterReset = null, Func<int>? height = null, string? fieldId = null)
+            => _legacy?.AddComplexOption(_manifest, name, draw, tooltip, beforeSave, afterSave, beforeReset, afterReset, height, fieldId);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddNumberOption with the formatValue callback instead.")]
+        public void AddNumberOption(Func<int> getValue, Action<int> setValue, Func<string> name, Func<string>? tooltip = null, int? min = null, int? max = null, int? interval = null, string? fieldId = null)
+            => _legacy?.AddNumberOption(_manifest, getValue, setValue, name, tooltip, min, max, interval, fieldId);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddNumberOption with the formatValue callback instead.")]
+        public void AddNumberOption(Func<float> getValue, Action<float> setValue, Func<string> name, Func<string>? tooltip = null, float? min = null, float? max = null, float? interval = null, string? fieldId = null)
+            => _legacy?.AddNumberOption(_manifest, getValue, setValue, name, tooltip, min, max, interval, fieldId);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddTextOption with the formatAllowedValue argument instead.")]
+        public void AddTextOption(Func<string> getValue, Action<string> setValue, Func<string> name, Func<string>? tooltip = null, string[]? allowedValues = null, string? fieldId = null)
+            => _legacy?.AddTextOption(_manifest, getValue, setValue, name, tooltip, allowedValues, fieldId);
+
+        [Obsolete("Use IGenericModConfigMenuApi.Register instead.")]
+        public void RegisterModConfig(Action revertToDefault, Action saveToFile)
+            => _legacy?.RegisterModConfig(_manifest, revertToDefault, saveToFile);
+
+        [Obsolete("Use IGenericModConfigMenuApi.Unregister instead.")]
+        public void UnregisterModConfig()
+            => _legacy?.UnregisterModConfig(_manifest);
+
+        [Obsolete("Use IGenericModConfigMenuApi.Register or SetTitleScreenOnlyForNextOptions instead.")]
+        public void SetDefaultIngameOptinValue(bool optedIn)
+            => _legacy?.SetDefaultIngameOptinValue(_manifest, optedIn);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddPage instead.")]
+        public void StartNewPage(string pageName)
+            => _legacy?.StartNewPage(_manifest, pageName);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddPage instead.")]
+        public void OverridePageDisplayName(string pageName, string displayName)
+            => _legacy?.OverridePageDisplayName(_manifest, pageName, displayName);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddSectionTitle instead.")]
+        public void RegisterLabel(string labelName, string labelDesc)
+            => _legacy?.RegisterLabel(_manifest, labelName, labelDesc);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddParagraph instead.")]
+        public void RegisterParagraph(string paragraph)
+            => _legacy?.RegisterParagraph(_manifest, paragraph);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddPageLink instead.")]
+        public void RegisterPageLabel(string labelName, string labelDesc, string newPage)
+            => _legacy?.RegisterPageLabel(_manifest, labelName, labelDesc, newPage);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddImage instead.")]
+        public void RegisterImage(string texPath, Rectangle? texRect = null, int scale = 4)
+            => _legacy?.RegisterImage(_manifest, texPath, texRect, scale);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddBoolOption instead.")]
+        public void RegisterSimpleOption(string optionName, string optionDesc, Func<bool> optionGet, Action<bool> optionSet)
+            => _legacy?.RegisterSimpleOption(_manifest, optionName, optionDesc, optionGet, optionSet);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddNumberOption instead.")]
+        public void RegisterSimpleOption(string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet)
+            => _legacy?.RegisterSimpleOption(_manifest, optionName, optionDesc, optionGet, optionSet);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddNumberOption instead.")]
+        public void RegisterSimpleOption(string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet)
+            => _legacy?.RegisterSimpleOption(_manifest, optionName, optionDesc, optionGet, optionSet);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddTextOption instead.")]
+        public void RegisterSimpleOption(string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet)
+            => _legacy?.RegisterSimpleOption(_manifest, optionName, optionDesc, optionGet, optionSet);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddKeybind instead.")]
+        public void RegisterSimpleOption(string optionName, string optionDesc, Func<SButton> optionGet, Action<SButton> optionSet)
+            => _legacy?.RegisterSimpleOption(_manifest, optionName, optionDesc, optionGet, optionSet);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddKeybindList instead.")]
+        public void RegisterSimpleOption(string optionName, string optionDesc, Func<KeybindList> optionGet, Action<KeybindList> optionSet)
+            => _legacy?.RegisterSimpleOption(_manifest, optionName, optionDesc, optionGet, optionSet);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddNumberOption instead.")]
+        public void RegisterClampedOption(string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet, int min, int max)
+            => _legacy?.RegisterClampedOption(_manifest, optionName, optionDesc, optionGet, optionSet, min, max);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddNumberOption instead.")]
+        public void RegisterClampedOption(string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet, float min, float max)
+            => _legacy?.RegisterClampedOption(_manifest, optionName, optionDesc, optionGet, optionSet, min, max);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddNumberOption instead.")]
+        public void RegisterClampedOption(string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet, int min, int max, int interval)
+            => _legacy?.RegisterClampedOption(_manifest, optionName, optionDesc, optionGet, optionSet, min, max, interval);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddNumberOption instead.")]
+        public void RegisterClampedOption(string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet, float min, float max, float interval)
+            => _legacy?.RegisterClampedOption(_manifest, optionName, optionDesc, optionGet, optionSet, min, max, interval);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddTextOption instead.")]
+        public void RegisterChoiceOption(string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet, string[] choices)
+            => _legacy?.RegisterChoiceOption(_manifest, optionName, optionDesc, optionGet, optionSet, choices);
+
+        [Obsolete("Use IGenericModConfigMenuApi.AddComplexOption instead.")]
+        public void RegisterComplexOption(string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave)
+            => _legacy?.RegisterComplexOption(_manifest, optionName, optionDesc, widgetUpdate, widgetDraw, onSave);
+
+        [Obsolete("Use IGenericModConfigMenuApi.OnFieldChanged instead.")]
+        public void SubscribeToChange(Action<string, bool> changeHandler)
+            => _legacy?.SubscribeToChange(_manifest, changeHandler);
+
+        [Obsolete("Use IGenericModConfigMenuApi.OnFieldChanged instead.")]
+        public void SubscribeToChange(Action<string, int> changeHandler)
+            => _legacy?.SubscribeToChange(_manifest, changeHandler);
+
+        [Obsolete("Use IGenericModConfigMenuApi.OnFieldChanged instead.")]
+        public void SubscribeToChange(Action<string, float> changeHandler)
+            => _legacy?.SubscribeToChange(_manifest, changeHandler);
+
+        [Obsolete("Use IGenericModConfigMenuApi.OnFieldChanged instead.")]
+        public void SubscribeToChange(Action<string, string> changeHandler)
+            => _legacy?.SubscribeToChange(_manifest, changeHandler);
+    }
+
 }

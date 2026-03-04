@@ -38,7 +38,7 @@ public sealed class GmcmIntegration
         IModHelper helper,
         IManifest manifest,
         I18TranslationHelper i18n,
-        IGenericModConfigMenuAPI gmcmApi,
+        IGenericModConfigMenuApi gmcmApi,
         IGMCMOptionsAPI? gmcmOptionsApi)
     {
         _helper = helper;
@@ -64,7 +64,7 @@ public sealed class GmcmIntegration
         string gmcmModId = "spacechase0.GenericModConfigMenu",
         string gmcmOptionsModId = "jltaylor-us.GMCMOptions")
     {
-        var gmcm = helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>(gmcmModId);
+        var gmcm = helper.ModRegistry.GetApi<IGenericModConfigMenuApi>(gmcmModId);
         if (gmcm is null)
             return null;
 
