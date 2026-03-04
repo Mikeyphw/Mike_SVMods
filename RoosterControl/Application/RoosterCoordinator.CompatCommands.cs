@@ -52,8 +52,6 @@ internal sealed partial class RoosterCoordinator
             LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, BuildCompatResetHelp(), LogLevel.Info);
             return;
         }
-return;
-        }
 
         if (!Context.IsWorldReady)
         {
