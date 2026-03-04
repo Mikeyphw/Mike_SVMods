@@ -2,19 +2,19 @@
   "SchemaVersion": 1,
   "Sources": [
     {
-      "SourceId": "example.provider",
-      "DisplayName": "Example provider",
+      "SourceId": "example:provider",
+      "DisplayName": "Example Provider",
       "RoosterEggItemId": "(O)174",
       "FarmAnimalKeys": [
         {
-          "Key": "cockwhite",
+          "Key": "White Chicken",
           "BreedingRole": "Male",
           "EggLayerRole": "NoEggs"
         },
         {
-          "Key": "cockbrown",
-          "BreedingRole": "Male",
-          "EggLayerRole": "NoEggs"
+          "Key": "White Chicken",
+          "BreedingRole": "Female",
+          "EggLayerRole": "InheritFromFarmAnimalData"
         }
       ]
     }

@@ -2,22 +2,20 @@
   "SchemaVersion": 1,
   "Sources": [
     {
-      "SourceId": "example.item.white_egg",
-      "DisplayName": "Example: White Egg item override",
-      "EggKind": "WhiteEgg",
-      "ItemId": "(O)174",
-      "FarmAnimalRef": null
-    },
-    {
-      "SourceId": "example.farmanimal.rooster_egg",
-      "DisplayName": "Example: Rooster Egg via FarmAnimals ref",
-      "EggKind": "RoosterEgg",
-      "ItemId": null,
+      "SourceId": "farmanimal:brown-chicken:egg0",
+      "DisplayName": "Brown Chicken (EggItemIds[0])",
+      "EggKind": "BrownEgg",
       "FarmAnimalRef": {
-        "FarmAnimalKey": "cockwhite",
+        "FarmAnimalKey": "Brown Chicken",
         "List": "EggItemIds",
         "Index": 0
       }
+    },
+    {
+      "SourceId": "itemid:custom-blue-egg",
+      "DisplayName": "My Custom Blue Egg",
+      "EggKind": "BlueEgg",
+      "ItemId": "MyAuthor.MyMod/CustomBlueEgg"
     }
   ]
 }

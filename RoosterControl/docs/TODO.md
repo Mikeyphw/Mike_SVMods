@@ -3,7 +3,11 @@
 ## Next: Phase 15 — Compat test matrix + content-pack examples
 - [x] Compat matrix doc
 - [x] Example templates/content packs + schema notes
-- [ ] Unit tests + manual QA checklist
+- [ ] Reference patterns (match types + gating)
+- [ ] Unit tests: catalog loading + deterministic repair
+- [ ] Unit tests: fertilized mapping determinism (native vs synthesized)
+- [ ] Manual QA checklist + smoke-test notes
+- [ ] Docs wired to templates + matrix
 
 ## Done
 - [x] Phase 14: Actionable validation messaging

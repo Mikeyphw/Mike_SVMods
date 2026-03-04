@@ -1,17 +1,15 @@
 {
-  "Format": "2.9.0",
+  "Format": "2.0.0",
   "Changes": [
     {
       "Action": "Load",
       "Target": "Mods/Mikew.roostersaddon.smapi/compat/egg_sources",
-      "FromFile": "assets/egg_sources.json",
-      "Priority": "Low"
+      "FromFile": "assets/egg_sources.json"
     },
     {
       "Action": "Load",
       "Target": "Mods/Mikew.roostersaddon.smapi/compat/rooster_sources",
-      "FromFile": "assets/rooster_sources.json",
-      "Priority": "Low"
+      "FromFile": "assets/rooster_sources.json"
     }
   ]
 }

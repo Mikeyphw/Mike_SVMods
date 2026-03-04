@@ -1,38 +1,34 @@
-# Compat templates (Content Patcher)
+# Compat templates & content pack examples
 
-This doc provides **known-good templates** for extending RoosterControl via Content Patcher.
+This doc provides **ready-to-copy templates** for RoosterControl’s CP‑patchable compat catalogs, plus a **known‑good Content Patcher pack** you can use as a starting point.
 
-RoosterControl exposes two CP-patchable compat catalogs:
+RoosterControl exposes two JSON assets which **Content Patcher can `Load`**:
 
-- **Egg sources**: `Mods/<RoosterControlId>/compat/egg_sources`
-- **Rooster providers**: `Mods/<RoosterControlId>/compat/rooster_sources`
+- Egg sources: `Mods/<RoosterControlId>/compat/egg_sources`
+- Rooster providers: `Mods/<RoosterControlId>/compat/rooster_sources`
 
-`<RoosterControlId>` is the mod’s `UniqueID` (see `RoosterControl/manifest.json`).
+For this repo build, `<RoosterControlId>` is:
 
-> Why `Load`?
-> The catalogs are models which contain a `Sources: [...]` list keyed by `SourceId` (not `Id`), so `EditData` can’t reliably append entries. The supported extension point today is **replacing the catalog** with a `Load` patch, starting from the reference copies under `RoosterControl/data/compat/`.
+- `Mikew.roostersaddon.smapi`
 
-## Quick start (recommended workflow)
+## Quick start (recommended)
 
-1) Copy these reference files into your content pack:
-   - `RoosterControl/data/compat/egg_sources.json`
-   - `RoosterControl/data/compat/rooster_sources.json`
+1) Copy the example content pack under:
 
-2) Edit them:
-   - add new `Sources[]` entries (keep `SourceId` stable and unique);
-   - keep `SchemaVersion` unchanged unless RoosterControl bumps it.
+- `examples/contentpacks/RoosterControl.ExampleCompatSources/`
 
-3) Use Content Patcher `Load` to replace the catalogs with your files.
+2) Edit the JSON under `assets/` to add your sources/providers.
 
-## Example pack
+3) Run in-game:
 
-See `examples/contentpacks/RoosterControl.ExampleCompatSources/` for a working pack with:
-
-- `assets/egg_sources.json`
-- `assets/rooster_sources.json`
-- `content.json` which loads both catalogs.
+- `ra_compat validate`
+- `ra_compat status`
 
 ## Schema notes
+
+These assets deserialize into:
+
+- `Application/Compat/CompatCatalogModels.cs`
 
 ### EggSourcesCatalog
 
@@ -41,28 +37,24 @@ See `examples/contentpacks/RoosterControl.ExampleCompatSources/` for a working p
   "SchemaVersion": 1,
   "Sources": [
     {
-      "SourceId": "your.unique.id",
-      "DisplayName": "Text shown in GMCM / logs",
+      "SourceId": "string",
+      "DisplayName": "string",
       "EggKind": "BrownEgg | LargeBrownEgg | ... | RoosterEgg",
-      "ItemId": "(O)174",
-      "FarmAnimalRef": null
+      "ItemId": "Optional string",
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "Data/FarmAnimals key",
+        "List": "EggItemIds | ProduceItemIds | DeluxeProduceItemIds",
+        "Index": 0
+      }
     }
   ]
 }
 ```
 
 Rules:
-- Exactly one of `ItemId` or `FarmAnimalRef` should be set.
-- `EggKind` must match `Application/Compat/EggKind`.
-- `FarmAnimalRef` shape:
-
-```json
-{
-  "FarmAnimalKey": "White Chicken",
-  "List": "EggItemIds | ProduceItemIds | DeluxeProduceItemIds",
-  "Index": 0
-}
-```
+- Exactly **one** of `ItemId` **or** `FarmAnimalRef` should be set.
+- `SourceId` must be stable and unique across the list.
+- `EggKind` is the logical role (what the UI selects), not necessarily the vanilla item.
 
 ### RoosterSourcesCatalog
 
@@ -71,24 +63,34 @@ Rules:
   "SchemaVersion": 1,
   "Sources": [
     {
-      "SourceId": "provider.id",
-      "DisplayName": "Provider name",
-      "RoosterEggItemId": "(O)174",
+      "SourceId": "string",
+      "DisplayName": "string",
+      "RoosterEggItemId": "Optional string (used for GMCM icons)",
       "FarmAnimalKeys": [
-        { "Key": "cockwhite", "BreedingRole": "Male", "EggLayerRole": "NoEggs" }
+        {
+          "Key": "Data/FarmAnimals key",
+          "BreedingRole": "Male | Female | Both | None",
+          "EggLayerRole": "InheritFromFarmAnimalData | LaysEggs | NoEggs"
+        }
       ]
     }
   ]
 }
 ```
 
-Notes:
-- `FarmAnimalKeys[].Key` must match keys in `Data/FarmAnimals`.
-- `RoosterEggItemId` is optional; RoosterControl uses it as a **picker icon** hint in GMCM.
+Rules:
+- `FarmAnimalKeys[].Key` should exist in `Data/FarmAnimals` after all packs load.
+- Missing keys are reported by `ra_compat validate`.
 
-## Troubleshoot
+## Content Patcher example
 
-- Run `ra_compat validate` for actionable warnings (missing keys, invalid selections).
-- If a pack removes a selected entry, use:
-  - GMCM reset toggles (arm + save), or
-  - console: `ra_compat reset-all / reset-eggs all / reset-roosters`.
+The included example pack uses `Load` for both catalogs:
+
+- `Action: Load`
+- `Target: Mods/Mikew.roostersaddon.smapi/compat/egg_sources`
+- `Target: Mods/Mikew.roostersaddon.smapi/compat/rooster_sources`
+
+This replaces the full catalog content for that asset. Start from RoosterControl’s reference copies:
+
+- `data/compat/egg_sources.json`
+- `data/compat/rooster_sources.json`

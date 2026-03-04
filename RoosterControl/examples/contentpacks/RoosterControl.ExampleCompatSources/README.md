@@ -1,25 +1,15 @@
-# RoosterControl - Example Compat Sources (Content Patcher)
+# RoosterControl Example Compat Sources
 
-This is a **known-good template pack** for overriding RoosterControl’s compat catalogs.
+This is an example **Content Patcher** pack that replaces RoosterControl’s compat catalogs.
 
-## What it changes
+## Files
 
-- `Mods/Mikew.roostersaddon.smapi/compat/egg_sources`
-- `Mods/Mikew.roostersaddon.smapi/compat/rooster_sources`
+- `assets/egg_sources.json` → `Mods/Mikew.roostersaddon.smapi/compat/egg_sources`
+- `assets/rooster_sources.json` → `Mods/Mikew.roostersaddon.smapi/compat/rooster_sources`
 
-It uses `Action: Load` (with `Priority: Low`), so another pack can intentionally override it.
+## Testing
 
-## How to use
-
-1) Copy this folder into `Stardew Valley/Mods/`.
-2) Change `manifest.json` `UniqueID` + `Name` to your own.
-3) Replace `assets/*.json` with your customized versions.
-
-Recommended: start from RoosterControl’s reference copies:
-- `RoosterControl/data/compat/egg_sources.json`
-- `RoosterControl/data/compat/rooster_sources.json`
-
-## Troubleshoot
+In-game:
 
 - `ra_compat validate`
 - `ra_compat status`

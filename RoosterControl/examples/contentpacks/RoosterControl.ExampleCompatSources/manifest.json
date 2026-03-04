@@ -1,12 +1,12 @@
 {
-  "Name": "RoosterControl - Example Compat Sources",
-  "Author": "RoosterControl contributors",
+  "Name": "RoosterControl Example Compat Sources",
+  "Author": "Mike",
   "Version": "1.0.0",
-  "Description": "Example Content Patcher pack showing how to override RoosterControl compat catalogs (egg sources + rooster providers).",
-  "UniqueID": "MikeW.RoosterControl.ExampleCompatSources",
+  "Description": "Example Content Patcher pack for RoosterControl compat catalogs (egg sources + rooster providers).",
+  "UniqueID": "Mike.RoosterControl.ExampleCompatSources",
   "ContentPackFor": {
     "UniqueID": "Pathoschild.ContentPatcher",
-    "MinimumVersion": "2.9.0"
+    "MinimumVersion": "2.0.0"
   },
   "Dependencies": [
     {
