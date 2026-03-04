@@ -9,8 +9,8 @@ Rules:
 
 ## Status
 
-- Current: **Phase 15 — Step 2 (Example templates/content packs + schema notes)**
-- Last completed: **Phase 14 — Step 4 (Actionable validation messaging)**
+- Current: **Phase 15 — Step 3 (Reference patterns: match types + gating)**
+- Last completed: **Phase 15 — Step 2 (Example templates/content packs + schema notes)**
 
 ## Goals
 

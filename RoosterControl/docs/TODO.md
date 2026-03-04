@@ -2,7 +2,7 @@
 
 ## Next: Phase 15 — Compat test matrix + content-pack examples
 - [x] Compat matrix doc
-- [ ] Example templates/content packs + schema notes
+- [x] Example templates/content packs + schema notes
 - [ ] Unit tests + manual QA checklist
 
 ## Done

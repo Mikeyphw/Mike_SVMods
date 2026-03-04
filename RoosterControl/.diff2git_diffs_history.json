@@ -353,6 +353,19 @@
       }
     },
     {
+      "id": "20260304T151801-0300-01",
+      "file": "20260304T151801-0300-01",
+      "title": "Phase 15 Step 2: templates (schemas + CP content-pack examples)",
+      "title_with_id": "Phase 15 Step 2: templates (schemas + CP content-pack examples) [20260304T151801-0300-01]",
+      "created_at": "2026-03-03T19:57:13-03:00",
+      "applied_at": "2026-03-04T16:17:27-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
+    },
+    {
       "id": "20260303T201520-0300-01",
       "file": "20260303T201520-0300-01",
       "title": "Phase 13: Linux verify script + ra_compat status + GMCM empty-sources i18n",
@@ -405,5 +418,5 @@
       }
     }
   ],
-  "updated_at": "2026-03-04T15:08:09-03:00"
+  "updated_at": "2026-03-04T16:17:27-03:00"
 }

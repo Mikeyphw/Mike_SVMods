@@ -62,7 +62,7 @@
 
 ## Phase 15 — Compat test matrix + content-pack examples
 - [x] Compat matrix doc (known mods + expected outcomes)
-- [ ] Example content packs/templates + schema notes
+- [x] Example content packs/templates + schema notes
 - [ ] Reference patterns (match types + gating)
 - [ ] Unit tests: catalog loading + deterministic repair
 - [ ] Unit tests: fertilized mapping determinism (native vs synthesized)

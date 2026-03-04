@@ -10,6 +10,8 @@ See also:
 - `docs/PLAN.md` (phases)
 - `docs/CHECKLIST.md` (completion tracking)
 - `docs/TODO.md` (next work)
+- `docs/COMPAT_TEMPLATES.md` (schemas + content-pack templates)
+- `examples/contentpacks/RoosterControl.ExampleCompatSources/` (known-good pack)
 
 ## How compat works (high level)
 

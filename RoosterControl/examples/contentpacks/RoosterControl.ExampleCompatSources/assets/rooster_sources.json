@@ -1,0 +1,22 @@
+{
+  "SchemaVersion": 1,
+  "Sources": [
+    {
+      "SourceId": "example.provider",
+      "DisplayName": "Example provider",
+      "RoosterEggItemId": "(O)174",
+      "FarmAnimalKeys": [
+        {
+          "Key": "cockwhite",
+          "BreedingRole": "Male",
+          "EggLayerRole": "NoEggs"
+        },
+        {
+          "Key": "cockbrown",
+          "BreedingRole": "Male",
+          "EggLayerRole": "NoEggs"
+        }
+      ]
+    }
+  ]
+}

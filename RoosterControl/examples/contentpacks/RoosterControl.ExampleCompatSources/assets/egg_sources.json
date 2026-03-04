@@ -1,0 +1,23 @@
+{
+  "SchemaVersion": 1,
+  "Sources": [
+    {
+      "SourceId": "example.item.white_egg",
+      "DisplayName": "Example: White Egg item override",
+      "EggKind": "WhiteEgg",
+      "ItemId": "(O)174",
+      "FarmAnimalRef": null
+    },
+    {
+      "SourceId": "example.farmanimal.rooster_egg",
+      "DisplayName": "Example: Rooster Egg via FarmAnimals ref",
+      "EggKind": "RoosterEgg",
+      "ItemId": null,
+      "FarmAnimalRef": {
+        "FarmAnimalKey": "cockwhite",
+        "List": "EggItemIds",
+        "Index": 0
+      }
+    }
+  ]
+}
