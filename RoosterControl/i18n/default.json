@@ -1,4 +1,5 @@
 {
+  "config.compatSources.egg.noValidSourcesFound": "{{eggKind}}: (no valid sources found)",
   "config.Bool.Buyable.description": "Whether the rooster can be bought.",
   "config.Bool.Buyable.name": "Can Be Purchased",
   "config.Bool.BypassBlueConditions.description": "Bypass the unlock conditions for the blue chicken.",

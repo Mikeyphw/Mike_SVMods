@@ -27,6 +27,8 @@ internal sealed partial class RoosterCoordinator
                 "ra_compat usage (Phase 9B):\n" +
                 "  ra_compat list\n" +
                 "    - prints current compat catalogs and per-save selections.\n" +
+                "  ra_compat status\n" +
+                "    - prints catalog health warnings + current selections (single block).\n" +
                 "  ra_compat cycle-egg <EggKind> [prev]\n" +
                 "    - cycles selected egg source for the given EggKind.\n" +
                 "  ra_compat cycle-rooster [prev]\n" +
@@ -52,6 +54,12 @@ internal sealed partial class RoosterCoordinator
         }
 
         EnsureCompatInitialized();
+
+        if (verbLower == "status")
+        {
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, BuildCompatStatusSummary(), LogLevel.Info);
+            return;
+        }
 
         if (verbLower == "list")
         {

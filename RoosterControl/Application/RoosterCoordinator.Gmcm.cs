@@ -221,7 +221,7 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
 
         if (allowed.Length == 0)
         {
-            b.ParagraphDynamic(() => $"{kind}: (no valid sources found)");
+            b.ParagraphDynamic(() => _i18n.GetString("config.compatSources.egg.noValidSourcesFound", new { eggKind = kind }));
             continue;
         }
 
