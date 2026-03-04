@@ -470,6 +470,19 @@
       }
     },
     {
+      "id": "20260304T125852-0300-01",
+      "file": "20260304T125852-0300-01",
+      "title": "Refactor: extract GMCM section builders",
+      "title_with_id": "Refactor: extract GMCM section builders [20260304T125852-0300-01]",
+      "created_at": "2026-03-03T19:57:13-03:00",
+      "applied_at": "2026-03-04T13:05:44-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
+    },
+    {
       "id": "20260304T003654-0300-01",
       "file": "20260304T003654-0300-01",
       "title": "Phase 9A: bulk header + skip-noop (build fix)",
@@ -509,5 +522,5 @@
       }
     }
   ],
-  "updated_at": "2026-03-04T12:27:57-03:00"
+  "updated_at": "2026-03-04T13:05:44-03:00"
 }
