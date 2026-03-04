@@ -3,7 +3,7 @@
 ## Next: Phase 13 — Release hardening
 - [x] Performance pass (edits/invalidation batching)
 - [x] Safe defaults for empty/missing catalogs
-- [ ] Build/test workflow verified
+- [x] Build/test workflow verified
 
 ## Upcoming: Phase 14 — UX polish (non-optional)
 - [ ] GMCM Compat page layout pass + reset affordances
@@ -16,6 +16,7 @@
 - [ ] Unit tests + manual QA checklist
 
 ## Done
+- [x] Phase 13: Build/test verified + `ra_compat status` + GMCM i18n for empty sources
 - [x] Phase 13: Safe defaults for empty/missing catalogs (empty catalogs, null fields, actionable warnings)
 - [x] Phase 13: Fail-fast checks + actionable errors
 - [x] Phase 13: Harden selection repair/persistence logs + no-op clarity

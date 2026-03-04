@@ -168,6 +168,9 @@ Steps:
 4) Add “safe defaults” for edge cases (empty catalogs, missing providers, missing assets) with clear logging.
    - Ensure coop rooster scan overrides are always set/cleared from enabled providers (avoid stale overrides).
 5) Verify build/test workflow (solution build + unit tests); fix any lingering warnings that hide real errors.
+   - Add `RoosterControl/scripts/verify.sh` for Linux: restore + build + tests with minimal output.
+   - Add `ra_compat status` for a single-block health + selection dump.
+   - Localize GMCM "no valid sources found" messaging.
 6) Update docs: upgrade notes + release checklist.
 
 ---

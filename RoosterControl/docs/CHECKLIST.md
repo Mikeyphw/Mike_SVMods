@@ -47,7 +47,10 @@
   - [x] Clear invalid egg selections when a catalog has no valid sources (prefer (unset) over stale IDs)
   - [x] Normalize null save-state fields (SelectedEggSources/EnabledRoosterSources) to empty collections
   - [x] Warn once when compat catalogs are empty (actionable asset names)
-- [ ] Build/test workflow verified (warnings pass)
+- [x] Build/test workflow verified (warnings pass)
+  - [x] Linux verify script (`RoosterControl/scripts/verify.sh`) for build + tests
+  - [x] `ra_compat status` command for a single-block health + selection dump
+  - [x] GMCM empty-sources message localized (i18n)
 - [ ] Docs: upgrade notes + release checklist
 
 ## Phase 14 — UX polish (non-optional)
