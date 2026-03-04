@@ -56,7 +56,7 @@
 ## Phase 14 — UX polish (non-optional)
 - [x] GMCM Compat page layout pass (grouping/headings/spacing)
 - [x] Picker affordances (icons/labels) + robust fallback without GMCMOptions
-- [ ] Reset affordances (all/per-egg-kind/roosters)
+- [x] Reset affordances (all/per-egg-kind/roosters)
 - [ ] Actionable validation messaging
 - [x] QoL toggles (e.g., dedicated All providers toggle)
 

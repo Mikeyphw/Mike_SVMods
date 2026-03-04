@@ -27,6 +27,9 @@ internal sealed partial class RoosterCoordinator
     private GmcmConfigHost<RoosterControlConfig>? _gmcmHost;
     private bool _gmcmRebuildQueued;
     private string _compatSourcesSummary = string.Empty;
+    private bool _gmcmResetAllArmed;
+    private bool _gmcmResetEggSourcesArmed;
+    private bool _gmcmResetRoosterProvidersArmed;
 
     public void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
@@ -84,12 +87,17 @@ internal sealed partial class RoosterCoordinator
 
     private void SaveConfig()
     {
+        var didReset = TryApplyGmcmResetsOnSave();
+
         ConfigManager.Save(Helper, Config);
 
-        InvalidateDailyPlanCache("config saved");
+        InvalidateDailyPlanCache(didReset ? "config saved (after reset)" : "config saved");
         _needsRoosterSetup = true;
         RequestInvalidate(FarmAnimalsAssetName);
         RequestInvalidate(ObjectsAssetName);
+
+        if (didReset)
+            RequestGmcmRebuild();
     }
 
     private void DefineGmcmLayout(GmcmMenuLayout<RoosterControlConfig> layout)
@@ -216,6 +224,36 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
     }
 
     _compatSourcesSummary = BuildCompatSourcesSummary(data);
+
+
+    b.Separator(simple: true);
+
+    b.Section("compat.reset");
+    b.Paragraph("compat.reset.help");
+
+    b.Bool(
+        "compat.reset.resetAll",
+        () => _gmcmResetAllArmed,
+        v => _gmcmResetAllArmed = v,
+        tooltip: true,
+        fieldId: $"{ModManifest.UniqueID}.compat.reset.all"
+    );
+
+    b.Bool(
+        "compat.reset.resetEggSources",
+        () => _gmcmResetEggSourcesArmed,
+        v => _gmcmResetEggSourcesArmed = v,
+        tooltip: true,
+        fieldId: $"{ModManifest.UniqueID}.compat.reset.eggs"
+    );
+
+    b.Bool(
+        "compat.reset.resetRoosterProviders",
+        () => _gmcmResetRoosterProvidersArmed,
+        v => _gmcmResetRoosterProvidersArmed = v,
+        tooltip: true,
+        fieldId: $"{ModManifest.UniqueID}.compat.reset.roosters"
+    );
     b.ParagraphDynamic(() => _compatSourcesSummary, styled: true, id: "compat_sources_summary");
 
     b.Separator("compat_sources_sep_eggs", simple: true);
@@ -697,6 +735,104 @@ private string FormatRoosterProviderValue(string value)
 
     return isAmbiguous ? $"{src.DisplayName} ({src.SourceId})" : src.DisplayName;
 }
+
+
+private bool TryApplyGmcmResetsOnSave()
+{
+    if (!_gmcmResetAllArmed && !_gmcmResetEggSourcesArmed && !_gmcmResetRoosterProvidersArmed)
+        return false;
+
+    var resetAll = _gmcmResetAllArmed;
+    var resetEggs = resetAll || _gmcmResetEggSourcesArmed;
+    var resetRoosters = resetAll || _gmcmResetRoosterProvidersArmed;
+
+    _gmcmResetAllArmed = false;
+    _gmcmResetEggSourcesArmed = false;
+    _gmcmResetRoosterProvidersArmed = false;
+
+    if (!Context.IsWorldReady)
+    {
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm,
+            "GMCM reset requested, but a save is not loaded yet. No changes were applied.",
+            LogLevel.Info);
+        return true;
+    }
+
+    if (!Context.IsMainPlayer)
+    {
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm,
+            "GMCM reset requested, but only the host can modify per-save compat selections.",
+            LogLevel.Info);
+        return true;
+    }
+
+    EnsureCompatInitialized();
+
+    var reason = resetAll
+        ? "gmcm reset compat: all"
+        : resetEggs && resetRoosters
+            ? "gmcm reset compat: eggs + roosters"
+            : resetEggs
+                ? "gmcm reset compat: eggs"
+                : "gmcm reset compat: roosters";
+
+    if (TryResetCompatSelections(resetEggs, resetRoosters, reason, out var summary))
+    {
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm,
+            summary is null
+                ? "GMCM reset applied: compat selections were reset to defaults."
+                : $"GMCM reset applied:\n{summary}",
+            LogLevel.Info);
+    }
+
+    return true;
+}
+
+private bool TryResetCompatSelections(bool resetEggSources, bool resetRoosterProviders, string reason, out string? summary)
+{
+    summary = null;
+
+    if (!Context.IsWorldReady)
+    {
+        summary = "Reset skipped: no save loaded.";
+        return false;
+    }
+
+    EnsureCompatInitialized();
+
+    if (resetEggSources)
+        _saveState.Compat.SelectedEggSources.Clear();
+
+    if (resetRoosterProviders)
+        _saveState.Compat.EnabledRoosterSources.Clear();
+
+    // Re-run deterministic repair to seed defaults.
+    _compatSelection.InitializeOrRepair(_saveState.Compat, out summary);
+
+    PersistAndApplyCompatChange(reason);
+    return true;
+}
+
+private bool TryResetCompatEggKind(EggKind kind, string reason, out string? summary)
+{
+    summary = null;
+
+    if (!Context.IsWorldReady)
+    {
+        summary = "Reset skipped: no save loaded.";
+        return false;
+    }
+
+    EnsureCompatInitialized();
+
+    _saveState.Compat.SelectedEggSources.Remove(kind);
+
+    _compatSelection.InitializeOrRepair(_saveState.Compat, out summary);
+
+    PersistAndApplyCompatChange(reason);
+    return true;
+}
+
 
 
 private void PersistAndApplyCompatChange(string reason)

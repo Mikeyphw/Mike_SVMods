@@ -932,5 +932,13 @@
   "shop.void.displayname": "Void Rooster",
   "config.compatSources.roosters.useAll.name": "Usar todos os provedores",
   "config.compatSources.roosters.useAll.description": "Ativa o modo união (todos os provedores de galo). Desative para escolher um provedor único abaixo.",
-  "compat.sources.roosters.noProvidersFound": "Nenhum provedor de galo foi encontrado no catálogo de compatibilidade."
+  "compat.sources.roosters.noProvidersFound": "Nenhum provedor de galo foi encontrado no catálogo de compatibilidade.",
+  "config.section.compat.reset.text": "Redefinir (marcar + salvar)",
+  "config.paragraph.compat.reset.help.text": "Marque uma opção de redefinição e clique em Salvar no GMCM para aplicar. Isso redefine as seleções de compatibilidade por save (fontes de ovos / provedores de galos) para padrões determinísticos e grava no save. Apenas o host.",
+  "config.compat.reset.resetAll.name": "Redefinir todas as seleções de compatibilidade",
+  "config.compat.reset.resetAll.description": "Ao salvar, redefine as fontes de ovos e os provedores de galos para o padrão.",
+  "config.compat.reset.resetEggSources.name": "Redefinir fontes de ovos",
+  "config.compat.reset.resetEggSources.description": "Ao salvar, redefine todas as seleções de EggKind para o padrão.",
+  "config.compat.reset.resetRoosterProviders.name": "Redefinir provedores de galos",
+  "config.compat.reset.resetRoosterProviders.description": "Ao salvar, redefine os provedores de galos habilitados para o padrão (habilita todos, se houver)."
 }

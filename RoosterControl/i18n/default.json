@@ -933,5 +933,13 @@
   "shop.void.displayname": "Void Rooster",
   "config.compatSources.roosters.useAll.name": "Use all providers",
   "config.compatSources.roosters.useAll.description": "Enable union mode (all rooster providers). Disable to choose a single provider below.",
-  "compat.sources.roosters.noProvidersFound": "No rooster providers were found in the compat catalog."
+  "compat.sources.roosters.noProvidersFound": "No rooster providers were found in the compat catalog.",
+  "config.section.compat.reset.text": "Reset (arm + save)",
+  "config.paragraph.compat.reset.help.text": "Tick a reset option, then click Save in GMCM to apply. This resets per-save compat selections (egg sources / rooster providers) to deterministic defaults and writes them to save data. Host-only.",
+  "config.compat.reset.resetAll.name": "Reset all compat selections",
+  "config.compat.reset.resetAll.description": "On Save, resets egg sources and rooster providers to defaults.",
+  "config.compat.reset.resetEggSources.name": "Reset egg sources",
+  "config.compat.reset.resetEggSources.description": "On Save, resets all EggKind selections to defaults.",
+  "config.compat.reset.resetRoosterProviders.name": "Reset rooster providers",
+  "config.compat.reset.resetRoosterProviders.description": "On Save, resets enabled rooster providers to defaults (enable all if available)."
 }

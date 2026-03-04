@@ -36,7 +36,7 @@ internal sealed partial class RoosterCoordinator
                 "  ra_compat enable-all-roosters\n" +
                 "    - enables all rooster providers (union mode).\n" +
                 "  ra_compat validate [EggKind]\n" +
-                "    - reports invalid FarmAnimalRef targets/indexes and shows resolved values.\n" +
+                "    - reports invalid FarmAnimalRef targets/indexes and shows resolved values.\n  ra_compat reset-all\n    - resets all per-save compat selections (egg sources + rooster providers) to defaults.\n  ra_compat reset-eggs <EggKind|all>\n    - resets egg sources for one EggKind (or all) to defaults.\n  ra_compat reset-roosters\n    - resets rooster providers to defaults (enable all if available).\n" +
                 "\n" +
                 "Notes:\n" +
                 "  - Mutating commands are host-only.\n" +
@@ -273,6 +273,106 @@ if (verbLower == "validate")
     LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, sb.ToString(), level);
     return;
 }
+
+
+        if (verbLower == "reset-all")
+        {
+            if (!Context.IsMainPlayer)
+            {
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    "Only the host can change compat selections.",
+                    LogLevel.Info);
+                return;
+            }
+
+            if (TryResetCompatSelections(resetEggSources: true, resetRoosterProviders: true, reason: "ra_compat reset-all", out var summary))
+            {
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    summary is null
+                        ? "Compat selections reset to defaults."
+                        : $"Compat selections reset to defaults:\n{summary}",
+                    LogLevel.Info);
+            }
+
+            return;
+        }
+
+        if (verbLower == "reset-eggs")
+        {
+            if (!Context.IsMainPlayer)
+            {
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    "Only the host can change compat selections.",
+                    LogLevel.Info);
+                return;
+            }
+
+            if (args.Length < 2 || string.IsNullOrWhiteSpace(args[1]))
+            {
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    "Usage: ra_compat reset-eggs <EggKind|all>",
+                    LogLevel.Info);
+                return;
+            }
+
+            var target = args[1].Trim();
+
+            if (target.Equals("all", StringComparison.OrdinalIgnoreCase))
+            {
+                if (TryResetCompatSelections(resetEggSources: true, resetRoosterProviders: false, reason: "ra_compat reset-eggs all", out var summary))
+                {
+                    LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                        summary is null
+                            ? "Egg sources reset to defaults."
+                            : $"Egg sources reset to defaults:\n{summary}",
+                        LogLevel.Info);
+                }
+
+                return;
+            }
+
+            if (!Enum.TryParse<EggKind>(target, ignoreCase: true, out var kind))
+            {
+                var kinds = string.Join(", ", Enum.GetNames(typeof(EggKind)));
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    $"Unknown EggKind '{target}'. Valid values: {kinds} (or 'all')",
+                    LogLevel.Info);
+                return;
+            }
+
+            if (TryResetCompatEggKind(kind, reason: $"ra_compat reset-eggs {kind}", out var oneSummary))
+            {
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    oneSummary is null
+                        ? $"Egg source reset to default for {kind}."
+                        : $"Egg source reset to default for {kind}:\n{oneSummary}",
+                    LogLevel.Info);
+            }
+
+            return;
+        }
+
+        if (verbLower == "reset-roosters")
+        {
+            if (!Context.IsMainPlayer)
+            {
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    "Only the host can change compat selections.",
+                    LogLevel.Info);
+                return;
+            }
+
+            if (TryResetCompatSelections(resetEggSources: false, resetRoosterProviders: true, reason: "ra_compat reset-roosters", out var summary))
+            {
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    summary is null
+                        ? "Rooster providers reset to defaults."
+                        : $"Rooster providers reset to defaults:\n{summary}",
+                    LogLevel.Info);
+            }
+
+            return;
+        }
 
         if (verbLower == "cycle-egg")
         {
