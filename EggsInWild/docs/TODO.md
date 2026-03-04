@@ -16,7 +16,8 @@
   - [x] Dev: `wegg wildanimals dump_effective` includes validation warnings (unloaded modIds + unknown FarmAnimalKeys when Data/FarmAnimals is available).
 - [x] Index-page navigation improvements that fit GMCM static-page limits (no live search).
   - [x] Group index pages: All, A–F, G–L, M–R, S–Z, Other (with counts).
-- [ ] Keep build/warning budget tight (no obsolete legacy support; avoid config churn).
+- [x] Keep build/warning budget tight (no obsolete legacy support; avoid config churn).
+  - [x] Phase 9E: dedupe bulk planning logic + shared export builder + reuse cached Data/FarmAnimals load.
 
 ## Notes
 - Keep changes inside `EggsInWild` and prefer NestCore helpers for GMCM plumbing.

@@ -209,9 +209,11 @@
 1. Add a per-animal bulk header summary (staged counts + planned set/clear/no-op). ✅
 2. Add a Skip-noop Bulk Apply toggle (default on) so no-op apply keeps staged text. ✅
 3. Add an export action to write effective blocks as `modId | csvKeys` to SMAPI log. ✅
-4. Expand validation warnings surfaced in GMCM (unknown modIds, empty/duplicate keys, missing FarmAnimalKeys when available).
+4. Expand validation warnings surfaced in GMCM (unknown modIds, empty/duplicate keys, missing FarmAnimalKeys when available). ✅
+5. Maintenance pass: keep build/warning budget tight (dedupe bulk planning logic; share export builder; reuse cached Data/FarmAnimals load). ✅
 
 **Acceptance**
 - Bulk preview/plan remains readable without scrolling.
 - No-op bulk applies do not clear staged text (unless user disables skip-noop).
 - User can export effective blocks and paste back into bulk stage to reproduce state.
+- Bulk planning is computed consistently for header, preview, and apply; no redundant game-data loads.

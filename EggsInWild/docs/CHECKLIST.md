@@ -65,3 +65,4 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Phase 9B: export effective blocks as `modId | csvKeys` to SMAPI log.
 - [x] Phase 9C: surface richer bulk validation warnings (unknown modIds, blank/duplicate keys, keys not in game data when available).
 - [x] Phase 9D: copy export into bulk stage (overwrite/append) for round-trip editing.
+- [x] Phase 9E: maintenance pass (dedupe bulk planning + export helper; reuse cached game-data load).
