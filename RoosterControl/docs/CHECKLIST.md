@@ -54,7 +54,7 @@
 - [x] Docs: upgrade notes + release checklist
 
 ## Phase 14 — UX polish (non-optional)
-- [ ] GMCM Compat page layout pass (grouping/headings/spacing)
+- [x] GMCM Compat page layout pass (grouping/headings/spacing)
 - [ ] Picker affordances (icons/labels) + robust fallback without GMCMOptions
 - [ ] Reset affordances (all/per-egg-kind/roosters)
 - [ ] Actionable validation messaging

@@ -9,7 +9,7 @@ Rules:
 
 ## Status
 
-- Current: **Phase 14 — Step 1 (GMCM Compat page layout pass)**
+- Current: **Phase 14 — Step 2 (Picker affordances + fallback without GMCMOptions)**
 - Last completed: **Phase 13 — Release hardening (docs + release checklist added)**
 
 ## Goals
