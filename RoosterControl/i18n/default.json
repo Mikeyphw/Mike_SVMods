@@ -941,5 +941,7 @@
   "config.compat.reset.resetEggSources.name": "Reset egg sources",
   "config.compat.reset.resetEggSources.description": "On Save, resets all EggKind selections to defaults.",
   "config.compat.reset.resetRoosterProviders.name": "Reset rooster providers",
-  "config.compat.reset.resetRoosterProviders.description": "On Save, resets enabled rooster providers to defaults (enable all if available)."
+  "config.compat.reset.resetRoosterProviders.description": "On Save, resets enabled rooster providers to defaults (enable all if available).",
+  "config.section.compat.validation.text": "Validation",
+  "config.paragraph.compat.validation.help.text": "Shows the latest validation result for your per-save compat selections. Validation runs on save-load and when you click Save in GMCM. Missing optional mods/packs are WARN. For details, run: ra_compat validate"
 }

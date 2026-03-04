@@ -9,8 +9,8 @@ Rules:
 
 ## Status
 
-- Current: **Phase 14 — Step 4 (Actionable validation messaging)**
-- Last completed: **Phase 14 — Step 3 (Reset affordances (GMCM arm+save + console commands))**
+- Current: **Phase 15 — Step 1 (Compat matrix doc)**
+- Last completed: **Phase 14 — Step 4 (Actionable validation messaging)**
 
 ## Goals
 

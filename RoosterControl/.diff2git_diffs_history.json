@@ -327,6 +327,19 @@
       }
     },
     {
+      "id": "20260304T132935-0300-01",
+      "file": "20260304T132935-0300-01",
+      "title": "Phase 14 — Step 4: actionable validation messaging (hybrid GMCM summary + richer ra_compat validate)",
+      "title_with_id": "Phase 14 — Step 4: actionable validation messaging (hybrid GMCM summary + richer ra_compat validate) [20260304T132935-0300-01]",
+      "created_at": "2026-03-03T19:57:13-03:00",
+      "applied_at": "2026-03-04T13:52:26-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
+    },
+    {
       "id": "20260303T201520-0300-01",
       "file": "20260303T201520-0300-01",
       "title": "Phase 13: Linux verify script + ra_compat status + GMCM empty-sources i18n",
@@ -379,5 +392,5 @@
       }
     }
   ],
-  "updated_at": "2026-03-04T12:52:37-03:00"
+  "updated_at": "2026-03-04T13:52:26-03:00"
 }

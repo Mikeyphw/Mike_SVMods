@@ -27,6 +27,11 @@ internal sealed partial class RoosterCoordinator
     private GmcmConfigHost<RoosterControlConfig>? _gmcmHost;
     private bool _gmcmRebuildQueued;
     private string _compatSourcesSummary = string.Empty;
+    private string _compatValidationSummary = string.Empty;
+    private DateTimeOffset? _compatValidationLastRunAt;
+    private int _compatValidationWarnings;
+    private int _compatValidationErrors;
+    private string _compatValidationLastReason = string.Empty;
     private bool _gmcmResetAllArmed;
     private bool _gmcmResetEggSourcesArmed;
     private bool _gmcmResetRoosterProvidersArmed;
@@ -77,6 +82,9 @@ internal sealed partial class RoosterCoordinator
         if (changed)
             ConfigManager.Save(Helper, Config);
 
+        if (Context.IsWorldReady && TryLoadFarmAnimals(out var farmAnimals, out _))
+            EnsureCompatValidationState(farmAnimals, reason: "gmcm save", log: true, category: ModRoosterControlCategory.Gmcm);
+
         InvalidateDailyPlanCache("config reset");
         _needsRoosterSetup = true;
         RequestInvalidate(FarmAnimalsAssetName);
@@ -90,6 +98,9 @@ internal sealed partial class RoosterCoordinator
         var didReset = TryApplyGmcmResetsOnSave();
 
         ConfigManager.Save(Helper, Config);
+
+        if (Context.IsWorldReady && TryLoadFarmAnimals(out var farmAnimals, out _))
+            EnsureCompatValidationState(farmAnimals, reason: "gmcm save", log: true, category: ModRoosterControlCategory.Gmcm);
 
         InvalidateDailyPlanCache(didReset ? "config saved (after reset)" : "config saved");
         _needsRoosterSetup = true;
@@ -224,6 +235,14 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
     }
 
     _compatSourcesSummary = BuildCompatSourcesSummary(data);
+
+
+    b.Separator(simple: true);
+
+    b.Section("compat.validation");
+    b.Paragraph("compat.validation.help");
+    EnsureCompatValidationState(data, reason: "gmcm page", log: false, category: ModRoosterControlCategory.Gmcm);
+    b.ParagraphDynamic(() => _compatValidationSummary, styled: true, id: "compat_validation_summary");
 
 
     b.Separator(simple: true);

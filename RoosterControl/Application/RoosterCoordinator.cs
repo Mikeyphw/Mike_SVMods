@@ -320,6 +320,9 @@ private NextTickScheduler _nextTick;
 
         EnsureCompatInitialized();
 
+        if (TryLoadFarmAnimals(out var farmAnimals, out _))
+            EnsureCompatValidationState(farmAnimals, reason: "save loaded", log: true, category: ModRoosterControlCategory.SaveData);
+
         _needsRoosterSetup = true;
         _lastRoosterSetupDay = -1;
         _lastDebugDumpDay = -1;

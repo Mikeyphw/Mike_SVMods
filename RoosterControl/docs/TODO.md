@@ -1,14 +1,12 @@
 # RoosterControl TODO
 
-## Next: Phase 14 — UX polish (non-optional)
-- [ ] Actionable validation messaging
-
-## Later: Phase 15 — Compat test matrix + content-pack examples
+## Next: Phase 15 — Compat test matrix + content-pack examples
 - [ ] Compat matrix doc
 - [ ] Example templates/content packs + schema notes
 - [ ] Unit tests + manual QA checklist
 
 ## Done
+- [x] Phase 14: Actionable validation messaging
 - [x] Phase 14: Reset affordances (GMCM arm+save + console commands)
 - [x] Phase 14: GMCM Compat page layout pass (grouping/headings/spacing)
 - [x] Phase 14: Picker affordances (icons/labels) + robust fallback without GMCMOptions

@@ -940,5 +940,7 @@
   "config.compat.reset.resetEggSources.name": "Redefinir fontes de ovos",
   "config.compat.reset.resetEggSources.description": "Ao salvar, redefine todas as seleções de EggKind para o padrão.",
   "config.compat.reset.resetRoosterProviders.name": "Redefinir provedores de galos",
-  "config.compat.reset.resetRoosterProviders.description": "Ao salvar, redefine os provedores de galos habilitados para o padrão (habilita todos, se houver)."
+  "config.compat.reset.resetRoosterProviders.description": "Ao salvar, redefine os provedores de galos habilitados para o padrão (habilita todos, se houver).",
+  "config.section.compat.validation.text": "Validação",
+  "config.paragraph.compat.validation.help.text": "Mostra o resultado mais recente da validação das seleções de compatibilidade por save. A validação roda ao carregar o save e quando você clica em Salvar no GMCM. Mods/packs opcionais ausentes contam como AVISO. Para detalhes: execute ra_compat validate"
 }

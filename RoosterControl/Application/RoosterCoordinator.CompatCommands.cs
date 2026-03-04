@@ -117,6 +117,7 @@ if (verbLower == "validate")
     var totalRefs = 0;
     var totalInvalid = 0;
     var selectedErrors = 0;
+    var warnings = 0;
 
     foreach (var kind in kindsToCheck)
     {
@@ -132,6 +133,13 @@ if (verbLower == "validate")
         {
             selectedErrors++;
             sb.AppendLine($"  Selected: ERROR -> {selectedError}");
+            if (!string.IsNullOrWhiteSpace(selectedError) && selectedError.Contains("not found in Data/FarmAnimals", StringComparison.OrdinalIgnoreCase))
+                warnings++;
+
+            sb.AppendLine($"    Fix (GMCM): Compat → Egg sources → {kind}");
+            sb.AppendLine($"    Fix (console): ra_compat cycle-egg {kind}");
+            sb.AppendLine($"    Fix (reset): ra_compat reset-eggs {kind}");
+            sb.AppendLine($"    Fix (save data): Compat.SelectedEggSources[{kind}] = \"<SourceId>\"");
         }
 
         var sources = _compatSelection.EggCatalog.Sources
@@ -152,6 +160,13 @@ if (verbLower == "validate")
             totalInvalid++;
             var fa = src.FarmAnimalRef!;
             sb.AppendLine($"  INVALID: {src.SourceId} ({src.DisplayName}) -> {fa.FarmAnimalKey}.{fa.List}[{fa.Index}] :: {err}");
+            if (!string.IsNullOrWhiteSpace(err) && err.Contains("not found in Data/FarmAnimals", StringComparison.OrdinalIgnoreCase))
+            {
+                warnings++;
+                sb.AppendLine("    WARN: FarmAnimal key is missing. Likely a missing/disabled optional mod or content pack.");
+            }
+
+            sb.AppendLine($"    Fix: pick a different egg source for {kind} (GMCM Compat page), or install/enable the content that provides {fa.FarmAnimalKey}.");
         }
 
         sb.AppendLine($"  Catalog: total={sources.Count}, directItemId={directCount}, farmAnimalRef={refSources.Count}, invalidRefs={invalidThisKind}");
@@ -274,11 +289,54 @@ if (verbLower == "validate")
     sb.AppendLine($"Rooster providers enabled: {enabledProviders}");
     sb.AppendLine($"Coop rooster FarmAnimal keys: {roosterKeys.Count}");
 
-    sb.AppendLine();
-    sb.AppendLine($"Summary: refsChecked={totalRefs}, invalidRefs={totalInvalid}, selectedErrors={selectedErrors}");
+    var knownProviderIds = new HashSet<string>(
+        _compatSelection.RoosterCatalog.Sources.Select(s => s.SourceId),
+        StringComparer.OrdinalIgnoreCase
+    );
+    var enabledProviderIds = _saveState.Compat.EnabledRoosterSources?
+        .Where(id => !string.IsNullOrWhiteSpace(id))
+        .Select(id => id.Trim())
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList() ?? new List<string>();
+    var unknownProviders = enabledProviderIds
+        .Where(id => !knownProviderIds.Contains(id))
+        .ToList();
 
-    var level = totalInvalid > 0 || selectedErrors > 0 ? LogLevel.Warn : LogLevel.Info;
+    if (unknownProviders.Count > 0)
+    {
+        warnings += unknownProviders.Count;
+        sb.AppendLine();
+        sb.AppendLine("Rooster provider issues:");
+        foreach (var id in unknownProviders)
+        {
+            sb.AppendLine($"  WARN: EnabledRoosterSources contains unknown provider id '{id}'.");
+        }
+        sb.AppendLine("    Fix (reset): ra_compat reset-roosters");
+        sb.AppendLine("    Fix (save data): Compat.EnabledRoosterSources = [ ... ]");
+    }
+
+    var missingRoosterKeys = roosterKeys
+        .Where(k => !animalData.ContainsKey(k))
+        .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+    if (missingRoosterKeys.Count > 0)
+    {
+        warnings += missingRoosterKeys.Count;
+        sb.AppendLine();
+        sb.AppendLine("Rooster FarmAnimal key issues:");
+        foreach (var k in missingRoosterKeys)
+            sb.AppendLine($"  WARN: Rooster FarmAnimal key '{k}' not found in Data/FarmAnimals (optional mod/pack missing?).");
+        sb.AppendLine("    Fix: install/enable the mod/content pack that adds those farm animals, or change rooster providers in GMCM.");
+    }
+
+    sb.AppendLine();
+    sb.AppendLine($"Warnings: {warnings}");
+    sb.AppendLine();
+    sb.AppendLine($"Summary: refsChecked={totalRefs}, invalidRefs={totalInvalid}, selectedErrors={selectedErrors}, warnings={warnings}");
+
+    var level = totalInvalid > 0 || selectedErrors > 0 || warnings > 0 ? LogLevel.Warn : LogLevel.Info;
     LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, sb.ToString(), level);
+    EnsureCompatValidationState(animalData, reason: "ra_compat validate", log: false, category: ModRoosterControlCategory.Commands);
     return;
 }
 
@@ -529,6 +587,168 @@ if (verbLower == "validate")
             "  - Mutating commands are host-only.\n" +
             "  - Changes persist immediately to save data.\n" +
             "  - GMCM reset toggles apply only after clicking Save in GMCM.";
+    }
+
+
+
+    private bool TryLoadFarmAnimals(out Dictionary<string, FarmAnimalData> farmAnimals, out string? error)
+    {
+        farmAnimals = new Dictionary<string, FarmAnimalData>();
+        error = null;
+
+        try
+        {
+            farmAnimals = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    private sealed record CompatValidationCounts(
+        int Warnings,
+        int Errors,
+        int InvalidRefErrors,
+        int SelectedEggErrors,
+        int UnknownProviderWarnings,
+        int MissingRoosterKeyWarnings
+    );
+
+    private void EnsureCompatValidationState(
+        IDictionary<string, FarmAnimalData> farmAnimals,
+        string reason,
+        bool log,
+        ModRoosterControlCategory category
+    )
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        EnsureCompatInitialized();
+
+        var counts = ComputeCompatValidationCounts(farmAnimals);
+        UpdateCompatValidationState(reason, counts);
+
+        if (!log)
+            return;
+
+        var msg = BuildCompatValidationLogSummary(reason, counts);
+        var level = counts.Errors > 0 || counts.Warnings > 0 ? LogLevel.Warn : LogLevel.Info;
+        LogScopedHelper.Log(_log, category, msg, level);
+    }
+
+    private CompatValidationCounts ComputeCompatValidationCounts(IDictionary<string, FarmAnimalData> farmAnimals)
+    {
+        var warnings = 0;
+        var errors = 0;
+
+        var selectedEggErrors = 0;
+        foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+        {
+            if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, kind, farmAnimals, out _, out var err))
+                continue;
+
+            selectedEggErrors++;
+
+            if (IsMissingFarmAnimalKey(err))
+                warnings++;
+            else
+                errors++;
+        }
+
+        var invalidRefErrors = 0;
+        foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+        {
+            foreach (var src in _compatSelection.EggCatalog.Sources.Where(s => s.EggKind == kind && s.FarmAnimalRef is not null))
+            {
+                if (_compatSelection.TryResolveEggSourceItemId(src, farmAnimals, out _, out var err))
+                    continue;
+
+                invalidRefErrors++;
+
+                if (IsMissingFarmAnimalKey(err))
+                    warnings++;
+                else
+                    errors++;
+            }
+        }
+
+        var knownProviderIds = new HashSet<string>(
+            _compatSelection.RoosterCatalog.Sources.Select(s => s.SourceId),
+            StringComparer.OrdinalIgnoreCase
+        );
+        var enabledProviderIds = _saveState.Compat.EnabledRoosterSources?
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => id.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList() ?? new List<string>();
+
+        var unknownProviderWarnings = enabledProviderIds.Count(id => !knownProviderIds.Contains(id));
+        warnings += unknownProviderWarnings;
+
+        var roosterKeys = _compatSelection.GetEnabledRoosterFarmAnimalKeys(_saveState.Compat);
+        var missingRoosterKeyWarnings = roosterKeys.Count(k => !farmAnimals.ContainsKey(k));
+        warnings += missingRoosterKeyWarnings;
+
+        return new CompatValidationCounts(
+            Warnings: warnings,
+            Errors: errors,
+            InvalidRefErrors: invalidRefErrors,
+            SelectedEggErrors: selectedEggErrors,
+            UnknownProviderWarnings: unknownProviderWarnings,
+            MissingRoosterKeyWarnings: missingRoosterKeyWarnings
+        );
+    }
+
+    private static bool IsMissingFarmAnimalKey(string? error)
+    {
+        return !string.IsNullOrWhiteSpace(error)
+            && error.Contains("not found in Data/FarmAnimals", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void UpdateCompatValidationState(string reason, CompatValidationCounts counts)
+    {
+        _compatValidationLastRunAt = DateTimeOffset.Now;
+        _compatValidationLastReason = reason;
+        _compatValidationWarnings = counts.Warnings;
+        _compatValidationErrors = counts.Errors;
+
+        var at = _compatValidationLastRunAt.Value.ToString("yyyy-MM-dd HH:mm:ss zzz");
+        if (counts.Warnings == 0 && counts.Errors == 0)
+        {
+            _compatValidationSummary = $"✅ Validation OK ({at})\nNo issues found.\nRun: ra_compat validate (details)";
+            return;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"⚠️ Validation warnings/errors ({at})");
+        sb.AppendLine($"Reason: {reason}");
+        sb.AppendLine($"WARN={counts.Warnings}, ERR={counts.Errors}");
+        if (counts.UnknownProviderWarnings > 0)
+            sb.AppendLine($"- Unknown rooster provider ids: {counts.UnknownProviderWarnings}");
+        if (counts.MissingRoosterKeyWarnings > 0)
+            sb.AppendLine($"- Missing rooster FarmAnimal keys (optional mods/packs?): {counts.MissingRoosterKeyWarnings}");
+        if (counts.SelectedEggErrors > 0)
+            sb.AppendLine($"- EggKinds with invalid selection: {counts.SelectedEggErrors}");
+        if (counts.InvalidRefErrors > 0)
+            sb.AppendLine($"- Egg sources with invalid FarmAnimalRef: {counts.InvalidRefErrors}");
+        sb.AppendLine("Run: ra_compat validate  (prints actionable fixes)");
+        sb.AppendLine("Note: missing optional mods/packs are treated as WARN.");
+
+        _compatValidationSummary = sb.ToString().TrimEnd();
+    }
+
+    private static string BuildCompatValidationLogSummary(string reason, CompatValidationCounts counts)
+    {
+        if (counts.Warnings == 0 && counts.Errors == 0)
+            return $"Compat validation OK ({reason}).";
+
+        return
+            $"Compat validation found issues ({reason}): WARN={counts.Warnings}, ERR={counts.Errors}. " +
+            "Run: ra_compat validate";
     }
 
 

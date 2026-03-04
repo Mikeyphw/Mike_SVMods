@@ -57,7 +57,7 @@
 - [x] GMCM Compat page layout pass (grouping/headings/spacing)
 - [x] Picker affordances (icons/labels) + robust fallback without GMCMOptions
 - [x] Reset affordances (all/per-egg-kind/roosters)
-- [ ] Actionable validation messaging
+- [x] Actionable validation messaging
 - [x] QoL toggles (e.g., dedicated All providers toggle)
 
 ## Phase 15 — Compat test matrix + content-pack examples
