@@ -55,10 +55,10 @@
 
 ## Phase 14 — UX polish (non-optional)
 - [x] GMCM Compat page layout pass (grouping/headings/spacing)
-- [ ] Picker affordances (icons/labels) + robust fallback without GMCMOptions
+- [x] Picker affordances (icons/labels) + robust fallback without GMCMOptions
 - [ ] Reset affordances (all/per-egg-kind/roosters)
 - [ ] Actionable validation messaging
-- [ ] QoL toggles (e.g., dedicated All providers toggle)
+- [x] QoL toggles (e.g., dedicated All providers toggle)
 
 ## Phase 15 — Compat test matrix + content-pack examples
 - [ ] Compat matrix doc (known mods + expected outcomes)

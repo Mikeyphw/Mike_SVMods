@@ -122,8 +122,8 @@
   "config.compatSources.egg.WhiteEgg.name": "white egg source",
   "config.compatSources.egg.noValidSourcesFound": "{{eggKind}}: (no valid sources found)",
   "config.compatSources.roosters.allowed.all": "All providers (union)",
-  "config.compatSources.roosters.description": "Choose which rooster provider(s) are enabled for coop rooster scanning. Select 'All providers' for union mode.",
-  "config.compatSources.roosters.name": "Rooster providers",
+  "config.compatSources.roosters.description": "When 'Use all providers' is disabled, choose which provider is used for coop rooster scanning.",
+  "config.compatSources.roosters.name": "Single rooster provider",
   "config.debug.enableDebug.description": "Enables extra debug output and diagnostics.",
   "config.debug.enableDebug.name": "Enable debug mode",
   "config.debug.testingLogging.description": "Extra logs intended for development/testing.",
@@ -930,5 +930,8 @@
   "shop.gold.description": "Buy Gold Rooster!",
   "shop.gold.displayname": "Gold Rooster",
   "shop.void.description": "Buy Void Roosters!",
-  "shop.void.displayname": "Void Rooster"
+  "shop.void.displayname": "Void Rooster",
+  "config.compatSources.roosters.useAll.name": "Use all providers",
+  "config.compatSources.roosters.useAll.description": "Enable union mode (all rooster providers). Disable to choose a single provider below.",
+  "compat.sources.roosters.noProvidersFound": "No rooster providers were found in the compat catalog."
 }

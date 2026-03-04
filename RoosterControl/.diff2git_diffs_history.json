@@ -275,6 +275,19 @@
       }
     },
     {
+      "id": "20260304T104431-0300-01",
+      "file": "20260304T104431-0300-01",
+      "title": "Phase 14: QoL — dedicated All providers toggle + docs updates",
+      "title_with_id": "Phase 14: QoL — dedicated All providers toggle + docs updates [20260304T104431-0300-01]",
+      "created_at": "2026-03-03T19:57:13-03:00",
+      "applied_at": "2026-03-04T11:26:28-03:00",
+      "apply": {
+        "method": "tar-package",
+        "p": 0,
+        "dir": ""
+      }
+    },
+    {
       "id": "20260303T201520-0300-01",
       "file": "20260303T201520-0300-01",
       "title": "Phase 13: Linux verify script + ra_compat status + GMCM empty-sources i18n",
@@ -327,5 +340,5 @@
       }
     }
   ],
-  "updated_at": "2026-03-04T10:19:00-03:00"
+  "updated_at": "2026-03-04T11:26:28-03:00"
 }

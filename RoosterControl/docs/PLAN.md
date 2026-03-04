@@ -9,8 +9,8 @@ Rules:
 
 ## Status
 
-- Current: **Phase 14 — Step 2 (Picker affordances + fallback without GMCMOptions)**
-- Last completed: **Phase 13 — Release hardening (docs + release checklist added)**
+- Current: **Phase 14 — Step 3 (Reset affordances (all/per-egg-kind/roosters))**
+- Last completed: **Phase 14 — Step 2 (Picker affordances + fallback) + QoL toggles (All providers toggle)**
 
 ## Goals
 

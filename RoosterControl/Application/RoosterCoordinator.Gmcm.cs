@@ -340,35 +340,47 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
         .ThenBy(id => id, StringComparer.OrdinalIgnoreCase)
         .ToList();
 
-    var roosterAllowed = new List<string> { AllRoosterProvidersValue };
-    roosterAllowed.AddRange(roosterProviderIds);
-
-    var roosterAllowedArray = roosterAllowed.ToArray();
-
-    if (b.SupportsExtraOptions && TryBuildRoosterProviderChoices(roosterAllowedArray, out var roosterChoices))
+    if (roosterProviderIds.Count == 0)
     {
-        b.ImagePicker(
-            elementId: "compat_sources_roosters",
-            name: () => _i18n.GetString("config.compatSources.roosters.name"),
-            tooltip: () => _i18n.GetString("config.compatSources.roosters.description"),
-            getValue: () => GetSelectedRoosterProvidersIndex(roosterAllowedArray),
-            setValue: v => SetSelectedRoosterProvidersIndex(roosterAllowedArray, v),
-            choices: () => roosterChoices,
-            fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters"
-        );
+        b.Paragraph("compat.sources.roosters.noProvidersFound");
     }
     else
     {
-        b.TextLabel(
-            elementId: "compat_sources_roosters",
-            name: () => _i18n.GetString("config.compatSources.roosters.name"),
-            tooltip: () => _i18n.GetString("config.compatSources.roosters.description"),
-            getValue: GetSelectedRoosterProvidersValue,
-            setValue: SetSelectedRoosterProvidersValue,
-            allowedValues: roosterAllowedArray,
-            formatValue: FormatRoosterProviderValue,
-            fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters"
+        b.Bool(
+            "compatSources.roosters.useAll",
+            GetUseAllRoosterProviders,
+            SetUseAllRoosterProviders,
+            tooltip: true,
+            fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters.useAll"
         );
+
+        var roosterAllowedArray = roosterProviderIds.ToArray();
+
+        if (b.SupportsExtraOptions && TryBuildRoosterProviderChoices(roosterAllowedArray, out var roosterChoices))
+        {
+            b.ImagePicker(
+                elementId: "compat_sources_roosters",
+                name: () => _i18n.GetString("config.compatSources.roosters.name"),
+                tooltip: () => _i18n.GetString("config.compatSources.roosters.description"),
+                getValue: () => GetSelectedRoosterProviderIndex(roosterAllowedArray),
+                setValue: v => SetSelectedRoosterProviderIndex(roosterAllowedArray, v),
+                choices: () => roosterChoices,
+                fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters"
+            );
+        }
+        else
+        {
+            b.TextLabel(
+                elementId: "compat_sources_roosters",
+                name: () => _i18n.GetString("config.compatSources.roosters.name"),
+                tooltip: () => _i18n.GetString("config.compatSources.roosters.description"),
+                getValue: () => GetSelectedRoosterProviderValue(roosterAllowedArray[0]),
+                setValue: SetSelectedRoosterProviderValue,
+                allowedValues: roosterAllowedArray,
+                formatValue: FormatRoosterProviderValue,
+                fieldId: $"{ModManifest.UniqueID}.compat.sources.roosters"
+            );
+        }
     }
 
     b.ParagraphDynamic(
@@ -526,20 +538,65 @@ private string FormatEggSourceValue(string sourceId)
 }
 
 
-private uint GetSelectedRoosterProvidersIndex(string[] allowed)
+private bool GetUseAllRoosterProviders()
 {
-    var selected = GetSelectedRoosterProvidersValue();
-    var idx = Array.FindIndex(allowed, v => v.Equals(selected, StringComparison.OrdinalIgnoreCase));
-    return (uint)(idx < 0 ? 0 : idx);
+    var enabled = _saveState.Compat.EnabledRoosterSources
+        .Where(id => !string.IsNullOrWhiteSpace(id))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    return enabled.Count != 1;
 }
 
-private void SetSelectedRoosterProvidersIndex(string[] allowed, uint index)
+private void SetUseAllRoosterProviders(bool useAll)
 {
-    var i = (int)index;
-    if (i < 0 || i >= allowed.Length)
-        i = 0;
+    EnsureCompatInitialized();
 
-    SetSelectedRoosterProvidersValue(allowed[i]);
+    var changed = false;
+
+    if (useAll)
+    {
+        if (!_compatSelection.EnableAllRoosterProviders(_saveState.Compat, out _, out changed, out var error))
+        {
+            if (!string.IsNullOrWhiteSpace(error))
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to enable all rooster providers: {error}", LogLevel.Warn);
+            return;
+        }
+    }
+    else
+    {
+        var enabled = _saveState.Compat.EnabledRoosterSources
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (enabled.Count == 1)
+            return;
+
+        var fallback = _compatSelection.RoosterCatalog.Sources
+            .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
+            .GroupBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .OrderBy(s => s.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+            .Select(s => s.SourceId)
+            .FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(fallback))
+            return;
+
+        if (!_compatSelection.TrySetRoosterProviderSingle(_saveState.Compat, fallback, out _, out changed, out var error))
+        {
+            if (!string.IsNullOrWhiteSpace(error))
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to set rooster provider '{fallback}': {error}", LogLevel.Warn);
+            return;
+        }
+    }
+
+    if (!changed)
+        return;
+
+    PersistAndApplyCompatChange("gmcm set rooster providers mode");
 }
 
 private bool TryBuildRoosterProviderChoices(
@@ -576,45 +633,50 @@ private bool TryBuildRoosterProviderChoices(
     return choices.Length > 0;
 }
 
-private string GetSelectedRoosterProvidersValue()
+private uint GetSelectedRoosterProviderIndex(string[] allowed)
+{
+    var selected = GetSelectedRoosterProviderValue(allowed.Length > 0 ? allowed[0] : string.Empty);
+    var idx = Array.FindIndex(allowed, v => v.Equals(selected, StringComparison.OrdinalIgnoreCase));
+    return (uint)(idx < 0 ? 0 : idx);
+}
+
+private void SetSelectedRoosterProviderIndex(string[] allowed, uint index)
+{
+    var i = (int)index;
+    if (i < 0 || i >= allowed.Length)
+        i = 0;
+
+    if (allowed.Length == 0)
+        return;
+
+    SetSelectedRoosterProviderValue(allowed[i]);
+}
+
+private string GetSelectedRoosterProviderValue(string fallback)
 {
     var enabled = _saveState.Compat.EnabledRoosterSources
         .Where(id => !string.IsNullOrWhiteSpace(id))
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList();
 
-    return enabled.Count > 1 ? AllRoosterProvidersValue : enabled.Count == 1 ? enabled[0] : AllRoosterProvidersValue;
+    return enabled.Count == 1 ? enabled[0] : fallback;
 }
 
-private void SetSelectedRoosterProvidersValue(string value)
+private void SetSelectedRoosterProviderValue(string value)
 {
     EnsureCompatInitialized();
 
-    var changed = false;
-
-    if (value.Equals(AllRoosterProvidersValue, StringComparison.OrdinalIgnoreCase))
+    if (!_compatSelection.TrySetRoosterProviderSingle(_saveState.Compat, value, out _, out var changed, out var error))
     {
-        if (!_compatSelection.EnableAllRoosterProviders(_saveState.Compat, out _, out changed, out var error))
-        {
-            if (!string.IsNullOrWhiteSpace(error))
-                LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to enable all rooster providers: {error}", LogLevel.Warn);
-            return;
-        }
-    }
-    else
-    {
-        if (!_compatSelection.TrySetRoosterProviderSingle(_saveState.Compat, value, out _, out changed, out var error))
-        {
-            if (!string.IsNullOrWhiteSpace(error))
-                LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to set rooster provider '{value}': {error}", LogLevel.Warn);
-            return;
-        }
+        if (!string.IsNullOrWhiteSpace(error))
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"GMCM: failed to set rooster provider '{value}': {error}", LogLevel.Warn);
+        return;
     }
 
     if (!changed)
         return;
 
-    PersistAndApplyCompatChange("gmcm set rooster providers");
+    PersistAndApplyCompatChange("gmcm set rooster provider");
 }
 
 

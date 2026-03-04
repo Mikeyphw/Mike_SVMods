@@ -1,7 +1,6 @@
 # RoosterControl TODO
 
 ## Next: Phase 14 — UX polish (non-optional)
-- [ ] Picker affordances (icons/labels) + robust fallback without GMCMOptions
 - [ ] Reset affordances (all/per-egg-kind/roosters)
 - [ ] Actionable validation messaging
 
@@ -13,6 +12,8 @@
 
 ## Done
 - [x] Phase 14: GMCM Compat page layout pass (grouping/headings/spacing)
+- [x] Phase 14: Picker affordances (icons/labels) + robust fallback without GMCMOptions
+- [x] Phase 14: QoL toggle — dedicated All providers mode
 - [x] Phase 13: Docs: upgrade notes + release checklist
 - [x] Phase 13: Build/test verified + `ra_compat status` + GMCM i18n for empty sources
 - [x] Phase 13: Safe defaults for empty/missing catalogs (empty catalogs, null fields, actionable warnings)

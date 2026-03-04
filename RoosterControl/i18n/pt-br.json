@@ -121,8 +121,8 @@
   "config.compatSources.egg.WhiteEgg.description": "Selecione qual provedor de compatibilidade fornece este ovo usado no planejamento e nas edições de assets.",
   "config.compatSources.egg.WhiteEgg.name": "Fonte: White Egg",
   "config.compatSources.roosters.allowed.all": "Todos os provedores (união)",
-  "config.compatSources.roosters.description": "Escolha quais provedores de galo ficam habilitados para varredura de galos no galinheiro. Selecione 'Todos' para modo união.",
-  "config.compatSources.roosters.name": "Provedores de galo",
+  "config.compatSources.roosters.description": "Quando 'Usar todos os provedores' estiver desativado, escolha qual provedor é usado para varredura de galos no galinheiro.",
+  "config.compatSources.roosters.name": "Provedor de galo (único)",
   "config.debug.enableDebug.description": "Enables extra debug output and diagnostics.",
   "config.debug.enableDebug.name": "Enable debug mode",
   "config.debug.testingLogging.description": "Extra logs intended for development/testing.",
@@ -929,5 +929,8 @@
   "shop.gold.description": "Buy Gold Rooster!",
   "shop.gold.displayname": "Gold Rooster",
   "shop.void.description": "Buy Void Roosters!",
-  "shop.void.displayname": "Void Rooster"
+  "shop.void.displayname": "Void Rooster",
+  "config.compatSources.roosters.useAll.name": "Usar todos os provedores",
+  "config.compatSources.roosters.useAll.description": "Ativa o modo união (todos os provedores de galo). Desative para escolher um provedor único abaixo.",
+  "compat.sources.roosters.noProvidersFound": "Nenhum provedor de galo foi encontrado no catálogo de compatibilidade."
 }
