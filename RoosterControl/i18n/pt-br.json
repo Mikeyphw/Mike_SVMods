@@ -1,4 +1,5 @@
 {
+  "compat.sources.fallback_help": "Dica: instale o GMCM Options para habilitar seletores com ícones e prévias estilizadas. Sem ele, estes seletores usam rótulos de texto; IDs só aparecem quando necessário para diferenciar opções.",
   "config.Bool.Buyable.description": "Whether the rooster can be bought.",
   "config.Bool.Buyable.name": "Can Be Purchased",
   "config.Bool.BypassBlueConditions.description": "Bypass the unlock conditions for the blue chicken.",

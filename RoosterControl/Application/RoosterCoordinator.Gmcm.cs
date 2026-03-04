@@ -208,6 +208,13 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
 
     b.Paragraph("compat.sources.help");
 
+    b.ParagraphGmcmOptionsStatus();
+    if (!b.SupportsExtraOptions)
+    {
+        b.Paragraph("compat.sources.fallback_help");
+        b.Separator(id: "compat_sources_fallback_sep", simple: true);
+    }
+
     _compatSourcesSummary = BuildCompatSourcesSummary(data);
     b.ParagraphDynamic(() => _compatSourcesSummary, styled: true, id: "compat_sources_summary");
 
@@ -510,8 +517,14 @@ private string FormatEggSourceValue(string sourceId)
     if (src is null)
         return sourceId;
 
-    return $"{src.DisplayName} ({src.SourceId})";
+    // Keep labels short for the common case; include IDs only when the display name is ambiguous.
+    var isAmbiguous = _compatSelection.EggCatalog.Sources.Any(s =>
+        !s.SourceId.Equals(src.SourceId, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(s.DisplayName, src.DisplayName, StringComparison.OrdinalIgnoreCase));
+
+    return isAmbiguous ? $"{src.DisplayName} ({src.SourceId})" : src.DisplayName;
 }
+
 
 private uint GetSelectedRoosterProvidersIndex(string[] allowed)
 {
@@ -613,8 +626,16 @@ private string FormatRoosterProviderValue(string value)
     var src = _compatSelection.RoosterCatalog.Sources
         .FirstOrDefault(s => s.SourceId.Equals(value, StringComparison.OrdinalIgnoreCase));
 
-    return src is null ? value : $"{src.DisplayName} ({src.SourceId})";
+    if (src is null)
+        return value;
+
+    var isAmbiguous = _compatSelection.RoosterCatalog.Sources.Any(s =>
+        !s.SourceId.Equals(src.SourceId, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(s.DisplayName, src.DisplayName, StringComparison.OrdinalIgnoreCase));
+
+    return isAmbiguous ? $"{src.DisplayName} ({src.SourceId})" : src.DisplayName;
 }
+
 
 private void PersistAndApplyCompatChange(string reason)
 {
