@@ -206,10 +206,38 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
         return;
     }
 
+    b.Paragraph("compat.sources.help");
+
     _compatSourcesSummary = BuildCompatSourcesSummary(data);
     b.ParagraphDynamic(() => _compatSourcesSummary, styled: true, id: "compat_sources_summary");
 
-    foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+    b.Separator("compat_sources_sep_eggs", simple: true);
+    b.Section("compat.sources.eggs");
+
+    var eggGroups = new (string section, EggKind[] kinds)[]
+    {
+        ("compat.sources.eggs.standard", new[]
+        {
+            EggKind.BrownEgg, EggKind.WhiteEgg, EggKind.BlueEgg, EggKind.VoidEgg, EggKind.GoldEgg
+        }),
+        ("compat.sources.eggs.large", new[]
+        {
+            EggKind.LargeBrownEgg, EggKind.LargeWhiteEgg, EggKind.LargeBlueEgg, EggKind.LargeVoidEgg, EggKind.LargeGoldEgg
+        }),
+        ("compat.sources.eggs.fertilized", new[]
+        {
+            EggKind.FertilizedBrownEgg, EggKind.FertilizedWhiteEgg, EggKind.FertilizedBlueEgg, EggKind.FertilizedVoidEgg, EggKind.FertilizedGoldEgg
+        }),
+        ("compat.sources.eggs.special", new[]
+        {
+            EggKind.RoosterEgg
+        }),
+    };
+
+    var totalKinds = eggGroups.Sum(g => g.kinds.Length);
+    var kindIndex = 0;
+
+    void AddEggKindPicker(EggKind kind, bool addSeparatorAfter)
     {
         var allowed = _compatSelection.EggCatalog.Sources
             .Where(s => s.EggKind == kind && !string.IsNullOrWhiteSpace(s.SourceId))
@@ -222,7 +250,9 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
         if (allowed.Length == 0)
         {
             b.ParagraphDynamic(() => _i18n.GetString("config.compatSources.egg.noValidSourcesFound", new { eggKind = kind }));
-            continue;
+            if (addSeparatorAfter)
+                b.Separator(id: $"compat_egg_sep_{kind}", simple: true);
+            return;
         }
 
         if (b.SupportsExtraOptions && TryBuildEggSourceChoices(kind, allowed, data, out var eggChoices))
@@ -256,7 +286,27 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
             styled: true,
             id: $"compat_egg_note_{kind}"
         );
+
+        if (addSeparatorAfter)
+            b.Separator(id: $"compat_egg_sep_{kind}", simple: true);
     }
+
+    foreach (var group in eggGroups)
+    {
+        b.Section(group.section);
+
+        foreach (var kind in group.kinds)
+        {
+            kindIndex++;
+            AddEggKindPicker(kind, addSeparatorAfter: kindIndex < totalKinds);
+        }
+
+        if (kindIndex < totalKinds)
+            b.Separator(id: $"compat_egg_group_sep_{group.section}", simple: true);
+    }
+
+    b.Separator("compat_sources_sep_roosters", simple: true);
+    b.Section("compat.sources.roosters");
 
     var roosterProviderIds = _compatSelection.RoosterCatalog.Sources
         .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
@@ -302,6 +352,8 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
         id: "compat_rooster_note"
     );
 }
+
+
 
 private string BuildCompatSourcesSummary(IDictionary<string, FarmAnimalData> data)
 {

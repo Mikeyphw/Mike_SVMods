@@ -51,7 +51,7 @@
   - [x] Linux verify script (`RoosterControl/scripts/verify.sh`) for build + tests
   - [x] `ra_compat status` command for a single-block health + selection dump
   - [x] GMCM empty-sources message localized (i18n)
-- [ ] Docs: upgrade notes + release checklist
+- [x] Docs: upgrade notes + release checklist
 
 ## Phase 14 — UX polish (non-optional)
 - [ ] GMCM Compat page layout pass (grouping/headings/spacing)

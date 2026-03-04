@@ -6,6 +6,12 @@ Rules:
 - `CHECKLIST.md` tracks completion.
 - `TODO.md` tracks upcoming work items and decisions.
 
+
+## Status
+
+- Current: **Phase 14 — Step 1 (GMCM Compat page layout pass)**
+- Last completed: **Phase 13 — Release hardening (docs + release checklist added)**
+
 ## Goals
 
 1) **Deterministic daily hatching/produce** decisions (stable across reloads).
