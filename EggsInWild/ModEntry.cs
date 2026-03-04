@@ -1114,6 +1114,137 @@ foreach (var key in wildAnimalKeysForGmcm)
             page.Separator(simple: true);
             page.SectionLabel(() => Translate(i18n, "config.section.wildAnimals.extraModAnimalKeys.bulk.label", "Bulk edit (stage)"));
 
+            page.ParagraphDynamic(
+                () =>
+                {
+                    if (!_extraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) || string.IsNullOrWhiteSpace(st.Raw))
+                        return Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkHeader.empty", "Bulk: (none staged).");
+
+                    var cfg = _config!.Get();
+
+                    var fixTrim = cfg.GmcmExtraModAnimalKeysBulkFixTrimWhitespace;
+                    var fixDedupe = cfg.GmcmExtraModAnimalKeysBulkFixRemoveDuplicates;
+                    var fixDropUnknown = cfg.GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys;
+
+                    HashSet<string>? knownFarmAnimalIds = null;
+                    if (fixDropUnknown && Context.IsWorldReady)
+                    {
+                        try
+                        {
+                            var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                            knownFarmAnimalIds = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
+                        }
+                        catch
+                        {
+                            knownFarmAnimalIds = null;
+                        }
+                    }
+
+                    var enabledFixes = new List<string>();
+                    if (fixTrim) enabledFixes.Add("trim");
+                    if (fixDedupe) enabledFixes.Add("dedupe");
+                    if (fixDropUnknown) enabledFixes.Add("drop-unknown");
+                    var enabledFixesText = enabledFixes.Count == 0 ? "(none)" : string.Join(", ", enabledFixes);
+
+                    var ovNow = GetOverride(cfg);
+
+                    var plannedSet = 0;
+                    var plannedClear = 0;
+                    var plannedNoop = 0;
+
+                    static string CanonicalizeModId(string modIdRaw, IEnumerable<string> known)
+                    {
+                        foreach (var existing in known)
+                        {
+                            if (string.Equals(existing, modIdRaw, StringComparison.OrdinalIgnoreCase))
+                                return existing;
+                        }
+
+                        return (modIdRaw ?? string.Empty).Trim();
+                    }
+
+                    static IReadOnlyList<string> ApplyFixes(
+                        IReadOnlyList<string> rawKeys,
+                        bool fixTrim,
+                        bool fixDedupe,
+                        ISet<string>? knownIds)
+                    {
+                        if (!fixTrim && !fixDedupe && knownIds is null)
+                            return rawKeys;
+
+                        var outKeys = new List<string>(rawKeys.Count);
+                        HashSet<string>? seen = fixDedupe ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) : null;
+
+                        foreach (var raw in rawKeys)
+                        {
+                            var t = raw ?? string.Empty;
+                            if (fixTrim)
+                                t = t.Trim();
+                            if (t.Length == 0)
+                                continue;
+                            if (knownIds is not null && !knownIds.Contains(t))
+                                continue;
+                            if (seen is not null && !seen.Add(t))
+                                continue;
+                            outKeys.Add(t);
+                        }
+
+                        return outKeys;
+                    }
+
+                    foreach (var modIdRaw in st.Resets)
+                    {
+                        var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+                        var hasOv = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.ContainsKey(modId);
+                        if (hasOv) plannedClear++;
+                        else plannedNoop++;
+                    }
+
+                    foreach (var (modIdRaw, rawKeys) in st.Upserts)
+                    {
+                        var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+
+                        var fixedKeys = ApplyFixes(rawKeys, fixTrim, fixDedupe, knownFarmAnimalIds);
+
+                        var baseKeys = definition?.ExtraModAnimalKeys is not null
+                            && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                            ? baseBlock.GetEffectiveFarmAnimalKeys()
+                            : Array.Empty<string>();
+
+                        var matchesBase = fixedKeys.Count > 0 && SequenceEqualIgnoreCase(fixedKeys, baseKeys);
+
+                        ExtraModAnimalKeysOverrideConfig? existingBlock = null;
+                        var hasOv = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.TryGetValue(modId, out existingBlock);
+                        var existingKeys = hasOv && existingBlock?.FarmAnimalKeys is { } ovKeys ? ovKeys : new List<string>();
+
+                        var willClear = fixedKeys.Count == 0 || matchesBase;
+                        if (willClear)
+                        {
+                            if (hasOv) plannedClear++;
+                            else plannedNoop++;
+                        }
+                        else
+                        {
+                            if (hasOv && SequenceEqualIgnoreCase(existingKeys, fixedKeys)) plannedNoop++;
+                            else plannedSet++;
+                        }
+                    }
+
+                    return Translate(
+                        i18n,
+                        "config.paragraph.wildAnimals.extraModAnimalKeys.bulkHeader.text",
+                        "Bulk staged: {0} upserts, {1} resets, {2} warnings | Planned: set {3}, clear {4}, no-op {5} | Fixes: {6}.",
+                        st.Upserts.Count,
+                        st.Resets.Count,
+                        st.Warnings.Count,
+                        plannedSet,
+                        plannedClear,
+                        plannedNoop,
+                        enabledFixesText);
+                },
+                id: $"wildAnimals_extraModAnimalKeys_bulkHeader_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
+
+
             page.TextLabel(
                 elementId: $"wildAnimals.{key}.extraModAnimalKeys.bulkInput",
                 name: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.bulkInput.name", "Bulk paste (stage)"),
@@ -1439,6 +1570,9 @@ page.ParagraphDynamic(
                     "Toggle on to apply staged bulk changes. This writes overrides immediately and clears the staged text."),
                 id: $"wildAnimals_extraModAnimalKeys_bulkApplyNote_{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(key)}");
 
+            page.Bool(cfg => cfg.GmcmExtraModAnimalKeysBulkApplySkipNoop, optionId: "wildAnimals.extraModAnimalKeys.bulkSkipNoop", tooltip: true);
+
+
             
             page.Separator(simple: true);
             page.SectionLabel(() => Translate(i18n, "config.section.wildAnimals.extraModAnimalKeys.bulkFixes.label", "Bulk apply quick-fixes"));
@@ -1470,9 +1604,99 @@ page.Bool(
                     }
 
                     var cfg = _config!.Get();
+                    var skipNoop = cfg.GmcmExtraModAnimalKeysBulkApplySkipNoop;
+
+                    var fixTrim = cfg.GmcmExtraModAnimalKeysBulkFixTrimWhitespace;
+                    var fixDedupe = cfg.GmcmExtraModAnimalKeysBulkFixRemoveDuplicates;
+                    var fixDropUnknown = cfg.GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys;
+
+                    HashSet<string>? knownFarmAnimalIds = null;
+                    if (fixDropUnknown && Context.IsWorldReady)
+                    {
+                        try
+                        {
+                            var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                            knownFarmAnimalIds = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
+                        }
+                        catch
+                        {
+                            knownFarmAnimalIds = null;
+                        }
+                    }
+
+                    IReadOnlyList<string> ApplyFixes(IReadOnlyList<string> rawKeys)
+                    {
+                        if (!fixTrim && !fixDedupe && knownFarmAnimalIds is null)
+                            return rawKeys;
+
+                        var outKeys = new List<string>(rawKeys.Count);
+                        HashSet<string>? seen = fixDedupe ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) : null;
+
+                        foreach (var raw in rawKeys)
+                        {
+                            var t = raw ?? string.Empty;
+                            if (fixTrim)
+                                t = t.Trim();
+                            if (t.Length == 0)
+                                continue;
+                            if (knownFarmAnimalIds is not null && !knownFarmAnimalIds.Contains(t))
+                                continue;
+                            if (seen is not null && !seen.Add(t))
+                                continue;
+                            outKeys.Add(t);
+                        }
+
+                        return outKeys;
+                    }
+
+                    var ovNow = GetOverride(cfg);
+                    var anyChangePlanned = false;
+
+                    foreach (var modIdRaw in st.Resets)
+                    {
+                        var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+                        if (ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.ContainsKey(modId))
+                            anyChangePlanned = true;
+                    }
+
+                    foreach (var (modIdRaw, keys) in st.Upserts)
+                    {
+                        var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+                        var finalKeys = ApplyFixes(keys);
+
+                        var baseKeys = definition?.ExtraModAnimalKeys is not null
+                            && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                            ? baseBlock.GetEffectiveFarmAnimalKeys()
+                            : Array.Empty<string>();
+
+                        var matchesBase = finalKeys.Count > 0 && SequenceEqualIgnoreCase(finalKeys, baseKeys);
+
+                        ExtraModAnimalKeysOverrideConfig? existingBlock = null;
+                        var hasOv = ovNow?.ExtraModAnimalKeys is not null && ovNow.ExtraModAnimalKeys.TryGetValue(modId, out existingBlock) && existingBlock is not null;
+                        var existingKeys = hasOv && existingBlock!.FarmAnimalKeys is { } ovKeys ? ovKeys : new List<string>();
+
+                        var willClear = finalKeys.Count == 0 || matchesBase;
+                        if (willClear)
+                        {
+                            if (hasOv)
+                                anyChangePlanned = true;
+                        }
+                        else
+                        {
+                            if (!hasOv || !SequenceEqualIgnoreCase(existingKeys, finalKeys))
+                                anyChangePlanned = true;
+                        }
+                    }
+
+                    if (skipNoop && !anyChangePlanned)
+                    {
+                        Monitor.Log($"[GMCM][ExtraModAnimalKeys] Bulk Apply skipped (no-op) for '{key}'.", LogLevel.Trace);
+                        return;
+                    }
+
                     cfg.WildAnimalOverrides ??= new Dictionary<string, WildAnimalOverrideConfig>(StringComparer.OrdinalIgnoreCase);
 
-                    var ov = GetOverride(cfg) ?? new WildAnimalOverrideConfig();
+                    var ov = ovNow ?? new WildAnimalOverrideConfig();
                     ov.ExtraModAnimalKeys ??= new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.OrdinalIgnoreCase);
 
                     foreach (var modIdRaw in st.Resets)
@@ -1484,61 +1708,14 @@ page.Bool(
                     foreach (var (modIdRaw, keys) in st.Upserts)
                     {
                         var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
-
-                        var fixTrim = cfg.GmcmExtraModAnimalKeysBulkFixTrimWhitespace;
-                        var fixDedupe = cfg.GmcmExtraModAnimalKeysBulkFixRemoveDuplicates;
-                        var fixDropUnknown = cfg.GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys;
-
-                        HashSet<string>? knownFarmAnimalIds = null;
-                        if (fixDropUnknown && Context.IsWorldReady)
-                        {
-                            try
-                            {
-                                var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
-                                knownFarmAnimalIds = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
-                            }
-                            catch
-                            {
-                                knownFarmAnimalIds = null;
-                            }
-                        }
-
-                        IReadOnlyList<string> finalKeys = keys;
-                        if (fixTrim || fixDedupe || knownFarmAnimalIds is not null)
-                        {
-                            var outKeys = new List<string>(keys.Count);
-                            HashSet<string>? seen = fixDedupe ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) : null;
-
-                            foreach (var k in keys)
-                            {
-                                var t = k ?? string.Empty;
-                                if (fixTrim)
-                                    t = t.Trim();
-                                if (t.Length == 0)
-                                    continue;
-                                if (knownFarmAnimalIds is not null && !knownFarmAnimalIds.Contains(t))
-                                    continue;
-                                if (seen is not null && !seen.Add(t))
-                                    continue;
-                                outKeys.Add(t);
-                            }
-
-                            finalKeys = outKeys;
-                        }
-
-                        if (finalKeys.Count == 0)
-                        {
-                            ov.ExtraModAnimalKeys.Remove(modId);
-                            continue;
-                        }
-
+                        var finalKeys = ApplyFixes(keys);
 
                         var baseKeys = definition?.ExtraModAnimalKeys is not null
                             && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
                             ? baseBlock.GetEffectiveFarmAnimalKeys()
                             : Array.Empty<string>();
 
-                        if (SequenceEqualIgnoreCase(finalKeys, baseKeys))
+                        if (finalKeys.Count == 0 || SequenceEqualIgnoreCase(finalKeys, baseKeys))
                         {
                             ov.ExtraModAnimalKeys.Remove(modId);
                         }

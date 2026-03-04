@@ -94,6 +94,11 @@ public sealed class ModConfig
     /// </summary>
     public bool GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys { get; set; } = false;
 
+    /// <summary>
+    /// If enabled, GMCM Bulk Apply will do nothing (and will not clear the staged bulk text) when the planned result is a no-op.
+    /// </summary>
+    public bool GmcmExtraModAnimalKeysBulkApplySkipNoop { get; set; } = true;
+
 
     /// <summary>
     /// In multiplayer: only the host may add quests and queue mail for AnimalNotes.

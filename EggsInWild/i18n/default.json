@@ -510,5 +510,9 @@
   "config.wildAnimals.extraModAnimalKeys.bulkClear.name": "Clear staged bulk input",
   "config.wildAnimals.extraModAnimalKeys.bulkClear.tooltip": "Clear the staged bulk paste text and preview for this wild animal. This does not change your config.",
   "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.plan": "Planned: set {0}, clear {1}, no-op {2}.",
-  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.noop": "No config changes would be applied by Bulk Apply."
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.noop": "No config changes would be applied by Bulk Apply.",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkHeader.empty": "Bulk: (none staged).",
+  "config.paragraph.wildAnimals.extraModAnimalKeys.bulkHeader.text": "Bulk staged: {0} upserts, {1} resets, {2} warnings | Planned: set {3}, clear {4}, no-op {5} | Fixes: {6}.",
+  "config.wildAnimals.extraModAnimalKeys.bulkSkipNoop.name": "Skip Bulk Apply when no changes",
+  "config.wildAnimals.extraModAnimalKeys.bulkSkipNoop.description": "If enabled, Bulk Apply does nothing (and keeps staged text) when the planned result is a no-op."
 }
