@@ -217,3 +217,22 @@
 - No-op bulk applies do not clear staged text (unless user disables skip-noop).
 - User can export effective blocks and paste back into bulk stage to reproduce state.
 - Bulk planning is computed consistently for header, preview, and apply; no redundant game-data loads.
+
+
+---
+
+## Phase 10 — Bulk tooling parity (tests + dev commands)
+**Goal**: keep bulk editing logic stable by covering it with tests, and expose the same bulk workflows via dev commands.
+
+**Steps**
+1. Add unit tests for bulk parsing + planning (set/clear/no-op) behavior. ✅
+2. Add dev commands:
+   - `wegg wildanimals export_effective_bulk <wildAnimalKey>`
+   - `wegg wildanimals validate_bulk <wildAnimalKey> <rawBulk|@filePath>`
+   ✅
+3. (Later) Add dev-command-focused tests for export/validate output formatting.
+
+**Acceptance**
+- `dotnet test Tests/Tests.sln` passes.
+- `export_effective_bulk` output matches GMCM export lines (`modId | csvKeys`), one line per mod-group.
+- `validate_bulk` reports parsing issues and FarmAnimalKey warnings when `Data/FarmAnimals` is available.

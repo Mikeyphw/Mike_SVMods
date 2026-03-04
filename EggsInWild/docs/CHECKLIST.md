@@ -66,3 +66,9 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Phase 9C: surface richer bulk validation warnings (unknown modIds, blank/duplicate keys, keys not in game data when available).
 - [x] Phase 9D: copy export into bulk stage (overwrite/append) for round-trip editing.
 - [x] Phase 9E: maintenance pass (dedupe bulk planning + export helper; reuse cached game-data load).
+
+
+## Phase 10 — Bulk tooling parity (tests + dev commands)
+- [x] Phase 10C: add unit tests covering bulk parser + planner behavior (set/clear/no-op).
+- [x] Phase 10D: add dev commands for export_effective_bulk + validate_bulk.
+- [ ] Add dev-command-focused tests for export/validate output formatting.

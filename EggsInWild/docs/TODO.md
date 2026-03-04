@@ -22,3 +22,9 @@
 ## Notes
 - Keep changes inside `EggsInWild` and prefer NestCore helpers for GMCM plumbing.
 - Avoid fragile syntax edits in `WeggCommandDispatcher.cs` (braces/strings/switch expressions).
+
+
+## Phase 10 — Bulk tooling parity
+- [x] 10C: unit tests for bulk parsing + planning (set/clear/no-op).
+- [x] 10D: dev commands `export_effective_bulk` + `validate_bulk`.
+- [ ] Add dev-command-focused tests for export/validate output formatting.

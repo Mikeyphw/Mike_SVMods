@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -621,6 +622,295 @@ public FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled)
             StardewModdingAPI.LogLevel.Error);
         return new FacadeResult(false, "Failed setting wild animal override (see log).");
     }
+}
+
+
+public FacadeResult ExportWildAnimalEffectiveBulk(string wildAnimalKey)
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(wildAnimalKey))
+            return new FacadeResult(false, "Missing wildAnimalKey.");
+
+        var baseSnapshot = _dataLoader.LoadBase();
+        var snapshot = _dataLoader.Load();
+
+        var canonicalKey = ResolveWildAnimalKey(snapshot.WildAnimals.Keys, wildAnimalKey);
+        if (canonicalKey is null)
+            return new FacadeResult(false, BuildUnknownWildAnimalMessage(snapshot.WildAnimals.Keys, wildAnimalKey));
+
+        if (!baseSnapshot.WildAnimals.TryGetValue(canonicalKey, out var definition) || definition is null)
+            return new FacadeResult(false, $"Wild animal '{canonicalKey}' not found in base WildAnimalsList.json.");
+
+        var cfg = _config.Get();
+        var ov = TryGetWildAnimalOverride(cfg, canonicalKey);
+
+        var modIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Vanilla",
+        };
+
+        foreach (var mid in definition.ExtraModAnimalKeys.Keys)
+            modIds.Add(mid);
+
+        if (ov?.ExtraModAnimalKeys is not null)
+        {
+            foreach (var mid in ov.ExtraModAnimalKeys.Keys)
+                modIds.Add(mid);
+        }
+
+        var ordered = modIds
+            .OrderBy(mid => string.Equals(mid, "Vanilla", StringComparison.OrdinalIgnoreCase) ? "" : mid, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var body = new List<string>();
+        foreach (var modId in ordered)
+        {
+            IReadOnlyList<string> effectiveKeys;
+
+            if (ov?.ExtraModAnimalKeys is not null
+                && ov.ExtraModAnimalKeys.TryGetValue(modId, out var blockOv)
+                && blockOv?.FarmAnimalKeys is { Count: > 0 } ovKeys)
+            {
+                effectiveKeys = ovKeys;
+            }
+            else
+            {
+                effectiveKeys = definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                    ? baseBlock.GetEffectiveFarmAnimalKeys()
+                    : Array.Empty<string>();
+            }
+
+            if (effectiveKeys.Count == 0)
+                continue;
+
+            body.Add($"{modId} | {string.Join(", ", effectiveKeys)}");
+        }
+
+        var outLines = new List<string>
+        {
+            $"[wegg][ExtraModAnimalKeys] Export effective blocks for '{canonicalKey}':",
+        };
+
+        if (body.Count == 0)
+        {
+            outLines.Add("(none)");
+        }
+        else
+        {
+            outLines.AddRange(body);
+        }
+
+        return new FacadeResult(true, string.Join(Environment.NewLine, outLines));
+    }
+    catch (Exception ex)
+    {
+        LogScopedHelper.Log(
+            _log,
+            ModWeCategory.SaveData,
+            $"ExportWildAnimalEffectiveBulk failed: {ex}",
+            StardewModdingAPI.LogLevel.Error);
+
+        return new FacadeResult(false, "Export failed (see log).");
+    }
+}
+
+public FacadeResult ValidateWildAnimalBulk(string wildAnimalKey, string rawOrPath)
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(wildAnimalKey))
+            return new FacadeResult(false, "Missing wildAnimalKey.");
+
+        var baseSnapshot = _dataLoader.LoadBase();
+        var snapshot = _dataLoader.Load();
+
+        var canonicalKey = ResolveWildAnimalKey(snapshot.WildAnimals.Keys, wildAnimalKey);
+        if (canonicalKey is null)
+            return new FacadeResult(false, BuildUnknownWildAnimalMessage(snapshot.WildAnimals.Keys, wildAnimalKey));
+
+        if (!baseSnapshot.WildAnimals.TryGetValue(canonicalKey, out var definition) || definition is null)
+            return new FacadeResult(false, $"Wild animal '{canonicalKey}' not found in base WildAnimalsList.json.");
+
+        var cfg = _config.Get();
+        var ov = TryGetWildAnimalOverride(cfg, canonicalKey);
+
+        var knownModIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Vanilla",
+        };
+
+        foreach (var mid in definition.ExtraModAnimalKeys.Keys)
+            knownModIds.Add(mid);
+
+        if (ov?.ExtraModAnimalKeys is not null)
+        {
+            foreach (var mid in ov.ExtraModAnimalKeys.Keys)
+                knownModIds.Add(mid);
+        }
+
+        var raw = ReadBulkPayload(rawOrPath);
+        if (string.IsNullOrWhiteSpace(raw))
+            return new FacadeResult(true, $"[wegg][ExtraModAnimalKeys] Bulk validation for '{canonicalKey}':\n(no content)");
+
+        var knownFarmAnimalIds = TryLoadKnownFarmAnimalIdsOrNull();
+
+        var parsed = ParseBulkPayload(raw, knownModIds);
+        var upserts = parsed.Upserts;
+        var resets = parsed.Resets;
+
+        var modGroups = new Dictionary<string, ExtraModAnimalKeysJson>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (modId, rawKeys) in upserts)
+            modGroups[modId] = new ExtraModAnimalKeysJson { FarmAnimalKeys = rawKeys };
+
+        var warnings = new List<string>();
+        warnings.AddRange(parsed.Warnings);
+
+        if (modGroups.Count > 0)
+            warnings.AddRange(ExtraModAnimalKeysWarnings.Build(modGroups, _mods, knownFarmAnimalIds));
+
+        var outLines = new List<string>
+        {
+            $"[wegg][ExtraModAnimalKeys] Bulk validation for '{canonicalKey}':",
+            $"Parsed: {upserts.Count} upsert(s), {resets.Count} reset(s).",
+        };
+
+        if (warnings.Count == 0)
+        {
+            outLines.Add("No warnings.");
+        }
+        else
+        {
+            outLines.Add("Warnings:");
+            outLines.AddRange(warnings.Take(200).Select(x => $" - {x}"));
+            if (warnings.Count > 200)
+                outLines.Add($" - (+{warnings.Count - 200} more)");
+        }
+
+        return new FacadeResult(true, string.Join(Environment.NewLine, outLines));
+    }
+    catch (FileNotFoundException fnf)
+    {
+        return new FacadeResult(false, fnf.Message);
+    }
+    catch (Exception ex)
+    {
+        LogScopedHelper.Log(
+            _log,
+            ModWeCategory.SaveData,
+            $"ValidateWildAnimalBulk failed: {ex}",
+            StardewModdingAPI.LogLevel.Error);
+
+        return new FacadeResult(false, "Validation failed (see log).");
+    }
+}
+
+private static string ReadBulkPayload(string rawOrPath)
+{
+    if (string.IsNullOrWhiteSpace(rawOrPath))
+        return string.Empty;
+
+    var arg = rawOrPath.Trim();
+
+    if (arg.StartsWith("@", StringComparison.Ordinal) && arg.Length > 1)
+    {
+        var path = arg[1..].Trim().Trim('"');
+
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Bulk file not found: {path}", path);
+
+        return File.ReadAllText(path);
+    }
+
+    // Allow passing literal \n in a single argument.
+    return arg
+        .Replace("\\r", "\r", StringComparison.Ordinal)
+        .Replace("\\n", "\n", StringComparison.Ordinal);
+}
+
+
+private sealed record BulkParseResult(Dictionary<string, List<string>> Upserts, HashSet<string> Resets, List<string> Warnings);
+
+private static BulkParseResult ParseBulkPayload(string raw, ISet<string> knownModIds)
+{
+    var upserts = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+    var resets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    var warnings = new List<string>();
+
+    foreach (var rawLine in raw.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
+    {
+        var line = rawLine.Trim();
+        if (line.Length == 0)
+            continue;
+
+        if (line.StartsWith("#", StringComparison.Ordinal) || line.StartsWith("//", StringComparison.Ordinal))
+            continue;
+
+        var sepIndex = line.IndexOf('|');
+        if (sepIndex < 0) sepIndex = line.IndexOf(':');
+        if (sepIndex < 0) sepIndex = line.IndexOf('=');
+
+        if (sepIndex <= 0)
+        {
+            warnings.Add($"Bulk line ignored (missing separator): '{line}'. Expected: modId | csvKeys");
+            continue;
+        }
+
+        var modIdsRaw = line[..sepIndex].Trim();
+        var keysRaw = sepIndex >= line.Length - 1 ? "" : line[(sepIndex + 1)..];
+
+        if (modIdsRaw.Length == 0)
+        {
+            warnings.Add($"Bulk line ignored (blank modId): '{line}'.");
+            continue;
+        }
+
+        var modIds = modIdsRaw
+            .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim())
+            .Where(x => x.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (modIds.Count == 0)
+        {
+            warnings.Add($"Bulk line ignored (no valid modIds): '{line}'.");
+            continue;
+        }
+
+        foreach (var modId in modIds)
+        {
+            if (!knownModIds.Contains(modId))
+                warnings.Add($"Bulk line has unknown modId (not on this animal): '{modId}'. Line: '{line}'.");
+        }
+
+        var keysTrim = keysRaw.Trim();
+        var isReset = keysTrim.Length == 0
+            || keysTrim == "*"
+            || string.Equals(keysTrim, "reset", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(keysTrim, "remove", StringComparison.OrdinalIgnoreCase);
+
+        if (isReset)
+        {
+            foreach (var modId in modIds)
+            {
+                upserts.Remove(modId);
+                resets.Add(modId);
+            }
+
+            continue;
+        }
+
+        var parts = keysRaw.Split(new[] { ',', ';' }, StringSplitOptions.None).ToList();
+
+        foreach (var modId in modIds)
+        {
+            resets.Remove(modId);
+            upserts[modId] = parts;
+        }
+    }
+
+    return new BulkParseResult(upserts, resets, warnings);
 }
 
 private static string BuildUnknownWildAnimalMessage(IEnumerable<string> keys, string raw)

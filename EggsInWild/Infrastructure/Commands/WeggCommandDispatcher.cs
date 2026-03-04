@@ -64,6 +64,8 @@ public sealed class WeggCommandDispatcher
     //   wegg wildanimals dump_effective
     //   wegg wildanimals status <wildAnimalKey>
     //   wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>
+    //   wegg wildanimals export_effective_bulk <wildAnimalKey>
+    //   wegg wildanimals validate_bulk <wildAnimalKey> <rawBulk|@filePath>
     if (args.Length < 2 || IsHelp(args[1]))
         return new CommandResult(true, DefaultHelpTextDev());
 
@@ -73,6 +75,8 @@ public sealed class WeggCommandDispatcher
         "dump_effective" => ToCommandResult(_facade.DumpEffectiveWildAnimals()),
         "status" => HandleWildAnimalsStatus(args),
         "set_enabled" => HandleWildAnimalsSetEnabled(args),
+        "export_effective_bulk" => HandleWildAnimalsExportEffectiveBulk(args),
+        "validate_bulk" => HandleWildAnimalsValidateBulk(args),
         _ => new CommandResult(false, $"{T("command.wegg.error.wildanimals.unknown", "Unknown wildanimals subcommand '{0}'.", args[1])}\n\n{DefaultHelpTextDev()}"),
     };
 }
@@ -96,6 +100,28 @@ private CommandResult HandleWildAnimalsSetEnabled(string[] args)
     return ToCommandResult(_facade.SetWildAnimalEnabled(args[2], enabled));
 }
 #endif
+
+private CommandResult HandleWildAnimalsExportEffectiveBulk(string[] args)
+{
+    if (args.Length < 3 || IsHelp(args[2]))
+        return new CommandResult(false, $"{T("command.wegg.usage.wildanimals.export_effective_bulk", "Usage: wegg wildanimals export_effective_bulk <wildAnimalKey>")}\n\n{DefaultHelpTextDev()}");
+
+    return ToCommandResult(_facade.ExportWildAnimalEffectiveBulk(args[2]));
+}
+
+private CommandResult HandleWildAnimalsValidateBulk(string[] args)
+{
+    if (args.Length < 4 || IsHelp(args[2]) || IsHelp(args[3]))
+        return new CommandResult(
+            false,
+            $"{T("command.wegg.usage.wildanimals.validate_bulk", "Usage: wegg wildanimals validate_bulk <wildAnimalKey> <rawBulk|@filePath>")}\n" +
+            "Notes: pass literal \\n escapes for multi-line input, or prefix with @ to read a file path.\n\n" +
+            DefaultHelpTextDev());
+
+    var raw = string.Join(" ", args, 3, args.Length - 3);
+    return ToCommandResult(_facade.ValidateWildAnimalBulk(args[2], raw));
+}
+
 
     private CommandResult HandleStep(string[] args)
     {
@@ -307,7 +333,9 @@ private CommandResult HandleWildAnimalsSetEnabled(string[] args)
             "Dev-only WildAnimals tools:",
             "  wegg wildanimals dump_effective",
             "  wegg wildanimals status <wildAnimalKey>",
-            "  wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>"
+            "  wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>",
+            "  wegg wildanimals export_effective_bulk <wildAnimalKey>",
+            "  wegg wildanimals validate_bulk <wildAnimalKey> <rawBulk|@filePath>"
         );
 #endif
 

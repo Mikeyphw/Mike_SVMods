@@ -50,6 +50,12 @@ public interface IModFacade
 
     /// <summary>Dev-only: set the Enabled override for one wild animal (persists config).</summary>
     FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled);
+
+    /// <summary>Dev-only: export effective ExtraModAnimalKeys as bulk lines (modId | csvKeys) for one wild animal.</summary>
+    FacadeResult ExportWildAnimalEffectiveBulk(string wildAnimalKey);
+
+    /// <summary>Dev-only: validate a bulk-text payload (modId | csvKeys) for one wild animal; supports @filePath and \\n escapes.</summary>
+    FacadeResult ValidateWildAnimalBulk(string wildAnimalKey, string rawOrPath);
 #endif
 }
 
