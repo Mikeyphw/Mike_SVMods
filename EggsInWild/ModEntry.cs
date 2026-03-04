@@ -959,6 +959,33 @@ foreach (var key in wildAnimalKeysForGmcm)
                 .ToList();
 
             
+
+            HashSet<string>? cachedFarmAnimalIds = null;
+            var cachedFarmAnimalIdsLoaded = false;
+
+            HashSet<string>? GetKnownFarmAnimalIds()
+            {
+                if (cachedFarmAnimalIdsLoaded)
+                    return cachedFarmAnimalIds;
+
+                cachedFarmAnimalIdsLoaded = true;
+
+                if (!Context.IsWorldReady)
+                    return null;
+
+                try
+                {
+                    var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                    cachedFarmAnimalIds = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
+                }
+                catch
+                {
+                    cachedFarmAnimalIds = null;
+                }
+
+                return cachedFarmAnimalIds;
+            }
+
             page.TextLabel(
                 elementId: $"wildAnimals.{key}.extraModAnimalKeys.customUpsert",
                 name: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.customUpsert.name", "Add/update custom modId block"),
@@ -1155,6 +1182,115 @@ foreach (var key in wildAnimalKeysForGmcm)
                     Monitor.Log(string.Join(Environment.NewLine, outLines), LogLevel.Info);
                 });
 
+            page.BoolLabel(
+                elementId: $"wildAnimals.{key}.extraModAnimalKeys.copyExportToBulkOverwrite",
+                name: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.copyExportToBulkOverwrite.name", "Copy export into bulk stage (overwrite)"),
+                tooltip: () => Translate(
+                    i18n,
+                    "config.wildAnimals.extraModAnimalKeys.copyExportToBulkOverwrite.tooltip",
+                    "Overwrite the staged bulk input with the exported effective blocks (one line per mod-group: modId | csvKeys)."),
+                getValue: () => false,
+                setValue: v =>
+                {
+                    if (!v)
+                        return;
+
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+
+                    var bodyLines = new List<string>();
+
+                    foreach (var modId in extraModIdsOrdered)
+                    {
+                        IReadOnlyList<string> effectiveKeys;
+
+                        if (ov?.ExtraModAnimalKeys is not null
+                            && ov.ExtraModAnimalKeys.TryGetValue(modId, out var blockOv)
+                            && blockOv?.FarmAnimalKeys is { Count: > 0 } ovKeys)
+                        {
+                            effectiveKeys = ovKeys;
+                        }
+                        else
+                        {
+                            effectiveKeys = definition?.ExtraModAnimalKeys is not null
+                                && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                                ? baseBlock.GetEffectiveFarmAnimalKeys()
+                                : Array.Empty<string>();
+                        }
+
+                        if (effectiveKeys.Count == 0)
+                            continue;
+
+                        bodyLines.Add($"{modId} | {string.Join(", ", effectiveKeys)}");
+                    }
+
+                    var raw = string.Join(Environment.NewLine, bodyLines);
+                    if (string.IsNullOrWhiteSpace(raw))
+                    {
+                        _extraModAnimalKeysBulkByWildAnimalKey.Remove(key);
+                        return;
+                    }
+
+                    _extraModAnimalKeysBulkByWildAnimalKey[key] = ParseExtraModAnimalKeysBulk(raw, extraModIdsForGmcm, GetKnownFarmAnimalIds());
+                });
+
+            page.BoolLabel(
+                elementId: $"wildAnimals.{key}.extraModAnimalKeys.copyExportToBulkAppend",
+                name: () => Translate(i18n, "config.wildAnimals.extraModAnimalKeys.copyExportToBulkAppend.name", "Copy export into bulk stage (append)"),
+                tooltip: () => Translate(
+                    i18n,
+                    "config.wildAnimals.extraModAnimalKeys.copyExportToBulkAppend.tooltip",
+                    "Append the exported effective blocks to the staged bulk input (one line per mod-group: modId | csvKeys)."),
+                getValue: () => false,
+                setValue: v =>
+                {
+                    if (!v)
+                        return;
+
+                    var cfg = _config!.Get();
+                    var ov = GetOverride(cfg);
+
+                    var bodyLines = new List<string>();
+
+                    foreach (var modId in extraModIdsOrdered)
+                    {
+                        IReadOnlyList<string> effectiveKeys;
+
+                        if (ov?.ExtraModAnimalKeys is not null
+                            && ov.ExtraModAnimalKeys.TryGetValue(modId, out var blockOv)
+                            && blockOv?.FarmAnimalKeys is { Count: > 0 } ovKeys)
+                        {
+                            effectiveKeys = ovKeys;
+                        }
+                        else
+                        {
+                            effectiveKeys = definition?.ExtraModAnimalKeys is not null
+                                && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
+                                ? baseBlock.GetEffectiveFarmAnimalKeys()
+                                : Array.Empty<string>();
+                        }
+
+                        if (effectiveKeys.Count == 0)
+                            continue;
+
+                        bodyLines.Add($"{modId} | {string.Join(", ", effectiveKeys)}");
+                    }
+
+                    var exportRaw = string.Join(Environment.NewLine, bodyLines);
+                    if (string.IsNullOrWhiteSpace(exportRaw))
+                        return;
+
+                    var existing = _extraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) ? st.Raw : "";
+                    existing ??= string.Empty;
+
+                    var combined = existing.TrimEnd();
+                    if (combined.Length > 0)
+                        combined += Environment.NewLine;
+                    combined += exportRaw;
+
+                    _extraModAnimalKeysBulkByWildAnimalKey[key] = ParseExtraModAnimalKeysBulk(combined, extraModIdsForGmcm, GetKnownFarmAnimalIds());
+                });
+
 
             page.ParagraphDynamic(
                 () => Translate(
@@ -1178,19 +1314,7 @@ foreach (var key in wildAnimalKeysForGmcm)
                     var fixDedupe = cfg.GmcmExtraModAnimalKeysBulkFixRemoveDuplicates;
                     var fixDropUnknown = cfg.GmcmExtraModAnimalKeysBulkFixDropUnknownFarmAnimalKeys;
 
-                    HashSet<string>? knownFarmAnimalIds = null;
-                    if (fixDropUnknown && Context.IsWorldReady)
-                    {
-                        try
-                        {
-                            var data = StardewValley.Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
-                            knownFarmAnimalIds = new HashSet<string>(data.Keys, StringComparer.OrdinalIgnoreCase);
-                        }
-                        catch
-                        {
-                            knownFarmAnimalIds = null;
-                        }
-                    }
+                    var knownFarmAnimalIds = GetKnownFarmAnimalIds();
 
                     var enabledFixes = new List<string>();
                     if (fixTrim) enabledFixes.Add("trim");
@@ -1256,7 +1380,7 @@ foreach (var key in wildAnimalKeysForGmcm)
                     {
                         var modId = CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
 
-                        var fixedKeys = ApplyFixes(rawKeys, fixTrim, fixDedupe, knownFarmAnimalIds);
+                        var fixedKeys = ApplyFixes(rawKeys, fixTrim, fixDedupe, fixDropUnknown ? knownFarmAnimalIds : null);
 
                         var baseKeys = definition?.ExtraModAnimalKeys is not null
                             && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
@@ -1308,7 +1432,7 @@ foreach (var key in wildAnimalKeysForGmcm)
                     _extraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) ? st.Raw : "",
                 setValue: rawValue =>
                 {
-                    var st = ParseExtraModAnimalKeysBulk(rawValue);
+                    var st = ParseExtraModAnimalKeysBulk(rawValue, extraModIdsForGmcm, GetKnownFarmAnimalIds());
                     _extraModAnimalKeysBulkByWildAnimalKey[key] = st;
                 });
 
@@ -1497,7 +1621,7 @@ foreach (var key in wildAnimalKeysForGmcm)
 
                     if (st.Warnings.Count > 0)
                     {
-                        lines.Add("Parse warnings:");
+                        lines.Add("Warnings:");
                         foreach (var w in st.Warnings.Take(10))
                             lines.Add($" - {w}");
                         if (st.Warnings.Count > 10)
@@ -2905,7 +3029,7 @@ private void InstallHarmonyBootstrap()
         public List<string> Warnings { get; init; } = new();
     }
 
-    private static ExtraModAnimalKeysBulkState ParseExtraModAnimalKeysBulk(string? raw)
+    private static ExtraModAnimalKeysBulkState ParseExtraModAnimalKeysBulk(string? raw, ISet<string>? knownModIds = null, ISet<string>? knownFarmAnimalIds = null)
     {
         var state = new ExtraModAnimalKeysBulkState
         {
@@ -2964,6 +3088,71 @@ private void InstallHarmonyBootstrap()
                 || string.Equals(keysRaw, "remove", StringComparison.OrdinalIgnoreCase);
 
             var parsedKeys = isReset ? Array.Empty<string>() : ParseCsvKeyList(keysRaw);
+
+            if (knownModIds is not null)
+            {
+                var unknownMods = modIds.Where(mid => !knownModIds.Contains(mid)).ToList();
+                if (unknownMods.Count > 0)
+                {
+                    var sample = string.Join(", ", unknownMods.Take(3));
+                    var more = unknownMods.Count > 3 ? $" (+{unknownMods.Count - 3} more)" : "";
+                    state.Warnings.Add($"Bulk line has unknown modId(s) (not on this page): {sample}{more}. Line: '{line}'.");
+                }
+            }
+
+            if (!isReset)
+            {
+                var blankKeys = 0;
+                var dupKeys = 0;
+                var unknownKeys = 0;
+
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var sampleDup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var sampleUnknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var part in keysRaw.Split(new[] { ',', ';' }, StringSplitOptions.None))
+                {
+                    var t = (part ?? string.Empty).Trim();
+                    if (t.Length == 0)
+                    {
+                        blankKeys++;
+                        continue;
+                    }
+
+                    if (!seen.Add(t))
+                    {
+                        dupKeys++;
+                        if (sampleDup.Count < 3)
+                            sampleDup.Add(t);
+                    }
+
+                    if (knownFarmAnimalIds is not null && !knownFarmAnimalIds.Contains(t))
+                    {
+                        unknownKeys++;
+                        if (sampleUnknown.Count < 3)
+                            sampleUnknown.Add(t);
+                    }
+                }
+
+                if (blankKeys > 0)
+                    state.Warnings.Add($"Bulk line contains {blankKeys} blank FarmAnimalKey token(s) (ignored). Line: '{line}'.");
+
+                if (dupKeys > 0)
+                {
+                    var ex = sampleDup.Count == 0 ? "" : $" (e.g., {string.Join(", ", sampleDup)})";
+                    state.Warnings.Add($"Bulk line contains {dupKeys} duplicate FarmAnimalKey token(s) (ignored){ex}. Line: '{line}'.");
+                }
+
+                if (knownFarmAnimalIds is not null && unknownKeys > 0)
+                {
+                    var ex = sampleUnknown.Count == 0 ? "" : $" (e.g., {string.Join(", ", sampleUnknown)})";
+                    state.Warnings.Add($"Bulk line contains {unknownKeys} FarmAnimalKey(s) not present in Data/FarmAnimals{ex}. Line: '{line}'.");
+                }
+
+                if (parsedKeys.Count == 0)
+                    state.Warnings.Add($"Bulk line has no valid FarmAnimalKeys; treating as reset/remove. Line: '{line}'.");
+            }
+
 
             foreach (var modId in modIds)
             {

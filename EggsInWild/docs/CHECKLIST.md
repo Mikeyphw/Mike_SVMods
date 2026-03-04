@@ -59,3 +59,9 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Add base-vs-effective diffs to dev command output.
 - [x] Guard against accidental config churn (only save when normalization changes).
 - [x] Docs + checklist alignment.
+
+## Phase 9 — GMCM bulk UX + validation (post-Phase 8)
+- [x] Phase 9A: bulk header + skip-noop Bulk Apply.
+- [x] Phase 9B: export effective blocks as `modId | csvKeys` to SMAPI log.
+- [x] Phase 9C: surface richer bulk validation warnings (unknown modIds, blank/duplicate keys, keys not in game data when available).
+- [x] Phase 9D: copy export into bulk stage (overwrite/append) for round-trip editing.

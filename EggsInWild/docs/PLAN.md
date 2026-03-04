@@ -9,6 +9,7 @@
 - Validation warnings: GMCM displays ExtraModAnimalKeys warnings inline (shared validator with dev dump).
 - Bulk UX: GMCM ExtraModAnimalKeys supports stage + preview + apply bulk edits (export to SMAPI log available).
 - Export: GMCM action writes effective blocks as `modId | csvKeys` to the SMAPI log for round-trip editing.
+- Export: GMCM can also copy the exported `modId | csvKeys` lines into the Bulk stage (overwrite/append).
 - Quick-fixes: bulk fix toggles also apply to per-block edits (drop unknown FarmAnimalKeys when available).
 
 ## Scope
