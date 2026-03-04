@@ -9,7 +9,7 @@ Rules:
 
 ## Status
 
-- Current: **Phase 15 — Step 1 (Compat matrix doc)**
+- Current: **Phase 15 — Step 2 (Example templates/content packs + schema notes)**
 - Last completed: **Phase 14 — Step 4 (Actionable validation messaging)**
 
 ## Goals

@@ -1,7 +1,7 @@
 # RoosterControl TODO
 
 ## Next: Phase 15 — Compat test matrix + content-pack examples
-- [ ] Compat matrix doc
+- [x] Compat matrix doc
 - [ ] Example templates/content packs + schema notes
 - [ ] Unit tests + manual QA checklist
 

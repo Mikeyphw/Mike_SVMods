@@ -61,7 +61,7 @@
 - [x] QoL toggles (e.g., dedicated All providers toggle)
 
 ## Phase 15 — Compat test matrix + content-pack examples
-- [ ] Compat matrix doc (known mods + expected outcomes)
+- [x] Compat matrix doc (known mods + expected outcomes)
 - [ ] Example content packs/templates + schema notes
 - [ ] Reference patterns (match types + gating)
 - [ ] Unit tests: catalog loading + deterministic repair
