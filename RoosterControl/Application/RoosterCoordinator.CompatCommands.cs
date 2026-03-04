@@ -36,13 +36,23 @@ internal sealed partial class RoosterCoordinator
                 "  ra_compat enable-all-roosters\n" +
                 "    - enables all rooster providers (union mode).\n" +
                 "  ra_compat validate [EggKind]\n" +
-                "    - reports invalid FarmAnimalRef targets/indexes and shows resolved values.\n  ra_compat reset-all\n    - resets all per-save compat selections (egg sources + rooster providers) to defaults.\n  ra_compat reset-eggs <EggKind|all>\n    - resets egg sources for one EggKind (or all) to defaults.\n  ra_compat reset-roosters\n    - resets rooster providers to defaults (enable all if available).\n" +
+                "    - reports invalid FarmAnimalRef targets/indexes and shows resolved values.\n" +
+                "  ra_compat reset-help\n" +
+                "    - prints reset commands + examples.\n" +
                 "\n" +
                 "Notes:\n" +
                 "  - Mutating commands are host-only.\n" +
                 "  - Changes persist immediately to save data.",
                 LogLevel.Info);
             return;
+        }
+
+        if (verbLower is "reset-help" or "resethelp")
+        {
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, BuildCompatResetHelp(), LogLevel.Info);
+            return;
+        }
+return;
         }
 
         if (!Context.IsWorldReady)
@@ -501,6 +511,28 @@ if (verbLower == "validate")
 
         QueueRefreshFarmAnimals("compat selection changed");
     }
+
+    private static string BuildCompatResetHelp()
+    {
+        return
+            "ra_compat reset commands (Phase 14 Step 3):\n" +
+            "  ra_compat reset-all\n" +
+            "    - resets all per-save compat selections (egg sources + rooster providers) to defaults.\n" +
+            "  ra_compat reset-eggs <EggKind|all>\n" +
+            "    - resets egg sources for one EggKind (or all) to defaults.\n" +
+            "  ra_compat reset-roosters\n" +
+            "    - resets rooster providers to defaults (enable all if available).\n" +
+            "\n" +
+            "Examples:\n" +
+            "  ra_compat reset-eggs Standard\n" +
+            "  ra_compat reset-eggs all\n" +
+            "\n" +
+            "Notes:\n" +
+            "  - Mutating commands are host-only.\n" +
+            "  - Changes persist immediately to save data.\n" +
+            "  - GMCM reset toggles apply only after clicking Save in GMCM.";
+    }
+
 
     private string BuildCompatStatusSummary()
     {
