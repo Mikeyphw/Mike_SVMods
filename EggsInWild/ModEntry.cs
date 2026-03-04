@@ -1335,6 +1335,15 @@ foreach (var key in wildAnimalKeysForGmcm)
 
                     var plannedSummary = Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.plan", "Planned: set {0}, clear {1}, no-op {2}.", plan.PlannedSet, plan.PlannedClear, plan.PlannedNoop);
                     var plannedIsNoop = !plan.AnyChangePlanned;
+                    var lines = new List<string>
+                    {
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.header", "Bulk preview (not applied yet):"),
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.note", "This is a preview only. Use the toggle below to apply staged changes."),
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.summary", "Staged: {0} upserts, {1} resets, {2} parse warnings.", st.Upserts.Count, st.Resets.Count, st.Warnings.Count),
+                        plannedSummary,
+                        Translate(i18n, "config.paragraph.wildAnimals.extraModAnimalKeys.bulkPreview.fixes", "Quick-fixes enabled for apply: {0}.", enabledFixesText),
+                        "",
+                    };
 
                     if (plannedIsNoop)
                     {
@@ -1369,17 +1378,19 @@ foreach (var key in wildAnimalKeysForGmcm)
                             var canonicalModId = CanonicalizeModId(modId, extraModIdsForGmcm);
                             var displayModId = string.Equals(modId, canonicalModId, StringComparison.OrdinalIgnoreCase)
                                 ? modId
-                                : $"{modId} => {canonicalModId}";var fixedKeys = ApplyFarmAnimalKeyFixes(
-    rawKeys,
-    fixTrim,
-    fixDedupe,
-    knownFarmAnimalIds,
-    out var fixStats);
+                                : $"{modId} => {canonicalModId}";
 
-var blanksRemoved = fixStats.BlanksRemoved;
-var trimmedCount = fixStats.TrimmedCount;
-var dupesRemoved = fixStats.DuplicatesRemoved;
-var unknownRemoved = fixStats.UnknownRemoved;
+                            var fixedKeys = ApplyFarmAnimalKeyFixes(
+                                rawKeys,
+                                fixTrim,
+                                fixDedupe,
+                                knownFarmAnimalIds,
+                                out var fixStats);
+
+                            var blanksRemoved = fixStats.BlanksRemoved;
+                            var trimmedCount = fixStats.TrimmedCount;
+                            var dupesRemoved = fixStats.DuplicatesRemoved;
+                            var unknownRemoved = fixStats.UnknownRemoved;
 
                             var deltaParts = new List<string>();
                             if (fixTrim && trimmedCount > 0) deltaParts.Add($"trim:{trimmedCount}");

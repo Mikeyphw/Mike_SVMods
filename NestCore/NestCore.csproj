@@ -10,6 +10,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Dev'">
     <DefineConstants>$(DefineConstants);WEGG_DEV</DefineConstants>
+    <NoWarn>$(NoWarn);CS8604;CS8625;CS0618</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
