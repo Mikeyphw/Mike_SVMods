@@ -244,7 +244,16 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
             .Where(s => _compatSelection.TryResolveEggSourceItemId(s, data, out _, out _))
             .Select(s => s.SourceId)
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var displayNames = _compatSelection.EggCatalog.Sources
+            .Where(s => s.EggKind == kind && !string.IsNullOrWhiteSpace(s.SourceId))
+            .GroupBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().DisplayName ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+        allowed = allowed
+            .OrderBy(id => displayNames.TryGetValue(id, out var name) && !string.IsNullOrWhiteSpace(name) ? name : id, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(id => id, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
         if (allowed.Length == 0)
@@ -312,7 +321,16 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
         .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
         .Select(s => s.SourceId)
         .Distinct(StringComparer.OrdinalIgnoreCase)
-        .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    var roosterDisplayNames = _compatSelection.RoosterCatalog.Sources
+        .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
+        .GroupBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(g => g.Key, g => g.First().DisplayName ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+    roosterProviderIds = roosterProviderIds
+        .OrderBy(id => roosterDisplayNames.TryGetValue(id, out var name) && !string.IsNullOrWhiteSpace(name) ? name : id, StringComparer.OrdinalIgnoreCase)
+        .ThenBy(id => id, StringComparer.OrdinalIgnoreCase)
         .ToList();
 
     var roosterAllowed = new List<string> { AllRoosterProvidersValue };
@@ -516,12 +534,29 @@ private bool TryBuildRoosterProviderChoices(
     out (Func<string?> label, Texture2D sheet, Rectangle? sourceRect)[] choices)
 {
     var list = new List<(Func<string?> label, Texture2D sheet, Rectangle? sourceRect)>();
-    var icon = new Rectangle(0, 0, 16, 16);
 
     foreach (var value in allowed)
     {
         var captured = value;
-        list.Add((() => FormatRoosterProviderValue(captured), Game1.mouseCursors, icon));
+
+        var src = _compatSelection.RoosterCatalog.Sources
+            .FirstOrDefault(s => s.SourceId.Equals(captured, StringComparison.OrdinalIgnoreCase));
+
+        if (src is not null && !string.IsNullOrWhiteSpace(src.RoosterEggItemId))
+        {
+            try
+            {
+                var itemData = ItemRegistry.GetDataOrErrorItem(src.RoosterEggItemId);
+                list.Add((() => FormatRoosterProviderValue(captured), itemData.GetTexture(), itemData.GetSourceRect()));
+                continue;
+            }
+            catch
+            {
+                // fall through
+            }
+        }
+
+        list.Add((() => FormatRoosterProviderValue(captured), Game1.mouseCursors, new Rectangle(0, 0, 1, 1)));
     }
 
     choices = list.ToArray();
