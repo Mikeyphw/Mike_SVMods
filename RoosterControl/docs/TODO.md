@@ -9,6 +9,15 @@
 - [ ] Manual QA checklist + smoke-test notes
 - [ ] Docs wired to templates + matrix
 
+## After Phase 15: Phase 16 — GMCM standardization slice
+- [x] 16A: adopt NestCore GMCM batching helpers in RoosterControl
+- [ ] 16B: extract root/probabilities/debug page builders into `Integrations/Gmcm/Pages/*`
+- [ ] 16C: extract rooster page registration and editors into `RoosterTypePages`
+- [ ] 16D: add `RoosterControlGmcmMenu` as the layout orchestrator
+- [ ] Decide whether `compat` remains coordinator-owned
+- [ ] Decide whether `females` remains coordinator-owned
+- [ ] Keep all GMCM page ids / option ids / i18n keys unchanged during Phase 16
+
 ## Done
 - [x] Phase 14: Actionable validation messaging
 - [x] Phase 14: Reset affordances (GMCM arm+save + console commands)

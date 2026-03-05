@@ -68,3 +68,32 @@
 - [ ] Unit tests: fertilized mapping determinism (native vs synthesized)
 - [ ] Manual QA checklist + smoke-test notes
 - [ ] Docs wired to templates + matrix
+
+## Phase 16A — Adopt NestCore GMCM batching helpers
+- [x] Consume NestCore `Links(...)` helper from the RoosterControl root GMCM page
+- [x] Keep all existing page ids, option ids, and i18n keys unchanged
+- [x] Update docs (PLAN/CHECKLIST/TODO)
+- [x] Verify build
+
+## Phase 16B — Extract static GMCM pages
+- [x] Add `Integrations/Gmcm/Pages/RoosterRootPage.cs`
+- [x] Add `Integrations/Gmcm/Pages/RoosterProbabilitiesPage.cs`
+- [x] Add `Integrations/Gmcm/Pages/RoosterDebugPage.cs`
+- [x] Delegate `DefineGmcmLayout(...)` to the extracted page helpers
+- [x] Keep `compat` and `females` on the coordinator
+- [ ] Verify build
+
+## Phase 16C — Extract rooster-type GMCM pages
+- [ ] Add `Integrations/Gmcm/Pages/RoosterTypePages.cs`
+- [ ] Move rooster page registration and editor logic into that helper
+- [ ] Add only minimal coordinator access needed for translation/config
+- [ ] Keep `compat` and `females` on the coordinator
+- [ ] Verify build
+
+## Phase 16D — Add RoosterControl GMCM orchestrator
+- [ ] Add `Integrations/Gmcm/RoosterControlGmcmMenu.cs`
+- [ ] Move layout composition into the orchestrator
+- [ ] Keep coordinator ownership only for host setup, rebuild/save/reset, and `compat`/`females`
+- [ ] Replace direct `DefineGmcmLayout(...)` usage with the orchestrator
+- [ ] Update docs (PLAN/CHECKLIST/TODO)
+- [ ] Verify build

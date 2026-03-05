@@ -10,6 +10,7 @@ using RoosterControl.Application.Hatching;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
+using RoosterControl.Integrations.Gmcm.Pages;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -113,79 +114,15 @@ internal sealed partial class RoosterCoordinator
 
     private void DefineGmcmLayout(GmcmMenuLayout<RoosterControlConfig> layout)
     {
-        layout.Root(b =>
-        {
-            b.Section("root.general");
-            b.Enum(cfg => cfg.General.UpdateRate, optionId: "general.updateRate", tooltip: true);
-            b.Enum(cfg => cfg.General.HatchingMode, optionId: "general.hatchingMode", tooltip: true);
-            b.Enum(cfg => cfg.General.HarvestType, optionId: "general.harvestType", tooltip: true);
-
-            b.Separator(simple: true);
-
-            b.Section("root.pages");
-            b.Link("compat", tooltip: true);
-            b.Link("probabilities", tooltip: true);
-            b.Link("females", tooltip: true);
-            b.Link("debug", tooltip: true);
-
-            b.Separator(simple: true);
-
-            b.Section("root.roosters");
-            b.Link("rooster.white", tooltip: true);
-            b.Link("rooster.brown", tooltip: true);
-            b.Link("rooster.blue", tooltip: true);
-            b.Link("rooster.void", tooltip: true);
-            b.Link("rooster.gold", tooltip: true);
-        });
+        layout.Root(RoosterRootPage.Build);
 
         layout.Page("compat", BuildCompatPage);
 
-        layout.Page("probabilities", b =>
-        {
-            b.Section("probabilities.eggs");
-            b.Bool(cfg => cfg.General.EnableEggProbability, optionId: "prob.enableEggProbability", tooltip: true);
-            b.Int(cfg => cfg.General.EggProbability, optionId: "prob.eggProbability", tooltip: true, min: 0, max: 100, interval: 1);
-
-            b.Bool(cfg => cfg.General.EnableLargeEggProbability, optionId: "prob.enableLargeEggProbability", tooltip: true);
-            b.Int(cfg => cfg.General.LargeEggProbability, optionId: "prob.largeEggProbability", tooltip: true, min: 0, max: 100, interval: 1);
-
-            b.Int(cfg => cfg.General.FertilizedEggProbability, optionId: "prob.fertilizedEggProbability", tooltip: true, min: 0, max: 100, interval: 1);
-
-            b.Separator(simple: true);
-
-            b.Section("probabilities.breeding");
-            b.Int(cfg => cfg.General.RoosterToChickenRatio, optionId: "prob.roosterToChickenRatio", tooltip: true, min: 0, max: 100, interval: 1);
-            b.Float(cfg => cfg.General.BoostByRooster, optionId: "prob.boostByRooster", tooltip: true, min: 0, max: 10, interval: 0.05f);
-            b.Int(cfg => cfg.General.ChosenPercentageDailyLuckBonus, optionId: "prob.chosenDailyLuckBonusPct", tooltip: true, min: 0, max: 100, interval: 1);
-        });
+        layout.Page("probabilities", RoosterProbabilitiesPage.Build);
 
         layout.Page("females", BuildFemalesPage);
 
-        layout.Page("debug", b =>
-        {
-            b.ParagraphGmcmOptionsStatus();
-            b.Separator(simple: true);
-
-            b.Section("debug.flags");
-            b.Bool(cfg => cfg.General.EnableDebug, optionId: "debug.enableDebug", tooltip: true);
-
-            b.Separator(simple: true);
-
-            b.Section("debug.logging");
-            b.Bool(cfg => cfg.VerboseLogging, optionId: "debug.verboseLogging", tooltip: true);
-            b.Bool(cfg => cfg.TestingLogging, optionId: "debug.testingLogging", tooltip: true);
-
-            b.Paragraph("debug.note");
-
-#if RCTRL_DEV
-            b.Separator(simple: true);
-            b.Section("debug.tuning.luck");
-            b.Float(cfg => cfg.DebugKnobs.BonusCalculationMultiplier, optionId: "debug.tuning.bonusCalculation", tooltip: true, min: 0, max: 10, interval: 0.05f);
-            b.Float(cfg => cfg.DebugKnobs.SuperUnluckyBonusMultiplier, optionId: "debug.tuning.superUnluckyBonus", tooltip: true, min: -10, max: 0, interval: 0.25f);
-            b.Float(cfg => cfg.DebugKnobs.SuperLuckyBonusMultiplier, optionId: "debug.tuning.superLuckyBonus", tooltip: true, min: 0, max: 10, interval: 0.25f);
-            b.Float(cfg => cfg.DebugKnobs.LuckAdjustmentOffset, optionId: "debug.tuning.luckAdjustment", tooltip: true, min: -100, max: 100, interval: 1f);
-#endif
-        });
+        layout.Page("debug", RoosterDebugPage.Build);
 
         AddRoosterPages(layout);
     }

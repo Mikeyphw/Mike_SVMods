@@ -38,6 +38,7 @@ Models:
 
 ## Phase status summary
 
+- Phase 16A–16D: in progress (GMCM standardization slice)
 - Phases 0–7: complete (GMCM foundations + deterministic produce/hatching pipeline).
 - Phase 8: complete (compat catalogs + CP-patchable assets).
 - Phase 9A: complete (per-save selection state + catalog loading + list command).
@@ -206,3 +207,79 @@ Steps:
 5) Add tests for fertilized mapping determinism across chosen egg sources (incl. “native vs synthesized”).
 6) Add smoke-test notes + manual QA checklist (save load, day start, GMCM edits, command usage).
 7) Update docs to point mod authors to the templates and the compat matrix.
+
+---
+
+## Phase 16A — Adopt NestCore GMCM batching helpers
+
+Goal: use tiny NestCore DSL improvements to reduce repeated GMCM layout/link code before extracting pages.
+
+Steps:
+1. Consume NestCore `Links(...)` helper from the RoosterControl root GMCM page.
+2. Keep all existing page ids, option ids, and i18n keys unchanged.
+3. Do not change compat/females/rooster runtime behavior.
+4. Update `docs/CHECKLIST.md` and `docs/TODO.md`.
+5. Verify `RoosterControl` and solution builds cleanly.
+
+Acceptance:
+* Root page link registration uses batched helper(s).
+* No GMCM ids or config behavior changes.
+* Build passes.
+
+## Phase 16B — Extract static GMCM pages
+
+Goal: move root/probabilities/debug page definitions out of `RoosterCoordinator.Gmcm.cs` into dedicated GMCM page helper classes.
+
+Steps:
+1. Add `Integrations/Gmcm/Pages/RoosterRootPage.cs`.
+2. Add `Integrations/Gmcm/Pages/RoosterProbabilitiesPage.cs`.
+3. Add `Integrations/Gmcm/Pages/RoosterDebugPage.cs`.
+4. Update `DefineGmcmLayout(...)` to delegate to those page helper classes.
+5. Keep `compat` and `females` pages in the coordinator for now.
+6. Update docs and verify build.
+
+Acceptance:
+* `RoosterCoordinator.Gmcm.cs` no longer contains inline root/probabilities/debug page bodies.
+* All page ids and option ids are unchanged.
+* Build passes.
+
+## Phase 16C — Extract rooster-type GMCM pages
+
+Goal: move rooster subpage registration and rooster-page content into a dedicated helper.
+
+Steps:
+1. Add `Integrations/Gmcm/Pages/RoosterTypePages.cs`.
+2. Move rooster-page registration and editor logic into that helper.
+3. Add minimal coordinator access needed for translation/config access only.
+4. Keep `compat` and `females` pages in the coordinator.
+5. Update docs and verify build.
+
+Acceptance:
+* `RoosterCoordinator.Gmcm.cs` no longer owns rooster page registration or rooster-page content.
+* Rooster page ids and option ids are unchanged.
+* Build passes.
+
+## Phase 16D — Add RoosterControl GMCM orchestrator
+
+Goal: introduce a dedicated GMCM layout orchestrator so the coordinator stops owning menu composition.
+
+Steps:
+1. Add `Integrations/Gmcm/RoosterControlGmcmMenu.cs`.
+2. Move overall layout composition into that class.
+3. Keep coordinator ownership only for host setup, rebuild/save/reset, and the still-coupled `compat`/`females` page delegates.
+4. Replace direct `DefineGmcmLayout(...)` usage with the orchestrator.
+5. Update docs and verify build.
+
+Acceptance:
+* `RoosterControlGmcmMenu` becomes the single GMCM layout orchestrator.
+* `compat` and `females` remain on the coordinator.
+* No GMCM ids change.
+* Build passes.
+
+---
+
+## Deferred after Phase 16D
+
+* Decide whether `compat` should remain in the coordinator due world/runtime coupling.
+* Decide whether `females` should remain in the coordinator due plan/runtime coupling.
+* Consider a NestCore-first action/button DSL primitive before attempting repo-wide GMCM action standardization.
