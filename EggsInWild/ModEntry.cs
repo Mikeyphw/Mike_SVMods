@@ -51,7 +51,8 @@ public sealed partial class ModEntry : Mod
     private ILog? _contentLog;
     private IModDataLoader? _contentDataLoader;
 
-    private readonly Dictionary<string, ExtraModAnimalKeysBulkState> _extraModAnimalKeysBulkByWildAnimalKey = new(StringComparer.OrdinalIgnoreCase);
+    // Bulk state moved to EiwGmcmContext
+    // private readonly Dictionary<string, ExtraModAnimalKeysBulkState> _extraModAnimalKeysBulkByWildAnimalKey = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _knownLocationTypeKeysForNormalization = new(StringComparer.OrdinalIgnoreCase);
 
     private DesertTombRuntime? _desertTombRuntime;

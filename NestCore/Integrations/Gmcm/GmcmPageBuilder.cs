@@ -342,6 +342,86 @@ public void LinkLabel(string pageId, Func<string> text, Func<string>? tooltip = 
             fieldId: fieldId ?? AutoFieldId(elementId)
         );
 
+    /// <summary>
+    /// Add a one-shot action/command button to the current page.
+    /// Unlike a bool option, this does not persist a value—it simply invokes the callback when clicked.
+    /// Uses a ComplexOption with custom state tracking to avoid persisting any value.
+    /// </summary>
+    /// <param name="elementId">Unique identifier for this action (used for field ID generation).</param>
+    /// <param name="name">Label for the action (can be translated via i18n key).</param>
+    /// <param name="action">Callback invoked when the action is clicked.</param>
+    /// <param name="tooltip">Optional tooltip explanation.</param>
+    /// <param name="isEnabled">Optional predicate to enable/disable the action based on current state.</param>
+    /// <param name="fieldId">Optional explicit field ID (defaults to auto-generated).</param>
+    public void Action(
+        string elementId,
+        Func<string> name,
+        Action action,
+        Func<string>? tooltip = null,
+        Func<bool>? isEnabled = null,
+        string? fieldId = null)
+    {
+        // Use a wrapper class to track the "clicked" state across GMCM callbacks.
+        // This allows us to detect when the user interacts with the ComplexOption.
+        var state = new ActionButtonState { PendingAction = action, IsEnabled = isEnabled ?? (() => true) };
+
+        _menu.AddComplexOption(
+            elementId: elementId,
+            name: name,
+            draw: (spriteBatch, position) =>
+            {
+                // GMCM draws the ComplexOption label. We could add custom rendering here
+                // to make it look more like a button (e.g., different colors, icons).
+                // For now, we rely on GMCM's default rendering.
+            },
+            tooltip: tooltip,
+            beforeMenuOpened: null,
+            beforeSave: () =>
+            {
+                // Check if button was clicked and invoke action
+                if (state.PendingAction != null && state.WasClicked)
+                {
+                    try
+                    {
+                        state.PendingAction.Invoke();
+                    }
+                    finally
+                    {
+                        // Reset state after invoking
+                        state.WasClicked = false;
+                    }
+                }
+            },
+            afterSave: null,
+            beforeReset: null,
+            afterReset: null,
+            beforeMenuClosed: null,
+            height: null,
+            fieldId: fieldId ?? AutoFieldId(elementId)
+        );
+
+        // Register to detect clicks via OnFieldChanged
+        // GMCM triggers OnFieldChanged when a ComplexOption is interacted with
+        _menu.OnFieldChanged((fieldId, value) =>
+        {
+            var expectedFieldId = fieldId ?? AutoFieldId(elementId);
+            if (fieldId.EndsWith(expectedFieldId, StringComparison.OrdinalIgnoreCase))
+            {
+                state.WasClicked = true;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Internal state holder for action button click tracking.
+    /// </summary>
+    private sealed class ActionButtonState
+    {
+        public Action? PendingAction { get; set; }
+        public Func<bool>? IsEnabled { get; set; }
+        public bool WasClicked { get; set; }
+    }
+
     public void TitleScreenOnlyForNextOptions(bool titleScreenOnly)
         => _menu.SetTitleScreenOnlyForNextOptions(titleScreenOnly);
 

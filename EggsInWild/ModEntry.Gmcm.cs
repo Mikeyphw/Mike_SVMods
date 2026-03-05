@@ -36,6 +36,7 @@ using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Assets;
+using EggsInWild.Infrastructure.Integrations.Gmcm;
 
 namespace EggsInWild;
 
@@ -135,8 +136,26 @@ public sealed partial class ModEntry
             return;
 
         var i18n = new I18TranslationHelper(Helper);
+
+        // Create the GMCM context
+        var ctx = new EiwGmcmContext(
+            Helper,
+            Monitor,
+            ModManifest,
+            () => _config!.Get(),
+            () => _config!.Save()
+        );
+
+#if WEGG_DEV
+        // Pass debug services to the context
+        ctx.DevJsonTuning = _devJsonTuning;
+        ctx.DevMonsterDefinitions = DevMonsterDefinitions;
+#endif
+
+        // Create the menu and rebuild layout
+        var menu = new EiwGmcmMenu(ctx);
         _gmcmHost.RebuildLayoutSaveAware(
-            define: layout => DefineGmcmLayout(layout, i18n),
+            define: layout => menu.RebuildLayout(layout, i18n, force),
             force: force,
             rebuildOnSaveLoaded: true,
             rebuildOnReturnedToTitle: true);
@@ -225,7 +244,7 @@ public sealed partial class ModEntry
             animalId);
     }
 
-    private static string Translate(I18TranslationHelper i18n, string key, string fallback, params object[] tokens)
+    internal static string Translate(I18TranslationHelper i18n, string key, string fallback, params object[] tokens)
     {
         var translated = tokens.Length == 0
             ? i18n.GetString(key)
@@ -238,10 +257,10 @@ public sealed partial class ModEntry
     }
 
 
-private static string BuildWildAnimalPageId(string wildAnimalKey)
+internal static string BuildWildAnimalPageId(string wildAnimalKey)
     => $"wildAnimals.{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(wildAnimalKey)}";
 
-private static bool GetWildAnimalEffectiveEnabled(ModConfig cfg, string wildAnimalKey, bool defaultEnabled)
+internal static bool GetWildAnimalEffectiveEnabled(ModConfig cfg, string wildAnimalKey, bool defaultEnabled)
 {
     if (cfg.WildAnimalOverrides is not null
         && cfg.WildAnimalOverrides.TryGetValue(wildAnimalKey, out var ov)
@@ -251,7 +270,7 @@ private static bool GetWildAnimalEffectiveEnabled(ModConfig cfg, string wildAnim
     return defaultEnabled;
 }
 
-private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnimalKey, bool defaultEnabled)
+internal static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnimalKey, bool defaultEnabled)
 {
     if (cfg.WildAnimalOverrides is not null
         && cfg.WildAnimalOverrides.TryGetValue(wildAnimalKey, out var ov)
@@ -262,7 +281,7 @@ private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnima
 }
 
 
-    private sealed class ExtraModAnimalKeysBulkState
+    internal sealed class ExtraModAnimalKeysBulkState
     {
         public string Raw { get; init; } = "";
         public Dictionary<string, IReadOnlyList<string>> Upserts { get; init; } = new(StringComparer.OrdinalIgnoreCase);
@@ -271,11 +290,11 @@ private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnima
     }
 
 
-    private readonly record struct ExtraModAnimalKeysBulkPlanCounts(int PlannedSet, int PlannedClear, int PlannedNoop, bool AnyChangePlanned);
+    internal readonly record struct ExtraModAnimalKeysBulkPlanCounts(int PlannedSet, int PlannedClear, int PlannedNoop, bool AnyChangePlanned);
 
-    private readonly record struct FarmAnimalKeyFixStats(int BlanksRemoved, int TrimmedCount, int DuplicatesRemoved, int UnknownRemoved);
+    internal readonly record struct FarmAnimalKeyFixStats(int BlanksRemoved, int TrimmedCount, int DuplicatesRemoved, int UnknownRemoved);
 
-    private static string CanonicalizeModId(string modIdRaw, IEnumerable<string> knownModIds)
+    internal static string CanonicalizeModId(string modIdRaw, IEnumerable<string> knownModIds)
     {
         foreach (var existing in knownModIds)
         {
@@ -286,14 +305,14 @@ private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnima
         return (modIdRaw ?? string.Empty).Trim();
     }
 
-    private static IReadOnlyList<string> ApplyFarmAnimalKeyFixes(
+    internal static IReadOnlyList<string> ApplyFarmAnimalKeyFixes(
         IReadOnlyList<string> rawKeys,
         bool fixTrim,
         bool fixDedupe,
         ISet<string>? knownFarmAnimalIds)
         => ApplyFarmAnimalKeyFixes(rawKeys, fixTrim, fixDedupe, knownFarmAnimalIds, out _);
 
-    private static IReadOnlyList<string> ApplyFarmAnimalKeyFixes(
+    internal static IReadOnlyList<string> ApplyFarmAnimalKeyFixes(
         IReadOnlyList<string> rawKeys,
         bool fixTrim,
         bool fixDedupe,
@@ -351,7 +370,7 @@ private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnima
         return outKeys;
     }
 
-    private static ExtraModAnimalKeysBulkPlanCounts ComputeExtraModAnimalKeysBulkPlanCounts(
+    internal static ExtraModAnimalKeysBulkPlanCounts ComputeExtraModAnimalKeysBulkPlanCounts(
         ExtraModAnimalKeysBulkState st,
         IEnumerable<string> knownModIds,
         WildAnimalJson? definition,
@@ -430,7 +449,7 @@ private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnima
         return new ExtraModAnimalKeysBulkPlanCounts(plannedSet, plannedClear, plannedNoop, anyChangePlanned);
     }
 
-    private static List<string> BuildExtraModAnimalKeysEffectiveExportBodyLines(
+    internal static List<string> BuildExtraModAnimalKeysEffectiveExportBodyLines(
         IEnumerable<string> orderedModIds,
         WildAnimalJson? definition,
         WildAnimalOverrideConfig? ovNow)
@@ -465,7 +484,7 @@ private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnima
     }
 
 
-    private static ExtraModAnimalKeysBulkState ParseExtraModAnimalKeysBulk(string? raw, ISet<string>? knownModIds = null, ISet<string>? knownFarmAnimalIds = null)
+    internal static ExtraModAnimalKeysBulkState ParseExtraModAnimalKeysBulk(string? raw, ISet<string>? knownModIds = null, ISet<string>? knownFarmAnimalIds = null)
     {
         var state = new ExtraModAnimalKeysBulkState
         {
@@ -608,7 +627,7 @@ private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnima
         return state;
     }
 
-    private static IReadOnlyList<string> BuildExtraModAnimalKeysBulkFixPreviewLines(
+    internal static IReadOnlyList<string> BuildExtraModAnimalKeysBulkFixPreviewLines(
         string raw,
         bool fixTrim,
         bool fixDedupe,
@@ -740,7 +759,7 @@ private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnima
         return outLines;
     }
 
-    private static IReadOnlyList<string> ParseCsvKeyList(string? raw)
+    internal static IReadOnlyList<string> ParseCsvKeyList(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
             return Array.Empty<string>();
@@ -761,7 +780,7 @@ private static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnima
         return outList;
     }
 
-    private static bool SequenceEqualIgnoreCase(IEnumerable<string> left, IEnumerable<string> right)
+    internal static bool SequenceEqualIgnoreCase(IEnumerable<string> left, IEnumerable<string> right)
     {
         if (ReferenceEquals(left, right))
             return true;
