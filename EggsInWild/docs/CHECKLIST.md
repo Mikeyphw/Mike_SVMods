@@ -110,6 +110,15 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Verify `EggsInWild/EggsInWild.csproj` builds.
 - [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds.
 
+## Phase SUI-3 — Retire GMCM WildAnimals pages
+- [x] Remove `WildAnimalsPages.Define(...)` from `EiwGmcmMenu`.
+- [x] Remove the GMCM root `wildAnimals` link and keep only the StardewUI launcher action.
+- [x] Delete the three GMCM WildAnimals page files.
+- [x] Remove dead GMCM-only WildAnimals helper/state code from `ModEntry.Gmcm.cs` and `EiwGmcmContext`.
+- [x] Point WildAnimals bulk parser/planner tests at `WildAnimalsEditorHelpers`.
+- [x] Verify `EggsInWild/EggsInWild.csproj` builds.
+- [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds.
+
 ## R2 — Monolithic file splits
 
 ### Phase EIW-R2-1 — Split DebugKnobs.cs config types

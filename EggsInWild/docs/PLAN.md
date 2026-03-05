@@ -4,6 +4,7 @@
 - Phases 0–8 complete (see `docs/CHECKLIST.md`).
 - Phase SUI-1 complete: shared WildAnimals editor catalog/service extracted for GMCM + StardewUI reuse.
 - Phase SUI-2 complete: StardewUI WildAnimals editor added alongside GMCM with a temporary launcher action.
+- Phase SUI-3 complete: GMCM WildAnimals pages removed; GMCM now launches the StardewUI editor only.
 - Current focus: Phase 7+ UX polish (bulk workflows, richer validation surfaced in GMCM) and maintenance fixes.
 - Index navigation: GMCM WildAnimals index provides grouped page links with counts (All, A–F, G–L, M–R, S–Z, Other).
 - Bulk UX: staged bulk entries are indicated in index links; bulk preview includes planned set/clear/no-op summary; staging can be cleared.
@@ -275,6 +276,14 @@
 3. Add `WildAnimalsEditorViewModel` and `WildAnimalDraftViewModel` with save/discard/reload flows.
 4. Add one temporary GMCM launcher action `wildAnimals.openEditor` while keeping the existing `wildAnimals` link page.
 5. Add unit coverage for save/discard/reload behavior in the new viewmodel.
+6. Verify `EggsInWild` and `EggsInWild.Tests` build.
+
+## Phase SUI-3 — Retire GMCM WildAnimals pages
+1. Remove `WildAnimalsPages.Define(...)` from `EiwGmcmMenu`.
+2. Replace the remaining root `wildAnimals` link with the `wildAnimals.openEditor` launcher only.
+3. Delete the three GMCM WildAnimals page files under `Infrastructure/Integrations/Gmcm/Pages/WildAnimals/`.
+4. Remove now-dead GMCM-only WildAnimals helper/state code from `ModEntry.Gmcm.cs` and `EiwGmcmContext`.
+5. Point WildAnimals bulk parser/planner tests at `WildAnimalsEditorHelpers`.
 6. Verify `EggsInWild` and `EggsInWild.Tests` build.
 4. Record final architecture notes in docs.
 

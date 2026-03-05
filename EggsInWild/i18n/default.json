@@ -494,7 +494,7 @@
   "config.wildAnimals.index.back.name": "Back to WildAnimals index",
   "config.wildAnimals.index.back.description": "Return to the WildAnimals index page.",
   "config.wildAnimals.openEditor.name": "Open StardewUI WildAnimals editor",
-  "config.wildAnimals.openEditor.description": "Open the StardewUI WildAnimals editor. This temporary launcher exists while the GMCM pages are still available.",
+  "config.wildAnimals.openEditor.description": "Open the StardewUI WildAnimals editor.",
   "config.paragraph.wildAnimals.stardewUiStatus.enabled.text": "StardewUI editor available.",
   "config.paragraph.wildAnimals.stardewUiStatus.disabled.text": "StardewUI not installed. WildAnimals editor launcher disabled.",
   "config.wildAnimals.index.group.all.name": "All (A–Z)",

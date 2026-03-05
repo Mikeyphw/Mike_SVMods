@@ -53,7 +53,7 @@
 ## StardewUI migration
 - [x] Phase SUI-1: extract shared WildAnimals catalog/service/helpers for GMCM + StardewUI reuse.
 - [x] Phase SUI-2: add StardewUI WildAnimals editor alongside GMCM.
-- [ ] Phase SUI-3: retire GMCM WildAnimals pages and keep one launcher action.
+- [x] Phase SUI-3: retire GMCM WildAnimals pages and keep one launcher action.
 - [ ] Unblock `Tests/Tests.sln` from unrelated `RoosterControl.Pure` SMAPI reference errors before using it as a migration gate.
 
 ## R2 — Monolithic file splits

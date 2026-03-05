@@ -24,11 +24,6 @@ public sealed class EiwGmcmContext
     internal bool IsWildAnimalsEditorAvailable { get; set; }
 
     /// <summary>
-    /// Bulk state storage for ExtraModAnimalKeys per wild animal key.
-    /// </summary>
-    internal Dictionary<string, ExtraModAnimalKeysBulkState> ExtraModAnimalKeysBulkByWildAnimalKey { get; }
-
-    /// <summary>
     /// Known location type keys used for normalization.
     /// </summary>
     public HashSet<string> KnownLocationTypeKeys { get; set; } = new(StringComparer.OrdinalIgnoreCase);
@@ -68,7 +63,5 @@ public sealed class EiwGmcmContext
         GetConfig = getConfig ?? throw new ArgumentNullException(nameof(getConfig));
         SaveConfig = saveConfig ?? throw new ArgumentNullException(nameof(saveConfig));
         WildAnimalsEditor = new WildAnimalsEditorService(Helper, Monitor, GetConfig);
-
-        ExtraModAnimalKeysBulkByWildAnimalKey = new Dictionary<string, ExtraModAnimalKeysBulkState>(StringComparer.OrdinalIgnoreCase);
     }
 }

@@ -10,7 +10,6 @@ using StardewValley.GameData.FarmAnimals;
 using EggsInWild.Core.ShopProgression;
 using EggsInWild.Infrastructure.Config;
 using EggsInWild.Infrastructure.Diagnostics;
-using EggsInWild.Infrastructure.Integrations.Gmcm.Pages.WildAnimals;
 #if WEGG_DEV
 using EggsInWild.Infrastructure.Integrations.Gmcm.Pages.Debug;
 #endif
@@ -55,9 +54,6 @@ public sealed class EiwGmcmMenu
         // Animal Progression page
         DefineAnimalProgressionPage(layout, i18n);
 
-        // Wild Animals pages
-        WildAnimalsPages.Define(_ctx, layout, i18n);
-
 #if WEGG_DEV
         DefineDebugPages(layout, i18n);
 #endif
@@ -76,7 +72,6 @@ public sealed class EiwGmcmMenu
             root.Link("prices", tooltip: true);
             root.Link("animalNotes", tooltip: true);
             root.Link("animalProgression", tooltip: true);
-            root.Link("wildAnimals", tooltip: true);
             root.Action(
                 optionId: "wildAnimals.openEditor",
                 onAction: () => _ctx.OpenWildAnimalsEditor?.Invoke(),

@@ -11,14 +11,16 @@ namespace EggsInWild.Tests;
 
 public sealed class ExtraModAnimalKeysBulkParserAndPlannerTests
 {
-    private static readonly Type ModEntryType = typeof(EggsInWild.ModEntry);
+    private static readonly Type HelpersType =
+        typeof(ModConfig).Assembly.GetType("EggsInWild.Infrastructure.Integrations.StardewUi.WildAnimals.WildAnimalsEditorHelpers")
+        ?? throw new InvalidOperationException("WildAnimalsEditorHelpers type not found.");
 
     private static readonly MethodInfo ParseBulkMethod =
-        ModEntryType.GetMethod("ParseExtraModAnimalKeysBulk", BindingFlags.NonPublic | BindingFlags.Static)
+        HelpersType.GetMethod("ParseExtraModAnimalKeysBulk", BindingFlags.NonPublic | BindingFlags.Static)
         ?? throw new InvalidOperationException("ParseExtraModAnimalKeysBulk not found (private static).");
 
     private static readonly MethodInfo ComputePlanMethod =
-        ModEntryType.GetMethod("ComputeExtraModAnimalKeysBulkPlanCounts", BindingFlags.NonPublic | BindingFlags.Static)
+        HelpersType.GetMethod("ComputeExtraModAnimalKeysBulkPlanCounts", BindingFlags.NonPublic | BindingFlags.Static)
         ?? throw new InvalidOperationException("ComputeExtraModAnimalKeysBulkPlanCounts not found (private static).");
 
     [Fact]
