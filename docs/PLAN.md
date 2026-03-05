@@ -27,8 +27,8 @@
 - [x] Confirm no production changes needed
 
 ### Phase R1E — Finalize repo GMCM id / i18n normalization
-- Final validation of all phases
-- Update docs to reflect completion
+- [x] Final validation of all phases
+- [x] Update docs to reflect completion
 
 ## Scope
 - Subdir: `LetMeHatch`

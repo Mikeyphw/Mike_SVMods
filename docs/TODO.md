@@ -6,7 +6,7 @@
 - [x] Phase R1B: Normalize LetMeHatch GMCM ids and i18n keys
 - [x] Phase R1C: Prune RoosterControl legacy GMCM i18n aliases
 - [x] Phase R1D: Verify EggsInWild GMCM ids already normalized
-- [ ] Phase R1E: Finalize repo GMCM id/i18n normalization
+- [x] Phase R1E: Finalize repo GMCM id/i18n normalization
 
 - [x] Ensure GMCM option IDs are stable and documented.
 - [x] Verify all debug/diagnostic/logging toggles are only on the `debug` page.

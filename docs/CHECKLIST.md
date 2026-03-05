@@ -38,10 +38,10 @@
 - [ ] Commit Phase R1D
 
 ### Phase R1E — Finalize repo GMCM id/i18n normalization
-- [ ] Verify all phases completed correctly
-- [ ] Update final docs
-- [ ] Run build gate
-- [ ] Commit Phase R1E
+- [x] Verify all phases completed correctly
+- [x] Update final docs
+- [x] Run build gate
+- [x] Commit Phase R1E
 
 ## Scope
 ## Phase 0 — Keep docs in sync
