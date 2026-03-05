@@ -2,6 +2,7 @@
 
 ## Status
 - Phases 0–8 complete (see `docs/CHECKLIST.md`).
+- Phase SUI-1 complete: shared WildAnimals editor catalog/service extracted for GMCM + StardewUI reuse.
 - Current focus: Phase 7+ UX polish (bulk workflows, richer validation surfaced in GMCM) and maintenance fixes.
 - Index navigation: GMCM WildAnimals index provides grouped page links with counts (All, A–F, G–L, M–R, S–Z, Other).
 - Bulk UX: staged bulk entries are indicated in index links; bulk preview includes planned set/clear/no-op summary; staging can be cleared.
@@ -258,6 +259,14 @@
 1. Re-scan GMCM code for pseudo-button fake-bool patterns.
 2. Re-scan for leftover inline GMCM layout bodies in `ModEntry`/coordinator files.
 3. Remove remaining dead legacy GMCM partials where safe and build-stable.
+
+## Phase SUI-1 — Shared WildAnimals editor extraction
+1. Add shared WildAnimals catalog/draft records under `Infrastructure/Integrations/StardewUi/WildAnimals/`.
+2. Add `WildAnimalsEditorService` for loading base JSON + config overlays and applying draft changes.
+3. Move shared helper logic out of `ModEntry.Gmcm.cs` into `WildAnimalsEditorHelpers`.
+4. Switch `WildAnimalsPages.Define(...)` to load through the shared service while keeping GMCM behavior unchanged.
+5. Add unit coverage for catalog ordering and draft apply behavior.
+6. Verify `EggsInWild` and `EggsInWild.Tests` build; note `Tests/Tests.sln` remains blocked by unrelated `RoosterControl.Pure` compile errors.
 4. Record final architecture notes in docs.
 
 ---

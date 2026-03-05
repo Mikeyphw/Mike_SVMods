@@ -91,6 +91,16 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Remove dead legacy GMCM partial layout files from `ModEntry.Gmcm*`.
 - [x] Confirm final architecture is `EiwGmcmMenu` + `Infrastructure/Integrations/Gmcm/Pages/*`.
 
+## Phase SUI-1 — Shared WildAnimals editor extraction
+- [x] Add shared WildAnimals catalog/draft records under `Infrastructure/Integrations/StardewUi/WildAnimals/`.
+- [x] Add `WildAnimalsEditorService` for shared load/apply behavior.
+- [x] Move shared WildAnimals helper logic out of `ModEntry.Gmcm.cs`.
+- [x] Route `WildAnimalsPages.Define(...)` through the shared service.
+- [x] Add unit coverage for catalog ordering and draft apply behavior.
+- [x] Verify `EggsInWild/EggsInWild.csproj` builds.
+- [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds.
+- [ ] `Tests/Tests.sln` build is still blocked by unrelated `RoosterControl.Pure` compile errors.
+
 ## R2 — Monolithic file splits
 
 ### Phase EIW-R2-1 — Split DebugKnobs.cs config types

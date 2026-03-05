@@ -23,6 +23,14 @@
 - Keep changes inside `EggsInWild` and prefer NestCore helpers for GMCM plumbing.
 - Avoid fragile syntax edits in `WeggCommandDispatcher.cs` (braces/strings/switch expressions).
 
+## Wiring follow-up
+- [x] Wire AnimalNotes runtime services into normal `ModEntry` flow (save/day/warp/message handling).
+- [x] Wire `Phase8HealthReporter` at startup.
+- [x] Wire `WeggDiagnosticsState` for current NestCore API version + GMCM registration state.
+- [x] Wire `WildAnimalPreviewResolver` into GMCM as preview-source text.
+- [ ] GMCM image rendering for wild-animal previews still TODO (resolver is wired, visual preview is not).
+- [ ] `WeggDiagnosticsState` still has no user-facing surface beyond the stored state.
+
 
 ## Phase 10 — Bulk tooling parity
 - [x] 10C: unit tests for bulk parsing + planning (set/clear/no-op).
@@ -41,6 +49,12 @@
 ## Phase 18E — Finalization
 - [x] Final grep/review completed: no fake-bool action patterns remain.
 - [x] Legacy `ModEntry.Gmcm*` inline layout partials removed; `EiwGmcmMenu + Pages/*` is canonical.
+
+## StardewUI migration
+- [x] Phase SUI-1: extract shared WildAnimals catalog/service/helpers for GMCM + StardewUI reuse.
+- [ ] Phase SUI-2: add StardewUI WildAnimals editor alongside GMCM.
+- [ ] Phase SUI-3: retire GMCM WildAnimals pages and keep one launcher action.
+- [ ] Unblock `Tests/Tests.sln` from unrelated `RoosterControl.Pure` SMAPI reference errors before using it as a migration gate.
 
 ## R2 — Monolithic file splits
 

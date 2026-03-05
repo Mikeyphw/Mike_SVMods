@@ -37,6 +37,7 @@ using EggsInWild.Infrastructure.ModData;
 using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Assets;
 using EggsInWild.Infrastructure.Integrations.Gmcm;
+using EggsInWild.Infrastructure.Integrations.StardewUi.WildAnimals;
 
 namespace EggsInWild;
 
@@ -56,84 +57,15 @@ public sealed partial class ModEntry
         InvalidateGameAssets();
     }
 
-    private static bool IsEmptyOverride(WildAnimalOverrideConfig? ov)
-        => ov is null
-            || (ov.Enabled is null
-                && ov.LargeEgg is null
-                && ov.Price is null
-                && ov.IsMagic is null
-                && (ov.LocationTypes is null || ov.LocationTypes.Count == 0)
-                && (ov.ExtraModAnimalKeys is null || ov.ExtraModAnimalKeys.Count == 0));
-
     private bool NormalizeLocationTypesOverrides(ModConfig cfg)
-    {
-        if (cfg.WildAnimalOverrides is null || cfg.WildAnimalOverrides.Count == 0)
-            return false;
-
-        var known = _knownLocationTypeKeysForNormalization;
-        var anyChanged = false;
-
-        foreach (var (wildKey, ov) in cfg.WildAnimalOverrides.ToList())
-        {
-            if (ov is null)
-                continue;
-
-            if (ov.LocationTypes is { Count: > 0 })
-            {
-                var blockChanged = false;
-                var newDict = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var (k, v) in ov.LocationTypes)
-                {
-                    if (string.IsNullOrWhiteSpace(k))
-                    {
-                        blockChanged = true;
-                        continue;
-                    }
-
-                    var t = k.Trim();
-                    if (t.Length == 0)
-                    {
-                        blockChanged = true;
-                        continue;
-                    }
-
-                    if (known.Count > 0 && !known.Contains(t))
-                    {
-                        blockChanged = true;
-                        continue;
-                    }
-
-                    if (!newDict.TryAdd(t, v))
-                    {
-                        blockChanged = true;
-                        continue;
-                    }
-
-                    if (!string.Equals(k, t, StringComparison.Ordinal))
-                        blockChanged = true;
-                }
-
-                if (blockChanged)
-                {
-                    ov.LocationTypes = newDict.Count == 0 ? null : newDict;
-                    anyChanged = true;
-                }
-            }
-
-            if (IsEmptyOverride(ov))
-            {
-                cfg.WildAnimalOverrides.Remove(wildKey);
-                anyChanged = true;
-            }
-        }
-
-        return anyChanged;
-    }
+        => WildAnimalsEditorHelpers.NormalizeLocationTypesOverrides(cfg, _knownLocationTypeKeysForNormalization);
     private void RebuildGmcmLayout(bool force)
     {
         if (_gmcmHost is null)
+        {
+            UpdateDiagnosticsState();
             return;
+        }
 
         var i18n = new I18TranslationHelper(Helper);
 
@@ -165,6 +97,8 @@ public sealed partial class ModEntry
             force: force,
             rebuildOnSaveLoaded: true,
             rebuildOnReturnedToTitle: true);
+
+        UpdateDiagnosticsState();
     }
 
     internal static string Translate(I18TranslationHelper i18n, string key, string fallback, params object[] tokens)
@@ -181,27 +115,13 @@ public sealed partial class ModEntry
 
 
 internal static string BuildWildAnimalPageId(string wildAnimalKey)
-    => $"wildAnimals.{Mikew.NestCore.Integrations.Gmcm.GmcmFieldIds.Normalize(wildAnimalKey)}";
+    => WildAnimalsEditorHelpers.BuildWildAnimalPageId(wildAnimalKey);
 
 internal static bool GetWildAnimalEffectiveEnabled(ModConfig cfg, string wildAnimalKey, bool defaultEnabled)
-{
-    if (cfg.WildAnimalOverrides is not null
-        && cfg.WildAnimalOverrides.TryGetValue(wildAnimalKey, out var ov)
-        && ov?.Enabled is not null)
-        return ov.Enabled.Value;
-
-    return defaultEnabled;
-}
+    => WildAnimalsEditorHelpers.GetWildAnimalEffectiveEnabled(cfg, wildAnimalKey, defaultEnabled);
 
 internal static string GetWildAnimalEnabledSource(ModConfig cfg, string wildAnimalKey, bool defaultEnabled)
-{
-    if (cfg.WildAnimalOverrides is not null
-        && cfg.WildAnimalOverrides.TryGetValue(wildAnimalKey, out var ov)
-        && ov?.Enabled is not null)
-        return "override";
-
-    return "default";
-}
+    => WildAnimalsEditorHelpers.GetWildAnimalEnabledSource(cfg, wildAnimalKey);
 
 
     internal sealed class ExtraModAnimalKeysBulkState

@@ -6,7 +6,9 @@ using Mikew.NestCore.Integrations.Gmcm;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
+using EggsInWild.Application.Animals;
 using EggsInWild.Infrastructure.Config;
+using EggsInWild.Infrastructure.Integrations.StardewUi.WildAnimals;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Mods;
@@ -163,6 +165,53 @@ public static class WildAnimalDetailPages
                     isMagicText);
             },
             id: $"wildAnimals_overrides_{GmcmFieldIds.Normalize(key)}");
+
+        page.ParagraphDynamic(
+            () =>
+            {
+                if (definition is null)
+                    return ModEntry.Translate(i18n, "config.paragraph.wildAnimals.preview.unavailable", "Preview source: unavailable.");
+
+                if (!Context.IsWorldReady)
+                {
+                    return ModEntry.Translate(
+                        i18n,
+                        "config.paragraph.wildAnimals.preview.saveRequired",
+                        "Preview source: load a save to resolve mapped farm animal sprites.");
+                }
+
+                try
+                {
+                    var farmAnimals = ctx.Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                    var preview = WildAnimalPreviewResolver.TryResolvePreview(key, definition, ctx.Helper.ModRegistry, farmAnimals);
+                    if (preview is null)
+                    {
+                        return ModEntry.Translate(
+                            i18n,
+                            "config.paragraph.wildAnimals.preview.none",
+                            "Preview source: no installed ExtraModAnimalKeys block resolved to a farm animal.");
+                    }
+
+                    return ModEntry.Translate(
+                        i18n,
+                        "config.paragraph.wildAnimals.preview.text",
+                        $"Preview source: {preview.FarmAnimalKey} -> {preview.TexturePath} [{preview.SourceRect.X},{preview.SourceRect.Y},{preview.SourceRect.Width},{preview.SourceRect.Height}]. Image rendering in GMCM is still TODO.",
+                        preview.FarmAnimalKey,
+                        preview.TexturePath,
+                        preview.SourceRect.X,
+                        preview.SourceRect.Y,
+                        preview.SourceRect.Width,
+                        preview.SourceRect.Height);
+                }
+                catch (Exception ex)
+                {
+                    return ModEntry.Translate(
+                        i18n,
+                        "config.paragraph.wildAnimals.preview.failed",
+                        $"Preview source: failed to load Data/FarmAnimals ({ex.GetType().Name}).");
+                }
+            },
+            id: $"wildAnimals_preview_{GmcmFieldIds.Normalize(key)}");
 
         page.Separator(simple: true);
 
@@ -524,7 +573,7 @@ public static class WildAnimalDetailPages
                 if (modIdRaw.Length == 0 || string.Equals(modIdRaw, "Vanilla", StringComparison.OrdinalIgnoreCase))
                     return;
 
-                var parsed = ModEntry.ParseCsvKeyList(keysRaw);
+                var parsed = WildAnimalsEditorHelpers.ParseCsvKeyList(keysRaw);
                 if (parsed.Count == 0)
                     return;
 
@@ -568,7 +617,7 @@ public static class WildAnimalDetailPages
 
                 ov.ExtraModAnimalKeys ??= new Dictionary<string, ExtraModAnimalKeysOverrideConfig>(StringComparer.OrdinalIgnoreCase);
 
-                if (ModEntry.SequenceEqualIgnoreCase(fixedKeys, baseKeys))
+                if (WildAnimalsEditorHelpers.SequenceEqualIgnoreCase(fixedKeys, baseKeys))
                 {
                     ov.ExtraModAnimalKeys.Remove(modId);
                 }
@@ -650,7 +699,7 @@ public static class WildAnimalDetailPages
                     $"[GMCM][ExtraModAnimalKeys] Export effective blocks for '{key}':",
                 };
 
-                var bodyLines = ModEntry.BuildExtraModAnimalKeysEffectiveExportBodyLines(extraModIdsOrdered, definition, ov);
+                var bodyLines = WildAnimalsEditorHelpers.BuildExtraModAnimalKeysEffectiveExportBodyLines(extraModIdsOrdered, definition, ov);
                 outLines.AddRange(bodyLines);
 
                 if (bodyLines.Count == 0)
@@ -669,7 +718,7 @@ public static class WildAnimalDetailPages
                 var cfg = ctx.GetConfig();
                 var ov = GetOverrideForKey(cfg, key);
 
-                var bodyLines = ModEntry.BuildExtraModAnimalKeysEffectiveExportBodyLines(extraModIdsOrdered, definition, ov);
+                var bodyLines = WildAnimalsEditorHelpers.BuildExtraModAnimalKeysEffectiveExportBodyLines(extraModIdsOrdered, definition, ov);
                 var raw = string.Join(Environment.NewLine, bodyLines);
                 if (string.IsNullOrWhiteSpace(raw))
                 {
@@ -677,7 +726,7 @@ public static class WildAnimalDetailPages
                     return;
                 }
 
-                ctx.ExtraModAnimalKeysBulkByWildAnimalKey[key] = ModEntry.ParseExtraModAnimalKeysBulk(raw, extraModIdsForGmcm, GetKnownFarmAnimalIds());
+                ctx.ExtraModAnimalKeysBulkByWildAnimalKey[key] = WildAnimalsEditorHelpers.ParseExtraModAnimalKeysBulk(raw, extraModIdsForGmcm, GetKnownFarmAnimalIds());
             },
             tooltip: true,
             fieldId: page.FieldId($"wildAnimals.{key}.extraModAnimalKeys.copyExportToBulkOverwrite"));
@@ -690,7 +739,7 @@ public static class WildAnimalDetailPages
                 var cfg = ctx.GetConfig();
                 var ov = GetOverrideForKey(cfg, key);
 
-                var bodyLines = ModEntry.BuildExtraModAnimalKeysEffectiveExportBodyLines(extraModIdsOrdered, definition, ov);
+                var bodyLines = WildAnimalsEditorHelpers.BuildExtraModAnimalKeysEffectiveExportBodyLines(extraModIdsOrdered, definition, ov);
                 var exportRaw = string.Join(Environment.NewLine, bodyLines);
                 if (string.IsNullOrWhiteSpace(exportRaw))
                     return;
@@ -703,7 +752,7 @@ public static class WildAnimalDetailPages
                     combined += Environment.NewLine;
                 combined += exportRaw;
 
-                ctx.ExtraModAnimalKeysBulkByWildAnimalKey[key] = ModEntry.ParseExtraModAnimalKeysBulk(combined, extraModIdsForGmcm, GetKnownFarmAnimalIds());
+                ctx.ExtraModAnimalKeysBulkByWildAnimalKey[key] = WildAnimalsEditorHelpers.ParseExtraModAnimalKeysBulk(combined, extraModIdsForGmcm, GetKnownFarmAnimalIds());
             },
             tooltip: true,
             fieldId: page.FieldId($"wildAnimals.{key}.extraModAnimalKeys.copyExportToBulkAppend"));
@@ -755,7 +804,7 @@ public static class WildAnimalDetailPages
 
                 var ovNow = GetOverrideForKey(cfg, key);
 
-                var plan = ModEntry.ComputeExtraModAnimalKeysBulkPlanCounts(
+                var plan = WildAnimalsEditorHelpers.ComputeExtraModAnimalKeysBulkPlanCounts(
                     st,
                     extraModIdsForGmcm,
                     definition,
@@ -790,7 +839,7 @@ public static class WildAnimalDetailPages
                 ctx.ExtraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) ? st.Raw : "",
             setValue: rawValue =>
             {
-                var st = ModEntry.ParseExtraModAnimalKeysBulk(rawValue, extraModIdsForGmcm, getKnownFarmAnimalIds());
+                var st = WildAnimalsEditorHelpers.ParseExtraModAnimalKeysBulk(rawValue, extraModIdsForGmcm, getKnownFarmAnimalIds());
                 ctx.ExtraModAnimalKeysBulkByWildAnimalKey[key] = st;
             });
 
@@ -845,7 +894,7 @@ public static class WildAnimalDetailPages
 
                 var ovNow = GetOverrideForKey(cfg, key);
 
-                var plan = ModEntry.ComputeExtraModAnimalKeysBulkPlanCounts(
+                var plan = WildAnimalsEditorHelpers.ComputeExtraModAnimalKeysBulkPlanCounts(
                     st,
                     extraModIdsForGmcm,
                     definition,
@@ -898,7 +947,7 @@ public static class WildAnimalDetailPages
                     lines.Add("");
                 }
 
-                var fixPreview = ModEntry.BuildExtraModAnimalKeysBulkFixPreviewLines(st.Raw, fixTrim, fixDedupe, fixDropUnknown, knownFarmAnimalIds);
+                var fixPreview = WildAnimalsEditorHelpers.BuildExtraModAnimalKeysBulkFixPreviewLines(st.Raw, fixTrim, fixDedupe, fixDropUnknown, knownFarmAnimalIds);
                 if (fixPreview.Count > 0)
                 {
                     lines.AddRange(fixPreview);
@@ -912,12 +961,12 @@ public static class WildAnimalDetailPages
                         .OrderBy(kvp => kvp.Key == "Vanilla" ? "" : kvp.Key, StringComparer.OrdinalIgnoreCase)
                         .Take(12))
                     {
-                        var canonicalModId = ModEntry.CanonicalizeModId(modId, extraModIdsForGmcm);
+                        var canonicalModId = WildAnimalsEditorHelpers.CanonicalizeModId(modId, extraModIdsForGmcm);
                         var displayModId = string.Equals(modId, canonicalModId, StringComparison.OrdinalIgnoreCase)
                             ? modId
                             : $"{modId} => {canonicalModId}";
 
-                        var fixedKeys = ModEntry.ApplyFarmAnimalKeyFixes(
+                        var fixedKeys = WildAnimalsEditorHelpers.ApplyFarmAnimalKeyFixes(
                             rawKeys,
                             fixTrim,
                             fixDedupe,
@@ -942,7 +991,7 @@ public static class WildAnimalDetailPages
                             ? baseBlock.GetEffectiveFarmAnimalKeys()
                             : Array.Empty<string>();
 
-                        var matchesBase = fixedKeys.Count > 0 && ModEntry.SequenceEqualIgnoreCase(fixedKeys, baseKeys);
+                        var matchesBase = fixedKeys.Count > 0 && WildAnimalsEditorHelpers.SequenceEqualIgnoreCase(fixedKeys, baseKeys);
 
                         ExtraModAnimalKeysOverrideConfig? existingBlock = null;
                         var hasOverrideNow = ovNow?.ExtraModAnimalKeys is not null
@@ -954,7 +1003,7 @@ public static class WildAnimalDetailPages
                             : new List<string>();
 
                         var willClear = fixedKeys.Count == 0 || matchesBase;
-                        var alreadySet = !willClear && hasOverrideNow && ModEntry.SequenceEqualIgnoreCase(existingKeys, fixedKeys);
+                        var alreadySet = !willClear && hasOverrideNow && WildAnimalsEditorHelpers.SequenceEqualIgnoreCase(existingKeys, fixedKeys);
 
                         if (willClear)
                         {
@@ -994,7 +1043,7 @@ public static class WildAnimalDetailPages
                         .OrderBy(mid => mid == "Vanilla" ? "" : mid, StringComparer.OrdinalIgnoreCase)
                         .Take(12))
                     {
-                        var canonicalModId = ModEntry.CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+                        var canonicalModId = WildAnimalsEditorHelpers.CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
                         var displayModId = string.Equals(modIdRaw, canonicalModId, StringComparison.OrdinalIgnoreCase)
                             ? modIdRaw
                             : $"{modIdRaw} => {canonicalModId}";
@@ -1039,7 +1088,7 @@ public static class WildAnimalDetailPages
 
                 var ovNow = GetOverrideForKey(cfg, key);
 
-                var plan = ModEntry.ComputeExtraModAnimalKeysBulkPlanCounts(
+                var plan = WildAnimalsEditorHelpers.ComputeExtraModAnimalKeysBulkPlanCounts(
                     st,
                     extraModIdsForGmcm,
                     definition,
@@ -1060,21 +1109,21 @@ public static class WildAnimalDetailPages
 
                 foreach (var modIdRaw in st.Resets)
                 {
-                    var modId = ModEntry.CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+                    var modId = WildAnimalsEditorHelpers.CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
                     ov.ExtraModAnimalKeys.Remove(modId);
                 }
 
                 foreach (var (modIdRaw, keys) in st.Upserts)
                 {
-                    var modId = ModEntry.CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
-                    var finalKeys = ModEntry.ApplyFarmAnimalKeyFixes(keys, fixTrim, fixDedupe, knownFarmAnimalIds);
+                    var modId = WildAnimalsEditorHelpers.CanonicalizeModId(modIdRaw, extraModIdsForGmcm);
+                    var finalKeys = WildAnimalsEditorHelpers.ApplyFarmAnimalKeyFixes(keys, fixTrim, fixDedupe, knownFarmAnimalIds);
 
                     var baseKeys = definition?.ExtraModAnimalKeys is not null
                         && definition.ExtraModAnimalKeys.TryGetValue(modId, out var baseBlock)
                         ? baseBlock.GetEffectiveFarmAnimalKeys()
                         : Array.Empty<string>();
 
-                    if (finalKeys.Count == 0 || ModEntry.SequenceEqualIgnoreCase(finalKeys, baseKeys))
+                    if (finalKeys.Count == 0 || WildAnimalsEditorHelpers.SequenceEqualIgnoreCase(finalKeys, baseKeys))
                     {
                         ov.ExtraModAnimalKeys.Remove(modId);
                     }

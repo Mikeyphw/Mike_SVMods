@@ -5,6 +5,7 @@ using EggsInWild.Infrastructure.Config;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Definitions;
+using EggsInWild.Infrastructure.Integrations.StardewUi.WildAnimals;
 
 namespace EggsInWild.Infrastructure.Integrations.Gmcm;
 
@@ -18,11 +19,12 @@ public sealed class EiwGmcmContext
     public IManifest Manifest { get; }
     public Func<ModConfig> GetConfig { get; }
     public Action SaveConfig { get; }
+    internal WildAnimalsEditorService WildAnimalsEditor { get; }
 
     /// <summary>
     /// Bulk state storage for ExtraModAnimalKeys per wild animal key.
     /// </summary>
-    internal Dictionary<string, ModEntry.ExtraModAnimalKeysBulkState> ExtraModAnimalKeysBulkByWildAnimalKey { get; }
+    internal Dictionary<string, ExtraModAnimalKeysBulkState> ExtraModAnimalKeysBulkByWildAnimalKey { get; }
 
     /// <summary>
     /// Known location type keys used for normalization.
@@ -63,7 +65,8 @@ public sealed class EiwGmcmContext
         Manifest = manifest ?? throw new ArgumentNullException(nameof(manifest));
         GetConfig = getConfig ?? throw new ArgumentNullException(nameof(getConfig));
         SaveConfig = saveConfig ?? throw new ArgumentNullException(nameof(saveConfig));
+        WildAnimalsEditor = new WildAnimalsEditorService(Helper, Monitor, GetConfig);
 
-        ExtraModAnimalKeysBulkByWildAnimalKey = new Dictionary<string, ModEntry.ExtraModAnimalKeysBulkState>(StringComparer.OrdinalIgnoreCase);
+        ExtraModAnimalKeysBulkByWildAnimalKey = new Dictionary<string, ExtraModAnimalKeysBulkState>(StringComparer.OrdinalIgnoreCase);
     }
 }
