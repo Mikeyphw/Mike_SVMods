@@ -7,34 +7,34 @@
 - [x] Update docs/PLAN.md with Phase R1 entry
 - [x] Update docs/CHECKLIST.md (this file)
 - [x] Update docs/TODO.md with Phase R1 current work
-- [ ] Run build gate
-- [ ] Commit Phase R1A
+- [x] Run build gate
+- [x] Commit Phase R1A
 
 ### Phase R1B — Normalize LetMeHatch GMCM ids and i18n keys
-- [ ] Apply C# page-id literal renames in LmhGmcmMenu.cs
-- [ ] Apply C# option-id renames in LmhGmcmMenu.cs
-- [ ] Apply C# GetString(...) key renames in LmhGmcmMenu.cs
-- [ ] Apply i18n page key renames in default.json and pt-br.json
-- [ ] Apply i18n option key renames in both i18n files
-- [ ] Apply i18n manual GMCM key renames in both i18n files
-- [ ] Remove legacy page keys from both i18n files
-- [ ] Run verification greps to confirm old keys are gone
-- [ ] Run build gate
-- [ ] Commit Phase R1B
+- [x] Apply C# page-id literal renames in LmhGmcmMenu.cs
+- [x] Apply C# option-id renames in LmhGmcmMenu.cs
+- [x] Apply C# GetString(...) key renames in LmhGmcmMenu.cs
+- [x] Apply i18n page key renames in default.json and pt-br.json
+- [x] Apply i18n option key renames in both i18n files
+- [x] Apply i18n manual GMCM key renames in both i18n files
+- [x] Remove legacy page keys from both i18n files
+- [x] Run verification greps to confirm old keys are gone
+- [x] Run build gate
+- [x] Commit Phase R1B
 
 ### Phase R1C — Prune RoosterControl legacy GMCM i18n aliases
-- [ ] Verify no config.(Bool|Number|Text|Page|Section). references in RoosterControl C#
-- [ ] Delete legacy config.Bool.* alias keys from both i18n files
-- [ ] Delete legacy config.Number.* alias keys from both i18n files
-- [ ] Delete legacy config.Text.* alias keys from both i18n files
-- [ ] Verify canonical dotted lowercase GMCM keys remain intact
-- [ ] Run build gate
-- [ ] Commit Phase R1C
+- [x] Verify no config.(Bool|Number|Text|Page|Section). references in RoosterControl C#
+- [x] Delete legacy config.Bool.* alias keys from both i18n files
+- [x] Delete legacy config.Number.* alias keys from both i18n files
+- [x] Delete legacy config.Text.* alias keys from both i18n files
+- [x] Verify canonical dotted lowercase GMCM keys remain intact
+- [x] Run build gate
+- [x] Commit Phase R1C
 
 ### Phase R1D — Verify EggsInWild GMCM ids already normalized
-- [ ] Run verification checks for EggsInWild
-- [ ] Confirm EggsInWild production code unchanged (docs-only)
-- [ ] Run build gate
+- [x] Run verification checks for EggsInWild
+- [x] Confirm EggsInWild production code unchanged (docs-only)
+- [x] Run build gate
 - [ ] Commit Phase R1D
 
 ### Phase R1E — Finalize repo GMCM id/i18n normalization

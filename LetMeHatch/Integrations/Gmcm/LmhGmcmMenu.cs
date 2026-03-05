@@ -69,10 +69,10 @@ public static class LmhGmcmMenu
     {
         layout.Root(root =>
         {
-            root.Section("General");
-            root.Bool(cfg => cfg.EditEggListByName, optionId: "EditEggListByName", tooltip: true);
-            root.Bool(cfg => cfg.EditBirthText, optionId: "EditBirthText", tooltip: true);
-            root.Bool(cfg => cfg.AlternateBirthText, optionId: "AlternateBirthText", tooltip: true);
+            root.Section("general");
+            root.Bool(cfg => cfg.EditEggListByName, optionId: "general.editEggListByName", tooltip: true);
+            root.Bool(cfg => cfg.EditBirthText, optionId: "general.editBirthText", tooltip: true);
+            root.Bool(cfg => cfg.AlternateBirthText, optionId: "general.alternateBirthText", tooltip: true);
 
             root.Separator(simple: true);
 
@@ -95,16 +95,16 @@ public static class LmhGmcmMenu
             page.Section(core.Translation.GetString("config.page.edits.name"), tooltip: false);
             page.ParagraphDynamic(() => core.Translation.GetString("config.edits.paragraph"), id: "edits_paragraph");
             page.Separator(simple: true);
-            page.Link("editsEggList");
-            page.Link("editsBirthText");
-            page.Link("editsCloneEggs");
+            page.Link("edits.eggList");
+            page.Link("edits.birthText");
+            page.Link("edits.cloneEggs");
         });
 
         layout.Pages(new (string PageId, Action<GmcmPageBuilder<ModConfig>> Build)[]
         {
-            ("editsEggList", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.EggList)),
-            ("editsBirthText", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.BirthText)),
-            ("editsCloneEggs", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.CloneEggs)),
+            ("edits.eggList", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.EggList)),
+            ("edits.birthText", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.BirthText)),
+            ("edits.cloneEggs", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.CloneEggs)),
         });
     }
 
@@ -118,13 +118,13 @@ public static class LmhGmcmMenu
             title: () => core.Translation.GetString("config.page.cloning.name"),
             build: page =>
             {
-                page.Bool(cfg => cfg.CloneVanillaEggs, optionId: "CloneVanillaEggs", tooltip: true);
-                page.Bool(cfg => cfg.CloneMachineRules, optionId: "CloneMachineRules", tooltip: true);
-                page.Bool(cfg => cfg.UseDynamicCloneTextures, optionId: "UseDynamicCloneTextures", tooltip: true);
-                page.Bool(cfg => cfg.DinoEggAsArtifact, optionId: "DinoEggsAsArtifact", tooltip: true);
-                page.Bool(cfg => cfg.OnlyFertilizedEggs, optionId: "OnlyFertilizedEggs", tooltip: true);
-                page.Bool(cfg => cfg.ColorClonedMilk, optionId: "ColorMilk", tooltip: true);
-                page.Bool(cfg => cfg.ExclusiveRabbitWool, optionId: "ExclusiveRabbitWool", tooltip: true);
+                page.Bool(cfg => cfg.CloneVanillaEggs, optionId: "cloning.cloneVanillaEggs", tooltip: true);
+                page.Bool(cfg => cfg.CloneMachineRules, optionId: "cloning.cloneMachineRules", tooltip: true);
+                page.Bool(cfg => cfg.UseDynamicCloneTextures, optionId: "cloning.useDynamicCloneTextures", tooltip: true);
+                page.Bool(cfg => cfg.DinoEggAsArtifact, optionId: "cloning.dinoEggAsArtifact", tooltip: true);
+                page.Bool(cfg => cfg.OnlyFertilizedEggs, optionId: "cloning.onlyFertilizedEggs", tooltip: true);
+                page.Bool(cfg => cfg.ColorClonedMilk, optionId: "cloning.colorClonedMilk", tooltip: true);
+                page.Bool(cfg => cfg.ExclusiveRabbitWool, optionId: "cloning.exclusiveRabbitWool", tooltip: true);
             }
         );
     }
@@ -139,23 +139,23 @@ public static class LmhGmcmMenu
             title: () => core.Translation.GetString("config.page.colors.name"),
             build: page =>
             {
-                page.Bool(cfg => cfg.ChangeEggColors, optionId: "ChangeEggColors", tooltip: true);
-                page.Enum(cfg => cfg.DynamicCloneTintMode, optionId: "DynamicCloneTintMode", tooltip: true);
-                page.Bool(cfg => cfg.LinkAnimalColorToEgg, optionId: "LinkAnimalColorToEggs", tooltip: true);
+                page.Bool(cfg => cfg.ChangeEggColors, optionId: "colors.changeEggColors", tooltip: true);
+                page.Enum(cfg => cfg.DynamicCloneTintMode, optionId: "colors.dynamicCloneTintMode", tooltip: true);
+                page.Bool(cfg => cfg.LinkAnimalColorToEgg, optionId: "colors.linkAnimalColorToEgg", tooltip: true);
 
                 page.Separator(simple: true);
                 page.ParagraphDynamic(() => core.Translation.GetString("config.colors.paragraph"), id: "colors_intro");
                 page.Separator(simple: true);
 
-                page.Link("eggPalette");
-                page.Link("eggColorOverrides");
+                page.Link("colors.eggPalette");
+                page.Link("colors.eggColorOverrides");
             }
         );
 
         layout.Pages(new (string PageId, Action<GmcmPageBuilder<ModConfig>> Build)[]
         {
-            ("eggPalette", page => BuildEggPalettePage(page, core, configProvider)),
-            ("eggColorOverrides", page => BuildEggColorOverridesPage(page, core, configProvider)),
+            ("colors.eggPalette", page => BuildEggPalettePage(page, core, configProvider)),
+            ("colors.eggColorOverrides", page => BuildEggColorOverridesPage(page, core, configProvider)),
         });
     }
 
@@ -169,9 +169,9 @@ public static class LmhGmcmMenu
             title: () => core.Translation.GetString("config.page.breeding.name"),
             build: page =>
             {
-                page.Bool(cfg => cfg.BreedingSystemEnabled, optionId: "BreedingSystemEnabled", tooltip: true);
-                page.Bool(cfg => cfg.DeterministicBreedingRng, optionId: "DeterministicBreedingRng", tooltip: true);
-                page.Float(cfg => cfg.DailyLuckBonus, optionId: "DailyLuckBonus", tooltip: true, min: MinChance, max: MaxChance, interval: 0.01f);
+                page.Bool(cfg => cfg.BreedingSystemEnabled, optionId: "breeding.systemEnabled", tooltip: true);
+                page.Bool(cfg => cfg.DeterministicBreedingRng, optionId: "breeding.deterministicRng", tooltip: true);
+                page.Float(cfg => cfg.DailyLuckBonus, optionId: "breeding.dailyLuckBonus", tooltip: true, min: MinChance, max: MaxChance, interval: 0.01f);
 
                 page.Separator(simple: true);
 
@@ -203,12 +203,12 @@ public static class LmhGmcmMenu
                     interval: ChanceInterval);
 
                 page.Separator(simple: true);
-                page.Link("breedingPacks");
+                page.Link("breeding.packs");
             }
         );
 
         // Strict parity restore: old GMCM's per-content-pack -> per-female -> per-male tuning flow.
-        layout.Page("breedingPacks", page => BuildBreedingPackIndexPage(page, core));
+        layout.Page("breeding.packs", page => BuildBreedingPackIndexPage(page, core));
 
         var packPages = new List<(string PageId, Func<string> Title, Action<GmcmPageBuilder<ModConfig>> Build)>();
         var femalePages = new List<(string PageId, Func<string> Title, Action<GmcmPageBuilder<ModConfig>> Build)>();
@@ -224,7 +224,7 @@ public static class LmhGmcmMenu
                 () => packTitle,
                 page =>
                 {
-                    page.SectionLabel(() => core.Translation.GetString("config.section.Females.text"));
+                    page.SectionLabel(() => core.Translation.GetString("config.section.breeding.females.text"));
 
                     foreach (var female in pack.FemaleKeys)
                         page.Link(BuildFemalePageId(capturedPackId, female));
@@ -249,7 +249,7 @@ public static class LmhGmcmMenu
 
     private static void BuildBreedingPackIndexPage(GmcmPageBuilder<ModConfig> page, CoreContext core)
     {
-        page.Section("LoadedBreedingSystems");
+        page.Section("breeding.loadedSystems");
 var packs = GetBreedingPacksSnapshot();
         if (packs.Count == 0)
         {
@@ -287,8 +287,8 @@ var packs = GetBreedingPacksSnapshot();
 
         page.BoolLabel(
             elementId: "ApplyDailyBoost",
-            name: () => core.Translation.GetString("config.ApplyDailyBoost.name"),
-            tooltip: () => core.Translation.GetString("config.ApplyDailyBoost.description"),
+            name: () => core.Translation.GetString("config.breeding.applyDailyBoost.name"),
+            tooltip: () => core.Translation.GetString("config.breeding.applyDailyBoost.description"),
             getValue: () => femaleData.ApplyDailyLuckBoost,
             setValue: v =>
             {
@@ -300,12 +300,12 @@ var packs = GetBreedingPacksSnapshot();
         if (femaleData.AdjustableEggChances)
         {
             page.Separator(simple: true);
-            page.SectionLabel(() => core.Translation.GetString("config.section.NormalHatching.text"));
+            page.SectionLabel(() => core.Translation.GetString("config.section.breeding.normalHatching.text"));
 
             page.FloatLabel(
                 elementId: "NormalEggChance",
-                name: () => core.Translation.GetString("config.NormalEggChance.name"),
-                tooltip: () => core.Translation.GetString("config.NormalEggChance.description"),
+                name: () => core.Translation.GetString("config.breeding.normalEggChance.name"),
+                tooltip: () => core.Translation.GetString("config.breeding.normalEggChance.description"),
                 getValue: () => GetBreedingEggChance(femaleConfig, ItemType.Normal),
                 setValue: v => SetBreedingEggChance(femaleConfig, ItemType.Normal, v),
                 min: MinChance,
@@ -315,8 +315,8 @@ var packs = GetBreedingPacksSnapshot();
 
             page.FloatLabel(
                 elementId: "LargeEggChance",
-                name: () => core.Translation.GetString("config.LargeEggChance.name"),
-                tooltip: () => core.Translation.GetString("config.LargeEggChance.description"),
+                name: () => core.Translation.GetString("config.breeding.largeEggChance.name"),
+                tooltip: () => core.Translation.GetString("config.breeding.largeEggChance.description"),
                 getValue: () => GetBreedingEggChance(femaleConfig, ItemType.Large),
                 setValue: v => SetBreedingEggChance(femaleConfig, ItemType.Large, v),
                 min: MinChance,
@@ -324,11 +324,11 @@ var packs = GetBreedingPacksSnapshot();
                 interval: ChanceInterval
             );
 
-            page.SectionLabel(() => core.Translation.GetString("config.section.FertilizedHatching.text"));
+            page.SectionLabel(() => core.Translation.GetString("config.section.breeding.fertilizedHatching.text"));
             page.FloatLabel(
                 elementId: "FertilizedEggChance",
-                name: () => core.Translation.GetString("config.FertilizedEggChance.name"),
-                tooltip: () => core.Translation.GetString("config.FertilizedEggChance.description"),
+                name: () => core.Translation.GetString("config.breeding.fertilizedEggChance.name"),
+                tooltip: () => core.Translation.GetString("config.breeding.fertilizedEggChance.description"),
                 getValue: () => GetBreedingEggChance(femaleConfig, ItemType.FertilizedEgg),
                 setValue: v => SetBreedingEggChance(femaleConfig, ItemType.FertilizedEgg, v),
                 min: MinChance,
@@ -338,7 +338,7 @@ var packs = GetBreedingPacksSnapshot();
         }
 
         page.Separator(simple: true);
-        page.SectionLabel(() => core.Translation.GetString("config.section.Males.text"));
+        page.SectionLabel(() => core.Translation.GetString("config.section.breeding.males.text"));
 
         foreach (var (maleKey, maleData) in femaleData.Males.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
         {
@@ -351,8 +351,8 @@ var packs = GetBreedingPacksSnapshot();
 
             page.BoolLabel(
                 elementId: $"EnableMale_{maleKey}",
-                name: () => core.Translation.GetString("config.EnableMale.name"),
-                tooltip: () => core.Translation.GetString("config.EnableMale.description"),
+                name: () => core.Translation.GetString("config.breeding.enableMale.name"),
+                tooltip: () => core.Translation.GetString("config.breeding.enableMale.description"),
                 getValue: () => GetMaleEnabled(femaleConfig, maleKey),
                 setValue: v => SetMaleEnabled(femaleConfig, maleKey, v)
             );
@@ -361,8 +361,8 @@ var packs = GetBreedingPacksSnapshot();
             {
                 page.BoolLabel(
                     elementId: $"AddAsAlternatePurchase_{maleKey}",
-                    name: () => core.Translation.GetString("config.AddAsAlternatePurchase.name"),
-                    tooltip: () => core.Translation.GetString("config.AddAsAlternatePurchase.description"),
+                    name: () => core.Translation.GetString("config.breeding.addAsAlternatePurchase.name"),
+                    tooltip: () => core.Translation.GetString("config.breeding.addAsAlternatePurchase.description"),
                     getValue: () => femaleConfig.MaleConfig.AddAsAlternatePurchase,
                     setValue: v => femaleConfig.MaleConfig.AddAsAlternatePurchase = v
                 );
@@ -374,8 +374,8 @@ var packs = GetBreedingPacksSnapshot();
             {
                 page.FloatLabel(
                     elementId: $"BoostByMale_{maleKey}",
-                    name: () => core.Translation.GetString("config.BoostByMale.name"),
-                    tooltip: () => core.Translation.GetString("config.BoostByMale.description"),
+                    name: () => core.Translation.GetString("config.breeding.boostByMale.name"),
+                    tooltip: () => core.Translation.GetString("config.breeding.boostByMale.description"),
                     getValue: () => GetBoostByMale(femaleConfig, maleKey),
                     setValue: v => SetBoostByMale(femaleConfig, maleKey, v),
                     min: MinChance,
@@ -385,8 +385,8 @@ var packs = GetBreedingPacksSnapshot();
 
                 page.FloatLabel(
                     elementId: $"MaleChance_{maleKey}",
-                    name: () => core.Translation.GetString("config.MaleChance.name"),
-                    tooltip: () => core.Translation.GetString("config.MaleChance.description"),
+                    name: () => core.Translation.GetString("config.breeding.maleChance.name"),
+                    tooltip: () => core.Translation.GetString("config.breeding.maleChance.description"),
                     getValue: () => GetMaleChance(femaleConfig, maleKey),
                     setValue: v => SetMaleChance(femaleConfig, maleKey, v),
                     min: MinChance,
@@ -407,34 +407,34 @@ var packs = GetBreedingPacksSnapshot();
             title: () => core.Translation.GetString("config.page.advanced.name"),
             build: page =>
             {
-                page.Bool(cfg => cfg.StabilizeFarmAnimalsAssetOrder, optionId: "StabilizeFarmAnimalsAssetOrder", tooltip: true);
+                page.Bool(cfg => cfg.StabilizeFarmAnimalsAssetOrder, optionId: "advanced.stabilizeFarmAnimalsAssetOrder", tooltip: true);
 
                 page.Separator(simple: true);
-                page.Link("itemMappings");
+                page.Link("advanced.itemMappings");
             }
         );
 
         layout.Page(
-            "itemMappings",
-            title: () => core.Translation.GetString("config.page.itemMappings.name"),
+            "advanced.itemMappings",
+            title: () => core.Translation.GetString("config.page.advanced.itemMappings.name"),
             build: page => BuildItemMappingsIndexPage(page, core)
         );
 
         layout.Page(
-            "itemMappingsEgg",
-            title: () => core.Translation.GetString("config.page.itemMappingsEgg.name"),
+            "advanced.itemMappings.egg",
+            title: () => core.Translation.GetString("config.page.advanced.itemMappings.egg.name"),
             build: page => BuildItemMappingsCloneTypePage(page, core, configProvider, CloneItemType.Egg)
         );
 
         layout.Page(
-            "itemMappingsMilk",
-            title: () => core.Translation.GetString("config.page.itemMappingsMilk.name"),
+            "advanced.itemMappings.milk",
+            title: () => core.Translation.GetString("config.page.advanced.itemMappings.milk.name"),
             build: page => BuildItemMappingsCloneTypePage(page, core, configProvider, CloneItemType.Milk)
         );
 
         layout.Page(
-            "itemMappingsMisc",
-            title: () => core.Translation.GetString("config.page.itemMappingsMisc.name"),
+            "advanced.itemMappings.misc",
+            title: () => core.Translation.GetString("config.page.advanced.itemMappings.misc.name"),
             build: page => BuildItemMappingsCloneTypePage(page, core, configProvider, CloneItemType.Misc)
         );
     }
@@ -443,9 +443,9 @@ var packs = GetBreedingPacksSnapshot();
     {
         page.ParagraphDynamic(() => core.Translation.GetString("config.itemMappings.paragraph"), id: "itemmappings_paragraph");
         page.Separator(simple: true);
-        page.Link("itemMappingsEgg");
-        page.Link("itemMappingsMilk");
-        page.Link("itemMappingsMisc");
+        page.Link("advanced.itemMappings.egg");
+        page.Link("advanced.itemMappings.milk");
+        page.Link("advanced.itemMappings.misc");
     }
 
     private static void BuildItemMappingsCloneTypePage(
@@ -586,13 +586,13 @@ var packs = GetBreedingPacksSnapshot();
                 page.ParagraphGmcmOptionsStatus();
                 page.Separator(simple: true);
 
-                page.Bool(cfg => cfg.ShowEdits, optionId: "ShowEdits", tooltip: true);
-                page.Bool(cfg => cfg.ShowAnimalKeys, optionId: "ShowAnimalKeys", tooltip: true);
+                page.Bool(cfg => cfg.ShowEdits, optionId: "debug.showEdits", tooltip: true);
+                page.Bool(cfg => cfg.ShowAnimalKeys, optionId: "debug.showAnimalKeys", tooltip: true);
 
                 page.Separator(simple: true);
 
-                page.Bool(cfg => cfg.VerboseLogging, optionId: "VerboseLogging", tooltip: true);
-                page.Bool(cfg => cfg.TestingLogging, optionId: "TestingLogging", tooltip: true);
+                page.Bool(cfg => cfg.VerboseLogging, optionId: "debug.verboseLogging", tooltip: true);
+                page.Bool(cfg => cfg.TestingLogging, optionId: "debug.testingLogging", tooltip: true);
             }
         );
     }
@@ -1045,10 +1045,10 @@ private static string BuildMaleEggsParagraph(I18TranslationHelper i18n, Breeding
     }
 
     private static string BuildPackPageId(string contentPackId)
-        => "breeding_pack_" + Slug(contentPackId);
+        => "breeding.pack." + Slug(contentPackId);
 
     private static string BuildFemalePageId(string contentPackId, string femaleKey)
-        => "breeding_female_" + Slug(contentPackId) + "_" + Slug(femaleKey);
+        => "breeding.female." + Slug(contentPackId) + "." + Slug(femaleKey);
 
     private static string Slug(string value)
     {
