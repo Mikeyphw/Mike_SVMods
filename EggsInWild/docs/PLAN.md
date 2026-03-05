@@ -236,3 +236,11 @@
 - `dotnet test Tests/Tests.sln` passes.
 - `export_effective_bulk` output matches GMCM export lines (`modId | csvKeys`), one line per mod-group.
 - `validate_bulk` reports parsing issues and FarmAnimalKey warnings when `Data/FarmAnimals` is available.
+
+## Phase 18C — NestCore-first GMCM consolidation
+
+1. Keep `EiwGmcmMenu` as the single GMCM layout orchestrator.
+2. Keep WildAnimals page bodies under `Infrastructure/Integrations/Gmcm/Pages/*`.
+3. Replace pseudo-button fake-bool command controls with NestCore `Action(...)`.
+4. Remove no-longer-used GMCM layout bodies from `ModEntry.Gmcm*` where safe.
+5. Preserve page IDs, option IDs, field IDs, translation keys, and save-aware rebuild behavior.

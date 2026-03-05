@@ -155,93 +155,14 @@ public sealed partial class ModEntry
         // Create the menu and rebuild layout
         var menu = new EiwGmcmMenu(ctx);
         _gmcmHost.RebuildLayoutSaveAware(
-            define: layout => menu.RebuildLayout(layout, i18n, force),
+            define: layout =>
+            {
+                menu.RebuildLayout(layout, i18n, force);
+                _knownLocationTypeKeysForNormalization = ctx.KnownLocationTypeKeys;
+            },
             force: force,
             rebuildOnSaveLoaded: true,
             rebuildOnReturnedToTitle: true);
-    }
-
-    private void BuildAnimalProgressionPage(GmcmPageBuilder<ModConfig> page, I18TranslationHelper i18n)
-    {
-        if (!Context.IsWorldReady)
-        {
-            page.ParagraphDynamic(
-                () => Translate(i18n, "config.paragraph.animalProgression.loadSave.text", "Load a save to edit per-animal progression settings."),
-                id: "animalProgression_loadSave");
-            return;
-        }
-
-        Dictionary<string, FarmAnimalData> farmAnimals;
-        try
-        {
-            farmAnimals = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
-        }
-        catch (Exception ex)
-        {
-            var smapiLog = new SmapiLog(Monitor);
-            smapiLog.LogScoped(ScopedLogCatalog.ModWeCategory.Content, $"Failed to load Data/FarmAnimals for GMCM Animal Progression page: {ex}", LogLevel.Error);
-            page.ParagraphDynamic(
-                () => Translate(i18n, "config.paragraph.animalProgression.loadFailed.text", "Couldn't load Data/FarmAnimals. Try again after loading a save, or check your SMAPI log."),
-                id: "animalProgression_loadFailed");
-            return;
-        }
-
-        if (farmAnimals.Count == 0)
-        {
-            page.ParagraphDynamic(
-                () => Translate(i18n, "config.paragraph.animalProgression.empty.text", "No farm animals were found in Data/FarmAnimals."),
-                id: "animalProgression_empty");
-            return;
-        }
-
-        var config = _config!.Get();
-        config.AnimalProgressionMode ??= new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-
-        var animals = farmAnimals
-            .OrderBy(pair => pair.Value?.DisplayName?.ToString() ?? pair.Key, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase);
-
-        foreach (var (animalId, farmAnimal) in animals)
-        {
-            var defaultEnabled = AnimalShopProgressionPolicy.DefaultEnabled(animalId);
-            var elementId = $"animalProgression.{animalId}";
-
-            page.BoolLabel(
-                elementId: elementId,
-                name: () => BuildAnimalOptionName(animalId, farmAnimal),
-                tooltip: () => BuildAnimalOptionTooltip(i18n, animalId, defaultEnabled),
-                getValue: () => config.AnimalProgressionMode.TryGetValue(animalId, out var configured) ? configured : defaultEnabled,
-                setValue: value =>
-                {
-                    if (value == defaultEnabled)
-                        config.AnimalProgressionMode.Remove(animalId);
-                    else
-                        config.AnimalProgressionMode[animalId] = value;
-                });
-        }
-    }
-
-    private static string BuildAnimalOptionName(string animalId, FarmAnimalData? farmAnimal)
-    {
-        var displayName = farmAnimal?.DisplayName?.ToString();
-        if (string.IsNullOrWhiteSpace(displayName) || string.Equals(displayName, animalId, StringComparison.OrdinalIgnoreCase))
-            return animalId;
-
-        return $"{displayName} ({animalId})";
-    }
-
-    private static string BuildAnimalOptionTooltip(I18TranslationHelper i18n, string animalId, bool defaultEnabled)
-    {
-        var defaultState = defaultEnabled
-            ? Translate(i18n, "config.animalProgression.state.enabled", "Enabled")
-            : Translate(i18n, "config.animalProgression.state.disabled", "Disabled");
-
-        return Translate(
-            i18n,
-            "config.animalProgression.entry.tooltip",
-            $"Gate this animal behind Animal Notes progression. Default: {defaultState}. Key: {animalId}.",
-            defaultState,
-            animalId);
     }
 
     internal static string Translate(I18TranslationHelper i18n, string key, string fallback, params object[] tokens)

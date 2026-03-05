@@ -72,3 +72,11 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Phase 10C: add unit tests covering bulk parser + planner behavior (set/clear/no-op).
 - [x] Phase 10D: add dev commands for export_effective_bulk + validate_bulk.
 - [ ] Add dev-command-focused tests for export/validate output formatting.
+
+## Phase 18C — NestCore-first GMCM consolidation
+- [x] Keep `EiwGmcmMenu` as the single GMCM layout orchestrator.
+- [x] Keep page bodies under `Infrastructure/Integrations/Gmcm/Pages/*`.
+- [x] Replace fake-bool one-shot GMCM command controls with `Action(...)`.
+- [x] Move/remove duplicated Animal Progression GMCM page logic from `ModEntry.Gmcm.cs`.
+- [x] Preserve save-aware rebuild behavior and known-location-type normalization handoff.
+- [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).

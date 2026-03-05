@@ -28,3 +28,9 @@
 - [x] 10C: unit tests for bulk parsing + planning (set/clear/no-op).
 - [x] 10D: dev commands `export_effective_bulk` + `validate_bulk`.
 - [ ] Add dev-command-focused tests for export/validate output formatting.
+
+## Phase 18C — GMCM migration
+- [x] Replace pseudo-button fake bool GMCM controls with `Action(...)` on WildAnimals pages.
+- [x] Keep `EiwGmcmMenu` as the GMCM orchestrator and preserve save-aware rebuild.
+- [x] Remove duplicated Animal Progression page body from legacy `ModEntry.Gmcm.cs`.
+- [ ] Run full build gate after GMCM consolidation.

@@ -631,33 +631,17 @@ public static class WildAnimalDetailPages
             });
 
         // Clear staged bulk
-        page.Bool(
-            optionId: ModEntry.Translate(i18n, "config.wildAnimals.extraModAnimalKeys.bulkClear.name", "Clear staged bulk input"),
-            getValue: () => false,
-            setValue: v =>
-            {
-                if (!v)
-                    return;
-
-                ctx.ExtraModAnimalKeysBulkByWildAnimalKey.Remove(key);
-            },
+        page.Action(
+            optionId: "wildAnimals.extraModAnimalKeys.bulkClear",
+            onAction: () => ctx.ExtraModAnimalKeysBulkByWildAnimalKey.Remove(key),
             tooltip: true,
             fieldId: $"wildAnimals_extraModAnimalKeys_bulkClear_{GmcmFieldIds.Normalize(key)}");
 
         // Export to SMAPI log
-        page.BoolLabel(
-            elementId: $"wildAnimals.{key}.extraModAnimalKeys.exportEffective",
-            name: () => ModEntry.Translate(i18n, "config.wildAnimals.extraModAnimalKeys.exportEffective.name", "Export effective blocks to SMAPI log"),
-            tooltip: () => ModEntry.Translate(
-                i18n,
-                "config.wildAnimals.extraModAnimalKeys.exportEffective.tooltip",
-                "Write one line per mod-group to SMAPI log: modId | csvKeys (effective after overrides)."),
-            getValue: () => false,
-            setValue: v =>
+        page.Action(
+            optionId: "wildAnimals.extraModAnimalKeys.exportEffective",
+            onAction: () =>
             {
-                if (!v)
-                    return;
-
                 var cfg = ctx.GetConfig();
                 var ov = GetOverrideForKey(cfg, key);
 
@@ -673,22 +657,15 @@ public static class WildAnimalDetailPages
                     outLines.Add(ModEntry.Translate(i18n, "config.wildAnimals.value.none", "(none)"));
 
                 ctx.Monitor.Log(string.Join(Environment.NewLine, outLines), LogLevel.Info);
-            });
+            },
+            tooltip: true,
+            fieldId: page.FieldId($"wildAnimals.{key}.extraModAnimalKeys.exportEffective"));
 
         // Copy export to bulk (overwrite)
-        page.BoolLabel(
-            elementId: $"wildAnimals.{key}.extraModAnimalKeys.copyExportToBulkOverwrite",
-            name: () => ModEntry.Translate(i18n, "config.wildAnimals.extraModAnimalKeys.copyExportToBulkOverwrite.name", "Copy export into bulk stage (overwrite)"),
-            tooltip: () => ModEntry.Translate(
-                i18n,
-                "config.wildAnimals.extraModAnimalKeys.copyExportToBulkOverwrite.tooltip",
-                "Overwrite the staged bulk input with the exported effective blocks (one line per mod-group: modId | csvKeys)."),
-            getValue: () => false,
-            setValue: v =>
+        page.Action(
+            optionId: "wildAnimals.extraModAnimalKeys.copyExportToBulkOverwrite",
+            onAction: () =>
             {
-                if (!v)
-                    return;
-
                 var cfg = ctx.GetConfig();
                 var ov = GetOverrideForKey(cfg, key);
 
@@ -701,22 +678,15 @@ public static class WildAnimalDetailPages
                 }
 
                 ctx.ExtraModAnimalKeysBulkByWildAnimalKey[key] = ModEntry.ParseExtraModAnimalKeysBulk(raw, extraModIdsForGmcm, GetKnownFarmAnimalIds());
-            });
+            },
+            tooltip: true,
+            fieldId: page.FieldId($"wildAnimals.{key}.extraModAnimalKeys.copyExportToBulkOverwrite"));
 
         // Copy export to bulk (append)
-        page.BoolLabel(
-            elementId: $"wildAnimals.{key}.extraModAnimalKeys.copyExportToBulkAppend",
-            name: () => ModEntry.Translate(i18n, "config.wildAnimals.extraModAnimalKeys.copyExportToBulkAppend.name", "Copy export into bulk stage (append)"),
-            tooltip: () => ModEntry.Translate(
-                i18n,
-                "config.wildAnimals.extraModAnimalKeys.copyExportToBulkAppend.tooltip",
-                "Append the exported effective blocks to the staged bulk input (one line per mod-group: modId | csvKeys)."),
-            getValue: () => false,
-            setValue: v =>
+        page.Action(
+            optionId: "wildAnimals.extraModAnimalKeys.copyExportToBulkAppend",
+            onAction: () =>
             {
-                if (!v)
-                    return;
-
                 var cfg = ctx.GetConfig();
                 var ov = GetOverrideForKey(cfg, key);
 
@@ -734,7 +704,9 @@ public static class WildAnimalDetailPages
                 combined += exportRaw;
 
                 ctx.ExtraModAnimalKeysBulkByWildAnimalKey[key] = ModEntry.ParseExtraModAnimalKeysBulk(combined, extraModIdsForGmcm, GetKnownFarmAnimalIds());
-            });
+            },
+            tooltip: true,
+            fieldId: page.FieldId($"wildAnimals.{key}.extraModAnimalKeys.copyExportToBulkAppend"));
 
         // Refresh note
         page.ParagraphDynamic(
@@ -1049,14 +1021,10 @@ public static class WildAnimalDetailPages
         HashSet<string> extraModIdsForGmcm,
         Func<HashSet<string>?> getKnownFarmAnimalIds)
     {
-        page.Bool(
-            optionId: ModEntry.Translate(i18n, "config.wildAnimals.extraModAnimalKeys.bulkApply.name", "Apply staged bulk changes"),
-            getValue: () => false,
-            setValue: v =>
+        page.Action(
+            optionId: "wildAnimals.extraModAnimalKeys.bulkApply",
+            onAction: () =>
             {
-                if (!v)
-                    return;
-
                 if (!ctx.ExtraModAnimalKeysBulkByWildAnimalKey.TryGetValue(key, out var st) || string.IsNullOrWhiteSpace(st.Raw))
                     return;
 
