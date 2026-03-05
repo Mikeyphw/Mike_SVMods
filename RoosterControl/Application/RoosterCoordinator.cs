@@ -68,6 +68,8 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
             RoosterHelper?.UpdateConfig(_config);
         }
     }
+
+    internal I18TranslationHelper I18n => _i18n;
     internal RoosterHelper RoosterHelper = null!;
 internal ILetMeHatchApi? HatchApi;
 

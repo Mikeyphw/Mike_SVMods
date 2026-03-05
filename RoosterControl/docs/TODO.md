@@ -11,8 +11,8 @@
 
 ## After Phase 15: Phase 16 — GMCM standardization slice
 - [x] 16A: adopt NestCore GMCM batching helpers in RoosterControl
-- [ ] 16B: extract root/probabilities/debug page builders into `Integrations/Gmcm/Pages/*`
-- [ ] 16C: extract rooster page registration and editors into `RoosterTypePages`
+- [x] 16B: extract root/probabilities/debug page builders into `Integrations/Gmcm/Pages/*`
+- [x] 16C: extract rooster page registration and editors into `RoosterTypePages`
 - [ ] 16D: add `RoosterControlGmcmMenu` as the layout orchestrator
 - [ ] Decide whether `compat` remains coordinator-owned
 - [ ] Decide whether `females` remains coordinator-owned

@@ -26,14 +26,7 @@ internal static class RoosterRootPage
         b.Separator(simple: true);
 
         b.Section("root.roosters");
-        b.Links(
-            tooltip: true,
-            "rooster.white",
-            "rooster.brown",
-            "rooster.blue",
-            "rooster.void",
-            "rooster.gold"
-        );
+        b.Links(tooltip: true, RoosterTypePages.PageIds);
     }
 }
 

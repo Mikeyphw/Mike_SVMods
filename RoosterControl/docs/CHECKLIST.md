@@ -84,11 +84,11 @@
 - [ ] Verify build
 
 ## Phase 16C — Extract rooster-type GMCM pages
-- [ ] Add `Integrations/Gmcm/Pages/RoosterTypePages.cs`
-- [ ] Move rooster page registration and editor logic into that helper
-- [ ] Add only minimal coordinator access needed for translation/config
-- [ ] Keep `compat` and `females` on the coordinator
-- [ ] Verify build
+- [x] Add `Integrations/Gmcm/Pages/RoosterTypePages.cs`
+- [x] Move rooster page registration and editor logic into that helper
+- [x] Add only minimal coordinator access needed for translation/config
+- [x] Keep `compat` and `females` on the coordinator
+- [x] Verify build
 
 ## Phase 16D — Add RoosterControl GMCM orchestrator
 - [ ] Add `Integrations/Gmcm/RoosterControlGmcmMenu.cs`
