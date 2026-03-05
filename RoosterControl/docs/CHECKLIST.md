@@ -91,9 +91,9 @@
 - [x] Verify build
 
 ## Phase 16D — Add RoosterControl GMCM orchestrator
-- [ ] Add `Integrations/Gmcm/RoosterControlGmcmMenu.cs`
-- [ ] Move layout composition into the orchestrator
-- [ ] Keep coordinator ownership only for host setup, rebuild/save/reset, and `compat`/`females`
-- [ ] Replace direct `DefineGmcmLayout(...)` usage with the orchestrator
+- [x] Add `Integrations/Gmcm/RoosterControlGmcmMenu.cs`
+- [x] Move layout composition into the orchestrator
+- [x] Keep coordinator ownership only for host setup, rebuild/save/reset, and `compat`/`females`
+- [x] Replace direct `DefineGmcmLayout(...)` usage with the orchestrator
 - [ ] Update docs (PLAN/CHECKLIST/TODO)
 - [ ] Verify build

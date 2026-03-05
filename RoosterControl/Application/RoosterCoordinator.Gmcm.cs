@@ -10,6 +10,7 @@ using RoosterControl.Application.Hatching;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
+using RoosterControl.Integrations.Gmcm;
 using RoosterControl.Integrations.Gmcm.Pages;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -26,6 +27,7 @@ namespace RoosterControl.Application;
 internal sealed partial class RoosterCoordinator
 {
     private GmcmConfigHost<RoosterControlConfig>? _gmcmHost;
+    private RoosterControlGmcmMenu? _gmcmMenu;
     private bool _gmcmRebuildQueued;
     private string _compatSourcesSummary = string.Empty;
     private string _compatValidationSummary = string.Empty;
@@ -57,8 +59,10 @@ internal sealed partial class RoosterCoordinator
         if (_gmcmHost is null)
             return;
 
+        _gmcmMenu = new RoosterControlGmcmMenu(this, BuildCompatPage, BuildFemalesPage);
+
         _gmcmHost.RebuildLayout(
-            define: DefineGmcmLayout,
+            define: _gmcmMenu.DefineLayout,
             fieldIdPrefix: ModManifest.UniqueID,
             titleScreenOnly: false,
             force: true,
@@ -110,21 +114,6 @@ internal sealed partial class RoosterCoordinator
 
         if (didReset)
             RequestGmcmRebuild();
-    }
-
-    private void DefineGmcmLayout(GmcmMenuLayout<RoosterControlConfig> layout)
-    {
-        layout.Root(RoosterRootPage.Build);
-
-        layout.Page("compat", BuildCompatPage);
-
-        layout.Page("probabilities", RoosterProbabilitiesPage.Build);
-
-        layout.Page("females", BuildFemalesPage);
-
-        layout.Page("debug", RoosterDebugPage.Build);
-
-        RoosterTypePages.Define(layout, this);
     }
 
 private const string AllRoosterProvidersValue = "__ALL__";
@@ -955,7 +944,7 @@ private void PersistAndApplyCompatChange(string reason)
         {
             _gmcmRebuildQueued = false;
             _gmcmHost?.RebuildLayout(
-                define: DefineGmcmLayout,
+                define: _gmcmMenu!.DefineLayout,
                 fieldIdPrefix: ModManifest.UniqueID,
                 titleScreenOnly: false,
                 force: true,
