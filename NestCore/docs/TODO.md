@@ -26,5 +26,9 @@
 - [x] Phase 18A: document `Action(...)` in `GMCM_BUILDER.md` with simple + reset/remove/apply examples.
 - [ ] Phase 18A: run full repo build gate after NestCore action integration.
 
+- [x] Phase 18D: establish repo GMCM convention rules in `GMCM_BUILDER.md`.
+- [x] Phase 18D: align NestCore/LetMeHatch/EggsInWild docs to the shared GMCM convention.
+- [ ] Phase 18D: run full repo build gate after docs alignment.
+
 - [ ] Add a tiny consumer mod example (outside NestCore) wired to a real `assets/views/*.sml` view.
 - [ ] Consider a SMAPI main-thread scheduler helper for async viewmodels that update UI-bound properties.

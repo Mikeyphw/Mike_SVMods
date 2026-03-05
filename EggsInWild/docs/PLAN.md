@@ -244,3 +244,11 @@
 3. Replace pseudo-button fake-bool command controls with NestCore `Action(...)`.
 4. Remove no-longer-used GMCM layout bodies from `ModEntry.Gmcm*` where safe.
 5. Preserve page IDs, option IDs, field IDs, translation keys, and save-aware rebuild behavior.
+
+## Phase 18D — Repo GMCM convention alignment
+
+1. Confirm NestCore is the GMCM plumbing layer and `EiwGmcmMenu` is the orchestrator.
+2. Keep page bodies under `Infrastructure/Integrations/Gmcm/Pages/*`.
+3. Keep one-shot commands on `Action(...)` controls instead of fake bool toggles.
+4. Keep save-aware rebuild behavior for world-dependent pages.
+5. Document any intentionally retained GMCM wrappers only when runtime-coupling requires it.

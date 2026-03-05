@@ -36,3 +36,6 @@
 - [x] Keep dynamic/dictionary GMCM controls on manual/unbound APIs only.
 - [x] Use GMCM page batching helpers where safe for repeated page registration.
 - [ ] Run full build gate after GMCM DSL standardization.
+
+## Phase 18D
+- [x] Mark LetMeHatch docs aligned with repo-wide GMCM convention.

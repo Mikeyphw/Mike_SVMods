@@ -77,3 +77,10 @@ Steps:
 3. Keep existing field-id generation and i18n conventions intact.
 4. Document `Action(...)` in `GMCM_BUILDER.md` with simple and reset/remove/apply examples.
 5. Verify `NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, and solution builds remain green.
+
+## Phase 18D — Repo GMCM convention alignment
+
+1. Add a repo convention section to `GMCM_BUILDER.md` with the 10 standardized GMCM rules.
+2. Record the convention as established in NestCore planning/checklist/todo docs.
+3. Mark downstream mod docs as aligned (`LetMeHatch`, `EggsInWild`).
+4. Keep production behavior unchanged (docs-only alignment in this phase).

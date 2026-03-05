@@ -116,6 +116,13 @@ Status: completed (stable dump DTOs + more tests).
 4. Use page batching helpers (`layout.Pages(...)`) for repeated page registration where safe.
 5. Preserve menu behavior, grouping, translation keys, and config schema.
 
+## Phase 18D — Repo GMCM convention alignment
+
+1. Confirm LetMeHatch GMCM follows the repo convention (NestCore plumbing + `LmhGmcmMenu` orchestration).
+2. Keep page-specific logic in GMCM integration files (no giant inline `ModEntry` GMCM bodies).
+3. Keep bound options for direct config members; keep manual options only for dynamic/derived values.
+4. Keep save-aware rebuild path for menu sections that depend on loaded save content.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(

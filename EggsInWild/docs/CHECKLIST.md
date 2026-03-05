@@ -80,3 +80,8 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Move/remove duplicated Animal Progression GMCM page logic from `ModEntry.Gmcm.cs`.
 - [x] Preserve save-aware rebuild behavior and known-location-type normalization handoff.
 - [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).
+
+## Phase 18D — Repo GMCM convention alignment
+- [x] EggsInWild docs mark NestCore-first GMCM plumbing as the standard.
+- [x] Docs confirm `EiwGmcmMenu` + `Pages/*` architecture alignment.
+- [x] Docs confirm one-shot commands use `Action(...)`.

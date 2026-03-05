@@ -49,3 +49,9 @@
 - [x] Preserve existing i18n + field-id conventions for action controls.
 - [x] Document `Action(...)` usage with simple and reset/remove/apply examples.
 - [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).
+
+## Phase 18D — Repo GMCM convention alignment
+- [x] Add repo convention section to `GMCM_BUILDER.md` with the 10 standardized rules.
+- [x] Record convention establishment in NestCore docs.
+- [x] Align LetMeHatch/EggsInWild docs to mark convention adoption.
+- [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).

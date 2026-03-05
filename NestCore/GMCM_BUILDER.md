@@ -33,6 +33,23 @@ This folder provides a small layer on top of **Generic Mod Config Menu (GMCM)** 
 
 ---
 
+## Repo Convention
+
+Repo-wide GMCM rules for `Mike_SVMods`:
+
+1. NestCore is the required GMCM plumbing layer.
+2. Mods own only mod-specific pages and logic.
+3. Menu orchestration belongs in one `<Mod>GmcmMenu` class.
+4. Page bodies belong in `Integrations/Gmcm/Pages/*`.
+5. Use bound options for direct config members.
+6. Use unbound/manual options only for dynamic/derived values.
+7. Use `Action(...)` for one-shot commands.
+8. Use batching helpers for repeated page links/page registration.
+9. Use save-aware rebuild for menus that depend on save/world data.
+10. Do not leave giant inline GMCM layout bodies in `ModEntry` or runtime coordinators.
+
+---
+
 ## Quick start
 
 ### Recommended: use `GmcmConfigHost<TConfig>` (config-bound, minimal boilerplate)

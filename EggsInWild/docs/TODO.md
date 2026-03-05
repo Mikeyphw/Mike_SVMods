@@ -34,3 +34,6 @@
 - [x] Keep `EiwGmcmMenu` as the GMCM orchestrator and preserve save-aware rebuild.
 - [x] Remove duplicated Animal Progression page body from legacy `ModEntry.Gmcm.cs`.
 - [ ] Run full build gate after GMCM consolidation.
+
+## Phase 18D — GMCM convention
+- [x] Mark EggsInWild docs aligned with repo-wide GMCM convention.

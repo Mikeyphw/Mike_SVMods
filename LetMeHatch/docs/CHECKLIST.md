@@ -70,3 +70,9 @@
 - [x] Keep manual/unbound usage only for dynamic/dictionary/derived GMCM controls.
 - [x] Use `layout.Pages(...)` batching helpers for repeated page registration where safe.
 - [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).
+
+## Phase 18D — Repo GMCM convention alignment
+- [x] LetMeHatch is aligned to NestCore-first GMCM plumbing.
+- [x] `LmhGmcmMenu` remains the single menu orchestrator.
+- [x] Direct config options use bound DSL; manual options are limited to dynamic/derived needs.
+- [x] No giant inline GMCM layout body remains in `ModEntry`.
