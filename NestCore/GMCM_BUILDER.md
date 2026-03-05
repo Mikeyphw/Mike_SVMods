@@ -538,6 +538,85 @@ This keeps configs smaller and avoids "redundant overrides" drift over time.
 
 ---
 
+## GMCM id and i18n normalization
+
+This section defines the repo-wide GMCM naming convention for Mike_SVMods.
+
+### Canonical naming rules
+
+#### Page ids
+* Use **dotted lowerCamel** for nested page ids.
+* Top-level root pages may remain single-segment lowerCamel if already canonical:
+  * `edits`
+  * `cloning`
+  * `colors`
+  * `breeding`
+  * `advanced`
+  * `debug`
+  * `compat`
+  * `probabilities`
+  * `females`
+
+Examples:
+* `edits.eggList`
+* `colors.eggPalette`
+* `advanced.itemMappings.egg`
+* `breeding.pack.<slug>`
+* `breeding.female.<packSlug>.<femaleSlug>`
+
+#### Option ids
+* Use:
+  * `<scope>.<lowerCamelName>`
+* Scope must reflect the page/domain, not the C# property casing.
+
+Examples:
+* `general.editEggListByName`
+* `cloning.cloneVanillaEggs`
+* `colors.dynamicCloneTintMode`
+* `breeding.dailyLuckBonus`
+* `debug.verboseLogging`
+
+#### Section ids
+* Use:
+  * `general`
+  * or dotted lowerCamel if nested
+* Examples:
+  * `general`
+  * `breeding.loadedSystems`
+  * `breeding.normalHatching`
+  * `breeding.fertilizedHatching`
+  * `breeding.males`
+
+#### i18n keys
+Use these exact patterns:
+* page:
+  * `config.page.<pageId>.name`
+  * `config.page.<pageId>.description`
+* option:
+  * `config.<optionId>.name`
+  * `config.<optionId>.description`
+* section:
+  * `config.section.<sectionId>.text`
+  * `config.section.<sectionId>.description`
+
+#### Manual GMCM text keys
+If a GMCM-facing label is not a direct page/option/section id, scope it under the closest page/domain.
+
+Examples:
+* `config.breeding.applyDailyBoost.name`
+* `config.breeding.normalEggChance.description`
+
+### Normalization principles
+
+1. Nested page ids use dotted lowerCamel.
+2. Direct config option ids use dotted lowerCamel scoped by page/domain.
+3. Section ids use `config.section.<id>.text`.
+4. Manual GMCM labels should use the closest page/domain namespace.
+5. Avoid PascalCase GMCM ids and legacy mixed page-id naming.
+6. Do not keep duplicate legacy i18n aliases once code is migrated.
+
+---
+
 ## Raw GMCM API
 
 The builder DSL covers the full GMCM API surface.

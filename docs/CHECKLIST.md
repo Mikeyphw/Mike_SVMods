@@ -1,5 +1,48 @@
 # CHECKLIST — LetMeHatch
 
+## Repo Phase R1 — GMCM id/i18n Normalization
+
+### Phase R1A — Define repo normalization rules
+- [x] Update NestCore/GMCM_BUILDER.md with GMCM id and i18n normalization rules
+- [x] Update docs/PLAN.md with Phase R1 entry
+- [x] Update docs/CHECKLIST.md (this file)
+- [x] Update docs/TODO.md with Phase R1 current work
+- [ ] Run build gate
+- [ ] Commit Phase R1A
+
+### Phase R1B — Normalize LetMeHatch GMCM ids and i18n keys
+- [ ] Apply C# page-id literal renames in LmhGmcmMenu.cs
+- [ ] Apply C# option-id renames in LmhGmcmMenu.cs
+- [ ] Apply C# GetString(...) key renames in LmhGmcmMenu.cs
+- [ ] Apply i18n page key renames in default.json and pt-br.json
+- [ ] Apply i18n option key renames in both i18n files
+- [ ] Apply i18n manual GMCM key renames in both i18n files
+- [ ] Remove legacy page keys from both i18n files
+- [ ] Run verification greps to confirm old keys are gone
+- [ ] Run build gate
+- [ ] Commit Phase R1B
+
+### Phase R1C — Prune RoosterControl legacy GMCM i18n aliases
+- [ ] Verify no config.(Bool|Number|Text|Page|Section). references in RoosterControl C#
+- [ ] Delete legacy config.Bool.* alias keys from both i18n files
+- [ ] Delete legacy config.Number.* alias keys from both i18n files
+- [ ] Delete legacy config.Text.* alias keys from both i18n files
+- [ ] Verify canonical dotted lowercase GMCM keys remain intact
+- [ ] Run build gate
+- [ ] Commit Phase R1C
+
+### Phase R1D — Verify EggsInWild GMCM ids already normalized
+- [ ] Run verification checks for EggsInWild
+- [ ] Confirm EggsInWild production code unchanged (docs-only)
+- [ ] Run build gate
+- [ ] Commit Phase R1D
+
+### Phase R1E — Finalize repo GMCM id/i18n normalization
+- [ ] Verify all phases completed correctly
+- [ ] Update final docs
+- [ ] Run build gate
+- [ ] Commit Phase R1E
+
 ## Scope
 ## Phase 0 — Keep docs in sync
 - [ ] Update `docs/PLAN.md`, `docs/CHECKLIST.md`, `docs/TODO.md` as phases/steps complete.

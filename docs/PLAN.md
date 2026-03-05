@@ -1,5 +1,34 @@
 # PLAN — GMCM Menu (LetMeHatch)
 
+## Repo-wide GMCM ID / i18n Normalization (Phase R1)
+
+### Phase R1A — Define repo normalization rules in docs
+- [x] Update NestCore/GMCM_BUILDER.md with GMCM id and i18n normalization rules
+- [ ] Update docs/PLAN.md (this file)
+- [ ] Update docs/CHECKLIST.md
+- [ ] Update docs/TODO.md
+- [ ] Run build gate
+- [ ] Commit Phase R1A
+
+### Phase R1B — Normalize LetMeHatch GMCM ids and i18n keys
+- Normalize LetMeHatch page ids from PascalCase to dotted lowerCamel
+- Normalize LetMeHatch option ids from PascalCase to dotted lowerCamel
+- Update i18n keys to match normalized ids
+- No config/schema changes
+
+### Phase R1C — Prune RoosterControl legacy GMCM i18n aliases
+- Verify no old-prefix references in C# code
+- Delete unused legacy `config.Bool.*`, `config.Number.*`, `config.Text.*` i18n keys
+- Keep canonical dotted keys intact
+
+### Phase R1D — Verify EggsInWild GMCM ids already normalized
+- Run verification checks for EggsInWild
+- Confirm no production changes needed
+
+### Phase R1E — Finalize repo GMCM id / i18n normalization
+- Final validation of all phases
+- Update docs to reflect completion
+
 ## Scope
 - Subdir: `LetMeHatch`
 - Dependency: NestCore Phase 1 (host helper). Dynamic editor work depends on NestCore Phase 5.
