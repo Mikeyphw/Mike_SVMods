@@ -20,6 +20,8 @@ public sealed class EiwGmcmContext
     public Func<ModConfig> GetConfig { get; }
     public Action SaveConfig { get; }
     internal WildAnimalsEditorService WildAnimalsEditor { get; }
+    internal Action? OpenWildAnimalsEditor { get; set; }
+    internal bool IsWildAnimalsEditorAvailable { get; set; }
 
     /// <summary>
     /// Bulk state storage for ExtraModAnimalKeys per wild animal key.

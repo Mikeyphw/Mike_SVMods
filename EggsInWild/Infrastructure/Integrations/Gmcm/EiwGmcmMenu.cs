@@ -63,7 +63,7 @@ public sealed class EiwGmcmMenu
 #endif
     }
 
-    private static void DefineRoot(GmcmMenuLayout<ModConfig> layout, I18TranslationHelper i18n)
+    private void DefineRoot(GmcmMenuLayout<ModConfig> layout, I18TranslationHelper i18n)
     {
         layout.Root(root =>
         {
@@ -77,6 +77,15 @@ public sealed class EiwGmcmMenu
             root.Link("animalNotes", tooltip: true);
             root.Link("animalProgression", tooltip: true);
             root.Link("wildAnimals", tooltip: true);
+            root.Action(
+                optionId: "wildAnimals.openEditor",
+                onAction: () => _ctx.OpenWildAnimalsEditor?.Invoke(),
+                tooltip: true);
+            root.ParagraphDynamic(
+                () => _ctx.IsWildAnimalsEditorAvailable
+                    ? ModEntry.Translate(i18n, "config.paragraph.wildAnimals.stardewUiStatus.enabled.text", "StardewUI editor available.")
+                    : ModEntry.Translate(i18n, "config.paragraph.wildAnimals.stardewUiStatus.disabled.text", "StardewUI not installed. WildAnimals editor launcher disabled."),
+                id: "wildAnimals_stardewUi_status");
 #if WEGG_DEV
             root.Link("debug", tooltip: true);
 #endif

@@ -16,6 +16,7 @@ using EggsInWild.Application.Animals;
 using EggsInWild.Application.Facade;
 using EggsInWild.Application.Progression;
 using EggsInWild.Core.Enums;
+using EggsInWild.Core.ShopAnchors;
 using EggsInWild.Core.ShopProgression;
 using EggsInWild.Infrastructure.Api;
 using EggsInWild.Infrastructure.Content;
@@ -36,6 +37,9 @@ using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Assets;
+using EggsInWild.Application.AnimalNotes;
+using Mikew.NestCore.Framework;
+using static Mikew.NestCore.EnumsAndStrings.Strings;
 
 namespace EggsInWild;
 
@@ -50,12 +54,14 @@ public sealed partial class ModEntry : Mod
     private ProgressionService? _contentProgression;
     private ILog? _contentLog;
     private IModDataLoader? _contentDataLoader;
+    private ChosenEggAssignments? _chosenEggAssignments;
 
     // Bulk state moved to EiwGmcmContext
     // private readonly Dictionary<string, ExtraModAnimalKeysBulkState> _extraModAnimalKeysBulkByWildAnimalKey = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _knownLocationTypeKeysForNormalization = new(StringComparer.OrdinalIgnoreCase);
 
     private DesertTombRuntime? _desertTombRuntime;
+    private Infrastructure.DesertTomb.Diagnostics.DesertTombDiagnostics? _desertTombDiagnostics;
     private bool _desertTombHarmonyInstalled;
 
     public override void Entry(IModHelper helper)
@@ -70,7 +76,12 @@ public sealed partial class ModEntry : Mod
 
         helper.Events.GameLoop.GameLaunched += OnGameLaunched;
         helper.Events.GameLoop.DayStarted += OnDayStarted;
+        helper.Events.GameLoop.DayEnding += OnDayEnding;
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+        helper.Events.GameLoop.Saving += OnSaving;
+        helper.Events.Player.Warped += OnWarped;
+        helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
+        helper.Events.Display.RenderedHud += OnRenderedHud;
         InitializeModAssetHandler();
         InitializeContentPipeline();
 
@@ -83,8 +94,12 @@ public sealed partial class ModEntry : Mod
         if (_config is null)
             return null;
 
-        _api ??= new WildEggsApi(() => _config.Get());
-        SyncApiBirthTextMode();
+        _api ??= new WildEggsApi(
+            () => _config.Get(),
+            getStep: GetContentProgressionStep,
+            getQuestCompletionDays: () => _contentProgression?.GetQuestCompletionDays()
+                ?? new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase));
+        SyncApiState();
         return _api;
     }
 
@@ -104,34 +119,123 @@ public sealed partial class ModEntry : Mod
         _devJsonTuning = new DevJsonTuningService(Helper, new SmapiLog(Monitor));
 #endif
 
+        InitializeWildAnimalsStardewUi();
+        UpdateDiagnosticsState();
         RebuildGmcmLayout(force: true);
     }
 
     private void OnDayStarted(object? sender, DayStartedEventArgs e)
     {
         _contentProgression?.OnDayStarted();
-        SyncApiBirthTextMode();
+        _animalNotes?.OnDayStarted();
+        _animalNotesClientObserver?.OnDayStarted();
+        SyncApiState();
     }
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         _contentProgression?.OnSaveLoaded();
+        _animalNotes?.OnSaveLoaded();
+        _animalNotesValidator?.ValidateAndLog();
+        SyncApiState();
     }
 
 
     
 private void OnConfigUpdated(object? sender, ModConfig _)
 {
-    SyncApiBirthTextMode();
+    SyncApiState();
     TryInstallDesertTombHarmonyPatches(reason: "config updated");
+    UpdateDiagnosticsState();
 }
 
-private void SyncApiBirthTextMode()
+private void SyncApiState()
     {
         if (_config is null || _api is null)
             return;
 
         _api.SetBirthTextMode(_config.Get().BirthText);
+
+        var log = _contentLog ?? new SmapiLog(Monitor);
+        var dataLoader = _contentDataLoader
+            ?? new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), log), _config, log);
+        var snapshot = dataLoader.Load();
+
+        _api.SetWildEggsIDs(new HashSet<string>(
+            SpawnAreaEggIds.GetEggItemIds(snapshot.SpawnAreas, log),
+            StringComparer.OrdinalIgnoreCase));
+
+        _api.SetValidAnimals(ComputeParityVisibleAnimals(snapshot));
+
+        _api.ClearChosenAnimals();
+        SyncChosenAnimals(snapshot);
+    }
+
+    private HashSet<string> ComputeParityVisibleAnimals(ModDataSnapshot snapshot)
+    {
+        var visible = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (animalId, wild) in snapshot.WildAnimals)
+        {
+            if (wild.Enabled)
+                visible.Add(animalId);
+        }
+
+        if (_config is null || !_config.Get().ProgressionMode || !Context.IsWorldReady)
+            return visible;
+
+        try
+        {
+            var farmAnimals = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(AssetNames.FarmAnimals);
+            var anchors = ShopAnchorIndex.Build(farmAnimals, warn: _ => { });
+
+            foreach (var animalId in visible.ToList())
+            {
+                if (!farmAnimals.ContainsKey(animalId))
+                {
+                    visible.Remove(animalId);
+                    continue;
+                }
+
+                if (!AnimalShopProgressionPolicy.ShouldGate(animalId, _config.Get(), farmAnimals, anchors))
+                    continue;
+
+                if (!Game1.MasterPlayer.mailReceived.Contains(AnimalNoteIds.NoteMailId(animalId)))
+                    visible.Remove(animalId);
+            }
+        }
+        catch
+        {
+            // Best-effort parity data: keep enabled animals if runtime assets are unavailable.
+        }
+
+        return visible;
+    }
+
+    private void SyncChosenAnimals(ModDataSnapshot snapshot)
+    {
+        if (_api is null || _chosenEggAssignments is null || !Context.IsWorldReady)
+            return;
+
+        try
+        {
+            var farmAnimals = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(AssetNames.FarmAnimals);
+            var anchors = ShopAnchorIndex.Build(farmAnimals, warn: _ => { });
+            _chosenEggAssignments.RecomputeIfNeeded(GetContentProgressionStep(), farmAnimals, anchors);
+
+            foreach (var pair in _chosenEggAssignments.Current.OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                if (!farmAnimals.TryGetValue(pair.Value, out var animal) || animal is null)
+                    continue;
+
+                var isMagic = EggKindExtensions.FromEggItemId(pair.Key).IsMagic();
+                _api.SetChosenAnimal(pair.Value, animal.House ?? string.Empty, isMagic);
+            }
+        }
+        catch
+        {
+            // Best-effort parity data only.
+        }
     }
 
 

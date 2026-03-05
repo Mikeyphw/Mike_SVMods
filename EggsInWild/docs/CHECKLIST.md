@@ -101,6 +101,15 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds.
 - [ ] `Tests/Tests.sln` build is still blocked by unrelated `RoosterControl.Pure` compile errors.
 
+## Phase SUI-2 — StardewUI WildAnimals editor alongside GMCM
+- [x] Add `ModEntry.StardewUi.cs` and wire `TryCreateStardewUiHost(...)` on game launch.
+- [x] Register StardewUI menu id `wildAnimalsEditor` with `assets/views/wildAnimals/editor.sml`.
+- [x] Add `WildAnimalsEditorViewModel` and `WildAnimalDraftViewModel`.
+- [x] Add temporary GMCM launcher action `wildAnimals.openEditor` while keeping the existing GMCM pages.
+- [x] Add unit coverage for save/discard/reload behavior in the new viewmodel.
+- [x] Verify `EggsInWild/EggsInWild.csproj` builds.
+- [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds.
+
 ## R2 — Monolithic file splits
 
 ### Phase EIW-R2-1 — Split DebugKnobs.cs config types

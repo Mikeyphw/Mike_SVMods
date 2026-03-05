@@ -3,6 +3,7 @@
 ## Status
 - Phases 0–8 complete (see `docs/CHECKLIST.md`).
 - Phase SUI-1 complete: shared WildAnimals editor catalog/service extracted for GMCM + StardewUI reuse.
+- Phase SUI-2 complete: StardewUI WildAnimals editor added alongside GMCM with a temporary launcher action.
 - Current focus: Phase 7+ UX polish (bulk workflows, richer validation surfaced in GMCM) and maintenance fixes.
 - Index navigation: GMCM WildAnimals index provides grouped page links with counts (All, A–F, G–L, M–R, S–Z, Other).
 - Bulk UX: staged bulk entries are indicated in index links; bulk preview includes planned set/clear/no-op summary; staging can be cleared.
@@ -267,6 +268,14 @@
 4. Switch `WildAnimalsPages.Define(...)` to load through the shared service while keeping GMCM behavior unchanged.
 5. Add unit coverage for catalog ordering and draft apply behavior.
 6. Verify `EggsInWild` and `EggsInWild.Tests` build; note `Tests/Tests.sln` remains blocked by unrelated `RoosterControl.Pure` compile errors.
+
+## Phase SUI-2 — StardewUI WildAnimals editor alongside GMCM
+1. Add `ModEntry.StardewUi.cs` and wire `TryCreateStardewUiHost(...)` in `OnGameLaunched`.
+2. Register one StardewUI menu id `wildAnimalsEditor` backed by `assets/views/wildAnimals/editor.sml`.
+3. Add `WildAnimalsEditorViewModel` and `WildAnimalDraftViewModel` with save/discard/reload flows.
+4. Add one temporary GMCM launcher action `wildAnimals.openEditor` while keeping the existing `wildAnimals` link page.
+5. Add unit coverage for save/discard/reload behavior in the new viewmodel.
+6. Verify `EggsInWild` and `EggsInWild.Tests` build.
 4. Record final architecture notes in docs.
 
 ---
