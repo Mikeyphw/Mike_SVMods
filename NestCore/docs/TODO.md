@@ -85,3 +85,8 @@
 - [x] Update PLAN/CHECKLIST/TODO marking R3 complete
 - [x] Build gate: verify NestCore and solution builds
 
+## Phase NC-SUI-R3-7 — Deterministic host rebuild/open behavior
+- [x] Add `StardewUiLayout.Clear()` and clear definitions in `RebuildLayout(...)`.
+- [x] Make `StardewUiMenuHost.OpenAsActiveMenu(...)` replace owned instances deterministically.
+- [x] Document the replace-only rebuild/open guarantees.
+- [x] Build `NestCore` and `EggsInWild`.

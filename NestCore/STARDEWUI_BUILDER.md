@@ -285,6 +285,8 @@ _uiHost.EnableHotReloading("path/to/views");
 | `CreateHudHost()` | Create a host for managing HUDs |
 | `CreateMenuHost()` | Create a host for managing menus |
 
+`RebuildLayout(...)` replaces the entire stored layout on each call. Re-register every menu and HUD definition you want to keep.
+
 ### StardewUiLayout
 
 | Method | Description |
@@ -327,6 +329,8 @@ _uiHost.EnableHotReloading("path/to/views");
 | `OpenAsActiveMenu(controller)` | Open as active menu |
 | `CloseActiveIfOwned()` | Close if we own it |
 | `DisposeAll()` | Dispose all managed controllers |
+
+`OpenAsActiveMenu(...)` replaces any owned active instance for the same menu id before opening a new controller.
 
 ---
 
@@ -418,4 +422,3 @@ The DSL provides:
 - Centralized menu/HUD registration
 - Built-in lifecycle management
 - Consistent API across your mod
-

@@ -111,6 +111,12 @@
 - [x] Update PLAN/CHECKLIST/TODO marking R3 complete
 - [x] Build gate: verify NestCore and solution builds
 
+## Phase NC-SUI-R3-7 — Deterministic host rebuild/open behavior
+- [x] Add `StardewUiLayout.Clear()` and use it from `StardewUiHost.RebuildLayout(...)`.
+- [x] Replace owned `StardewUiMenuHost` handles deterministically on repeated opens.
+- [x] Document the replace-only rebuild/open guarantees.
+- [x] Build gate: verify `NestCore` and `EggsInWild` builds.
+
 ## R3 Parity Checklist — Feature Completeness
 
 The following features are available via the StardewUI DSL:

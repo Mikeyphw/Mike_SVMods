@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using StardewUI.Framework;
 using StardewValley;
 using StardewValley.Menus;
@@ -41,12 +42,17 @@ public sealed class StardewUiMenuHost : IDisposable
         if (_disposed)
             throw new ObjectDisposedException(nameof(StardewUiMenuHost));
 
+        CloseActiveIfOwned();
+
+        if (_handles.TryGetValue(menuId, out var existing))
+            existing.Dispose();
+
         // Create the controller from the host
         var controller = _host.CreateMenuController(menuId);
         if (controller is null)
             return null;
 
-        var handle = new StardewUiMenuHandle(controller);
+        var handle = new StardewUiMenuHandle(controller, disposedHandle => RemoveHandle(menuId, disposedHandle));
         _handles[menuId] = handle;
 
         // Set as active menu
@@ -73,6 +79,7 @@ public sealed class StardewUiMenuHost : IDisposable
             {
                 handle.Close();
                 Game1.activeClickableMenu = null;
+                handle.Dispose();
                 return;
             }
         }
@@ -104,11 +111,16 @@ public sealed class StardewUiMenuHost : IDisposable
         if (_disposed)
             return;
 
-        foreach (var handle in _handles.Values)
+        foreach (var handle in _handles.Values.ToArray())
         {
             handle.Dispose();
         }
-        _handles.Clear();
+    }
+
+    private void RemoveHandle(string menuId, StardewUiMenuHandle handle)
+    {
+        if (_handles.TryGetValue(menuId, out var current) && ReferenceEquals(current, handle))
+            _handles.Remove(menuId);
     }
 
     /// <inheritdoc />
@@ -121,4 +133,3 @@ public sealed class StardewUiMenuHost : IDisposable
         DisposeAll();
     }
 }
-

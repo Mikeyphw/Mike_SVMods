@@ -15,6 +15,15 @@ public sealed class StardewUiLayout
     private readonly Dictionary<string, Action<StardewUiHudBuilder>> _hudDefinitions = new();
 
     /// <summary>
+    /// Clears all registered menu and HUD definitions so a rebuild replaces prior layout state.
+    /// </summary>
+    public void Clear()
+    {
+        _menuDefinitions.Clear();
+        _hudDefinitions.Clear();
+    }
+
+    /// <summary>
     /// Defines a menu with the given ID.
     /// </summary>
     /// <param name="menuId">Unique identifier for the menu.</param>
@@ -52,4 +61,3 @@ public sealed class StardewUiLayout
     internal bool TryGetHud(string hudId, out Action<StardewUiHudBuilder>? builder)
         => _hudDefinitions.TryGetValue(hudId, out builder);
 }
-

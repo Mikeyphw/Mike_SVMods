@@ -16,12 +16,14 @@ namespace Mikew.NestCore.Integrations.StardewUI.Dsl;
 /// </summary>
 public sealed class StardewUiHost
 {
+    private readonly IModHelper _helper;
     private readonly StardewUiIntegration _integration;
     private readonly StardewUiLayout _layout = new();
     private bool _assetsPreloaded;
 
-    private StardewUiHost(StardewUiIntegration integration)
+    private StardewUiHost(IModHelper helper, StardewUiIntegration integration)
     {
+        _helper = helper ?? throw new ArgumentNullException(nameof(helper));
         _integration = integration ?? throw new ArgumentNullException(nameof(integration));
     }
 
@@ -40,7 +42,7 @@ public sealed class StardewUiHost
         string stardewUiModId = StardewUiIntegration.DefaultStardewUiModId)
     {
         var integration = StardewUiIntegration.TryCreate(helper, manifest, stardewUiModId);
-        return integration is null ? null : new StardewUiHost(integration);
+        return integration is null ? null : new StardewUiHost(helper, integration);
     }
 
     /// <summary>
@@ -81,7 +83,8 @@ public sealed class StardewUiHost
         // Register assets first
         RegisterAssets(assets, preloadAssetsOnce, preloadModels);
 
-        // Build the layout definitions
+        // Replace the full layout on each rebuild so stale definitions cannot leak forward.
+        _layout.Clear();
         define(_layout);
     }
 
@@ -187,11 +190,7 @@ public sealed class StardewUiHost
     /// </remarks>
     public StardewUiHudHost CreateHudHost()
     {
-        // This will be created with a reference to the helper from the integration
-        // We need to get the helper from the integration's manifest or find another way
-        // For now, we'll create a simpler approach - the host needs access to the helper
-        // Let's check how to get it from StardewUiIntegration
-        throw new NotImplementedException("CreateHudHost requires helper access. Use CreateHudHost(IModHelper) instead.");
+        return new StardewUiHudHost(_helper, this);
     }
 
     /// <summary>

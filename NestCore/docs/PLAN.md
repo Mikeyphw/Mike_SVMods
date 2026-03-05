@@ -145,3 +145,9 @@ Steps:
 - [x] Add explicit "Parity checklist" bullet list
 - [x] Update PLAN/CHECKLIST/TODO marking R3 complete
 - [x] Build gate: verify NestCore and solution builds
+
+## Phase NC-SUI-R3-7 — Deterministic host rebuild/open behavior
+- [x] Add `StardewUiLayout.Clear()` and call it from `StardewUiHost.RebuildLayout(...)`.
+- [x] Make `StardewUiMenuHost.OpenAsActiveMenu(...)` replace owned handles deterministically.
+- [x] Document the replace-only rebuild/open guarantees.
+- [x] Build gate: verify `NestCore` and `EggsInWild` builds.

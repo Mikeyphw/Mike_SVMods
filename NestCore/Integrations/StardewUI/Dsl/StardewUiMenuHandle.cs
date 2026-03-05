@@ -13,14 +13,16 @@ namespace Mikew.NestCore.Integrations.StardewUI.Dsl;
 public sealed class StardewUiMenuHandle : IDisposable
 {
     private bool _disposed;
+    private readonly Action<StardewUiMenuHandle>? _onDisposed;
 
     /// <summary>
     /// Creates a new menu handle.
     /// </summary>
     /// <param name="controller">The underlying menu controller.</param>
-    internal StardewUiMenuHandle(IMenuController controller)
+    internal StardewUiMenuHandle(IMenuController controller, Action<StardewUiMenuHandle>? onDisposed = null)
     {
         Controller = controller ?? throw new ArgumentNullException(nameof(controller));
+        _onDisposed = onDisposed;
     }
 
     /// <summary>
@@ -52,6 +54,6 @@ public sealed class StardewUiMenuHandle : IDisposable
 
         _disposed = true;
         Controller.Dispose();
+        _onDisposed?.Invoke(this);
     }
 }
-
