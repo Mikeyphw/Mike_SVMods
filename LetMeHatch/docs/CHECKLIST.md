@@ -63,3 +63,10 @@
 - [x] Dump output ordering is deterministic (plan list and key lists sorted).
 - [x] Fertilized path executor test added (produce upsert, preserve non-egg).
 - [x] LMH-managed egg tracking test added (tracking shrinks as eggs are cleared).
+
+## Phase 18B — GMCM DSL standardization
+- [x] Keep `LmhGmcmMenu` as orchestrator and preserve page/option IDs.
+- [x] Convert direct config-member manual options to bound DSL with explicit `optionId` parity.
+- [x] Keep manual/unbound usage only for dynamic/dictionary/derived GMCM controls.
+- [x] Use `layout.Pages(...)` batching helpers for repeated page registration where safe.
+- [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).

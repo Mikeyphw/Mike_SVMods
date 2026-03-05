@@ -108,6 +108,14 @@ Status: completed (stable dump DTOs + more tests).
    - fertilized path upserts produce entries and preserves non-egg produce,
    - LMH-managed egg tracking stays consistent and doesn’t retain cleared ids.
 
+## Phase 18B — GMCM DSL standardization
+
+1. Keep `LmhGmcmMenu` as the GMCM orchestrator and preserve existing page/option IDs.
+2. Convert direct config-member manual options to bound expression DSL with explicit `optionId` for parity.
+3. Keep manual/unbound options only for dynamic/dictionary/derived values.
+4. Use page batching helpers (`layout.Pages(...)`) for repeated page registration where safe.
+5. Preserve menu behavior, grouping, translation keys, and config schema.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(

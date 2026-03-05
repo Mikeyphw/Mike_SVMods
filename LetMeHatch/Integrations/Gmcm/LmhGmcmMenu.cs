@@ -100,9 +100,12 @@ public static class LmhGmcmMenu
             page.Link("editsCloneEggs");
         });
 
-        layout.Page("editsEggList", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.EggList));
-        layout.Page("editsBirthText", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.BirthText));
-        layout.Page("editsCloneEggs", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.CloneEggs));
+        layout.Pages(new (string PageId, Action<GmcmPageBuilder<ModConfig>> Build)[]
+        {
+            ("editsEggList", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.EggList)),
+            ("editsBirthText", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.BirthText)),
+            ("editsCloneEggs", page => BuildPerAnimalOverridesPage(page, core, configProvider, EditType.CloneEggs)),
+        });
     }
 
     private static void BuildCloningPage(
@@ -118,19 +121,10 @@ public static class LmhGmcmMenu
                 page.Bool(cfg => cfg.CloneVanillaEggs, optionId: "CloneVanillaEggs", tooltip: true);
                 page.Bool(cfg => cfg.CloneMachineRules, optionId: "CloneMachineRules", tooltip: true);
                 page.Bool(cfg => cfg.UseDynamicCloneTextures, optionId: "UseDynamicCloneTextures", tooltip: true);
-                page.Bool("DinoEggsAsArtifact",
-                    getValue: () => configProvider.Get().DinoEggAsArtifact,
-                    setValue: v => configProvider.Get().DinoEggAsArtifact = v,
-                    tooltip: true);
+                page.Bool(cfg => cfg.DinoEggAsArtifact, optionId: "DinoEggsAsArtifact", tooltip: true);
                 page.Bool(cfg => cfg.OnlyFertilizedEggs, optionId: "OnlyFertilizedEggs", tooltip: true);
-                page.Bool("ColorMilk",
-                    getValue: () => configProvider.Get().ColorClonedMilk,
-                    setValue: v => configProvider.Get().ColorClonedMilk = v,
-                    tooltip: true);
-                page.Bool("ExclusiveRabbitWool",
-                    getValue: () => configProvider.Get().ExclusiveRabbitWool,
-                    setValue: v => configProvider.Get().ExclusiveRabbitWool = v,
-                    tooltip: true);
+                page.Bool(cfg => cfg.ColorClonedMilk, optionId: "ColorMilk", tooltip: true);
+                page.Bool(cfg => cfg.ExclusiveRabbitWool, optionId: "ExclusiveRabbitWool", tooltip: true);
             }
         );
     }
@@ -147,10 +141,7 @@ public static class LmhGmcmMenu
             {
                 page.Bool(cfg => cfg.ChangeEggColors, optionId: "ChangeEggColors", tooltip: true);
                 page.Enum(cfg => cfg.DynamicCloneTintMode, optionId: "DynamicCloneTintMode", tooltip: true);
-                page.Bool("LinkAnimalColorToEggs",
-                    getValue: () => configProvider.Get().LinkAnimalColorToEgg,
-                    setValue: v => configProvider.Get().LinkAnimalColorToEgg = v,
-                    tooltip: true);
+                page.Bool(cfg => cfg.LinkAnimalColorToEgg, optionId: "LinkAnimalColorToEggs", tooltip: true);
 
                 page.Separator(simple: true);
                 page.ParagraphDynamic(() => core.Translation.GetString("config.colors.paragraph"), id: "colors_intro");
@@ -161,8 +152,11 @@ public static class LmhGmcmMenu
             }
         );
 
-        layout.Page("eggPalette", page => BuildEggPalettePage(page, core, configProvider));
-        layout.Page("eggColorOverrides", page => BuildEggColorOverridesPage(page, core, configProvider));
+        layout.Pages(new (string PageId, Action<GmcmPageBuilder<ModConfig>> Build)[]
+        {
+            ("eggPalette", page => BuildEggPalettePage(page, core, configProvider)),
+            ("eggColorOverrides", page => BuildEggColorOverridesPage(page, core, configProvider)),
+        });
     }
 
     private static void BuildBreedingPages(
@@ -216,37 +210,41 @@ public static class LmhGmcmMenu
         // Strict parity restore: old GMCM's per-content-pack -> per-female -> per-male tuning flow.
         layout.Page("breedingPacks", page => BuildBreedingPackIndexPage(page, core));
 
+        var packPages = new List<(string PageId, Func<string> Title, Action<GmcmPageBuilder<ModConfig>> Build)>();
+        var femalePages = new List<(string PageId, Func<string> Title, Action<GmcmPageBuilder<ModConfig>> Build)>();
+
         foreach (var pack in GetBreedingPacksSnapshot())
         {
             var packPageId = BuildPackPageId(pack.ContentPackId);
             var packTitle = pack.DisplayName;
+            var capturedPackId = pack.ContentPackId;
 
-            layout.Page(
+            packPages.Add((
                 packPageId,
-                title: () => packTitle,
-                build: page =>
+                () => packTitle,
+                page =>
                 {
                     page.SectionLabel(() => core.Translation.GetString("config.section.Females.text"));
 
                     foreach (var female in pack.FemaleKeys)
-                        page.Link(BuildFemalePageId(pack.ContentPackId, female));
-                }
-            );
+                        page.Link(BuildFemalePageId(capturedPackId, female));
+                }));
 
             foreach (var female in pack.FemaleKeys)
             {
                 var femalePageId = BuildFemalePageId(pack.ContentPackId, female);
                 var femaleTitle = female;
-                var capturedPack = pack.ContentPackId;
                 var capturedFemale = female;
 
-                layout.Page(
+                femalePages.Add((
                     femalePageId,
-                    title: () => femaleTitle,
-                    build: page => BuildFemaleBreedingPage(page, core, capturedPack, capturedFemale)
-                );
+                    () => femaleTitle,
+                    page => BuildFemaleBreedingPage(page, core, capturedPackId, capturedFemale)));
             }
         }
+
+        layout.Pages(packPages);
+        layout.Pages(femalePages);
     }
 
     private static void BuildBreedingPackIndexPage(GmcmPageBuilder<ModConfig> page, CoreContext core)
