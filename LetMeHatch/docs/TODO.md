@@ -39,3 +39,6 @@
 
 ## Phase 18D
 - [x] Mark LetMeHatch docs aligned with repo-wide GMCM convention.
+
+## Phase 18E
+- [x] Final GMCM validation pass completed (no fake-bool action controls; no inline `ModEntry` GMCM layout body).

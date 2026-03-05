@@ -76,3 +76,7 @@
 - [x] `LmhGmcmMenu` remains the single menu orchestrator.
 - [x] Direct config options use bound DSL; manual options are limited to dynamic/derived needs.
 - [x] No giant inline GMCM layout body remains in `ModEntry`.
+
+## Phase 18E — Final validation
+- [x] No fake-bool action pattern remains for one-shot commands.
+- [x] No giant inline GMCM layout body remains in `ModEntry`/coordinators.

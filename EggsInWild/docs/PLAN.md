@@ -252,3 +252,10 @@
 3. Keep one-shot commands on `Action(...)` controls instead of fake bool toggles.
 4. Keep save-aware rebuild behavior for world-dependent pages.
 5. Document any intentionally retained GMCM wrappers only when runtime-coupling requires it.
+
+## Phase 18E — Final validation
+
+1. Re-scan GMCM code for pseudo-button fake-bool patterns.
+2. Re-scan for leftover inline GMCM layout bodies in `ModEntry`/coordinator files.
+3. Remove remaining dead legacy GMCM partials where safe and build-stable.
+4. Record final architecture notes in docs.

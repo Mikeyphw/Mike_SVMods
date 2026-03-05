@@ -24,11 +24,14 @@
 
 - [x] Phase 18A: add `GmcmPageBuilder<TConfig>.Action(...)` for one-shot commands (no fake bool toggle pattern).
 - [x] Phase 18A: document `Action(...)` in `GMCM_BUILDER.md` with simple + reset/remove/apply examples.
-- [ ] Phase 18A: run full repo build gate after NestCore action integration.
+- [x] Phase 18A: run full repo build gate after NestCore action integration.
 
 - [x] Phase 18D: establish repo GMCM convention rules in `GMCM_BUILDER.md`.
 - [x] Phase 18D: align NestCore/LetMeHatch/EggsInWild docs to the shared GMCM convention.
-- [ ] Phase 18D: run full repo build gate after docs alignment.
+- [x] Phase 18D: run full repo build gate after docs alignment.
+
+- [x] Phase 18E: final grep/review for fake-bool action patterns and inline GMCM bodies.
+- [x] Phase 18E: final build gate and doc finalization for repo-wide GMCM standardization.
 
 - [ ] Add a tiny consumer mod example (outside NestCore) wired to a real `assets/views/*.sml` view.
 - [ ] Consider a SMAPI main-thread scheduler helper for async viewmodels that update UI-bound properties.

@@ -33,7 +33,11 @@
 - [x] Replace pseudo-button fake bool GMCM controls with `Action(...)` on WildAnimals pages.
 - [x] Keep `EiwGmcmMenu` as the GMCM orchestrator and preserve save-aware rebuild.
 - [x] Remove duplicated Animal Progression page body from legacy `ModEntry.Gmcm.cs`.
-- [ ] Run full build gate after GMCM consolidation.
+- [x] Run full build gate after GMCM consolidation.
 
 ## Phase 18D — GMCM convention
 - [x] Mark EggsInWild docs aligned with repo-wide GMCM convention.
+
+## Phase 18E — Finalization
+- [x] Final grep/review completed: no fake-bool action patterns remain.
+- [x] Legacy `ModEntry.Gmcm*` inline layout partials removed; `EiwGmcmMenu + Pages/*` is canonical.

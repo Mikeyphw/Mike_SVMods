@@ -79,9 +79,14 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Replace fake-bool one-shot GMCM command controls with `Action(...)`.
 - [x] Move/remove duplicated Animal Progression GMCM page logic from `ModEntry.Gmcm.cs`.
 - [x] Preserve save-aware rebuild behavior and known-location-type normalization handoff.
-- [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).
+- [x] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).
 
 ## Phase 18D — Repo GMCM convention alignment
 - [x] EggsInWild docs mark NestCore-first GMCM plumbing as the standard.
 - [x] Docs confirm `EiwGmcmMenu` + `Pages/*` architecture alignment.
 - [x] Docs confirm one-shot commands use `Action(...)`.
+
+## Phase 18E — Final validation
+- [x] Re-scan found no remaining fake-bool pseudo-button action controls.
+- [x] Remove dead legacy GMCM partial layout files from `ModEntry.Gmcm*`.
+- [x] Confirm final architecture is `EiwGmcmMenu` + `Infrastructure/Integrations/Gmcm/Pages/*`.

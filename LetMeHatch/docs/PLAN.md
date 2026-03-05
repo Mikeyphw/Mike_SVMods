@@ -123,6 +123,12 @@ Status: completed (stable dump DTOs + more tests).
 3. Keep bound options for direct config members; keep manual options only for dynamic/derived values.
 4. Keep save-aware rebuild path for menu sections that depend on loaded save content.
 
+## Phase 18E — Final validation
+
+1. Reconfirm no pseudo-button fake-bool GMCM controls are used for one-shot commands.
+2. Reconfirm no large inline GMCM layout remains in `ModEntry`/runtime coordinators.
+3. Keep docs synchronized with final repo-wide GMCM convention state.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(

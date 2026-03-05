@@ -84,3 +84,10 @@ Steps:
 2. Record the convention as established in NestCore planning/checklist/todo docs.
 3. Mark downstream mod docs as aligned (`LetMeHatch`, `EggsInWild`).
 4. Keep production behavior unchanged (docs-only alignment in this phase).
+
+## Phase 18E — Final GMCM standardization validation
+
+1. Re-scan mods for fake-bool action patterns and replace/remove remaining cases where safe.
+2. Re-scan for large inline GMCM layouts in `ModEntry`/coordinators and keep orchestration in `<Mod>GmcmMenu`.
+3. Record final architecture state across NestCore/LetMeHatch/EggsInWild docs.
+4. Run full build gate and finalize.

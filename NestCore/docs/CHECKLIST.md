@@ -48,10 +48,16 @@
 - [x] Wire action registration through NestCore helper plumbing without persisted fake values.
 - [x] Preserve existing i18n + field-id conventions for action controls.
 - [x] Document `Action(...)` usage with simple and reset/remove/apply examples.
-- [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).
+- [x] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).
 
 ## Phase 18D — Repo GMCM convention alignment
 - [x] Add repo convention section to `GMCM_BUILDER.md` with the 10 standardized rules.
 - [x] Record convention establishment in NestCore docs.
 - [x] Align LetMeHatch/EggsInWild docs to mark convention adoption.
-- [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).
+- [x] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).
+
+## Phase 18E — Final GMCM standardization validation
+- [x] Re-scan for pseudo-button/fake-bool action patterns in GMCM code.
+- [x] Re-scan for inline GMCM layout bodies in `ModEntry`/coordinator files.
+- [x] Confirm final docs reflect NestCore-first GMCM architecture.
+- [x] Verify final build gate.
