@@ -19,6 +19,21 @@
 - [x] Keep all GMCM page ids / option ids / i18n keys unchanged during Phase 16
 - [x] Phase 17: Document GMCM page ownership decisions (both kept coordinator-owned due to runtime coupling)
 
+## R2 — Monolithic file splits
+
+### Phase RC-R2-1 — Extract debug record models
+- [ ] Create `RoosterControl/Helpers/RoosterDebugModels.cs`
+- [ ] Move 5 debug record types to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-rc-01: extract RoosterHelper debug record models into file`
+
+### Phase RC-R2-2 — Split debug methods into partial file
+- [ ] Convert `RoosterHelper` to `partial class`
+- [ ] Create `RoosterHelper.Debug.cs`
+- [ ] Move 4 debug methods to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-rc-02: split RoosterHelper debug methods into partial file`
+
 ## Done
 - [x] Phase 14: Actionable validation messaging
 - [x] Phase 14: Reset affordances (GMCM arm+save + console commands)

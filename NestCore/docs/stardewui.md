@@ -1,6 +1,51 @@
 # StardewUI integration (NestCore)
 
-NestCore provides an optional facade over the StardewUI Framework mod API so dependent mods can:
+> **Recommendation**: For new mods, use the **StardewUI DSL** (Host pattern) for a GMCM-like experience. See [`STARDEWUI_BUILDER.md`](STARDEWUI_BUILDER.md) for the complete guide.
+
+NestCore provides two ways to use StardewUI:
+1. **DSL Host** (Recommended) - GMCM-like experience with layout definitions
+2. **Direct Integration** - Lower-level API access
+
+---
+
+## Quick Start: DSL Host (Recommended)
+
+```csharp
+private StardewUiHost? _uiHost;
+
+private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+{
+    var nest = Helper.ModRegistry.GetApi<INestCoreApi>("Mikew.NestCore");
+    _uiHost = nest?.TryCreateStardewUiHost(Helper, ModManifest);
+
+    if (_uiHost is null)
+        return; // StardewUI not installed
+
+    // Define layout once
+    _uiHost.RebuildLayout(define: layout =>
+    {
+        layout.Menu("config", menu => menu
+            .View("config")
+            .Context(() => new ConfigViewModel()));
+    });
+}
+
+// Open a menu
+private void OpenConfig()
+{
+    var controller = _uiHost?.CreateMenuController("config");
+    if (controller is not null)
+        Game1.activeClickableMenu = controller.Menu;
+}
+```
+
+For detailed DSL documentation, see [`STARDEWUI_BUILDER.md`](STARDEWUI_BUILDER.md).
+
+---
+
+## Direct Integration (Legacy)
+
+The following sections describe the lower-level integration API.
 
 - Discover StardewUI safely (`null` when not installed)
 - Register view/sprite/custom-data directories by convention

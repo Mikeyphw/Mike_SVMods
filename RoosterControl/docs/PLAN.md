@@ -321,3 +321,26 @@ Rationale: Kept coordinator-owned because the page depends on runtime/compat/orc
 * Mutates `Config.FemalesOptions` - config mutation
 
 No further extraction planned unless runtime coupling is removed in a future refactor.
+
+---
+
+## R2 — Monolithic file splits
+
+This section documents the R2 refactoring effort to split monolithic files into smaller, more maintainable files.
+
+### Phase RC-R2-1 — Extract debug record models
+
+- [ ] Create `RoosterControl/Helpers/RoosterDebugModels.cs`
+- [ ] Move 5 debug record types to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-rc-01: extract RoosterHelper debug record models into file`
+
+### Phase RC-R2-2 — Split debug methods into partial file
+
+- [ ] Convert `RoosterHelper` to `partial class`
+- [ ] Create `RoosterHelper.Debug.cs`
+- [ ] Move 4 debug methods to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-rc-02: split RoosterHelper debug methods into partial file`
+
+**Reference**: [Repo-wide R2 Documentation](../refactor/Repo-wide_R2_Monolithic_File_Splits.md)

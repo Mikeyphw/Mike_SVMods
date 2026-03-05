@@ -177,3 +177,26 @@ public interface IBreedingPlanExecutor
     void Apply(IDictionary<string, FarmAnimalData> gameDataFarmAnimals, BreedingPlan plan);
 }
 ```
+
+---
+
+## R2 — Monolithic file splits
+
+This section documents the R2 refactoring effort to split monolithic files into smaller, more maintainable files.
+
+### Phase LMH-R2-1 — Move #region Eggs into partial file
+
+- [ ] Convert `ItemManager` to `partial class`
+- [ ] Create `ItemManager.Eggs.cs`
+- [ ] Move `#region Eggs` block to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-lmh-01: split ItemManager eggs region into partial file`
+
+### Phase LMH-R2-2 — Move #region Items into partial file
+
+- [ ] Create `ItemManager.Items.cs`
+- [ ] Move `#region Items` block to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-lmh-02: split ItemManager items region into partial file`
+
+**Reference**: [Repo-wide R2 Documentation](../refactor/Repo-wide_R2_Monolithic_File_Splits.md)

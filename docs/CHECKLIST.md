@@ -2,46 +2,34 @@
 
 ## Repo Phase R1 — GMCM id/i18n Normalization
 
-### Phase R1A — Define repo normalization rules
-- [x] Update NestCore/GMCM_BUILDER.md with GMCM id and i18n normalization rules
-- [x] Update docs/PLAN.md with Phase R1 entry
-- [x] Update docs/CHECKLIST.md (this file)
-- [x] Update docs/TODO.md with Phase R1 current work
-- [x] Run build gate
-- [x] Commit Phase R1A
+See [Refactor/R1 Documentation](refactor/Repo-wide_GMCM_ID_i18n_Normalization_R1D.md) for full checklist.
 
-### Phase R1B — Normalize LetMeHatch GMCM ids and i18n keys
-- [x] Apply C# page-id literal renames in LmhGmcmMenu.cs
-- [x] Apply C# option-id renames in LmhGmcmMenu.cs
-- [x] Apply C# GetString(...) key renames in LmhGmcmMenu.cs
-- [x] Apply i18n page key renames in default.json and pt-br.json
-- [x] Apply i18n option key renames in both i18n files
-- [x] Apply i18n manual GMCM key renames in both i18n files
-- [x] Remove legacy page keys from both i18n files
-- [x] Run verification greps to confirm old keys are gone
-- [x] Run build gate
-- [x] Commit Phase R1B
+## Repo Phase R2 — Monolithic File Splits
 
-### Phase R1C — Prune RoosterControl legacy GMCM i18n aliases
-- [x] Verify no config.(Bool|Number|Text|Page|Section). references in RoosterControl C#
-- [x] Delete legacy config.Bool.* alias keys from both i18n files
-- [x] Delete legacy config.Number.* alias keys from both i18n files
-- [x] Delete legacy config.Text.* alias keys from both i18n files
-- [x] Verify canonical dotted lowercase GMCM keys remain intact
-- [x] Run build gate
-- [x] Commit Phase R1C
+### EggsInWild
 
-### Phase R1D — Verify EggsInWild GMCM ids already normalized
-- [x] Run verification checks for EggsInWild
-- [x] Confirm EggsInWild production code unchanged (docs-only)
-- [x] Run build gate
-- [ ] Commit Phase R1D
+| Phase | Status |
+|-------|--------|
+| EIW-R2-1: Split DebugKnobs config types | [ ] |
+| EIW-R2-2: Split WeggVerifier helper types | [ ] |
+| EIW-R2-3: Extract Dump* models | [ ] |
+| EIW-R2-4: Split AnimalNotesOrchestrator | [ ] |
 
-### Phase R1E — Finalize repo GMCM id/i18n normalization
-- [x] Verify all phases completed correctly
-- [x] Update final docs
-- [x] Run build gate
-- [x] Commit Phase R1E
+### LetMeHatch
+
+| Phase | Status |
+|-------|--------|
+| LMH-R2-1: Move #region Eggs | [ ] |
+| LMH-R2-2: Move #region Items | [ ] |
+
+### RoosterControl
+
+| Phase | Status |
+|-------|--------|
+| RC-R2-1: Extract debug record models | [ ] |
+| RC-R2-2: Split debug methods | [ ] |
+
+**Reference**: [Repo-wide R2 Documentation](refactor/Repo-wide_R2_Monolithic_File_Splits.md)
 
 ## Scope
 ## Phase 0 — Keep docs in sync

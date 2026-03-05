@@ -144,6 +144,39 @@ public sealed class StardewUiIntegration
         return drawable;
     }
 
+    /// <summary>
+    /// Creates a menu from inline StarML markup.
+    /// </summary>
+    /// <param name="markup">The StarML markup.</param>
+    /// <param name="context">Optional binding context.</param>
+    /// <returns>The created menu.</returns>
+    public IClickableMenu CreateMenuFromMarkup(string markup, object? context = null)
+        => Engine.CreateMenuFromMarkup(markup, context);
+
+    /// <summary>
+    /// Creates a menu controller from inline StarML markup.
+    /// </summary>
+    /// <param name="markup">The StarML markup.</param>
+    /// <param name="context">Optional binding context.</param>
+    /// <returns>The created controller.</returns>
+    public IMenuController CreateMenuControllerFromMarkup(string markup, object? context = null)
+        => Engine.CreateMenuControllerFromMarkup(markup, context);
+
+    /// <summary>
+    /// Creates a HUD drawable from inline StarML markup.
+    /// </summary>
+    /// <param name="markup">The StarML markup.</param>
+    /// <param name="context">Optional binding context.</param>
+    /// <param name="maxSize">Optional maximum size constraint.</param>
+    /// <returns>The created drawable.</returns>
+    public IViewDrawable CreateHudDrawableFromMarkup(string markup, object? context = null, Vector2? maxSize = null)
+    {
+        var drawable = Engine.CreateDrawableFromMarkup(markup);
+        drawable.Context = context;
+        drawable.MaxSize = maxSize;
+        return drawable;
+    }
+
     private static string QualifyAsset(string prefix, string name, string stripExtension)
     {
         var normalized = (name ?? string.Empty).Replace('\\', '/').TrimStart('/');

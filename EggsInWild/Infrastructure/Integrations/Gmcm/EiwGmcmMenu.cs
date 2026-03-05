@@ -236,7 +236,7 @@ public sealed class EiwGmcmMenu
 #if WEGG_DEV
     private void DefineDebugPages(GmcmMenuLayout<ModConfig> layout, I18TranslationHelper i18n)
     {
-        DebugPages.Define(layout, i18n, _ctx.DevJsonTuning, _ctx.DevMonsterDefinitions);
+        DebugPages.Define(layout, i18n, _ctx.DevJsonTuning, _ctx.DevMonsterDefinitions, _ctx.MutateDevMonsterDefinitions, _ctx.NormalizeDevJsonKey);
     }
 #endif
 }

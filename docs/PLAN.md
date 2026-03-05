@@ -2,33 +2,26 @@
 
 ## Repo-wide GMCM ID / i18n Normalization (Phase R1)
 
-### Phase R1A — Define repo normalization rules in docs
-- [x] Update NestCore/GMCM_BUILDER.md with GMCM id and i18n normalization rules
-- [x] Update docs/PLAN.md (this file)
-- [x] Update docs/CHECKLIST.md
-- [x] Update docs/TODO.md
-- [x] Run build gate
-- [x] Commit Phase R1A
+See [Refactor/R1 Documentation](refactor/Repo-wide_GMCM_ID_i18n_Normalization_R1D.md) for details.
 
-### Phase R1B — Normalize LetMeHatch GMCM ids and i18n keys
-- [x] Normalize LetMeHatch page ids from PascalCase to dotted lowerCamel
-- [x] Normalize LetMeHatch option ids from PascalCase to dotted lowerCamel
-- [x] Update i18n keys to match normalized ids
-- [x] No config/schema changes
-- [x] Run build gate
+---
 
-### Phase R1C — Prune RoosterControl legacy GMCM i18n aliases
-- [x] Verify no old-prefix references in C# code
-- [x] Delete unused legacy `config.Bool.*`, `config.Number.*`, `config.Text.*` i18n keys
-- [x] Keep canonical dotted keys intact
+## Repo-wide R2 — Monolithic File Splits
 
-### Phase R1D — Verify EggsInWild GMCM ids already normalized
-- [x] Run verification checks for EggsInWild
-- [x] Confirm no production changes needed
+See [Refactor/R2 Documentation](refactor/Repo-wide_R2_Monolithic_File_Splits.md) for the complete R2 plan.
 
-### Phase R1E — Finalize repo GMCM id / i18n normalization
-- [x] Final validation of all phases
-- [x] Update docs to reflect completion
+### Summary
+
+| Mod | Phase | Target File | Description |
+|-----|-------|-------------|-------------|
+| EggsInWild | EIW-R2-1 | DebugKnobs.cs | Split 15 config POCO classes |
+| EggsInWild | EIW-R2-2 | WeggVerifier.cs | Split 8 helper types |
+| EggsInWild | EIW-R2-3 | AnimalNotesOrchestrator.cs | Extract 5 Dump* models |
+| EggsInWild | EIW-R2-4 | AnimalNotesOrchestrator.cs | Split into 7 partial files |
+| LetMeHatch | LMH-R2-1 | ItemManager.cs | Move #region Eggs |
+| LetMeHatch | LMH-R2-2 | ItemManager.cs | Move #region Items |
+| RoosterControl | RC-R2-1 | RoosterControl.cs | Extract 5 debug records |
+| RoosterControl | RC-R2-2 | RoosterHelper.cs | Split debug methods |
 
 ## Scope
 - Subdir: `LetMeHatch`

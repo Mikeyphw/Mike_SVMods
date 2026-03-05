@@ -80,3 +80,18 @@
 ## Phase 18E — Final validation
 - [x] No fake-bool action pattern remains for one-shot commands.
 - [x] No giant inline GMCM layout body remains in `ModEntry`/coordinators.
+
+## R2 — Monolithic file splits
+
+### Phase LMH-R2-1 — Move #region Eggs into partial file
+- [ ] Convert `ItemManager` to `partial class`
+- [ ] Create `ItemManager.Eggs.cs`
+- [ ] Move `#region Eggs` block to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-lmh-01: split ItemManager eggs region into partial file`
+
+### Phase LMH-R2-2 — Move #region Items into partial file
+- [ ] Create `ItemManager.Items.cs`
+- [ ] Move `#region Items` block to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-lmh-02: split ItemManager items region into partial file`

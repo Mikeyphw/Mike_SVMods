@@ -1,6 +1,7 @@
 using System;
 using Mikew.NestCore.Integrations.Gmcm;
 using Mikew.NestCore.Integrations.StardewUI;
+using Mikew.NestCore.Integrations.StardewUI.Dsl;
 using StardewModdingAPI;
 
 namespace Mikew.NestCore.Framework;
@@ -49,5 +50,14 @@ public interface INestCoreApi
     /// Returns <c>null</c> when StardewUI isn't installed.
     /// </summary>
     StardewUiIntegration? TryCreateStardewUiIntegration(IModHelper helper, IManifest manifest);
+
+    /// <summary>
+    /// Try to create a StardewUI DSL host instance.
+    /// Returns <c>null</c> when StardewUI isn't installed.
+    /// </summary>
+    /// <remarks>
+    /// This provides a GMCM-like DSL experience for StardewUI menus and HUDs.
+    /// </remarks>
+    StardewUiHost? TryCreateStardewUiHost(IModHelper helper, IManifest manifest);
 
 }

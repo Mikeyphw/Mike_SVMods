@@ -25,7 +25,7 @@ using LetMeHatch.Utilities;
 
 namespace LetMeHatch.Cloning
 {
-    public class ItemManager
+    public partial class ItemManager
     {
         // Dependencies
         private readonly Dictionary<
@@ -70,8 +70,6 @@ namespace LetMeHatch.Cloning
             _fertilizedEggsToAdd = fertilizedEggsToAdd;
             _outpuItemsToClone = outpuItemsToClone;
         }
-
-        #region Items
         public void CloneItemsFromGame()
         {
             foreach (var cloneItemType in AnimalItemRelationsManager.GetCloneItemTypes())
@@ -987,10 +985,6 @@ namespace LetMeHatch.Cloning
                 * targetEggProductionFrequency
                 / dailyEggValueFromBaseChicken;
         }
-
-        #endregion
-
-        #region Eggs
         public void SetFertilizedEggs(IDictionary<string, ObjectData> objectData)
         {
             foreach (var breedingDataGroup in _loadedFemaleBreedingData.SelectMany(x => x.Value))
@@ -1356,7 +1350,5 @@ namespace LetMeHatch.Cloning
             }
             AddFertilizedEggs(data);
         }
-
-        #endregion
     }
 }

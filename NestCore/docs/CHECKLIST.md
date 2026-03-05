@@ -61,3 +61,99 @@
 - [x] Re-scan for inline GMCM layout bodies in `ModEntry`/coordinator files.
 - [x] Confirm final docs reflect NestCore-first GMCM architecture.
 - [x] Verify final build gate.
+
+---
+
+# R3 — StardewUI DSL
+
+## Phase NC-SUI-R3-1 — Sync vendored StardewUI framework API (full surface)
+- [x] Replace minimal vendored `IViewEngine.cs` with full StardewUI framework API surface
+- [x] Ensure `IMenuController` includes all required members (Closed/Closing events, all properties, all methods)
+- [x] Include `ViewEngineExtensions.EnableHotReloadingWithSourceSync(...)` helper
+- [x] Update PLAN.md, CHECKLIST.md, TODO.md for R3
+- [x] Build gate: verify NestCore and solution builds
+
+## Phase NC-SUI-R3-2 — Add StardewUI DSL core (Host + Layout + Builders)
+- [x] Create folder `NestCore/Integrations/StardewUI/Dsl/`
+- [x] Create `StardewUiHost.cs` with TryCreate, Integration, RebuildLayout, CreateMenu, CreateMenuController, CreateHud
+- [x] Create `StardewUiLayout.cs` with Menu/Hud definition methods
+- [x] Create `StardewUiMenuBuilder.cs` with View, Context, ConfigureController, OnClosing, OnClosed
+- [x] Create `StardewUiHudBuilder.cs` with View, Context, MaxSize
+- [x] Update `StardewUiIntegration.cs` with CreateMenuFromMarkup, CreateMenuControllerFromMarkup, CreateHudDrawableFromMarkup
+- [x] Update docs for R3
+- [x] Build gate: verify NestCore and solution builds
+
+## Phase NC-SUI-R3-3 — Add HUD runtime host (draw + dispose)
+- [x] Create `StardewUiHudHandle.cs` with IDisposable, stores Drawable/subscriptions/position provider
+- [x] Create `StardewUiHudHost.cs` with Show/Hide/HideAll methods and event wiring
+- [x] Add `CreateHudHost()` to `StardewUiHost`
+- [x] Update docs
+- [x] Build gate: verify NestCore and solution builds
+
+## Phase NC-SUI-R3-4 — Add Menu runtime host (controller customization + lifecycle)
+- [x] Create `StardewUiMenuHandle.cs` with IDisposable, owns IMenuController
+- [x] Create `StardewUiMenuHost.cs` with OpenAsActiveMenu/CloseActiveIfOwned/DisposeAll
+- [x] Wire controller events (Closing/Closed callbacks)
+- [x] Add `CreateMenuHost()` to `StardewUiHost`
+- [x] Update docs
+- [x] Build gate: verify NestCore and solution builds
+
+## Phase NC-SUI-R3-5 — Expose StardewUI DSL via NestCore public API
+- [x] Add `TryCreateStardewUiHost(...)` to `INestCoreApi`
+- [x] Implement in `NestCoreApi.cs`
+- [x] Update docs
+- [x] Build gate: verify NestCore and solution builds
+
+## Phase NC-SUI-R3-6 — Documentation + "full-feature parity checklist"
+- [x] Create `NestCore/STARDEWUI_BUILDER.md` with Quick start, Asset registration, Menus vs Controllers, HUD drawables, Hot reload
+- [x] Update `docs/stardewui.md` to prefer DSL host usage
+- [x] Add explicit "Parity checklist" bullet list
+- [x] Update PLAN/CHECKLIST/TODO marking R3 complete
+- [x] Build gate: verify NestCore and solution builds
+
+## R3 Parity Checklist — Feature Completeness
+
+The following features are available via the StardewUI DSL:
+
+### Core API
+- [x] TryCreate for safe discovery (null when StardewUI not installed)
+- [x] Asset registration (views, sprites, custom data)
+- [x] Convention-based asset discovery
+
+### Menu System
+- [x] Menu definition via DSL (StardewUiLayout.Menu)
+- [x] CreateMenu for simple modal menus
+- [x] CreateMenuController for full-featured menus
+- [x] View configuration (view name, context provider)
+- [x] Controller configuration (gutters, close button)
+- [x] Lifecycle events (OnClosing, OnClosed)
+
+### HUD System
+- [x] HUD definition via DSL (StardewUiLayout.Hud)
+- [x] CreateHud for basic drawables
+- [x] StardewUiHudHost for managed HUD lifecycle
+- [x] Show/Hide/HideAll operations
+- [x] Dynamic position providers
+- [x] Automatic RenderedHud event wiring
+
+### Menu Host
+- [x] StardewUiMenuHost for menu orchestration
+- [x] OpenAsActiveMenu
+- [x] CloseActiveIfOwned
+- [x] DisposeAll for cleanup
+
+### Developer Experience
+- [x] RebuildLayout for hot configuration
+- [x] Asset preloading support
+- [x] Model reflection preloading
+- [x] Hot reload helpers (WEGG_DEV gated)
+
+### ViewModel Support
+- [x] ObservableObject helper
+- [x] RelayCommand helper
+- [x] AsyncRelayCommand with IsExecuting
+
+### Documentation
+- [x] STARDEWUI_BUILDER.md comprehensive guide
+- [x] docs/stardewui.md updated with DSL preference
+- [x] API reference documentation

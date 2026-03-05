@@ -259,3 +259,42 @@
 2. Re-scan for leftover inline GMCM layout bodies in `ModEntry`/coordinator files.
 3. Remove remaining dead legacy GMCM partials where safe and build-stable.
 4. Record final architecture notes in docs.
+
+---
+
+## R2 — Monolithic file splits
+
+This section documents the R2 refactoring effort to split monolithic files into smaller, more maintainable files.
+
+### Phase EIW-R2-1 — Split DebugKnobs.cs config types
+
+- [ ] Create folder `EggsInWild/Infrastructure/Config/DebugKnobs/`
+- [ ] Create 15 new files for config POCO classes
+- [ ] Move types from DebugKnobs.cs to new files
+- [ ] Run build gate
+- [ ] Commit: `r2-eiw-01: split DebugKnobs config types into files`
+
+### Phase EIW-R2-2 — Split WeggVerifier.cs helper types
+
+- [ ] Create folder `EggsInWild/Infrastructure/Diagnostics/WeggVerify/`
+- [ ] Create 8 new files for helper types
+- [ ] Move types from WeggVerifier.cs to new files
+- [ ] Run build gate
+- [ ] Commit: `r2-eiw-02: split WeggVerifier helper types into files`
+
+### Phase EIW-R2-3 — Extract Dump* models from AnimalNotesOrchestrator
+
+- [ ] Create `EggsInWild/Application/AnimalNotes/DumpModels.cs`
+- [ ] Move 5 Dump* classes to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-eiw-03: extract AnimalNotes dump models into file`
+
+### Phase EIW-R2-4 — Split AnimalNotesOrchestrator into partials
+
+- [ ] Convert to `partial class`
+- [ ] Create 7 partial files by method group
+- [ ] Move methods to respective partial files
+- [ ] Run build gate
+- [ ] Commit: `r2-eiw-04: split AnimalNotesOrchestrator into partial files`
+
+**Reference**: [Repo-wide R2 Documentation](../refactor/Repo-wide_R2_Monolithic_File_Splits.md)

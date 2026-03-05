@@ -35,47 +35,11 @@ using EggsInWild.Core.Weighting;
 using System.Collections;
 using AnimalNotesSaveKeys = EggsInWild.Application.AnimalNotes.SaveKeys;
 using ProgressionSaveKeys = EggsInWild.Application.Progression.SaveKeys;
+
 namespace EggsInWild.Infrastructure.Diagnostics;
-
-public sealed record WeggVerifyOptions(
-    bool AsJson,
-    bool Full,
-    bool IsWorldReady,
-    bool IsMainPlayer,
-    ProgressionStep ProgressionStep
-);
-
-public sealed record WeggVerifyResult(bool Success, string Rendered, WeggVerifyReport Report);
-
-public enum WeggVerifyStatus
-{
-    Pass = 0,
-    Warn = 1,
-    Fail = 2,
-}
-
-public sealed record WeggVerifyCheck(string Id, WeggVerifyStatus Status, string Message);
-
-public sealed class WeggVerifyReport
-{
-    public List<WeggVerifyCheck> Checks { get; } = new();
-
-    public int PassCount => Checks.Count(x => x.Status == WeggVerifyStatus.Pass);
-    public int WarnCount => Checks.Count(x => x.Status == WeggVerifyStatus.Warn);
-    public int FailCount => Checks.Count(x => x.Status == WeggVerifyStatus.Fail);
-
-    public bool Success => FailCount == 0;
-
-    public void Add(string id, WeggVerifyStatus status, string message) => Checks.Add(new WeggVerifyCheck(id, status, message));
-}
 
 public sealed class WeggVerifier
 {
-    private interface IContentPatcherApiProbe
-    {
-        IEnumerable<object>? GetPatches();
-    }
-
     private static readonly Regex ImageSourceRegex = new("<image\\s+source=\"(?<src>[^\"]+)\"", RegexOptions.Compiled);
 
     private readonly IModHelper _helper;
@@ -857,54 +821,6 @@ catch (Exception ex)
     {
         try { return Game1.content.Load<T>(assetName); }
         catch { return null; }
-    }
-
-    
-
-    private sealed record WeightRow(
-        string Id,
-        double EffectiveValue,
-        double RawWeight,
-        double ClampedWeight,
-        double FinalWeight,
-        bool HiddenNoAnchorPenaltyApplied,
-        bool UnlockedPenaltyApplied)
-    {
-        public string Render()
-        {
-            var flags = new List<string>();
-            if (HiddenNoAnchorPenaltyApplied)
-                flags.Add("hidden-no-anchor");
-            if (UnlockedPenaltyApplied)
-                flags.Add("unlocked");
-
-            var flagText = flags.Count == 0 ? "-" : string.Join("|", flags);
-
-            return $"{Id}: v={(int)Math.Round(EffectiveValue)}g w={FinalWeight:0.###E+0} raw={RawWeight:0.###E+0} clamp={ClampedWeight:0.###E+0} flags={flagText}";
-        }
-    }
-
-    private sealed class WeightRowSet : IReadOnlyList<WeightRow>
-    {
-        private readonly List<WeightRow> _rows;
-
-        public WeightRowSet(List<WeightRow> rows, double medianRaw, double minClamp, double maxClamp)
-        {
-            _rows = rows;
-            MedianRaw = medianRaw;
-            MinClamp = minClamp;
-            MaxClamp = maxClamp;
-        }
-
-        public double MedianRaw { get; }
-        public double MinClamp { get; }
-        public double MaxClamp { get; }
-
-        public int Count => _rows.Count;
-        public WeightRow this[int index] => _rows[index];
-
-        public IEnumerator<WeightRow> GetEnumerator() => _rows.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => _rows.GetEnumerator();
     }
 
     private List<string> BuildVerifyCandidateIds(

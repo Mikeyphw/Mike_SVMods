@@ -150,6 +150,8 @@ public sealed partial class ModEntry
         // Pass debug services to the context
         ctx.DevJsonTuning = _devJsonTuning;
         ctx.DevMonsterDefinitions = DevMonsterDefinitions;
+        ctx.MutateDevMonsterDefinitions = MutateDevMonsterDefinitions;
+        ctx.NormalizeDevJsonKey = NormalizeDevJsonKey;
 #endif
 
         // Create the menu and rebuild layout

@@ -8,11 +8,27 @@
 - [x] Phase R1D: Verify EggsInWild GMCM ids already normalized
 - [x] Phase R1E: Finalize repo GMCM id/i18n normalization
 
-- [x] Ensure GMCM option IDs are stable and documented.
-- [x] Verify all debug/diagnostic/logging toggles are only on the `debug` page.
-- [x] Add/verify i18n keys for all pages/options (`config.*`).
-- [x] Decide which advanced mappings remain file-only in v1 to keep UI bounded.
-- [x] Curate allowed-values lists for mapping dropdowns (avoid huge catalogs).
+See [Refactor/R1 Documentation](refactor/Repo-wide_GMCM_ID_i18n_Normalization_R1D.md) for full details.
 
-- [ ] Consider adding quick actions (reset per animal/type) using GMCM Options buttons when available.
-- [ ] Phase 6: Dynamic per-clone texture loader (flagged)
+---
+
+## Repo Phase R2 — Monolithic File Splits
+
+### EggsInWild
+
+- [ ] EIW-R2-1: Split DebugKnobs config types into files
+- [ ] EIW-R2-2: Split WeggVerifier helper types into files
+- [ ] EIW-R2-3: Extract Dump* models from AnimalNotesOrchestrator
+- [ ] EIW-R2-4: Split AnimalNotesOrchestrator into partial files
+
+### LetMeHatch
+
+- [ ] LMH-R2-1: Move #region Eggs into partial file
+- [ ] LMH-R2-2: Move #region Items into partial file
+
+### RoosterControl
+
+- [ ] RC-R2-1: Extract debug record models into file
+- [ ] RC-R2-2: Split debug methods into partial file
+
+**Reference**: [Repo-wide R2 Documentation](refactor/Repo-wide_R2_Monolithic_File_Splits.md)

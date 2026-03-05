@@ -90,3 +90,32 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Re-scan found no remaining fake-bool pseudo-button action controls.
 - [x] Remove dead legacy GMCM partial layout files from `ModEntry.Gmcm*`.
 - [x] Confirm final architecture is `EiwGmcmMenu` + `Infrastructure/Integrations/Gmcm/Pages/*`.
+
+## R2 — Monolithic file splits
+
+### Phase EIW-R2-1 — Split DebugKnobs.cs config types
+- [x] Create folder `EggsInWild/Infrastructure/Config/DebugKnobs/`
+- [x] Create 15 new files for config POCO classes
+- [x] Move types from DebugKnobs.cs to new files
+- [x] Run build gate
+- [x] Commit: `r2-eiw-01: split DebugKnobs config types into files`
+
+### Phase EIW-R2-2 — Split WeggVerifier.cs helper types
+- [ ] Create folder `EggsInWild/Infrastructure/Diagnostics/WeggVerify/`
+- [ ] Create 8 new files for helper types
+- [ ] Move types from WeggVerifier.cs to new files
+- [ ] Run build gate
+- [ ] Commit: `r2-eiw-02: split WeggVerifier helper types into files`
+
+### Phase EIW-R2-3 — Extract Dump* models from AnimalNotesOrchestrator
+- [ ] Create `EggsInWild/Application/AnimalNotes/DumpModels.cs`
+- [ ] Move 5 Dump* classes to new file
+- [ ] Run build gate
+- [ ] Commit: `r2-eiw-03: extract AnimalNotes dump models into file`
+
+### Phase EIW-R2-4 — Split AnimalNotesOrchestrator into partials
+- [ ] Convert to `partial class`
+- [ ] Create 7 partial files by method group
+- [ ] Move methods to respective partial files
+- [ ] Run build gate
+- [ ] Commit: `r2-eiw-04: split AnimalNotesOrchestrator into partial files`

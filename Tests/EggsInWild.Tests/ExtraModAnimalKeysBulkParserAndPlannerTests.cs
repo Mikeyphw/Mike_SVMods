@@ -169,7 +169,9 @@ public sealed class ExtraModAnimalKeysBulkParserAndPlannerTests
         foreach (DictionaryEntry entry in dict)
         {
             var k = (string)entry.Key;
-            var v = ((IEnumerable)entry.Value).Cast<string>().ToList();
+            var source = entry.Value as IEnumerable
+                         ?? throw new InvalidOperationException($"Upserts entry '{k}' has null value.");
+            var v = source.Cast<string>().ToList();
             outDict[k] = v;
         }
 

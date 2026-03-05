@@ -4,6 +4,7 @@ using StardewModdingAPI;
 using EggsInWild.Infrastructure.Config;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.DesertTomb.Core.Configuration;
+using EggsInWild.Infrastructure.DesertTomb.Monsters.Definitions;
 
 namespace EggsInWild.Infrastructure.Integrations.Gmcm;
 
@@ -32,12 +33,22 @@ public sealed class EiwGmcmContext
     /// <summary>
     /// Dev JSON tuning service (only available in WEGG_DEV builds).
     /// </summary>
-    public DevJsonTuningService? DevJsonTuning { get; set; }
+    internal DevJsonTuningService? DevJsonTuning { get; set; }
 
     /// <summary>
     /// Dev monster definitions (only available in WEGG_DEV builds).
     /// </summary>
-    public Dictionary<string, TombMonsterDefinitionJson>? DevMonsterDefinitions { get; set; }
+    internal Dictionary<string, TombMonsterDefinitionJson>? DevMonsterDefinitions { get; set; }
+
+    /// <summary>
+    /// Callback for writing dev monster definition changes.
+    /// </summary>
+    internal Action<Action>? MutateDevMonsterDefinitions { get; set; }
+
+    /// <summary>
+    /// Callback for normalizing field keys used in dev JSON controls.
+    /// </summary>
+    internal Func<string, string>? NormalizeDevJsonKey { get; set; }
 #endif
 
     public EiwGmcmContext(

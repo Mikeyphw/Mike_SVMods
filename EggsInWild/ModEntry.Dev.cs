@@ -82,13 +82,13 @@ public sealed partial class ModEntry
         }
     }
 
-    private void MutateDevMonsterDefinitions(Action mutate)
+    internal void MutateDevMonsterDefinitions(Action mutate)
     {
         mutate();
         Helper.Data.WriteJsonFile(DesertTombDefinitionPaths.MonsterDefinitions, DevMonsterDefinitions);
     }
 
-    private static string NormalizeDevJsonKey(string raw)
+    internal static string NormalizeDevJsonKey(string raw)
         => string.IsNullOrWhiteSpace(raw) ? "empty" : new string(raw.Select(ch => char.IsLetterOrDigit(ch) ? ch : '_').ToArray());
 #endif
 }

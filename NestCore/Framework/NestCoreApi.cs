@@ -1,6 +1,7 @@
 using System;
 using Mikew.NestCore.Integrations.Gmcm;
 using Mikew.NestCore.Integrations.StardewUI;
+using Mikew.NestCore.Integrations.StardewUI.Dsl;
 using StardewModdingAPI;
 
 namespace Mikew.NestCore.Framework;
@@ -42,7 +43,10 @@ public sealed class NestCoreApi : INestCoreApi
         return gmcm;
     }
 
-    public StardewUiIntegration? TryCreateStardewUiIntegration(IModHelper helper, IManifest manifest)
+public StardewUiIntegration? TryCreateStardewUiIntegration(IModHelper helper, IManifest manifest)
         => StardewUiIntegration.TryCreate(helper, manifest);
+
+    public StardewUiHost? TryCreateStardewUiHost(IModHelper helper, IManifest manifest)
+        => StardewUiHost.TryCreate(helper, manifest);
 
 }
