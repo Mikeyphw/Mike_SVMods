@@ -153,18 +153,15 @@ If any count differs: STOP and report the deltas.
 ## Gate 7 — Confirm expected top-level GMCM page id set (informational, but must match)
 
 Expected page ids set:
+- `animalNotes`
+- `animalProgression`
+- `desertTomb`
+- `hatching`
+- `items`
+- `prices`
+- `wildAnimals`
 
-* `animalNotes`
-* `animalProgression`
-* `debug`
-* `desertTomb`
-* `hatching`
-* `items`
-* `prices`
-* `wildAnimals`
-
-Command (must show ONLY these 8 unique ids):
-
+Command (must show ONLY these 7 unique ids):
 ```bash
 rg -n '\bPage\(\s*"[^"]+"' EggsInWild/Infrastructure/Integrations/Gmcm -g'*.cs' \
   | rg -o '"[^"]+"' \
