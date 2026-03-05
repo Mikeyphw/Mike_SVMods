@@ -344,3 +344,14 @@ This section documents the R2 refactoring effort to split monolithic files into 
 - [ ] Commit: `r2-rc-02: split RoosterHelper debug methods into partial file`
 
 **Reference**: [Repo-wide R2 Documentation](../refactor/Repo-wide_R2_Monolithic_File_Splits.md)
+
+
+## R5 — StardewUI White Rooster Produce Editor
+
+Goal: add a StardewUI-based editor for White rooster produce entries, opened via a keybind.
+
+Steps:
+1. Add config keybind `General.OpenWhiteRoosterProduceEditorKey`.
+2. Hook SMAPI input event routing to coordinator.
+3. Add StardewUI view + view model for editing 4 produce slots.
+4. Open the menu controller on keybind and persist config on close.

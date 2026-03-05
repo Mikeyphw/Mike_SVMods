@@ -35,6 +35,7 @@ internal sealed class SmapiEventRouter
         _helper.Events.Content.LocaleChanged += _coordinator.OnLocaleChanged;
 
         _helper.Events.Player.Warped += _coordinator.OnWarped;
+        _helper.Events.Input.ButtonPressed += _coordinator.OnButtonPressed;
     }
 
     public void Unhook()
@@ -52,5 +53,6 @@ internal sealed class SmapiEventRouter
         _helper.Events.Content.LocaleChanged -= _coordinator.OnLocaleChanged;
 
         _helper.Events.Player.Warped -= _coordinator.OnWarped;
+        _helper.Events.Input.ButtonPressed -= _coordinator.OnButtonPressed;
     }
 }

@@ -120,3 +120,11 @@
 - [ ] Move 4 debug methods to new file
 - [ ] Run build gate
 - [ ] Commit: `r2-rc-02: split RoosterHelper debug methods into partial file`
+
+
+## R5 — StardewUI White Rooster Produce Editor
+- [x] Added config keybind for White rooster StardewUI editor
+- [x] Routed Input.ButtonPressed to coordinator
+- [x] Added StardewUI view + view model for produce entry editing
+- [x] Keybind opens StardewUI menu controller and saves config on close
+- [ ] Verified build

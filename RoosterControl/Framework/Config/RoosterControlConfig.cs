@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
+using StardewModdingAPI;
+using StardewModdingAPI.Utilities;
 
 namespace RoosterControl.Framework.Config;
 
@@ -43,6 +45,11 @@ public sealed class RoosterControlConfig
 public sealed class GeneralSettings
 {
     public UpdateRateMode UpdateRate { get; set; } = UpdateRateMode.OnDayStart;
+
+    /// <summary>
+    /// Keybind to open the StardewUI editor for White rooster produce entries.
+    /// </summary>
+    public KeybindList OpenWhiteRoosterProduceEditorKey { get; set; } = new(SButton.F7);
 
     
 
