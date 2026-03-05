@@ -563,6 +563,30 @@ page.OnFieldChanged((fieldId, value) =>
 });
 ```
 
+### Action option (one-shot command)
+
+Use `Action(...)` for commands that should run immediately and should not persist config state.
+
+```csharp
+page.Action(
+    optionId: "tools.refreshCache",
+    onAction: () => _cache.Clear(),
+    tooltip: true
+);
+```
+
+For reset/remove/apply workflows:
+
+```csharp
+page.Action("wildAnimals.extraModAnimalKeys.bulkClear", () => ClearBulkStage(), tooltip: true);
+page.Action("wildAnimals.extraModAnimalKeys.bulkApply", () => ApplyBulkStage(), tooltip: true);
+page.Action("wildAnimals.extraModAnimalKeys.removeOverride", () => RemoveCurrentOverride(), tooltip: true);
+```
+
+`Action(...)` uses the same i18n pattern as normal options:
+- label: `config.<optionId>.name`
+- tooltip (when enabled): `config.<optionId>.description`
+
 ### Obsolete GMCM methods (if you need them)
 
 ```csharp

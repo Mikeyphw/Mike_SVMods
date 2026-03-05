@@ -22,5 +22,9 @@
 - [x] Phase 8: Add `GmcmMenuLayout<TConfig>.Pages(...)` overloads for batched page registration.
 - [x] Phase 8: Document batched GMCM page/link helpers in `GMCM_BUILDER.md`.
 
+- [x] Phase 18A: add `GmcmPageBuilder<TConfig>.Action(...)` for one-shot commands (no fake bool toggle pattern).
+- [x] Phase 18A: document `Action(...)` in `GMCM_BUILDER.md` with simple + reset/remove/apply examples.
+- [ ] Phase 18A: run full repo build gate after NestCore action integration.
+
 - [ ] Add a tiny consumer mod example (outside NestCore) wired to a real `assets/views/*.sml` view.
 - [ ] Consider a SMAPI main-thread scheduler helper for async viewmodels that update UI-bound properties.

@@ -66,3 +66,14 @@ Acceptance:
 * `Pages(...)` exists and delegates to existing `Page(...)`.
 * Existing GMCM call sites do not require changes.
 * `GMCM_BUILDER.md` includes helper usage notes and example.
+
+## Phase 18A — GMCM action option
+
+Goal: add a first-class one-shot action control to the NestCore GMCM DSL (no fake bool buttons).
+
+Steps:
+1. Add `GmcmPageBuilder<TConfig>.Action(...)` using `optionId` + callback.
+2. Back it with a dedicated NestCore helper registration path (non-persistent action semantics).
+3. Keep existing field-id generation and i18n conventions intact.
+4. Document `Action(...)` in `GMCM_BUILDER.md` with simple and reset/remove/apply examples.
+5. Verify `NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, and solution builds remain green.

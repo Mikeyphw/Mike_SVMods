@@ -42,3 +42,10 @@
 - [x] Document the new helpers in `GMCM_BUILDER.md`
 - [x] Update `docs/TODO.md` and `docs/PLAN.md`
 - [x] Verify `NestCore` builds cleanly
+
+## Phase 18A — GMCM action option
+- [x] Add a first-class `Action(...)` DSL primitive on `GmcmPageBuilder<TConfig>`.
+- [x] Wire action registration through NestCore helper plumbing without persisted fake values.
+- [x] Preserve existing i18n + field-id conventions for action controls.
+- [x] Document `Action(...)` usage with simple and reset/remove/apply examples.
+- [ ] Verify build gate (`NestCore`, `LetMeHatch`, `EggsInWild`, `RoosterControl`, solution).

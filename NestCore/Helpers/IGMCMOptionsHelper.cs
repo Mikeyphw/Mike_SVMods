@@ -402,6 +402,43 @@ private Func<string> GetName(string optionName)
         );
     }
 
+    /// <summary>
+    /// Add a one-shot action control (button-like) that invokes <paramref name="onAction"/> when activated.
+    /// This is non-persistent and does not map to a config value.
+    /// </summary>
+    public void AddActionOption(
+        string optionName,
+        Action onAction,
+        bool tooltip = false,
+        Func<bool>? isEnabled = null,
+        string? fieldId = null)
+    {
+        if (_gmcm is null)
+            return;
+
+        var resolvedFieldId = fieldId ?? optionName;
+
+        _gmcm.AddComplexOption(
+            _manifest,
+            name: GetName(optionName),
+            draw: static (_, _) => { },
+            tooltip: tooltip ? GetDescription(optionName) : null,
+            fieldId: resolvedFieldId
+        );
+
+        _gmcm.OnFieldChanged(_manifest, (changedFieldId, _) =>
+        {
+            if (!string.Equals(changedFieldId, resolvedFieldId, StringComparison.OrdinalIgnoreCase)
+                && !changedFieldId.EndsWith($".{resolvedFieldId}", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            if (isEnabled?.Invoke() == false)
+                return;
+
+            onAction();
+        });
+    }
+
     public void SetTitleScreenOnlyForNextOptions(bool titleScreenOnly)
         => _gmcm?.SetTitleScreenOnlyForNextOptions(_manifest, titleScreenOnly);
 
