@@ -14,9 +14,10 @@
 - [x] 16B: extract root/probabilities/debug page builders into `Integrations/Gmcm/Pages/*`
 - [x] 16C: extract rooster page registration and editors into `RoosterTypePages`
 - [x] 16D: add `RoosterControlGmcmMenu` as the layout orchestrator
-- [ ] Decide whether `compat` remains coordinator-owned
-- [ ] Decide whether `females` remains coordinator-owned
-- [ ] Keep all GMCM page ids / option ids / i18n keys unchanged during Phase 16
+- [x] Decide whether `compat` remains coordinator-owned
+- [x] Decide whether `females` remains coordinator-owned
+- [x] Keep all GMCM page ids / option ids / i18n keys unchanged during Phase 16
+- [x] Phase 17: Document GMCM page ownership decisions (both kept coordinator-owned due to runtime coupling)
 
 ## Done
 - [x] Phase 14: Actionable validation messaging

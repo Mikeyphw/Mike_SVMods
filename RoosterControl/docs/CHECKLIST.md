@@ -95,5 +95,13 @@
 - [x] Move layout composition into the orchestrator
 - [x] Keep coordinator ownership only for host setup, rebuild/save/reset, and `compat`/`females`
 - [x] Replace direct `DefineGmcmLayout(...)` usage with the orchestrator
-- [ ] Update docs (PLAN/CHECKLIST/TODO)
-- [ ] Verify build
+- [x] Update docs (PLAN/CHECKLIST/TODO)
+- [x] Verify build
+
+## Phase 17 — GMCM page ownership decision
+- [x] Classify `compat` page ownership
+- [x] Classify `females` page ownership
+- [x] Keep `compat` coordinator-owned (runtime-coupled)
+- [x] Keep `females` coordinator-owned (runtime-coupled)
+- [x] Document final ownership decisions in PLAN.md
+- [x] Verify build

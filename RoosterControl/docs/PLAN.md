@@ -283,3 +283,41 @@ Acceptance:
 * Decide whether `compat` should remain in the coordinator due world/runtime coupling.
 * Decide whether `females` should remain in the coordinator due plan/runtime coupling.
 * Consider a NestCore-first action/button DSL primitive before attempting repo-wide GMCM action standardization.
+
+## Phase 17 — GMCM page ownership decision
+
+Goal: determine whether `compat` and `females` should be extracted into `Integrations/Gmcm/Pages/*` or intentionally remain coordinator-owned.
+
+Decision rule:
+* Extract only if page logic is config/i18n/pure-helper only.
+* Keep coordinator-owned if page logic depends on runtime state, compat discovery, orchestration, rebuild flow, or multiple coordinator internals.
+
+Expected default:
+* Keep coordinator-owned unless extraction is clearly safe.
+
+### Decision: Phase 17A classification
+
+**compat**: **intentionally coordinator-owned**
+
+Rationale: Kept coordinator-owned because the page depends on runtime/compat/orchestration state beyond config+i18n.
+
+* Uses `Context.IsWorldReady` - runtime state
+* Uses `Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>` - game assets
+* Accesses `_compatSelection`, `_saveState`, `_invalidations` - coordinator state
+* Calls `EnsureCompatInitialized()`, `EnsureRoostersSetup()` - coordinator methods
+* Calls `PersistAndApplyCompatChange`, `ApplyCompatSelectionsToRuntime` - runtime mutation
+* Accesses `RoosterHelper.Roosters` - runtime state
+
+**females**: **intentionally coordinator-owned**
+
+Rationale: Kept coordinator-owned because the page depends on runtime/compat/orchestration state beyond config+i18n.
+
+* Uses `Context.IsWorldReady` - runtime state
+* Uses `Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>` - game assets
+* Accesses `_animalExclusions`, `_femaleAssignmentsDirty` - coordinator state
+* Calls `EnsureRoostersSetup()`, `ApplyCompatSelectionsToRuntime` - coordinator methods
+* Accesses `RoosterHelper.Roosters` - runtime state
+* Calls `FemaleAssignmentService.ComputeFemaleAssignmentsPlan` - depends on runtime
+* Mutates `Config.FemalesOptions` - config mutation
+
+No further extraction planned unless runtime coupling is removed in a future refactor.
