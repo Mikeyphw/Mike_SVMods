@@ -392,9 +392,39 @@ the auto-generated field IDs from this builder are already designed for it.
 - `Page(string pageId, Func<string> title, Action<GmcmPageBuilder<TConfig>> build, bool printId = false)`
 
 ### `GmcmPageBuilder<TConfig>`
-- page content: `Section`, `Paragraph`, `Link`, `Separator`, `Image`, `DynamicParagraph`
+- page content: `Section`, `Paragraph`, `Link`, `Links`, `Separator`, `Image`, `DynamicParagraph`
 - options (bound): `Bool`, `Int`, `Float`, `Text`, `Enum`, `Color`
 - options (unbound): `Bool`, `Int`, `Float`, `Text`, `Color`, `ImageOption`
+
+
+## Batch helpers
+
+### `GmcmPageBuilder<TConfig>.Links(...)`
+
+Use this when a page needs to register a list of page links without repeating `Link(...)` calls.
+
+```csharp
+root.Links(
+    tooltip: true,
+    "compat",
+    "probabilities",
+    "females",
+    "debug"
+);
+```
+
+### `GmcmMenuLayout<TConfig>.Pages(...)`
+
+Use this when a menu needs to register a repeated set of subpages.
+
+```csharp
+layout.Pages(new (string PageId, Action<GmcmPageBuilder<MyConfig>> Build>)[]
+{
+    ("rooster.white", b => BuildRoosterPage(b, RoosterType.White, "rooster.white")),
+    ("rooster.brown", b => BuildRoosterPage(b, RoosterType.Brown, "rooster.brown")),
+});
+```
+
 
 
 ## Dynamic/dictionary editors

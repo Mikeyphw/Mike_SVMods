@@ -34,3 +34,11 @@
 - [x] Extend `docs/stardewui.md` with a HUD overlay example (create/draw/dispose `IViewDrawable`).
 - [x] Add `docs/stardewui.md` consumer example (acquisition + menu open + viewmodel + StarML snippet).
 - [x] Verify `NestCore` builds (net6.0) with implicit usings + nullable enabled.
+
+## Phase 8 — GMCM batching helpers
+- [x] Add `GmcmPageBuilder<TConfig>.Links(...)` overloads for batched page-link registration
+- [x] Add `GmcmMenuLayout<TConfig>.Pages(...)` overloads for batched page registration
+- [x] Keep existing `Root(...)`, `Page(...)`, and `Build()` behavior unchanged
+- [x] Document the new helpers in `GMCM_BUILDER.md`
+- [x] Update `docs/TODO.md` and `docs/PLAN.md`
+- [x] Verify `NestCore` builds cleanly

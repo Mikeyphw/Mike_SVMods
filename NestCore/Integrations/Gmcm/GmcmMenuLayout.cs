@@ -49,6 +49,26 @@ public GmcmMenuLayout<TConfig> Root(Action<GmcmPageBuilder<TConfig>> build)
         return this;
     }
 
+    public GmcmMenuLayout<TConfig> Pages(
+        IEnumerable<(string PageId, Action<GmcmPageBuilder<TConfig>> Build)> pages,
+        bool printId = false)
+    {
+        foreach (var (pageId, build) in pages)
+            Page(pageId, build, printId);
+
+        return this;
+    }
+
+    public GmcmMenuLayout<TConfig> Pages(
+        IEnumerable<(string PageId, Func<string> Title, Action<GmcmPageBuilder<TConfig>> Build)> pages,
+        bool printId = false)
+    {
+        foreach (var (pageId, title, build) in pages)
+            Page(pageId, title, build, printId);
+
+        return this;
+    }
+
     public void Build()
     {
         var builder = new GmcmPageBuilder<TConfig>(_menu, _getConfig, _fieldIdPrefix);

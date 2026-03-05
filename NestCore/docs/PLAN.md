@@ -48,3 +48,21 @@
 5. Extend `docs/stardewui.md` with a HUD overlay example (create/draw/dispose `IViewDrawable`).
 6. Document intended use for StardewUI binding contexts and event handlers (method-first, optionally routing into commands).
 7. Verify `NestCore` builds (net6.0) with implicit usings + nullable enabled.
+
+## Phase 8 — GMCM batching helpers
+
+Goal: add small GMCM DSL helpers that reduce repeated page-link/page-registration code without changing behavior.
+
+Steps:
+1. Add `GmcmPageBuilder<TConfig>.Links(...)` overloads for batched page-link registration.
+2. Add `GmcmMenuLayout<TConfig>.Pages(...)` overloads for batched page registration.
+3. Keep existing `Root(...)`, `Page(...)`, and `Build()` behavior unchanged.
+4. Document the new helpers in `GMCM_BUILDER.md` with one generated-subpages example.
+5. Update `docs/CHECKLIST.md` and `docs/TODO.md` to track the new helper surface.
+6. Verify `NestCore` builds cleanly.
+
+Acceptance:
+* `Links(...)` exists and delegates to existing `Link(...)`.
+* `Pages(...)` exists and delegates to existing `Page(...)`.
+* Existing GMCM call sites do not require changes.
+* `GMCM_BUILDER.md` includes helper usage notes and example.

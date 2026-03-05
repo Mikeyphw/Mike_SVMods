@@ -17,5 +17,10 @@
 - [x] Add `RelayCommand` helper for UI viewmodels.
 
 - [ ] Decide whether to expand `StardewUI.Framework.IMenuController` vendored surface (currently minimal).
+
+- [x] Phase 8: Add `GmcmPageBuilder<TConfig>.Links(...)` overloads for batched page-link registration.
+- [x] Phase 8: Add `GmcmMenuLayout<TConfig>.Pages(...)` overloads for batched page registration.
+- [x] Phase 8: Document batched GMCM page/link helpers in `GMCM_BUILDER.md`.
+
 - [ ] Add a tiny consumer mod example (outside NestCore) wired to a real `assets/views/*.sml` view.
 - [ ] Consider a SMAPI main-thread scheduler helper for async viewmodels that update UI-bound properties.
