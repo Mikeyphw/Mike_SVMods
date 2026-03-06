@@ -91,6 +91,12 @@
 - [x] Add `assets/views/LmhColorsEditor.sml`
 - [x] Keep the shell unwired from code
 - [x] Update docs to mark code wiring deferred
+- [x] Verify build
+
+## Phase SUI-SML-3 — Duplicate advanced mappings editor shell
+- [x] Add `assets/views/LmhAdvancedMappingsEditor.sml`
+- [x] Keep the shell unwired from code
+- [x] Update docs to mark code wiring deferred
 - [ ] Verify build
 
 ## R2 — Monolithic file splits

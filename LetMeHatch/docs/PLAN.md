@@ -143,6 +143,13 @@ Status: completed (stable dump DTOs + more tests).
 3. Lock the future `LmhColorsEditorViewModel` contract in the SML header comment.
 4. Record that code wiring is deferred.
 
+## Phase SUI-SML-3 — Duplicate advanced mappings editor shell
+
+1. Add `assets/views/LmhAdvancedMappingsEditor.sml`.
+2. Keep it inert and unwired from code in this phase.
+3. Lock the future `LmhItemMappingsEditorViewModel` contract in the SML header comment.
+4. Record that code wiring is deferred.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(

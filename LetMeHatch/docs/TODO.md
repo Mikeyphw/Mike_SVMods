@@ -46,7 +46,7 @@
 ## Duplicate StardewUI shells
 - [x] Phase SUI-SML-1: add inert `LmhBreedingEditor.sml`
 - [x] Phase SUI-SML-2: add inert `LmhColorsEditor.sml`
-- [ ] Phase SUI-SML-3: add inert `LmhAdvancedMappingsEditor.sml`
+- [x] Phase SUI-SML-3: add inert `LmhAdvancedMappingsEditor.sml`
 - [ ] Wire LetMeHatch duplicate StardewUI shells in a later code phase
 
 ## R2 — Monolithic file splits
