@@ -43,6 +43,12 @@
 ## Phase 18E
 - [x] Final GMCM validation pass completed (no fake-bool action controls; no inline `ModEntry` GMCM layout body).
 
+## Duplicate StardewUI shells
+- [x] Phase SUI-SML-1: add inert `LmhBreedingEditor.sml`
+- [ ] Phase SUI-SML-2: add inert `LmhColorsEditor.sml`
+- [ ] Phase SUI-SML-3: add inert `LmhAdvancedMappingsEditor.sml`
+- [ ] Wire LetMeHatch duplicate StardewUI shells in a later code phase
+
 ## R2 — Monolithic file splits
 
 ### Phase LMH-R2-1 — Move #region Eggs into partial file

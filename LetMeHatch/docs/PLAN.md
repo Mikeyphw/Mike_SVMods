@@ -129,6 +129,13 @@ Status: completed (stable dump DTOs + more tests).
 2. Reconfirm no large inline GMCM layout remains in `ModEntry`/runtime coordinators.
 3. Keep docs synchronized with final repo-wide GMCM convention state.
 
+## Phase SUI-SML-1 — Duplicate breeding editor shell
+
+1. Add `assets/views/LmhBreedingEditor.sml`.
+2. Keep it inert and unwired from code in this phase.
+3. Lock the future `LmhBreedingEditorViewModel` contract in the SML header comment.
+4. Record that code wiring is deferred.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(

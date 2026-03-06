@@ -81,6 +81,12 @@
 - [x] No fake-bool action pattern remains for one-shot commands.
 - [x] No giant inline GMCM layout body remains in `ModEntry`/coordinators.
 
+## Phase SUI-SML-1 — Duplicate breeding editor shell
+- [x] Add `assets/views/LmhBreedingEditor.sml`
+- [x] Keep the shell unwired from code
+- [x] Update docs to mark code wiring deferred
+- [ ] Verify build
+
 ## R2 — Monolithic file splits
 
 ### Phase LMH-R2-1 — Move #region Eggs into partial file
