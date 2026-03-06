@@ -119,6 +119,27 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Verify `EggsInWild/EggsInWild.csproj` builds.
 - [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds.
 
+## Phase SUI-UX-1 — WildAnimals StardewUI UX upgrade
+- [x] Add preview metadata, warning state, and comparison-ready values to the WildAnimals editor service/catalog.
+- [x] Add search, filters, dirty-state tracking, and selection/close confirmation to the StardewUI editor viewmodels.
+- [x] Replace the minimal `wildAnimals/editor.sml` form with a sprite-backed master-detail layout.
+- [x] Keep WildAnimals save/discard/reload semantics on the existing config save + invalidate path.
+- [x] Add unit coverage for preview fallback, filters, dirty gating, and selection confirmation.
+- [x] Verify `EggsInWild/EggsInWild.csproj` builds.
+- [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds.
+
+## Phase SUI-UX-2 — Direct keybind access
+- [x] Add persisted `WildAnimalsEditorKeybind` config state.
+- [x] Expose the keybind on the GMCM root page.
+- [x] Open the StardewUI WildAnimals editor from `ButtonPressed` when the configured shortcut is pressed in-game with no menu open.
+- [x] Verify `EggsInWild/EggsInWild.csproj` builds.
+
+## Phase SUI-SML-1 — Duplicate Animal Progression editor shell
+- [x] Add `assets/views/animalProgression/editor.sml`
+- [x] Keep the shell unwired from code
+- [x] Update docs to mark code wiring deferred
+- [ ] Verify `EggsInWild/EggsInWild.csproj -p:EnableModDeploy=false` builds
+
 ## R2 — Monolithic file splits
 
 ### Phase EIW-R2-1 — Split DebugKnobs.cs config types

@@ -218,6 +218,16 @@
 **Acceptance**
 - Bulk preview/plan remains readable without scrolling.
 - No-op bulk applies do not clear staged text (unless user disables skip-noop).
+
+## Phase SUI-SML-1 — Duplicate Animal Progression editor shell
+
+**Goal**: add an inert StardewUI Animal Progression `.sml` shell and lock the future viewmodel contract without wiring code yet.
+
+**Steps**
+1. Add `assets/views/animalProgression/editor.sml`.
+2. Keep the shell inert and unwired from code in this phase.
+3. Mirror the working WildAnimals safe markup subset only.
+4. Record that code wiring is deferred.
 - User can export effective blocks and paste back into bulk stage to reproduce state.
 - Bulk planning is computed consistently for header, preview, and apply; no redundant game-data loads.
 
@@ -286,6 +296,20 @@
 5. Point WildAnimals bulk parser/planner tests at `WildAnimalsEditorHelpers`.
 6. Verify `EggsInWild` and `EggsInWild.Tests` build.
 4. Record final architecture notes in docs.
+
+## Phase SUI-UX-1 — WildAnimals StardewUI UX upgrade
+1. Extend the WildAnimals editor catalog/service with preview metadata, warning state, and comparison-ready values.
+2. Rework the editor viewmodels for search, filters, dirty-state tracking, and selection/close confirmation.
+3. Replace the minimal form view with a sprite-backed master-detail StardewUI layout.
+4. Keep save/discard/reload semantics identical to the current config + asset invalidation flow.
+5. Add unit coverage for preview fallback, filter behavior, dirty gating, and selection confirmation.
+6. Verify `EggsInWild` and `EggsInWild.Tests` build after the UX upgrade.
+
+## Phase SUI-UX-2 — Direct keybind access
+1. Add a persisted `WildAnimalsEditorKeybind` config entry.
+2. Expose the keybind on the GMCM root page next to the WildAnimals launcher action.
+3. Open the StardewUI WildAnimals editor from `ButtonPressed` when the configured keybind is pressed in-game and no other menu is open.
+4. Verify `EggsInWild` still builds after the input hook is added.
 
 ---
 

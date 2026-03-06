@@ -28,7 +28,7 @@
 - [x] Wire `Phase8HealthReporter` at startup.
 - [x] Wire `WeggDiagnosticsState` for current NestCore API version + GMCM registration state.
 - [x] Wire `WildAnimalPreviewResolver` into GMCM as preview-source text.
-- [ ] GMCM image rendering for wild-animal previews still TODO (resolver is wired, visual preview is not).
+- [x] Replace text-only WildAnimals preview info with StardewUI sprite previews in the WildAnimals editor.
 - [ ] `WeggDiagnosticsState` still has no user-facing surface beyond the stored state.
 
 
@@ -54,6 +54,10 @@
 - [x] Phase SUI-1: extract shared WildAnimals catalog/service/helpers for GMCM + StardewUI reuse.
 - [x] Phase SUI-2: add StardewUI WildAnimals editor alongside GMCM.
 - [x] Phase SUI-3: retire GMCM WildAnimals pages and keep one launcher action.
+- [x] Phase SUI-UX-1: upgrade the WildAnimals StardewUI editor with previews, filters, dirty-state UX, and structured mod-group editing.
+- [x] Phase SUI-UX-2: add a GMCM-configurable direct keybind for the WildAnimals editor.
+- [x] Phase SUI-SML-1: add inert `animalProgression/editor.sml` shell.
+- [ ] Wire the Animal Progression StardewUI shell in a later code phase.
 - [ ] Unblock `Tests/Tests.sln` from unrelated `RoosterControl.Pure` SMAPI reference errors before using it as a migration gate.
 
 ## R2 — Monolithic file splits
