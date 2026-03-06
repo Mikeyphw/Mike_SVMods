@@ -10,6 +10,7 @@ using RoosterControl.Application.Hatching;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
+using RoosterControl.Integrations.StardewUi.Compat;
 using RoosterControl.Integrations.Gmcm;
 using RoosterControl.Integrations.Gmcm.Pages;
 using StardewModdingAPI;
@@ -20,6 +21,7 @@ using StardewValley.ItemTypeDefinitions;
 using Mikew.NestCore.Helpers.Logging;
 
 using ILetMeHatchApi = Mikew.NestCore.Framework.ILetMeHatchApi;
+using IWildEggsApi = Mikew.NestCore.Framework.IWildEggsApi;
 using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace RoosterControl.Application;
@@ -38,12 +40,14 @@ internal sealed partial class RoosterCoordinator
     private bool _gmcmResetAllArmed;
     private bool _gmcmResetEggSourcesArmed;
     private bool _gmcmResetRoosterProvidersArmed;
+    private RoosterCompatEditorService? _compatEditorService;
 
     public void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
     {
         HatchApi =
             Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.lmh")
             ?? Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.letmehatch.smapi");
+        WildEggsApi = Helper.ModRegistry.GetApi<IWildEggsApi>("Mikew.eggsinwild");
 
         if (!Helper.ModRegistry.IsLoaded("Mikew.nestcore"))
             throw new InvalidOperationException("NestCore is required but was not found.");
@@ -136,6 +140,7 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
 
     EnsureCompatInitialized();
     EnsureRoostersSetup();
+    var compatEditor = GetCompatEditorService();
 
     _invalidations.Flush();
 
@@ -160,7 +165,8 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
         b.Separator(id: "compat_sources_fallback_sep", simple: true);
     }
 
-    _compatSourcesSummary = BuildCompatSourcesSummary(data);
+    var compatSnapshot = compatEditor.LoadSnapshot(_saveState.Compat, data);
+    _compatSourcesSummary = compatEditor.BuildSummaryText(_saveState.Compat, data);
 
 
     b.Separator(simple: true);
@@ -204,37 +210,13 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
     b.Separator("compat_sources_sep_eggs", simple: true);
     b.Section("compat.sources.eggs");
 
-    var eggGroups = new (string section, EggKind[] kinds)[]
-    {
-        ("compat.sources.eggs.standard", new[]
-        {
-            EggKind.BrownEgg, EggKind.WhiteEgg, EggKind.BlueEgg, EggKind.VoidEgg, EggKind.GoldEgg
-        }),
-        ("compat.sources.eggs.large", new[]
-        {
-            EggKind.LargeBrownEgg, EggKind.LargeWhiteEgg, EggKind.LargeBlueEgg, EggKind.LargeVoidEgg, EggKind.LargeGoldEgg
-        }),
-        ("compat.sources.eggs.fertilized", new[]
-        {
-            EggKind.FertilizedBrownEgg, EggKind.FertilizedWhiteEgg, EggKind.FertilizedBlueEgg, EggKind.FertilizedVoidEgg, EggKind.FertilizedGoldEgg
-        }),
-        ("compat.sources.eggs.special", new[]
-        {
-            EggKind.RoosterEgg
-        }),
-    };
-
-    var totalKinds = eggGroups.Sum(g => g.kinds.Length);
+    var totalKinds = compatSnapshot.EggGroups.Sum(g => g.Kinds.Count);
     var kindIndex = 0;
 
-    void AddEggKindPicker(EggKind kind, bool addSeparatorAfter)
+    void AddEggKindPicker(RoosterCompatEggKindRecord kindRecord, bool addSeparatorAfter)
     {
-        var allowed = _compatSelection.EggCatalog.Sources
-            .Where(s => s.EggKind == kind && !string.IsNullOrWhiteSpace(s.SourceId))
-            .Where(s => _compatSelection.TryResolveEggSourceItemId(s, data, out _, out _))
-            .Select(s => s.SourceId)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        var kind = kindRecord.Kind;
+        var allowed = kindRecord.AvailableSources.ToArray();
 
         var displayNames = _compatSelection.EggCatalog.Sources
             .Where(s => s.EggKind == kind && !string.IsNullOrWhiteSpace(s.SourceId))
@@ -290,33 +272,30 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
             b.Separator(id: $"compat_egg_sep_{kind}", simple: true);
     }
 
-    foreach (var group in eggGroups)
+    foreach (var group in compatSnapshot.EggGroups)
     {
-        b.Section(group.section);
+        b.Section(group.Section);
 
-        foreach (var kind in group.kinds)
+        foreach (var kind in group.Kinds)
         {
             kindIndex++;
             AddEggKindPicker(kind, addSeparatorAfter: kindIndex < totalKinds);
         }
 
         if (kindIndex < totalKinds)
-            b.Separator(id: $"compat_egg_group_sep_{group.section}", simple: true);
+            b.Separator(id: $"compat_egg_group_sep_{group.Section}", simple: true);
     }
 
     b.Separator("compat_sources_sep_roosters", simple: true);
     b.Section("compat.sources.roosters");
 
-    var roosterProviderIds = _compatSelection.RoosterCatalog.Sources
-        .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
-        .Select(s => s.SourceId)
-        .Distinct(StringComparer.OrdinalIgnoreCase)
+    var roosterProviderIds = compatSnapshot.ProviderRecords
+        .Select(s => s.ProviderId)
+        .Where(id => !string.IsNullOrWhiteSpace(id))
         .ToList();
 
-    var roosterDisplayNames = _compatSelection.RoosterCatalog.Sources
-        .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
-        .GroupBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
-        .ToDictionary(g => g.Key, g => g.First().DisplayName ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+    var roosterDisplayNames = compatSnapshot.ProviderRecords
+        .ToDictionary(g => g.ProviderId, g => g.DisplayName ?? string.Empty, StringComparer.OrdinalIgnoreCase);
 
     roosterProviderIds = roosterProviderIds
         .OrderBy(id => roosterDisplayNames.TryGetValue(id, out var name) && !string.IsNullOrWhiteSpace(name) ? name : id, StringComparer.OrdinalIgnoreCase)
@@ -373,62 +352,28 @@ private void BuildCompatPage(GmcmPageBuilder<RoosterControlConfig> b)
     );
 }
 
+private RoosterCompatEditorService GetCompatEditorService()
+{
+    EnsureCompatInitialized();
+    return _compatEditorService ??= new RoosterCompatEditorService(_compatSelection);
+}
+
 
 
 private string BuildCompatSourcesSummary(IDictionary<string, FarmAnimalData> data)
 {
-    var errors = 0;
-    var parts = new List<string>();
-
-    foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
-    {
-        if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, kind, data, out var itemId, out var err))
-        {
-            parts.Add($"{kind}={itemId}");
-        }
-        else
-        {
-            errors++;
-            parts.Add($"{kind}=ERR");
-        }
-    }
-
-    var enabledProviders = _saveState.Compat.EnabledRoosterSources?.Count ?? 0;
-    var roosterKeys = _compatSelection.GetEnabledRoosterFarmAnimalKeys(_saveState.Compat);
-    var roosterPart = $"roosters=providers:{enabledProviders} keys:{roosterKeys.Count}";
-    parts.Add(roosterPart);
-
-    var summary = $"Compat sources: {string.Join(", ", parts)}";
-    if (errors > 0)
-        summary += $" (errors:{errors})";
-
-    return summary;
+    return GetCompatEditorService().BuildSummaryText(_saveState.Compat, data);
 }
 
 
 private string BuildEggSelectionValidationNote(EggKind kind, IDictionary<string, FarmAnimalData> data)
 {
-    if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, kind, data, out var itemId, out var error))
-    {
-        var sourceId = _saveState.Compat.SelectedEggSources.TryGetValue(kind, out var sid) && !string.IsNullOrWhiteSpace(sid)
-            ? sid
-            : "(default)";
-        return $"{kind}: OK ({sourceId} => {itemId})";
-    }
-
-    return $"{kind}: ERR ({error ?? "unresolved"})";
+    return GetCompatEditorService().BuildEggSelectionValidationNote(_saveState.Compat, kind, data);
 }
 
 private string BuildRoosterProvidersValidationNote(IDictionary<string, FarmAnimalData> data)
 {
-    var enabledProviders = _saveState.Compat.EnabledRoosterSources?.Count ?? 0;
-    var keys = _compatSelection.GetEnabledRoosterFarmAnimalKeys(_saveState.Compat);
-
-    var missing = keys.Where(k => !data.ContainsKey(k)).ToList();
-    if (missing.Count == 0)
-        return $"Roosters: OK (providers:{enabledProviders} keys:{keys.Count})";
-
-    return $"Roosters: WARN (providers:{enabledProviders} keys:{keys.Count} missing:{missing.Count})";
+    return GetCompatEditorService().BuildRoosterProvidersValidationNote(_saveState.Compat, data);
 }
 
 private uint GetSelectedEggSourceIndex(EggKind kind, string fallback, string[] allowed)
@@ -842,7 +787,8 @@ private void PersistAndApplyCompatChange(string reason)
             animalData: data,
             roosters: RoosterHelper.Roosters,
             animalExclusions: _animalExclusions,
-            hatchApi: HatchApi
+            hatchApi: HatchApi,
+            wildEggsApi: WildEggsApi
         );
 
         // Keep the config dictionary aligned with the game-derived list to avoid missing entries.

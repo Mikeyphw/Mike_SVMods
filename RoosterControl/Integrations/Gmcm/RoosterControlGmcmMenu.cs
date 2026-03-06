@@ -24,7 +24,7 @@ internal sealed class RoosterControlGmcmMenu
 
     public void DefineLayout(GmcmMenuLayout<RoosterControlConfig> layout)
     {
-        layout.Root(RoosterRootPage.Build);
+        layout.Root(root => RoosterRootPage.Build(root, _owner));
         layout.Page("compat", _buildCompatPage);
         layout.Page("probabilities", RoosterProbabilitiesPage.Build);
         layout.Page("females", _buildFemalesPage);
@@ -32,4 +32,3 @@ internal sealed class RoosterControlGmcmMenu
         RoosterTypePages.Define(layout, _owner);
     }
 }
-

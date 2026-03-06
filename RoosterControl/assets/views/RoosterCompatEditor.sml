@@ -52,8 +52,18 @@ Contract:
             <scrollable layout="stretch stretch" peeking="48">
                 <lane orientation="vertical">
                     <label text="Current group" />
-                    <label text={SelectedEggGroup} />
+                    <label text={SelectedEggGroupName} />
+                    <lane *if={HasSelectedEggGroup} *context={SelectedEggGroup} orientation="vertical">
+                        <lane *repeat={Kinds} orientation="vertical">
+                            <label text={DisplayName} />
+                            <dropdown layout="stretch content"
+                                      options={^AvailableSources}
+                                      selected-option={<>SelectedSourceId} />
+                            <label text={ValidationNote} />
+                        </lane>
+                    </lane>
                     <label text="Provider options" />
+                    <button text="Use all providers" click=|UseAllProviders()| />
                     <lane *repeat={ProviderOptions} orientation="vertical">
                         <button layout="stretch content"
                                 text={ButtonText}
@@ -61,7 +71,7 @@ Contract:
                         <label text={DescriptionText} />
                     </lane>
                     <label text="Selected provider" />
-                    <label text={SelectedProvider} />
+                    <label text={SelectedProviderName} />
                 </lane>
             </scrollable>
         </lane>

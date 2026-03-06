@@ -140,3 +140,18 @@
 - [x] Keep the shell unwired from code
 - [x] Update docs to mark code wiring deferred
 - [ ] Verify build
+
+## Phase SUI-1 — Shared compat editor extraction
+- [x] Add `Integrations/StardewUi/Compat/RoosterCompatEditorService.cs`
+- [x] Add `Integrations/StardewUi/Compat/RoosterCompatEditorCatalog.cs`
+- [x] Route GMCM compat summary/validation reads through the shared service
+- [x] Add compat editor service tests
+- [ ] Verify `Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj` build
+- [x] Verify `Tests/RoosterControl.Tests/RoosterControl.Tests.csproj` build
+
+## Phase SUI-2 — Duplicate compat editor wiring
+- [x] Register StardewUI menu id `rooster.compat.editor`
+- [x] Add GMCM root action `compat.openStardewUi`
+- [x] Keep the GMCM compat page intact
+- [x] Verify `RoosterControl/RoosterControl.csproj` build
+- [x] Verify `Tests/RoosterControl.Tests/RoosterControl.Tests.csproj` build

@@ -238,6 +238,27 @@ Steps:
 2. Keep the shell inert: no host/menu/GMCM wiring in this phase.
 3. Reuse the same safe markup subset as the existing shipped RoosterControl and EggsInWild views.
 4. Record that code wiring is deferred.
+
+## Phase SUI-1 — Shared compat editor extraction
+
+Goal: extract shared compat editor snapshot, summary, validation, and apply logic for GMCM and future StardewUI reuse without changing current GMCM page IDs or behavior.
+
+Steps:
+1. Add `Integrations/StardewUi/Compat/RoosterCompatEditorService.cs`.
+2. Add `Integrations/StardewUi/Compat/RoosterCompatEditorCatalog.cs` with immutable snapshot/draft records.
+3. Route GMCM compat summary and per-selection validation reads through the shared service.
+4. Add service tests covering snapshot load, summary generation, and draft apply behavior.
+5. Mark GMCM compat as retained; StardewUI wiring remains a later phase.
+
+## Phase SUI-2 — Duplicate compat editor wiring
+
+Goal: register the duplicate StardewUI compat editor on the existing host and add a GMCM launcher action without removing the GMCM compat page.
+
+Steps:
+1. Register menu id `rooster.compat.editor` alongside the existing White rooster StardewUI editor.
+2. Back the menu with `RoosterCompatEditorViewModel` and persist changes through the existing compat save/apply path.
+3. Add a root GMCM action `compat.openStardewUi` plus availability/status text.
+4. Keep the GMCM compat page and all current IDs unchanged.
 4. Update `docs/CHECKLIST.md` and `docs/TODO.md`.
 5. Verify `RoosterControl` and solution builds cleanly.
 

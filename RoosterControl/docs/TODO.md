@@ -58,3 +58,8 @@
 - [x] Phase SUI-SML-1: add inert `RoosterCompatEditor.sml`
 - [x] Phase SUI-SML-2: add inert `RoosterFemalesEditor.sml`
 - [ ] Wire duplicate RoosterControl StardewUI shells in a later code phase
+
+## StardewUI compat migration
+- [x] Phase SUI-1: extract shared compat editor service/catalog and route GMCM compat reads through it
+- [x] Phase SUI-2: register duplicate StardewUI compat editor and GMCM launcher
+- [ ] Phase SUI-3: register duplicate StardewUI females editor and GMCM launcher
