@@ -79,6 +79,8 @@ public sealed partial class ModEntry
         );
         ctx.OpenWildAnimalsEditor = OpenWildAnimalsEditor;
         ctx.IsWildAnimalsEditorAvailable = _wildAnimalsStardewUiHost is not null && _wildAnimalsLayoutReady;
+        ctx.OpenAnimalProgressionEditor = OpenAnimalProgressionEditor;
+        ctx.IsAnimalProgressionEditorAvailable = _wildAnimalsStardewUiHost is not null && _wildAnimalsLayoutReady;
 
 #if WEGG_DEV
         // Pass debug services to the context

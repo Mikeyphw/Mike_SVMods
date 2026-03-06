@@ -24,6 +24,8 @@ public sealed class EiwGmcmContext
     internal AnimalProgressionEditorService AnimalProgressionEditor { get; }
     internal Action? OpenWildAnimalsEditor { get; set; }
     internal bool IsWildAnimalsEditorAvailable { get; set; }
+    internal Action? OpenAnimalProgressionEditor { get; set; }
+    internal bool IsAnimalProgressionEditorAvailable { get; set; }
 
     /// <summary>
     /// Known location type keys used for normalization.

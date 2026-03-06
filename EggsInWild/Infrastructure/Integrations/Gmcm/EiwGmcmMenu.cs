@@ -73,6 +73,15 @@ public sealed class EiwGmcmMenu
             root.Link("prices", tooltip: true);
             root.Link("animalNotes", tooltip: true);
             root.Link("animalProgression", tooltip: true);
+            root.Action(
+                optionId: "animalProgression.openEditor",
+                onAction: () => _ctx.OpenAnimalProgressionEditor?.Invoke(),
+                tooltip: true);
+            root.ParagraphDynamic(
+                () => _ctx.IsAnimalProgressionEditorAvailable
+                    ? ModEntry.Translate(i18n, "config.paragraph.animalProgression.stardewUiStatus.enabled.text", "StardewUI editor available.")
+                    : ModEntry.Translate(i18n, "config.paragraph.animalProgression.stardewUiStatus.disabled.text", "StardewUI not installed. Animal Progression editor launcher disabled."),
+                id: "animalProgression_stardewUi_status");
             root.KeybindList(cfg => cfg.WildAnimalsEditorKeybind, optionId: "wildAnimals.openEditorKeybind", tooltip: true);
             root.Action(
                 optionId: "wildAnimals.openEditor",
@@ -152,6 +161,15 @@ public sealed class EiwGmcmMenu
             page.ParagraphDynamic(
                 () => ModEntry.Translate(i18n, "config.paragraph.animalProgression.description.text", "Configure per-animal progression gating."),
                 id: "animalProgression_intro");
+            page.Action(
+                optionId: "animalProgression.openEditor",
+                onAction: () => _ctx.OpenAnimalProgressionEditor?.Invoke(),
+                tooltip: true);
+            page.ParagraphDynamic(
+                () => _ctx.IsAnimalProgressionEditorAvailable
+                    ? ModEntry.Translate(i18n, "config.paragraph.animalProgression.stardewUiStatus.enabled.text", "StardewUI editor available.")
+                    : ModEntry.Translate(i18n, "config.paragraph.animalProgression.stardewUiStatus.disabled.text", "StardewUI not installed. Animal Progression editor launcher disabled."),
+                id: "animalProgression_stardewUi_status_page");
             BuildAnimalProgressionPage(page, i18n);
         });
     }

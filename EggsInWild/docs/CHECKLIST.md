@@ -149,6 +149,16 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Verify `EggsInWild/EggsInWild.csproj -p:EnableModDeploy=false` builds
 - [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds
 
+## Phase SUI-5 — Duplicate Animal Progression editor wiring
+- [x] Register menu id `animalProgressionEditor`
+- [x] Add `Infrastructure/Integrations/StardewUi/AnimalProgression/AnimalProgressionEditorViewModel.cs`
+- [x] Wire `assets/views/animalProgression/editor.sml`
+- [x] Add GMCM action `animalProgression.openEditor`
+- [x] Keep the GMCM Animal Progression page intact
+- [x] Add Animal Progression editor viewmodel tests
+- [x] Verify `EggsInWild/EggsInWild.csproj -p:EnableModDeploy=false` builds
+- [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds
+
 ## R2 — Monolithic file splits
 
 ### Phase EIW-R2-1 — Split DebugKnobs.cs config types

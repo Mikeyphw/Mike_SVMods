@@ -242,6 +242,17 @@
 4. Keep the existing GMCM Animal Progression page and IDs intact.
 5. Add service tests and mark StardewUI editor wiring as the next phase.
 
+## Phase SUI-5 — Duplicate Animal Progression editor wiring
+
+**Goal**: wire the duplicate Animal Progression StardewUI shell onto the existing EggsInWild StardewUI host while keeping the GMCM page intact.
+
+**Steps**
+1. Register menu id `animalProgressionEditor` in `ModEntry.StardewUi.cs`.
+2. Add `Infrastructure/Integrations/StardewUi/AnimalProgression/AnimalProgressionEditorViewModel.cs`.
+3. Wire `assets/views/animalProgression/editor.sml` to the real viewmodel.
+4. Add GMCM launcher action `animalProgression.openEditor` while keeping the current GMCM page.
+5. Add viewmodel tests for search/filter and save behavior.
+
 
 ---
 
