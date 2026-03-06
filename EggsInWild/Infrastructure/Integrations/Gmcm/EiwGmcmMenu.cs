@@ -10,6 +10,7 @@ using StardewValley.GameData.FarmAnimals;
 using EggsInWild.Core.ShopProgression;
 using EggsInWild.Infrastructure.Config;
 using EggsInWild.Infrastructure.Diagnostics;
+using EggsInWild.Infrastructure.Integrations.StardewUi.AnimalProgression;
 #if WEGG_DEV
 using EggsInWild.Infrastructure.Integrations.Gmcm.Pages.Debug;
 #endif
@@ -72,6 +73,7 @@ public sealed class EiwGmcmMenu
             root.Link("prices", tooltip: true);
             root.Link("animalNotes", tooltip: true);
             root.Link("animalProgression", tooltip: true);
+            root.KeybindList(cfg => cfg.WildAnimalsEditorKeybind, optionId: "wildAnimals.openEditorKeybind", tooltip: true);
             root.Action(
                 optionId: "wildAnimals.openEditor",
                 onAction: () => _ctx.OpenWildAnimalsEditor?.Invoke(),
@@ -164,10 +166,10 @@ public sealed class EiwGmcmMenu
             return;
         }
 
-        Dictionary<string, FarmAnimalData> farmAnimals;
+        IReadOnlyList<AnimalProgressionAnimalRecord> animals;
         try
         {
-            farmAnimals = _ctx.Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+            animals = _ctx.AnimalProgressionEditor.LoadCatalog(_ctx.Helper, _ctx.GetConfig());
         }
         catch (Exception ex)
         {
@@ -179,7 +181,7 @@ public sealed class EiwGmcmMenu
             return;
         }
 
-        if (farmAnimals.Count == 0)
+        if (animals.Count == 0)
         {
             page.ParagraphDynamic(
                 () => ModEntry.Translate(i18n, "config.paragraph.animalProgression.empty.text", "No farm animals were found in Data/FarmAnimals."),
@@ -188,39 +190,24 @@ public sealed class EiwGmcmMenu
         }
 
         var config = _ctx.GetConfig();
-        config.AnimalProgressionMode ??= new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
-        var animals = farmAnimals
-            .OrderBy(pair => pair.Value?.DisplayName?.ToString() ?? pair.Key, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase);
-
-        foreach (var (animalId, farmAnimal) in animals)
+        foreach (var animal in animals)
         {
-            var defaultEnabled = AnimalShopProgressionPolicy.DefaultEnabled(animalId);
-            var elementId = $"animalProgression.{animalId}";
+            var elementId = $"animalProgression.{animal.AnimalId}";
 
             page.BoolLabel(
                 elementId: elementId,
-                name: () => BuildAnimalOptionName(animalId, farmAnimal),
-                tooltip: () => BuildAnimalOptionTooltip(i18n, animalId, defaultEnabled),
-                getValue: () => config.AnimalProgressionMode.TryGetValue(animalId, out var configured) ? configured : defaultEnabled,
+                name: () => animal.DisplayName,
+                tooltip: () => BuildAnimalOptionTooltip(i18n, animal.AnimalId, animal.DefaultEnabled),
+                getValue: () => config.AnimalProgressionMode.TryGetValue(animal.AnimalId, out var configured) ? configured : animal.DefaultEnabled,
                 setValue: value =>
                 {
-                    if (value == defaultEnabled)
-                        config.AnimalProgressionMode.Remove(animalId);
+                    if (value == animal.DefaultEnabled)
+                        config.AnimalProgressionMode.Remove(animal.AnimalId);
                     else
-                        config.AnimalProgressionMode[animalId] = value;
+                        config.AnimalProgressionMode[animal.AnimalId] = value;
                 });
         }
-    }
-
-    private static string BuildAnimalOptionName(string animalId, FarmAnimalData? farmAnimal)
-    {
-        var displayName = farmAnimal?.DisplayName?.ToString();
-        if (string.IsNullOrWhiteSpace(displayName) || string.Equals(displayName, animalId, StringComparison.OrdinalIgnoreCase))
-            return animalId;
-
-        return $"{displayName} ({animalId})";
     }
 
     private static string BuildAnimalOptionTooltip(I18TranslationHelper i18n, string animalId, bool defaultEnabled)

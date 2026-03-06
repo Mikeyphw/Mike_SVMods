@@ -5,6 +5,7 @@ using EggsInWild.Infrastructure.Config;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Definitions;
+using EggsInWild.Infrastructure.Integrations.StardewUi.AnimalProgression;
 using EggsInWild.Infrastructure.Integrations.StardewUi.WildAnimals;
 
 namespace EggsInWild.Infrastructure.Integrations.Gmcm;
@@ -20,6 +21,7 @@ public sealed class EiwGmcmContext
     public Func<ModConfig> GetConfig { get; }
     public Action SaveConfig { get; }
     internal WildAnimalsEditorService WildAnimalsEditor { get; }
+    internal AnimalProgressionEditorService AnimalProgressionEditor { get; }
     internal Action? OpenWildAnimalsEditor { get; set; }
     internal bool IsWildAnimalsEditorAvailable { get; set; }
 
@@ -63,5 +65,6 @@ public sealed class EiwGmcmContext
         GetConfig = getConfig ?? throw new ArgumentNullException(nameof(getConfig));
         SaveConfig = saveConfig ?? throw new ArgumentNullException(nameof(saveConfig));
         WildAnimalsEditor = new WildAnimalsEditorService(Helper, Monitor, GetConfig);
+        AnimalProgressionEditor = new AnimalProgressionEditorService();
     }
 }

@@ -57,6 +57,7 @@
 - [x] Phase SUI-UX-1: upgrade the WildAnimals StardewUI editor with previews, filters, dirty-state UX, and structured mod-group editing.
 - [x] Phase SUI-UX-2: add a GMCM-configurable direct keybind for the WildAnimals editor.
 - [x] Phase SUI-SML-1: add inert `animalProgression/editor.sml` shell.
+- [x] Phase SUI-4: extract shared Animal Progression editor service/catalog and route the GMCM page through it.
 - [ ] Wire the Animal Progression StardewUI shell in a later code phase.
 - [ ] Unblock `Tests/Tests.sln` from unrelated `RoosterControl.Pure` SMAPI reference errors before using it as a migration gate.
 

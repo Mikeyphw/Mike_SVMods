@@ -140,6 +140,15 @@ This checklist tracks the phased work defined in `docs/PLAN.md`.
 - [x] Update docs to mark code wiring deferred
 - [ ] Verify `EggsInWild/EggsInWild.csproj -p:EnableModDeploy=false` builds
 
+## Phase SUI-4 — Shared Animal Progression editor extraction
+- [x] Add `Infrastructure/Integrations/StardewUi/AnimalProgression/AnimalProgressionEditorService.cs`
+- [x] Add `Infrastructure/Integrations/StardewUi/AnimalProgression/AnimalProgressionEditorCatalog.cs`
+- [x] Route GMCM Animal Progression snapshot/load/apply logic through the shared service
+- [x] Keep the GMCM Animal Progression page intact
+- [x] Add Animal Progression editor service tests
+- [x] Verify `EggsInWild/EggsInWild.csproj -p:EnableModDeploy=false` builds
+- [x] Verify `Tests/EggsInWild.Tests/EggsInWild.Tests.csproj` builds
+
 ## R2 — Monolithic file splits
 
 ### Phase EIW-R2-1 — Split DebugKnobs.cs config types

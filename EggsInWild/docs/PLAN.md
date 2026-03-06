@@ -231,6 +231,17 @@
 - User can export effective blocks and paste back into bulk stage to reproduce state.
 - Bulk planning is computed consistently for header, preview, and apply; no redundant game-data loads.
 
+## Phase SUI-4 — Shared Animal Progression editor extraction
+
+**Goal**: move Animal Progression catalog/load/apply logic into a shared StardewUI-ready service while keeping the GMCM page intact.
+
+**Steps**
+1. Add `Infrastructure/Integrations/StardewUi/AnimalProgression/AnimalProgressionEditorService.cs`.
+2. Add `Infrastructure/Integrations/StardewUi/AnimalProgression/AnimalProgressionEditorCatalog.cs`.
+3. Route GMCM Animal Progression snapshot/load/apply logic through the shared service.
+4. Keep the existing GMCM Animal Progression page and IDs intact.
+5. Add service tests and mark StardewUI editor wiring as the next phase.
+
 
 ---
 
