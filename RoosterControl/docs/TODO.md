@@ -53,3 +53,8 @@
 ## R5 — StardewUI White Rooster Produce Editor
 - [x] Implement White rooster StardewUI produce editor behind keybind
 - [ ] Verify build
+
+## Duplicate StardewUI shells
+- [x] Phase SUI-SML-1: add inert `RoosterCompatEditor.sml`
+- [ ] Phase SUI-SML-2: add inert `RoosterFemalesEditor.sml`
+- [ ] Wire duplicate RoosterControl StardewUI shells in a later code phase

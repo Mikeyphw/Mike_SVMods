@@ -128,3 +128,9 @@
 - [x] Added StardewUI view + view model for produce entry editing
 - [x] Keybind opens StardewUI menu controller and saves config on close
 - [ ] Verified build
+
+## Phase SUI-SML-1 — Duplicate compat editor shell
+- [x] Add `assets/views/RoosterCompatEditor.sml`
+- [x] Keep the shell unwired from code
+- [x] Update docs to mark code wiring deferred
+- [ ] Verify build

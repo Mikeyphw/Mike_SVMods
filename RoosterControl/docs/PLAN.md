@@ -218,6 +218,16 @@ Steps:
 1. Consume NestCore `Links(...)` helper from the RoosterControl root GMCM page.
 2. Keep all existing page ids, option ids, and i18n keys unchanged.
 3. Do not change compat/females/rooster runtime behavior.
+
+## Phase SUI-SML-1 — Duplicate compat editor shell
+
+Goal: add an inert StardewUI compat editor `.sml` shell and lock the future viewmodel contract without wiring code yet.
+
+Steps:
+1. Add `assets/views/RoosterCompatEditor.sml`.
+2. Keep the shell inert: no host/menu/GMCM wiring in this phase.
+3. Use only the safe StardewUI markup subset already proven in repo runtime.
+4. Record that code wiring is deferred.
 4. Update `docs/CHECKLIST.md` and `docs/TODO.md`.
 5. Verify `RoosterControl` and solution builds cleanly.
 
