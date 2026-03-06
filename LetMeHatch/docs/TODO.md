@@ -56,6 +56,8 @@
 - [x] Verify Phase SUI-2 build gates
 - [x] Phase SUI-3: register duplicate StardewUI colors editor and GMCM launcher
 - [x] Verify Phase SUI-3 build gates
+- [x] Phase SUI-4: register duplicate StardewUI advanced item mappings editor and GMCM launcher
+- [x] Verify Phase SUI-4 build gates
 
 ## R2 — Monolithic file splits
 

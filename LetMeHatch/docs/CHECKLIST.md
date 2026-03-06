@@ -130,6 +130,17 @@
 - [x] Verify `Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj` build
 - [x] Verify `Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj` build
 
+## Phase SUI-4 — Duplicate advanced mappings editor wiring
+- [x] Add `Integrations/StardewUi/Advanced/LmhItemMappingsEditorService.cs`
+- [x] Add `Integrations/StardewUi/Advanced/LmhItemMappingsEditorCatalog.cs`
+- [x] Add `Integrations/StardewUi/Advanced/LmhItemMappingsEditorViewModel.cs`
+- [x] Register menu id `lmh.advancedMappings.editor`
+- [x] Add GMCM action `advanced.itemMappings.openStardewUi`
+- [x] Keep the GMCM advanced item mappings pages intact
+- [x] Verify `LetMeHatch/LetMeHatch.csproj` build
+- [x] Verify `Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj` build
+- [x] Verify `Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj` build
+
 ## R2 — Monolithic file splits
 
 ### Phase LMH-R2-1 — Move #region Eggs into partial file

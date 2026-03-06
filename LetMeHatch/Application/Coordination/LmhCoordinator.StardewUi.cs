@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using LetMeHatch.GameAssetManagement;
+using LetMeHatch.Integrations.StardewUi.Advanced;
 using LetMeHatch.Integrations.StardewUi.Breeding;
 using LetMeHatch.Integrations.StardewUi.Colors;
 using Mikew.NestCore.Integrations.StardewUI;
@@ -15,6 +16,8 @@ public sealed partial class LmhCoordinator
     private const string BreedingEditorViewFile = "LmhBreedingEditor";
     private const string ColorsEditorMenuId = "lmh.colors.editor";
     private const string ColorsEditorViewFile = "LmhColorsEditor";
+    private const string AdvancedMappingsEditorMenuId = "lmh.advancedMappings.editor";
+    private const string AdvancedMappingsEditorViewFile = "LmhAdvancedMappingsEditor";
 
     private StardewUiHost? _stardewUiHost;
     private StardewUiMenuHost? _stardewUiMenuHost;
@@ -72,10 +75,27 @@ public sealed partial class LmhCoordinator
                             controller.EnableCloseButton();
                         });
                     });
+
+                layout.Menu(
+                    AdvancedMappingsEditorMenuId,
+                    menu =>
+                    {
+                        menu.View(AdvancedMappingsEditorViewFile);
+                        menu.Context(() => new LmhItemMappingsEditorViewModel(
+                            new LmhItemMappingsEditorService(),
+                            LoadItemMappingsCatalog,
+                            SaveItemMappingsDraft));
+                        menu.ConfigureController(controller =>
+                        {
+                            controller.DimmingAmount = 0.45f;
+                            controller.CloseOnOutsideClick = true;
+                            controller.EnableCloseButton();
+                        });
+                    });
             },
             assets: new StardewUiAssetsOptions(ViewsDir: "assets/views", SpritesDir: "assets/sprites"),
             preloadAssetsOnce: true,
-            preloadModels: new[] { typeof(LmhBreedingEditorViewModel), typeof(LmhColorsEditorViewModel) });
+            preloadModels: new[] { typeof(LmhBreedingEditorViewModel), typeof(LmhColorsEditorViewModel), typeof(LmhItemMappingsEditorViewModel) });
 
         _stardewUiLayoutReady = true;
     }
@@ -92,6 +112,11 @@ public sealed partial class LmhCoordinator
         => HasStardewUiAvailable()
             ? "Duplicate StardewUI colors editor is available."
             : "Duplicate StardewUI colors editor requires StardewUI.";
+
+    public string GetAdvancedMappingsEditorAvailabilityText()
+        => HasStardewUiAvailable()
+            ? "Duplicate StardewUI item mappings editor is available."
+            : "Duplicate StardewUI item mappings editor requires StardewUI.";
 
     public void OpenBreedingEditor()
     {
@@ -133,6 +158,27 @@ public sealed partial class LmhCoordinator
         var handle = _stardewUiMenuHost.OpenAsActiveMenu(ColorsEditorMenuId);
         if (handle is null)
             _log.Log("Failed to open StardewUI colors editor.", LogLevel.Error);
+    }
+
+    public void OpenAdvancedMappingsEditor()
+    {
+        if (!Context.IsWorldReady || ModEntry.CurrentAssetManager is null)
+            return;
+
+        _stardewUiHost ??= StardewUiHost.TryCreate(_core.Helper, _core.Manifest);
+        if (_stardewUiHost is null)
+        {
+            _log.Log("StardewUI isn't installed; advanced mappings editor unavailable.", LogLevel.Warn);
+            return;
+        }
+
+        if (!_stardewUiLayoutReady)
+            RebuildStardewUiLayout();
+
+        _stardewUiMenuHost ??= _stardewUiHost.CreateMenuHost();
+        var handle = _stardewUiMenuHost.OpenAsActiveMenu(AdvancedMappingsEditorMenuId);
+        if (handle is null)
+            _log.Log("Failed to open StardewUI item mappings editor.", LogLevel.Error);
     }
 
     private IReadOnlyList<LmhBreedingPackRecord> LoadBreedingPacksSnapshot()
@@ -186,6 +232,26 @@ public sealed partial class LmhCoordinator
     private void SaveColorsDraft(LmhColorsEditorDraft draft)
     {
         _config.Update(cfg => new LmhColorsEditorService().ApplyDraft(cfg, draft), save: true);
+        InvalidateAllContent();
+        InvalidateGameContentCache();
+    }
+
+    private LmhItemMappingsEditorCatalog LoadItemMappingsCatalog()
+    {
+        var manager = ModEntry.CurrentAssetManager;
+        return manager is null
+            ? new LmhItemMappingsEditorCatalog(Array.Empty<LmhItemMappingsGroupRecord>())
+            : new LmhItemMappingsEditorService().LoadCatalog(manager.SavedItemsData, _config.Get());
+    }
+
+    private void SaveItemMappingsDraft(LmhItemMappingsEditorDraft draft)
+    {
+        var manager = ModEntry.CurrentAssetManager;
+        if (manager is null)
+            return;
+
+        _config.Update(cfg => new LmhItemMappingsEditorService().ApplyDraft(cfg, manager.SavedItemsData, draft), save: true);
+        GameAssetManager.SaveData(manager.SavedItemsData);
         InvalidateAllContent();
         InvalidateGameContentCache();
     }

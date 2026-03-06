@@ -448,6 +448,9 @@ public static class LmhGmcmMenu
                 page.Bool(cfg => cfg.StabilizeFarmAnimalsAssetOrder, optionId: "advanced.stabilizeFarmAnimalsAssetOrder", tooltip: true);
 
                 page.Separator(simple: true);
+                page.Action("advanced.itemMappings.openStardewUi", owner.OpenAdvancedMappingsEditor, tooltip: true, isEnabled: owner.HasStardewUiAvailable);
+                page.ParagraphDynamic(() => owner.GetAdvancedMappingsEditorAvailabilityText(), styled: true, id: "advanced_itemMappings_openStardewUi_status");
+                page.Separator(simple: true);
                 page.Link("advanced.itemMappings");
             }
         );

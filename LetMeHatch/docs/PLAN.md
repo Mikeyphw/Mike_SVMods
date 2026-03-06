@@ -175,6 +175,15 @@ Status: completed (stable dump DTOs + more tests).
 5. Wire the existing `assets/views/LmhColorsEditor.sml` shell to the real viewmodel.
 6. Add GMCM action `colors.openStardewUi` while keeping the existing colors GMCM pages.
 
+## Phase SUI-4 — Duplicate advanced mappings editor wiring
+
+1. Extend `Application/Coordination/LmhCoordinator.StardewUi.cs` with menu id `lmh.advancedMappings.editor`.
+2. Add `Integrations/StardewUi/Advanced/LmhItemMappingsEditorService.cs`.
+3. Add `Integrations/StardewUi/Advanced/LmhItemMappingsEditorCatalog.cs`.
+4. Add `Integrations/StardewUi/Advanced/LmhItemMappingsEditorViewModel.cs`.
+5. Wire the existing `assets/views/LmhAdvancedMappingsEditor.sml` shell to the real viewmodel.
+6. Add GMCM action `advanced.itemMappings.openStardewUi` while keeping the existing advanced GMCM pages.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(

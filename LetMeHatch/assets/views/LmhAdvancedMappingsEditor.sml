@@ -9,6 +9,8 @@ Contract:
   - SelectedMapping
   - HasSelectedMapping
   - ComparisonText
+  - NormalItemText
+  - LargeItemText
   - CanSave
   - CanDiscard
 - Methods:
@@ -50,9 +52,12 @@ Contract:
                         <label text="Selected mapping" />
                         <label text={SelectedMapping} />
                         <label text={ComparisonText} />
+                        <label text="Normal item id" />
+                        <textinput layout="260px 54px" text={<>NormalItemText} />
+                        <label text="Large item id" />
+                        <textinput layout="260px 54px" text={<>LargeItemText} />
                         <button text="Reset mapping" click=|ResetMapping()| />
                     </lane>
-                    <label text="Group rows are supplied by the future backing viewmodel." />
                     <lane *repeat={MappingGroups} orientation="vertical">
                         <button layout="stretch content"
                                 text={OpenText}
