@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LetMeHatch.Application.Coordination;
 using LetMeHatch.Config;
 using LetMeHatch.GameAssetManagement;
 using LetMeHatch.Integrations.StardewUi.Breeding;
@@ -25,10 +26,13 @@ public static class LmhGmcmMenu
     private static readonly LmhBreedingEditorService BreedingEditorService = new();
 
     public static void TryRegister(
+        LmhCoordinator owner,
         CoreContext core,
         SmapiConfigProvider<ModConfig> configProvider,
         Action? onSaved = null)
     {
+        if (owner is null)
+            throw new ArgumentNullException(nameof(owner));
         if (core is null)
             throw new ArgumentNullException(nameof(core));
         if (configProvider is null)
@@ -48,12 +52,12 @@ public static class LmhGmcmMenu
             return;
         void Define(GmcmMenuLayout<ModConfig> layout)
         {
-            BuildRoot(layout, core);
+            BuildRoot(layout, owner, core);
             BuildEditsPages(layout, core, configProvider);
             BuildCloningPage(layout, core, configProvider);
-            BuildColorsPages(layout, core, configProvider);
-            BuildBreedingPages(layout, core, configProvider);
-            BuildAdvancedPages(layout, core, configProvider);
+            BuildColorsPages(layout, owner, core, configProvider);
+            BuildBreedingPages(layout, owner, core, configProvider);
+            BuildAdvancedPages(layout, owner, core, configProvider);
             BuildDebugPage(layout, core, configProvider);
         }
 
@@ -67,7 +71,7 @@ public static class LmhGmcmMenu
         );
     }
 
-    private static void BuildRoot(GmcmMenuLayout<ModConfig> layout, CoreContext core)
+    private static void BuildRoot(GmcmMenuLayout<ModConfig> layout, LmhCoordinator owner, CoreContext core)
     {
         layout.Root(root =>
         {
@@ -82,6 +86,8 @@ public static class LmhGmcmMenu
             root.Link("cloning");
             root.Link("colors");
             root.Link("breeding");
+            root.Action("breeding.openStardewUi", owner.OpenBreedingEditor, tooltip: true, isEnabled: owner.HasStardewUiAvailable);
+            root.ParagraphDynamic(() => owner.GetBreedingEditorAvailabilityText(), styled: true, id: "breeding_openStardewUi_status");
             root.Link("advanced");
             root.Link("debug");
         });
@@ -133,6 +139,7 @@ public static class LmhGmcmMenu
 
     private static void BuildColorsPages(
         GmcmMenuLayout<ModConfig> layout,
+        LmhCoordinator owner,
         CoreContext core,
         SmapiConfigProvider<ModConfig> configProvider)
     {
@@ -163,6 +170,7 @@ public static class LmhGmcmMenu
 
     private static void BuildBreedingPages(
         GmcmMenuLayout<ModConfig> layout,
+        LmhCoordinator owner,
         CoreContext core,
         SmapiConfigProvider<ModConfig> configProvider)
     {
@@ -175,6 +183,9 @@ public static class LmhGmcmMenu
                 page.Bool(cfg => cfg.DeterministicBreedingRng, optionId: "breeding.deterministicRng", tooltip: true);
                 page.Float(cfg => cfg.DailyLuckBonus, optionId: "breeding.dailyLuckBonus", tooltip: true, min: MinChance, max: MaxChance, interval: 0.01f);
 
+                page.Separator(simple: true);
+                page.Action("breeding.openStardewUi", owner.OpenBreedingEditor, tooltip: true, isEnabled: owner.HasStardewUiAvailable);
+                page.ParagraphDynamic(() => owner.GetBreedingEditorAvailabilityText(), styled: true, id: "breeding_openStardewUi_status");
                 page.Separator(simple: true);
 
                 page.Float(
@@ -421,6 +432,7 @@ public static class LmhGmcmMenu
 
     private static void BuildAdvancedPages(
         GmcmMenuLayout<ModConfig> layout,
+        LmhCoordinator owner,
         CoreContext core,
         SmapiConfigProvider<ModConfig> configProvider)
     {

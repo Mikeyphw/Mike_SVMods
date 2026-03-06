@@ -109,6 +109,16 @@
 - [x] Verify `Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj` build
 - [x] Verify `Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj` build
 
+## Phase SUI-2 — Duplicate breeding editor wiring
+- [x] Add `Application/Coordination/LmhCoordinator.StardewUi.cs`
+- [x] Register menu id `lmh.breeding.editor`
+- [x] Add `Integrations/StardewUi/Breeding/LmhBreedingEditorViewModel.cs`
+- [x] Add GMCM action `breeding.openStardewUi`
+- [x] Keep the GMCM breeding pages intact
+- [ ] Verify `LetMeHatch/LetMeHatch.csproj` build
+- [ ] Verify `Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj` build
+- [ ] Verify `Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj` build
+
 ## R2 — Monolithic file splits
 
 ### Phase LMH-R2-1 — Move #region Eggs into partial file

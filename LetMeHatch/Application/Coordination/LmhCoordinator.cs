@@ -31,7 +31,7 @@ using ScopedLogCatalog = Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
 namespace LetMeHatch.Application.Coordination;
 
-public sealed class LmhCoordinator
+public sealed partial class LmhCoordinator
 {
     private readonly CoreContext _core;
     private readonly SmapiConfigProvider<ModConfig> _config;
@@ -64,6 +64,7 @@ public sealed class LmhCoordinator
         InitializeApis();
 
         LmhGmcmMenu.TryRegister(
+            owner: this,
             core: _core,
             configProvider: _config,
             onSaved: () =>
@@ -72,6 +73,8 @@ public sealed class LmhCoordinator
                 InvalidateGameContentCache();
             }
         );
+
+        InitializeStardewUi();
     }
 
     public void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)

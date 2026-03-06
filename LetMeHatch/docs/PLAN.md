@@ -158,6 +158,14 @@ Status: completed (stable dump DTOs + more tests).
 4. Keep the GMCM breeding page tree and ids unchanged.
 5. Add service tests covering pack ordering, female ordering, draft apply behavior, and no-op draft saves.
 
+## Phase SUI-2 — Duplicate breeding editor wiring
+
+1. Add `Application/Coordination/LmhCoordinator.StardewUi.cs`.
+2. Register menu id `lmh.breeding.editor` on a new LetMeHatch StardewUI host.
+3. Add `Integrations/StardewUi/Breeding/LmhBreedingEditorViewModel.cs`.
+4. Wire the existing `assets/views/LmhBreedingEditor.sml` shell to the real viewmodel.
+5. Add GMCM action `breeding.openStardewUi` while keeping the existing breeding GMCM pages.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(

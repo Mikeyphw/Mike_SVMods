@@ -5,6 +5,8 @@
     "config.general.alternateBirthText.name": "Alternate Birth Text",
     "config.breeding.applyDailyBoost.description": "Enable daily luck adjustments for this female.",
     "config.breeding.applyDailyBoost.name": "ApplyDaily Boost",
+    "config.breeding.openStardewUi.description": "Open the duplicate StardewUI breeding editor. The GMCM breeding pages remain available for now.",
+    "config.breeding.openStardewUi.name": "Open StardewUI breeding editor",
     "config.breeding.boostByMale.description": "Extra chance boost when this male is present.",
     "config.breeding.boostByMale.name": "Boost By Male",
     "config.breeding.systemEnabled.description": "Enable/disable the custom breeding system.",
@@ -126,6 +128,7 @@
     "config.page.edits.eggList.name": "Egg list overrides",
     "config.page.breeding.name": "Breeding",
     "config.page.breeding.packs.name": "Breeding Content Packs",
+    "config.paragraph.breeding_openStardewUi_status.text": "{{value}}",
     "config.page.cloning.name": "Cloning",
     "config.page.colors.name": "Colors",
     "config.page.colors.eggColorOverrides.name": "Custom Egg Colors",
@@ -157,4 +160,3 @@
     "fertilizedEgg.name": "Fertilized Egg",
     "object.Egg": "Egg"
 }
-
