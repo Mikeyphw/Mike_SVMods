@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LetMeHatch.Config;
 using LetMeHatch.GameAssetManagement;
+using LetMeHatch.Integrations.StardewUi.Breeding;
 using LetMeHatch.Models;
 using Mikew.NestCore.Framework;
 using Mikew.NestCore.Helpers.Config;
@@ -21,6 +22,7 @@ public static class LmhGmcmMenu
     private const float MinChance = 0f;
     private const float MaxChance = 1f;
     private const float ChanceInterval = 0.1f;
+    private static readonly LmhBreedingEditorService BreedingEditorService = new();
 
     public static void TryRegister(
         CoreContext core,
@@ -213,7 +215,12 @@ public static class LmhGmcmMenu
         var packPages = new List<(string PageId, Func<string> Title, Action<GmcmPageBuilder<ModConfig>> Build)>();
         var femalePages = new List<(string PageId, Func<string> Title, Action<GmcmPageBuilder<ModConfig>> Build)>();
 
-        foreach (var pack in GetBreedingPacksSnapshot())
+        var manager = ModEntry.CurrentAssetManager;
+        var packs = manager is null
+            ? Array.Empty<LmhBreedingPackRecord>()
+            : BreedingEditorService.LoadPacksSnapshot(manager.LoadedFemaleBreedingData, manager.LoadedContentPacks);
+
+        foreach (var pack in packs)
         {
             var packPageId = BuildPackPageId(pack.ContentPackId);
             var packTitle = pack.DisplayName;
@@ -250,7 +257,10 @@ public static class LmhGmcmMenu
     private static void BuildBreedingPackIndexPage(GmcmPageBuilder<ModConfig> page, CoreContext core)
     {
         page.Section("breeding.loadedSystems");
-var packs = GetBreedingPacksSnapshot();
+        var manager = ModEntry.CurrentAssetManager;
+        var packs = manager is null
+            ? Array.Empty<LmhBreedingPackRecord>()
+            : BreedingEditorService.LoadPacksSnapshot(manager.LoadedFemaleBreedingData, manager.LoadedContentPacks);
         if (packs.Count == 0)
         {
             page.Separator(simple: true);
@@ -285,19 +295,29 @@ var packs = GetBreedingPacksSnapshot();
             return;
         }
 
+        if (!BreedingEditorService.TryLoadFemaleRecord(
+                manager.LoadedFemaleBreedingData,
+                manager.BreedingConfigsByPack,
+                contentPackId,
+                femaleKey,
+                out var femaleRecord))
+        {
+            page.ParagraphDynamic(
+                () => core.Translation.GetString("config.breeding.missingData", new { femaleKey, contentPackId }),
+                id: "breeding_missing_snapshot"
+            );
+            return;
+        }
+
         page.BoolLabel(
             elementId: "ApplyDailyBoost",
             name: () => core.Translation.GetString("config.breeding.applyDailyBoost.name"),
             tooltip: () => core.Translation.GetString("config.breeding.applyDailyBoost.description"),
             getValue: () => femaleData.ApplyDailyLuckBoost,
-            setValue: v =>
-            {
-                femaleData.ApplyDailyLuckBoost = v;
-                femaleConfig.ApplyDailyLuckBoost = v;
-            }
+            setValue: v => BreedingEditorService.SetApplyDailyLuckBoost(femaleData, femaleConfig, v)
         );
 
-        if (femaleData.AdjustableEggChances)
+        if (femaleRecord.AdjustableEggChances)
         {
             page.Separator(simple: true);
             page.SectionLabel(() => core.Translation.GetString("config.section.breeding.normalHatching.text"));
@@ -307,7 +327,7 @@ var packs = GetBreedingPacksSnapshot();
                 name: () => core.Translation.GetString("config.breeding.normalEggChance.name"),
                 tooltip: () => core.Translation.GetString("config.breeding.normalEggChance.description"),
                 getValue: () => GetBreedingEggChance(femaleConfig, ItemType.Normal),
-                setValue: v => SetBreedingEggChance(femaleConfig, ItemType.Normal, v),
+                setValue: v => BreedingEditorService.SetEggChance(femaleData, femaleConfig, ItemType.Normal, v),
                 min: MinChance,
                 max: MaxChance,
                 interval: ChanceInterval
@@ -318,7 +338,7 @@ var packs = GetBreedingPacksSnapshot();
                 name: () => core.Translation.GetString("config.breeding.largeEggChance.name"),
                 tooltip: () => core.Translation.GetString("config.breeding.largeEggChance.description"),
                 getValue: () => GetBreedingEggChance(femaleConfig, ItemType.Large),
-                setValue: v => SetBreedingEggChance(femaleConfig, ItemType.Large, v),
+                setValue: v => BreedingEditorService.SetEggChance(femaleData, femaleConfig, ItemType.Large, v),
                 min: MinChance,
                 max: MaxChance,
                 interval: ChanceInterval
@@ -330,7 +350,7 @@ var packs = GetBreedingPacksSnapshot();
                 name: () => core.Translation.GetString("config.breeding.fertilizedEggChance.name"),
                 tooltip: () => core.Translation.GetString("config.breeding.fertilizedEggChance.description"),
                 getValue: () => GetBreedingEggChance(femaleConfig, ItemType.FertilizedEgg),
-                setValue: v => SetBreedingEggChance(femaleConfig, ItemType.FertilizedEgg, v),
+                setValue: v => BreedingEditorService.SetEggChance(femaleData, femaleConfig, ItemType.FertilizedEgg, v),
                 min: MinChance,
                 max: MaxChance,
                 interval: ChanceInterval
@@ -340,9 +360,11 @@ var packs = GetBreedingPacksSnapshot();
         page.Separator(simple: true);
         page.SectionLabel(() => core.Translation.GetString("config.section.breeding.males.text"));
 
-        foreach (var (maleKey, maleData) in femaleData.Males.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+        foreach (var maleRecord in femaleRecord.Males)
         {
-            var maleLabel = maleKey.EndsWith("_Male", StringComparison.OrdinalIgnoreCase)
+            var maleKey = maleRecord.MaleKey;
+            var maleData = femaleData.Males[maleKey];
+            var maleLabel = maleRecord.IsCloned
                 ? core.Translation.GetString("config.breeding.males.cloned.label")
                 : maleKey;
 
@@ -353,31 +375,31 @@ var packs = GetBreedingPacksSnapshot();
                 elementId: $"EnableMale_{maleKey}",
                 name: () => core.Translation.GetString("config.breeding.enableMale.name"),
                 tooltip: () => core.Translation.GetString("config.breeding.enableMale.description"),
-                getValue: () => GetMaleEnabled(femaleConfig, maleKey),
-                setValue: v => SetMaleEnabled(femaleConfig, maleKey, v)
+                getValue: () => BreedingEditorService.GetMaleEnabled(femaleConfig, maleKey),
+                setValue: v => BreedingEditorService.SetMaleEnabled(femaleData, femaleConfig, maleKey, v)
             );
 
-            if (manager.CloningHelper.IsAClonedAnimal(maleKey))
+            if (maleRecord.IsCloned)
             {
                 page.BoolLabel(
                     elementId: $"AddAsAlternatePurchase_{maleKey}",
                     name: () => core.Translation.GetString("config.breeding.addAsAlternatePurchase.name"),
                     tooltip: () => core.Translation.GetString("config.breeding.addAsAlternatePurchase.description"),
                     getValue: () => femaleConfig.MaleConfig.AddAsAlternatePurchase,
-                    setValue: v => femaleConfig.MaleConfig.AddAsAlternatePurchase = v
+                    setValue: v => BreedingEditorService.SetAddAsAlternatePurchase(femaleData, femaleConfig, v)
                 );
             }
 
             page.ParagraphDynamic(() => BuildMaleEggsParagraph(core.Translation, maleData), id: $"maleEggs_{contentPackId}_{femaleKey}_{maleKey}");
 
-            if (maleData.AdjustableMaleChances)
+            if (maleRecord.AdjustableMaleChances)
             {
                 page.FloatLabel(
                     elementId: $"BoostByMale_{maleKey}",
                     name: () => core.Translation.GetString("config.breeding.boostByMale.name"),
                     tooltip: () => core.Translation.GetString("config.breeding.boostByMale.description"),
-                    getValue: () => GetBoostByMale(femaleConfig, maleKey),
-                    setValue: v => SetBoostByMale(femaleConfig, maleKey, v),
+                    getValue: () => BreedingEditorService.GetBoostByMale(femaleConfig, maleKey),
+                    setValue: v => BreedingEditorService.SetBoostByMale(femaleData, femaleConfig, maleKey, v),
                     min: MinChance,
                     max: MaxChance,
                     interval: ChanceInterval
@@ -387,8 +409,8 @@ var packs = GetBreedingPacksSnapshot();
                     elementId: $"MaleChance_{maleKey}",
                     name: () => core.Translation.GetString("config.breeding.maleChance.name"),
                     tooltip: () => core.Translation.GetString("config.breeding.maleChance.description"),
-                    getValue: () => GetMaleChance(femaleConfig, maleKey),
-                    setValue: v => SetMaleChance(femaleConfig, maleKey, v),
+                    getValue: () => BreedingEditorService.GetMaleChance(femaleConfig, maleKey),
+                    setValue: v => BreedingEditorService.SetMaleChance(femaleData, femaleConfig, maleKey, v),
                     min: MinChance,
                     max: MaxChance,
                     interval: ChanceInterval
@@ -939,51 +961,6 @@ var packs = GetBreedingPacksSnapshot();
     private static float GetBreedingEggChance(BreedingConfig cfg, ItemType type)
         => cfg.EggChances.TryGetValue(type, out var v) ? v : 0f;
 
-    private static void SetBreedingEggChance(BreedingConfig cfg, ItemType type, float value)
-        => cfg.EggChances[type] = value;
-
-    private static bool GetMaleEnabled(BreedingConfig cfg, string maleKey)
-    {
-        if (!cfg.Enabled.TryGetValue(maleKey, out var enabled))
-        {
-            cfg.Enabled[maleKey] = true;
-            return true;
-        }
-
-        return enabled;
-    }
-
-    private static void SetMaleEnabled(BreedingConfig cfg, string maleKey, bool value)
-        => cfg.Enabled[maleKey] = value;
-
-    private static float GetBoostByMale(BreedingConfig cfg, string maleKey)
-    {
-        if (!cfg.BoostByMale.TryGetValue(maleKey, out var value))
-        {
-            cfg.BoostByMale[maleKey] = 0.5f;
-            return 0.5f;
-        }
-
-        return value;
-    }
-
-    private static void SetBoostByMale(BreedingConfig cfg, string maleKey, float value)
-        => cfg.BoostByMale[maleKey] = value;
-
-    private static float GetMaleChance(BreedingConfig cfg, string maleKey)
-    {
-        if (!cfg.MaleChance.TryGetValue(maleKey, out var value))
-        {
-            cfg.MaleChance[maleKey] = 0.5f;
-            return 0.5f;
-        }
-
-        return value;
-    }
-
-    private static void SetMaleChance(BreedingConfig cfg, string maleKey, float value)
-        => cfg.MaleChance[maleKey] = value;
-
     private static bool TryGetFemaleBreedingContext(
         GameAssetManager manager,
         string contentPackId,
@@ -1008,7 +985,7 @@ var packs = GetBreedingPacksSnapshot();
     }
 
     
-private static string BuildMaleEggsParagraph(I18TranslationHelper i18n, BreedingDataMale maleData)
+    private static string BuildMaleEggsParagraph(I18TranslationHelper i18n, BreedingDataMale maleData)
 {
     var header = i18n.GetString("config.breeding.maleEggs.header");
 
@@ -1018,31 +995,6 @@ private static string BuildMaleEggsParagraph(I18TranslationHelper i18n, Breeding
 
     return header + Environment.NewLine + string.Join(Environment.NewLine, lines);
 }
-
-    private static List<BreedingPackView> GetBreedingPacksSnapshot()
-    {
-        var manager = ModEntry.CurrentAssetManager;
-        if (manager is null)
-            return new List<BreedingPackView>();
-
-        return manager.LoadedFemaleBreedingData
-            .Select(kvp => new BreedingPackView(
-                ContentPackId: kvp.Key,
-                DisplayName: ResolveContentPackDisplayName(manager, kvp.Key),
-                FemaleKeys: kvp.Value.Keys.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList()
-            ))
-            .OrderBy(x => x.DisplayName, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(x => x.ContentPackId, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
-
-    private static string ResolveContentPackDisplayName(GameAssetManager manager, string contentPackId)
-    {
-        var cp = manager.LoadedContentPacks.FirstOrDefault(x =>
-            string.Equals(x.Manifest.UniqueID, contentPackId, StringComparison.OrdinalIgnoreCase));
-
-        return cp?.Manifest.Name ?? contentPackId;
-    }
 
     private static string BuildPackPageId(string contentPackId)
         => "breeding.pack." + Slug(contentPackId);
@@ -1064,5 +1016,4 @@ private static string BuildMaleEggsParagraph(I18TranslationHelper i18n, Breeding
 
     private sealed record EggOption(string Id, string Label);
     private sealed record AnimalOption(string Key, string Label);
-    private sealed record BreedingPackView(string ContentPackId, string DisplayName, IReadOnlyList<string> FemaleKeys);
 }

@@ -150,6 +150,14 @@ Status: completed (stable dump DTOs + more tests).
 3. Lock the future `LmhItemMappingsEditorViewModel` contract in the SML header comment.
 4. Record that code wiring is deferred.
 
+## Phase SUI-1 — Shared breeding editor extraction
+
+1. Add `Integrations/StardewUi/Breeding/LmhBreedingEditorService.cs`.
+2. Add `Integrations/StardewUi/Breeding/LmhBreedingEditorCatalog.cs` with immutable pack/female/draft records.
+3. Route GMCM breeding pack and per-female snapshot construction through the shared service.
+4. Keep the GMCM breeding page tree and ids unchanged.
+5. Add service tests covering pack ordering, female ordering, draft apply behavior, and no-op draft saves.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(

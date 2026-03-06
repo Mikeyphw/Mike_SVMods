@@ -99,6 +99,16 @@
 - [x] Update docs to mark code wiring deferred
 - [ ] Verify build
 
+## Phase SUI-1 — Shared breeding editor extraction
+- [x] Add `Integrations/StardewUi/Breeding/LmhBreedingEditorService.cs`
+- [x] Add `Integrations/StardewUi/Breeding/LmhBreedingEditorCatalog.cs`
+- [x] Route GMCM breeding pack/female snapshot construction through the shared service
+- [x] Keep the GMCM breeding page tree intact
+- [x] Add breeding editor service tests
+- [x] Verify `LetMeHatch/LetMeHatch.csproj` build
+- [x] Verify `Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj` build
+- [x] Verify `Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj` build
+
 ## R2 — Monolithic file splits
 
 ### Phase LMH-R2-1 — Move #region Eggs into partial file

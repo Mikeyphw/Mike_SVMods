@@ -49,6 +49,10 @@
 - [x] Phase SUI-SML-3: add inert `LmhAdvancedMappingsEditor.sml`
 - [ ] Wire LetMeHatch duplicate StardewUI shells in a later code phase
 
+## StardewUI breeding migration
+- [x] Phase SUI-1: extract shared breeding editor service/catalog and route GMCM breeding snapshots through it
+- [x] Verify Phase SUI-1 build gates
+
 ## R2 — Monolithic file splits
 
 ### Phase LMH-R2-1 — Move #region Eggs into partial file
