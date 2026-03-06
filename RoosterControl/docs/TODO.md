@@ -62,4 +62,5 @@
 ## StardewUI compat migration
 - [x] Phase SUI-1: extract shared compat editor service/catalog and route GMCM compat reads through it
 - [x] Phase SUI-2: register duplicate StardewUI compat editor and GMCM launcher
-- [ ] Phase SUI-3: register duplicate StardewUI females editor and GMCM launcher
+- [x] Phase SUI-3: register duplicate StardewUI females editor and GMCM launcher
+- [ ] Verify Phase SUI-3 build gates

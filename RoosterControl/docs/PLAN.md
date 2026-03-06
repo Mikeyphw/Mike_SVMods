@@ -258,6 +258,17 @@ Steps:
 1. Register menu id `rooster.compat.editor` alongside the existing White rooster StardewUI editor.
 2. Back the menu with `RoosterCompatEditorViewModel` and persist changes through the existing compat save/apply path.
 3. Add a root GMCM action `compat.openStardewUi` plus availability/status text.
+
+## Phase SUI-3 — Duplicate females editor wiring
+
+Goal: register the duplicate StardewUI females editor on the existing host and add a GMCM launcher action without removing the GMCM females page.
+
+Steps:
+1. Add `Integrations/StardewUi/Females/RoosterFemalesEditorService.cs` and `RoosterFemalesEditorViewModel.cs`.
+2. Register menu id `rooster.females.editor` alongside the existing White rooster and compat StardewUI editors.
+3. Back the menu with the shared females editor service and persist changes through the existing female-assignment planning path.
+4. Add a root GMCM action `females.openStardewUi` plus availability/status text.
+5. Keep the GMCM females page intact; mark removal as deferred.
 4. Keep the GMCM compat page and all current IDs unchanged.
 4. Update `docs/CHECKLIST.md` and `docs/TODO.md`.
 5. Verify `RoosterControl` and solution builds cleanly.

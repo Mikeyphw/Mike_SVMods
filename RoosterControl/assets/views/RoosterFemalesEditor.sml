@@ -27,7 +27,6 @@ Contract:
         <lane layout="stretch content" orientation="vertical">
             <banner text={Title} />
             <label text={SummaryText} />
-            <label text="Search text is owned by the future backing viewmodel." />
             <textinput layout="360px 54px" text={<>SearchText} />
         </lane>
 

@@ -155,3 +155,12 @@
 - [x] Keep the GMCM compat page intact
 - [x] Verify `RoosterControl/RoosterControl.csproj` build
 - [x] Verify `Tests/RoosterControl.Tests/RoosterControl.Tests.csproj` build
+
+## Phase SUI-3 — Duplicate females editor wiring
+- [x] Add `Integrations/StardewUi/Females/RoosterFemalesEditorService.cs`
+- [x] Add `Integrations/StardewUi/Females/RoosterFemalesEditorViewModel.cs`
+- [x] Register StardewUI menu id `rooster.females.editor`
+- [x] Add GMCM root action `females.openStardewUi`
+- [x] Keep the GMCM females page intact
+- [ ] Verify `RoosterControl/RoosterControl.csproj` build
+- [ ] Verify `Tests/RoosterControl.Tests/RoosterControl.Tests.csproj` build

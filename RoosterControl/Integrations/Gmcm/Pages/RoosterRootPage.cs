@@ -30,6 +30,13 @@ internal static class RoosterRootPage
             isEnabled: owner.HasStardewUiAvailable
         );
         b.ParagraphDynamic(() => owner.GetCompatEditorAvailabilityText(), styled: true, id: "compat_openStardewUi_status");
+        b.Action(
+            "females.openStardewUi",
+            onAction: owner.TryOpenFemalesEditor,
+            tooltip: true,
+            isEnabled: owner.HasStardewUiAvailable
+        );
+        b.ParagraphDynamic(() => owner.GetFemalesEditorAvailabilityText(), styled: true, id: "females_openStardewUi_status");
 
         b.Separator(simple: true);
 

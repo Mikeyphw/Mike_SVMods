@@ -1,7 +1,10 @@
 using Mikew.NestCore.Integrations.StardewUI;
 using Mikew.NestCore.Integrations.StardewUI.Dsl;
+using RoosterControl.Application.Hatching;
 using RoosterControl.Enums;
+using RoosterControl.Framework.Config;
 using RoosterControl.Integrations.StardewUi.Compat;
+using RoosterControl.Integrations.StardewUi.Females;
 using RoosterControl.Integrations.StardewUi;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -18,10 +21,13 @@ internal sealed partial class RoosterCoordinator
     private const string WhiteProduceEditorViewFile = "RoosterWhiteProduceEditor";
     private const string CompatEditorMenuId = "rooster.compat.editor";
     private const string CompatEditorViewFile = "RoosterCompatEditor";
+    private const string FemalesEditorMenuId = "rooster.females.editor";
+    private const string FemalesEditorViewFile = "RoosterFemalesEditor";
 
     private StardewUiHost? _stardewUiHost;
     private StardewUI.Framework.IMenuController? _whiteProduceEditorController;
     private StardewUI.Framework.IMenuController? _compatEditorController;
+    private StardewUI.Framework.IMenuController? _femalesEditorController;
     private bool _stardewUiLayoutInitialized;
 
     public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
@@ -71,6 +77,11 @@ internal sealed partial class RoosterCoordinator
             ? "Duplicate StardewUI compat editor is available."
             : "Duplicate StardewUI compat editor requires StardewUI.";
 
+    internal string GetFemalesEditorAvailabilityText()
+        => HasStardewUiAvailable()
+            ? "Duplicate StardewUI females editor is available."
+            : "Duplicate StardewUI females editor requires StardewUI.";
+
     internal void TryOpenCompatEditor()
     {
         if (!Context.IsWorldReady)
@@ -98,6 +109,36 @@ internal sealed partial class RoosterCoordinator
         }
 
         _compatEditorController = controller;
+        Game1.activeClickableMenu = controller.Menu;
+    }
+
+    internal void TryOpenFemalesEditor()
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        _stardewUiHost ??= StardewUiHost.TryCreate(Helper, ModManifest);
+        if (_stardewUiHost is null)
+        {
+            Monitor.Log("StardewUI isn't installed; females editor unavailable.", StardewModdingAPI.LogLevel.Warn);
+            return;
+        }
+
+        EnsureCompatInitialized();
+        EnsureRoostersSetup();
+        EnsureStardewUiLayoutInitialized();
+
+        if (_femalesEditorController is not null)
+            return;
+
+        var controller = _stardewUiHost.CreateMenuController(FemalesEditorMenuId);
+        if (controller is null)
+        {
+            Monitor.Log("Failed to create females editor menu controller.", StardewModdingAPI.LogLevel.Error);
+            return;
+        }
+
+        _femalesEditorController = controller;
         Game1.activeClickableMenu = controller.Menu;
     }
 
@@ -153,10 +194,33 @@ internal sealed partial class RoosterCoordinator
                             _compatEditorController = null;
                         });
                     });
+
+                layout.Menu(
+                    FemalesEditorMenuId,
+                    menu =>
+                    {
+                        var viewName = $"Mods/{ModManifest.UniqueID}/Views/{FemalesEditorViewFile}";
+                        menu.View(viewName);
+                        menu.Context(() => new RoosterFemalesEditorViewModel(
+                            new RoosterFemalesEditorService(),
+                            Config,
+                            LoadFemalesEditorSnapshot,
+                            () => PersistAndApplyFemalesAssignmentsChange("stardewui females editor save")));
+                        menu.ConfigureController(controller =>
+                        {
+                            controller.DimmingAmount = 0.6f;
+                            controller.CloseOnOutsideClick = true;
+                            controller.EnableCloseButton();
+                        });
+                        menu.OnClosed(() =>
+                        {
+                            _femalesEditorController = null;
+                        });
+                    });
             },
             assets: new StardewUiAssetsOptions(ViewsDir: "assets/views", SpritesDir: "assets/sprites"),
             preloadAssetsOnce: true,
-            preloadModels: new[] { typeof(WhiteRoosterProduceEditorViewModel), typeof(RoosterCompatEditorViewModel) });
+            preloadModels: new[] { typeof(WhiteRoosterProduceEditorViewModel), typeof(RoosterCompatEditorViewModel), typeof(RoosterFemalesEditorViewModel) });
     }
 
     private IDictionary<string, FarmAnimalData> LoadFarmAnimalsForCompatEditor()
@@ -165,5 +229,49 @@ internal sealed partial class RoosterCoordinator
             return farmAnimals;
 
         return new Dictionary<string, FarmAnimalData>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private RoosterFemalesEditorSnapshot LoadFemalesEditorSnapshot()
+    {
+        var service = new RoosterFemalesEditorService();
+
+        if (!TryLoadFarmAnimals(out var farmAnimals, out _))
+        {
+            return service.LoadSnapshot(
+                Config,
+                new Dictionary<string, FarmAnimalData>(StringComparer.OrdinalIgnoreCase),
+                RoosterHelper.Roosters,
+                _animalExclusions,
+                HatchApi,
+                WildEggsApi);
+        }
+
+        ApplyCompatSelectionsToRuntime(farmAnimals);
+        return service.LoadSnapshot(Config, farmAnimals, RoosterHelper.Roosters, _animalExclusions, HatchApi, WildEggsApi);
+    }
+
+    private void PersistAndApplyFemalesAssignmentsChange(string reason)
+    {
+        EnsureRoostersSetup();
+
+        if (TryLoadFarmAnimals(out var farmAnimals, out _))
+        {
+            ApplyCompatSelectionsToRuntime(farmAnimals);
+            var plan = FemaleAssignmentService.ComputeFemaleAssignmentsPlan(
+                Config,
+                farmAnimals,
+                RoosterHelper.Roosters,
+                _animalExclusions,
+                HatchApi,
+                WildEggsApi);
+            FemaleAssignmentService.ApplyFemaleAssignmentsPlan(Config, RoosterHelper, plan);
+        }
+
+        FemaleAssignmentService.UpdateChosenFemalesApi(Config);
+        _femaleAssignmentsDirty = false;
+        ConfigManager.Save(Helper, Config);
+        InvalidateDailyPlanCache(reason);
+        RequestInvalidate(FarmAnimalsAssetName);
+        RequestInvalidate(ObjectsAssetName);
     }
 }
