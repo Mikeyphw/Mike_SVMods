@@ -56,5 +56,5 @@
 
 ## Duplicate StardewUI shells
 - [x] Phase SUI-SML-1: add inert `RoosterCompatEditor.sml`
-- [ ] Phase SUI-SML-2: add inert `RoosterFemalesEditor.sml`
+- [x] Phase SUI-SML-2: add inert `RoosterFemalesEditor.sml`
 - [ ] Wire duplicate RoosterControl StardewUI shells in a later code phase

@@ -133,4 +133,10 @@
 - [x] Add `assets/views/RoosterCompatEditor.sml`
 - [x] Keep the shell unwired from code
 - [x] Update docs to mark code wiring deferred
+- [x] Verify build
+
+## Phase SUI-SML-2 — Duplicate females editor shell
+- [x] Add `assets/views/RoosterFemalesEditor.sml`
+- [x] Keep the shell unwired from code
+- [x] Update docs to mark code wiring deferred
 - [ ] Verify build

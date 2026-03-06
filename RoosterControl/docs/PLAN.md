@@ -228,6 +228,16 @@ Steps:
 2. Keep the shell inert: no host/menu/GMCM wiring in this phase.
 3. Use only the safe StardewUI markup subset already proven in repo runtime.
 4. Record that code wiring is deferred.
+
+## Phase SUI-SML-2 — Duplicate females editor shell
+
+Goal: add an inert StardewUI females editor `.sml` shell and lock the future viewmodel contract without wiring code yet.
+
+Steps:
+1. Add `assets/views/RoosterFemalesEditor.sml`.
+2. Keep the shell inert: no host/menu/GMCM wiring in this phase.
+3. Reuse the same safe markup subset as the existing shipped RoosterControl and EggsInWild views.
+4. Record that code wiring is deferred.
 4. Update `docs/CHECKLIST.md` and `docs/TODO.md`.
 5. Verify `RoosterControl` and solution builds cleanly.
 
