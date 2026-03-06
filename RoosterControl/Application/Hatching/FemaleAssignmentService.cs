@@ -11,6 +11,7 @@ using StardewValley.GameData.FarmAnimals;
 using RoosterControl.Application.FarmAnimals;
 
 using ILetMeHatchApi = Mikew.NestCore.Framework.ILetMeHatchApi;
+using IWildEggsApi = Mikew.NestCore.Framework.IWildEggsApi;
 
 namespace RoosterControl.Application.Hatching;
 
@@ -41,16 +42,17 @@ internal sealed class FemaleAssignmentsPlanResult
 
 internal static class FemaleAssignmentService
 {
-    public static bool SyncFemaleAssignments(
+public static bool SyncFemaleAssignments(
     RoosterControlConfig config,
     RoosterHelper roosterHelper,
     IDictionary<string, FarmAnimalData> animalData,
     Dictionary<RoosterType, RoosterData> roosters,
     AnimalExclusion animalExclusions,
-    ILetMeHatchApi? hatchApi
+    ILetMeHatchApi? hatchApi,
+    IWildEggsApi? wildEggsApi
 )
 {
-    var plan = ComputeFemaleAssignmentsPlan(config, animalData, roosters, animalExclusions, hatchApi);
+    var plan = ComputeFemaleAssignmentsPlan(config, animalData, roosters, animalExclusions, hatchApi, wildEggsApi);
     ApplyFemaleAssignmentsPlan(config, roosterHelper, plan);
     return plan.ConfigChanged;
 }
@@ -63,7 +65,8 @@ public static FemaleAssignmentsPlanResult ComputeFemaleAssignmentsPlan(
     IDictionary<string, FarmAnimalData> animalData,
     Dictionary<RoosterType, RoosterData> roosters,
     AnimalExclusion animalExclusions,
-    ILetMeHatchApi? hatchApi
+    ILetMeHatchApi? hatchApi,
+    IWildEggsApi? wildEggsApi
 )
 {
     if (config is null) throw new ArgumentNullException(nameof(config));
@@ -84,11 +87,13 @@ public static FemaleAssignmentsPlanResult ComputeFemaleAssignmentsPlan(
 
     var foundFemales = new HashSet<string>(defaultFemales.Keys, StringComparer.OrdinalIgnoreCase);
 
-    if (hatchApi is not null && hatchApi.GetClonedAnimalsInfo().Count > 0)
+    if (hatchApi is not null && hatchApi.FinishedEarlyStuff && hatchApi.GetClonedAnimalsInfo().Count > 0)
     {
         foreach (var f in GetClonedFemales(animalData, eggTypes, animalExclusions, hatchApi))
             foundFemales.Add(f);
     }
+
+    ApplyWildEggsParity(foundFemales, wildEggsApi);
 
     var existing = config.FemalesOptions is null
         ? new Dictionary<string, FemaleRoosterAssignment>(StringComparer.OrdinalIgnoreCase)
@@ -184,6 +189,18 @@ public static FemaleAssignmentsPlanResult ComputeFemaleAssignmentsPlan(
     }
 
     return new FemaleAssignmentsPlanResult(desired, femalesByRooster, femaleEggs, changed);
+}
+
+private static void ApplyWildEggsParity(HashSet<string> foundFemales, IWildEggsApi? wildEggsApi)
+{
+    if (foundFemales.Count == 0 || wildEggsApi is null)
+        return;
+
+    var validAnimals = wildEggsApi.ValidAnimals;
+    if (validAnimals is null || validAnimals.Count == 0)
+        return;
+
+    foundFemales.RemoveWhere(female => !validAnimals.Contains(female));
 }
 
 /// <summary>

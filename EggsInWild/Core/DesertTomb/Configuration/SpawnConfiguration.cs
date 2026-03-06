@@ -200,6 +200,9 @@ namespace EggsInWild.DesertTomb.Core.Configuration;
             ThePharaoh = original.ThePharaoh.Clone(this);
             DifficultyAdjustments = original.DifficultyAdjustments.Clone();
             RandomChanceModifiers = original.RandomChanceModifiers.Clone(this);
+            AllowedMonstersByDifficulty.Clear();
+            MinimumProgressionByMonster.Clear();
+            MonsterSpawnRatesByArea.Clear();
 
             // Deep copy AreaConfigurations
             // Removed AreaConfigurations deep copy
@@ -351,9 +354,10 @@ namespace EggsInWild.DesertTomb.Core.Configuration;
             };
 
             // Deep copy the dictionary
+            clone.MaxMonsterInTomb.Clear();
             foreach (var kvp in this.MaxMonsterInTomb)
             {
-                clone.MaxMonsterInTomb.Add(kvp.Key, kvp.Value);
+                clone.MaxMonsterInTomb[kvp.Key] = kvp.Value;
             }
 
             clone.BannedMonsters = new HashSet<TombMonsterType>(this.BannedMonsters);

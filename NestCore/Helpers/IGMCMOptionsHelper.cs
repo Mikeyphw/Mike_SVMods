@@ -19,6 +19,10 @@ namespace Mikew.NestCore.Helpers;
 /// </summary>
 public sealed class IGMCMOptionsHelper
 {
+    private static readonly Color SwatchCheckerLight = new(214, 214, 214);
+    private static readonly Color SwatchCheckerDark = new(164, 164, 164);
+    private const int SwatchCellSize = 6;
+
     private readonly IGMCMOptionsAPI? _extraOptionsApi;
     private readonly IGenericModConfigMenuApi? _gmcm;
     private readonly I18TranslationHelper _i18n;
@@ -642,16 +646,52 @@ public void AddColorOption(
 
 
 
-/// <summary>
+    /// <summary>
     /// Create a draw function suitable for the <c>drawSample</c> parameter of <see cref="AddColorOption"/>.
-    /// Returns null if GMCM Options isn't installed.
+    /// Matches the newer GMCM Options swatch signature while using local drawing code.
     /// </summary>
     public Action<SpriteBatch, int, int, Color>? MakeColorSwatchDrawer(
-        Action<SpriteBatch, int, int>? drawBackground = null,
-        Action<SpriteBatch, int, int, Color>? drawForeground = null)
-        => _extraOptionsApi?.MakeColorSwatchDrawer(drawBackground, drawForeground);
+        Action<SpriteBatch, Rectangle>? drawBackground = null,
+        Action<SpriteBatch, Rectangle, Color>? drawForeground = null)
+    {
+        return (spriteBatch, x, y, color) =>
+        {
+            var bounds = new Rectangle(x, y, 24, 24);
+            (drawBackground ?? DrawDefaultSwatchBackground)(spriteBatch, bounds);
+            (drawForeground ?? DrawDefaultSwatchForeground)(spriteBatch, bounds, color);
+        };
+    }
 
-public void AddImageOption(
+    private static void DrawDefaultSwatchBackground(SpriteBatch spriteBatch, Rectangle bounds)
+    {
+        for (var row = 0; row < bounds.Height; row += SwatchCellSize)
+        {
+            for (var col = 0; col < bounds.Width; col += SwatchCellSize)
+            {
+                var tileColor = ((row / SwatchCellSize) + (col / SwatchCellSize)) % 2 == 0
+                    ? SwatchCheckerLight
+                    : SwatchCheckerDark;
+
+                spriteBatch.Draw(
+                    Game1.staminaRect,
+                    new Rectangle(bounds.X + col, bounds.Y + row, SwatchCellSize, SwatchCellSize),
+                    tileColor
+                );
+            }
+        }
+    }
+
+    private static void DrawDefaultSwatchForeground(SpriteBatch spriteBatch, Rectangle bounds, Color color)
+    {
+        const int padding = 2;
+        spriteBatch.Draw(
+            Game1.staminaRect,
+            new Rectangle(bounds.X + padding, bounds.Y + padding, bounds.Width - (padding * 2), bounds.Height - (padding * 2)),
+            color
+        );
+    }
+
+    public void AddImageOption(
         Func<uint> getValue,
         Action<uint> setValue,
         string optionName,

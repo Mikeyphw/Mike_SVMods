@@ -117,13 +117,16 @@ private void InstallHarmonyBootstrap()
             log: _contentLog,
             invalidateAssets: InvalidateGameAssets);
 
-        var chosenEggAssignments = new ChosenEggAssignments(_contentDataLoader, Helper.ModRegistry, _contentLog);
+        InitializeAnimalNotesRuntime(_contentLog);
+        Phase8HealthReporter.LogPhase8HealthReport(Helper, saveData, _config, _contentLog);
+
+        _chosenEggAssignments = new ChosenEggAssignments(_contentDataLoader, Helper.ModRegistry, _contentLog);
         _contentPipeline = new AssetPipelineHost<ContentContext>(Helper, Monitor, CreateContentContext);
         if (_assetHandler is not null)
             _contentPipeline.RegisterModAssets(_assetHandler, order: -100);
 
         _contentPipeline.RegisterEditor(new MonstersEditor(), order: 10, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
-        _contentPipeline.RegisterEditor(new FarmAnimalsEditor(chosenEggAssignments), order: 20, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
+        _contentPipeline.RegisterEditor(new FarmAnimalsEditor(_chosenEggAssignments), order: 20, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
         _contentPipeline.RegisterEditor(new ObjectsEditor(), order: 30, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
         _contentPipeline.RegisterEditor(new BigCraftablesEditor(), order: 40, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
         _contentPipeline.RegisterEditor(new MachinesEditor(), order: 50, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);

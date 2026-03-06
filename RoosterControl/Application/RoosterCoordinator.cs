@@ -22,6 +22,7 @@ using StardewValley;
 using StardewValley.GameData.FarmAnimals;
 
 using ILetMeHatchApi = Mikew.NestCore.Framework.ILetMeHatchApi;
+using IWildEggsApi = Mikew.NestCore.Framework.IWildEggsApi;
 using LuckyTypes = Mikew.NestCore.EnumsAndStrings.Enums.LuckyTypes;
 using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Helpers.Content;
@@ -70,8 +71,9 @@ internal sealed partial class RoosterCoordinator : IRoosterCoordinator
     }
 
     internal I18TranslationHelper I18n => _i18n;
-    internal RoosterHelper RoosterHelper = null!;
+internal RoosterHelper RoosterHelper = null!;
 internal ILetMeHatchApi? HatchApi;
+internal IWildEggsApi? WildEggsApi;
 
     internal Dictionary<Textures, Dictionary<TextureDetails, string>> ModTextures = new();
 
@@ -433,6 +435,11 @@ private void QueueRefreshFarmAnimalsAfterDailyDecisions()
         LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WorldReady={Context.IsWorldReady}", LogLevel.Info);
         LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"MainPlayer={Context.IsMainPlayer}", LogLevel.Info);
         LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"LetMeHatchApiReady={HatchApi is not null}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"LetMeHatchApiVersion={(HatchApi is null ? "n/a" : HatchApi.ApiVersion)}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"LetMeHatchReady={(HatchApi is not null && HatchApi.FinishedEarlyStuff)}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WildEggsApiReady={WildEggsApi is not null}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WildEggsApiVersion={(WildEggsApi is null ? "n/a" : WildEggsApi.ApiVersion)}", LogLevel.Info);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WildEggsParityAnimals={(WildEggsApi?.ValidAnimals.Count ?? 0)}", LogLevel.Info);
         LogScopedHelper.Log(_log, ModRoosterControlCategory.General,
             $"Catalogs: roosters={_catalogs.Roosters.Roosters.Count}, produce={_catalogs.Produce.Roosters.Count}, hatching={_catalogs.Hatching.Roosters.Count}",
             LogLevel.Info);

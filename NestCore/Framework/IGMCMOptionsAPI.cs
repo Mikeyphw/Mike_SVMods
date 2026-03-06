@@ -57,6 +57,11 @@ namespace Mikew.NestCore.Framework {
         /// <param name="showAlpha">Whether the color picker should allow setting the Alpha channel</param>
         /// <param name="colorPickerStyle">Flags to control how the color picker is rendered.  <see cref="ColorPickerStyle"/></param>
         /// <param name="fieldId">The unique field ID for use with GMCM's <c>OnFieldChanged</c>, or <c>null</c> to auto-generate a randomized ID.</param>
+        /// <param name="drawSample">
+        ///   A function to draw a sample of the current color.  The arguments are the SpriteBatch, x and y coordinates
+        ///   of the top left corner of the area in which to draw the sample, and the Color to render.
+        ///   Passing <c>null</c> is equivalent to passing the result of <c>MakeColorSwatchDrawer()</c>.
+        /// </param>
         void AddColorOption(
             IManifest mod,
             Func<Color> getValue,
@@ -85,23 +90,24 @@ namespace Mikew.NestCore.Framework {
         }
         #pragma warning restore format
 
-        
         /// <summary>
-        /// Return a function (suitable for passing as the drawSample parameter of <see cref="AddColorOption"/>)
-        /// that draws a color swatch.
+        ///   Return a function (suitable for passing as the <c>drawSample</c> parameter of <c>AddColorOption</c>)
+        ///   that draws a color swatch.
         /// </summary>
         /// <param name="drawBackground">
-        /// A function that draws the background of the color swatch. By default (null), draws a checkerboard.
+        ///   A function that draws the background of the color swatch.  By default (i.e., if passed <c>null</c>),
+        ///   this draws a black and white checkerboard pattern.
         /// </param>
         /// <param name="drawForeground">
-        /// A function that draws the foreground of the color swatch. By default (null), draws a square of the given color.
+        ///   A function that draws the foreground of the color swatch.  By default (i.e., if passed <c>null</c>),
+        ///   this draws a square of the given Color.
         /// </param>
-        /// <returns>A function that draws a color swatch.</returns>
+        /// <returns>A function that draws a color swatch</returns>
         Action<SpriteBatch, int, int, Color> MakeColorSwatchDrawer(
-            Action<SpriteBatch, int, int>? drawBackground = null,
-            Action<SpriteBatch, int, int, Color>? drawForeground = null);
+            Action<SpriteBatch, Rectangle>? drawBackground = null,
+            Action<SpriteBatch, Rectangle, Color>? drawForeground = null);
 
-/// <summary>
+        /// <summary>
         /// Add an image picker option.  This is really an "array index picker" where you can specify what to draw
         /// for each index.  The underlying value is always a <c>uint</c> (the index).
         /// </summary>

@@ -80,6 +80,9 @@ public static class LmhGmcmMenu
             root.Bool(cfg => cfg.EditEggListByName, optionId: "general.editEggListByName", tooltip: true);
             root.Bool(cfg => cfg.EditBirthText, optionId: "general.editBirthText", tooltip: true);
             root.Bool(cfg => cfg.AlternateBirthText, optionId: "general.alternateBirthText", tooltip: true);
+            root.KeybindList(cfg => cfg.OpenBreedingEditorKey, optionId: "breeding.openEditorKeybind", tooltip: true);
+            root.KeybindList(cfg => cfg.OpenColorsEditorKey, optionId: "colors.openEditorKeybind", tooltip: true);
+            root.KeybindList(cfg => cfg.OpenAdvancedMappingsEditorKey, optionId: "advanced.itemMappings.openEditorKeybind", tooltip: true);
 
             root.Separator(simple: true);
 

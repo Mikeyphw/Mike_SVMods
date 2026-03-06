@@ -12,6 +12,9 @@ internal static class RoosterRootPage
         b.Enum(cfg => cfg.General.UpdateRate, optionId: "general.updateRate", tooltip: true);
         b.Enum(cfg => cfg.General.HatchingMode, optionId: "general.hatchingMode", tooltip: true);
         b.Enum(cfg => cfg.General.HarvestType, optionId: "general.harvestType", tooltip: true);
+        b.KeybindList(cfg => cfg.General.OpenWhiteRoosterProduceEditorKey, optionId: "whiteProduce.openEditorKeybind", tooltip: true);
+        b.KeybindList(cfg => cfg.General.OpenCompatEditorKey, optionId: "compat.openEditorKeybind", tooltip: true);
+        b.KeybindList(cfg => cfg.General.OpenFemalesEditorKey, optionId: "females.openEditorKeybind", tooltip: true);
 
         b.Separator(simple: true);
 

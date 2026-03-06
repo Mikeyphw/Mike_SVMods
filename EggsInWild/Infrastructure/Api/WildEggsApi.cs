@@ -9,6 +9,8 @@ namespace EggsInWild.Infrastructure.Api;
 public sealed class WildEggsApi : IWildEggsApi
 {
     private readonly Func<ModConfig> _getConfig;
+    private readonly Func<ProgressionStep>? _getStep;
+    private readonly Func<IReadOnlyDictionary<string, int>>? _getQuestCompletionDays;
 
     private HashSet<string> _wildEggIds = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _validAnimals = new(StringComparer.OrdinalIgnoreCase);
@@ -19,9 +21,14 @@ public sealed class WildEggsApi : IWildEggsApi
     private string? _chosenMagicCoop;
     private string? _chosenMagicBarn;
 
-    public WildEggsApi(Func<ModConfig> getConfig)
+    public WildEggsApi(
+        Func<ModConfig> getConfig,
+        Func<ProgressionStep>? getStep = null,
+        Func<IReadOnlyDictionary<string, int>>? getQuestCompletionDays = null)
     {
         _getConfig = getConfig;
+        _getStep = getStep;
+        _getQuestCompletionDays = getQuestCompletionDays;
     }
 
     public int ApiVersion => 1;
@@ -75,8 +82,19 @@ public sealed class WildEggsApi : IWildEggsApi
             _chosenBarn = chosenAnimal;
     }
 
+    public void ClearChosenAnimals()
+    {
+        _chosenCoop = null;
+        _chosenBarn = null;
+        _chosenMagicCoop = null;
+        _chosenMagicBarn = null;
+    }
+
     public ProgressionStep GetProgressionStep()
     {
+        if (_getStep is not null)
+            return _getStep();
+
         return _getConfig().ProgressionMode ? ProgressionStep.PartI : ProgressionStep.None;
     }
 
@@ -92,6 +110,8 @@ public sealed class WildEggsApi : IWildEggsApi
 
     public IReadOnlyDictionary<string, int> GetQuestCompletionDays()
     {
-        return new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        return _getQuestCompletionDays is null
+            ? new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, int>(_getQuestCompletionDays(), StringComparer.OrdinalIgnoreCase);
     }
 }

@@ -40,6 +40,7 @@ using EggsInWild.Infrastructure.Assets;
 using EggsInWild.Application.AnimalNotes;
 using Mikew.NestCore.Framework;
 using static Mikew.NestCore.EnumsAndStrings.Strings;
+using StardewModdingAPI.Utilities;
 
 namespace EggsInWild;
 
@@ -80,6 +81,7 @@ public sealed partial class ModEntry : Mod
         helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         helper.Events.GameLoop.Saving += OnSaving;
         helper.Events.Player.Warped += OnWarped;
+        helper.Events.Input.ButtonPressed += OnButtonPressed;
         helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
         helper.Events.Display.RenderedHud += OnRenderedHud;
         InitializeModAssetHandler();
@@ -138,6 +140,28 @@ public sealed partial class ModEntry : Mod
         _animalNotes?.OnSaveLoaded();
         _animalNotesValidator?.ValidateAndLog();
         SyncApiState();
+    }
+
+    private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+    {
+        if (_config is null || !Context.IsWorldReady)
+            return;
+
+        if (Game1.activeClickableMenu is not null)
+            return;
+
+        var keybind = _config.Get().WildAnimalsEditorKeybind;
+        if (keybind is not null && keybind.JustPressed())
+        {
+            OpenWildAnimalsEditor();
+            return;
+        }
+
+        var progressionKeybind = _config.Get().AnimalProgressionEditorKeybind;
+        if (progressionKeybind is null || !progressionKeybind.JustPressed())
+            return;
+
+        OpenAnimalProgressionEditor();
     }
 
 

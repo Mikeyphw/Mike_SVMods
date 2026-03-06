@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using HarmonyLib;
 using StardewValley;
 using StardewValley.Objects;
@@ -18,6 +19,8 @@ internal static class DesertTombBreakableLootPatches
     [ThreadStatic] private static double _dropRateMultiplier;
     [ThreadStatic] private static bool _inBreakableContext;
     [ThreadStatic] private static bool _reentryGuard;
+    private static readonly PropertyInfo? LocationProperty = AccessTools.Property(typeof(BreakableContainer), "Location");
+    private static readonly FieldInfo? CurrentLocationField = AccessTools.Field(typeof(BreakableContainer), "currentLocation");
 
     internal static void Install(HarmonyLib.Harmony harmony)
     {
@@ -54,13 +57,14 @@ internal static class DesertTombBreakableLootPatches
                 prefix: new HarmonyMethod(typeof(DesertTombBreakableLootPatches), nameof(BeforeCreateItemDebris))
             );
         }
-}
+    }
 
-    private static void BeforeBreakableToolAction(BreakableContainer __instance, GameLocation location)
+    private static void BeforeBreakableToolAction(BreakableContainer __instance)
     {
         _inBreakableContext = false;
         _dropRateMultiplier = 1.0;
 
+        var location = ResolveLocation(__instance);
         if (location is not StardewValley.Locations.MineShaft mineShaft)
             return;
 
@@ -117,5 +121,19 @@ internal static class DesertTombBreakableLootPatches
         {
             _reentryGuard = false;
         }
+    }
+
+    private static GameLocation? ResolveLocation(BreakableContainer? container)
+    {
+        if (container is null)
+            return Game1.currentLocation;
+
+        if (LocationProperty?.GetValue(container) is GameLocation propertyLocation)
+            return propertyLocation;
+
+        if (CurrentLocationField?.GetValue(container) is GameLocation fieldLocation)
+            return fieldLocation;
+
+        return Game1.currentLocation;
     }
 }

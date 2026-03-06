@@ -51,7 +51,15 @@ public sealed class GeneralSettings
     /// </summary>
     public KeybindList OpenWhiteRoosterProduceEditorKey { get; set; } = new(SButton.F7);
 
-    
+    /// <summary>
+    /// Optional shortcut to open the duplicate StardewUI compat editor directly.
+    /// </summary>
+    public KeybindList OpenCompatEditorKey { get; set; } = new();
+
+    /// <summary>
+    /// Optional shortcut to open the duplicate StardewUI females editor directly.
+    /// </summary>
+    public KeybindList OpenFemalesEditorKey { get; set; } = new();
 
     public CatalogApplyMode CatalogApplyMode { get; set; } = CatalogApplyMode.RepairInvalid;
 
@@ -217,4 +225,3 @@ public sealed class DebugKnobsConfig
     public float LuckAdjustmentOffset { get; set; } = 0.0f;
 }
 #endif
-

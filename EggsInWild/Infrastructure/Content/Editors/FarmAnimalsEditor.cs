@@ -83,7 +83,7 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>, IPostPa
         try
         {
             var api = context.Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.lmh");
-            if (api is null)
+            if (api is null || !api.FinishedEarlyStuff)
                 return;
 
             var pairs = api.GetClonedAnimalsInfo()?.ToList();

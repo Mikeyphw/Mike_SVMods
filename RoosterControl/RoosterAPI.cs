@@ -7,6 +7,8 @@ public class RoosterHatchingApi
         get { return _instance ??= new RoosterHatchingApi(); }
     }
 
+    public int ApiVersion => 1;
+
     public List<string> ChosenFemales { get; private set; } = new();
 
     public void UpdateChosenFemales(List<string> newFemales)

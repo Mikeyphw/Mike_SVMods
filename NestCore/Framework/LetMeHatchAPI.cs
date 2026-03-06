@@ -2,6 +2,7 @@ namespace Mikew.NestCore.Framework;
 
 public interface ILetMeHatchApi
 {
+    int ApiVersion { get; }
     List<string> AnimalsWithClonedEggs { get; }
     bool FinishedEarlyStuff { get; }
     int EDIT_BIRTH_TEXT_PRIORITY { get; }

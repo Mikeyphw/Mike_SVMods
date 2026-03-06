@@ -131,9 +131,9 @@ public interface IMenuController : IDisposable
     event Action? Closing;
 
     /// <summary>
-    /// Gets whether the menu can be closed by the player (e.g., via ESC key or close button).
+    /// Gets or sets a predicate that determines whether the menu can be closed by the player.
     /// </summary>
-    bool CanClose { get; }
+    Func<bool>? CanClose { get; set; }
 
     /// <summary>
     /// Gets or sets the action to invoke when the menu is closed.
@@ -168,7 +168,7 @@ public interface IMenuController : IDisposable
     /// <summary>
     /// Gets or sets the position selector for the menu.
     /// </summary>
-    Func<Vector2>? PositionSelector { get; set; }
+    Func<Point>? PositionSelector { get; set; }
 
     /// <summary>
     /// Clears any cursor attachment set by the menu.
@@ -181,15 +181,19 @@ public interface IMenuController : IDisposable
     void Close();
 
     /// <summary>
-    /// Enables the default close button on the menu.
+    /// Enables a close button on the menu, optionally using a custom sprite.
     /// </summary>
-    void EnableCloseButton();
+    void EnableCloseButton(Texture2D? texture = null, Rectangle? sourceRect = null, float scale = 4f);
 
     /// <summary>
-    /// Attaches the cursor to a specific element within the menu.
+    /// Displays a cursor-following attachment sprite.
     /// </summary>
-    /// <param name="componentId">The ID of the component to attach to.</param>
-    void SetCursorAttachment(string componentId);
+    void SetCursorAttachment(
+        Texture2D texture,
+        Rectangle? sourceRect = null,
+        Point? size = null,
+        Point? offset = null,
+        Color? tint = null);
 
     /// <summary>
     /// Sets the gutters (padding) around the menu content.
@@ -198,7 +202,7 @@ public interface IMenuController : IDisposable
     /// <param name="top">Top gutter height.</param>
     /// <param name="right">Right gutter width.</param>
     /// <param name="bottom">Bottom gutter height.</param>
-    void SetGutters(int left, int top, int right, int bottom);
+    void SetGutters(int left, int top, int right = -1, int bottom = -1);
 }
 
 /// <summary>
@@ -249,4 +253,3 @@ public static class ViewEngineExtensions
         engine.EnableHotReloading(null);
     }
 }
-

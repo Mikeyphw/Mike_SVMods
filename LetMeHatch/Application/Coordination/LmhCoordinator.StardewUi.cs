@@ -7,6 +7,8 @@ using LetMeHatch.Integrations.StardewUi.Colors;
 using Mikew.NestCore.Integrations.StardewUI;
 using Mikew.NestCore.Integrations.StardewUI.Dsl;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
+using StardewValley;
 
 namespace LetMeHatch.Application.Coordination;
 
@@ -22,6 +24,29 @@ public sealed partial class LmhCoordinator
     private StardewUiHost? _stardewUiHost;
     private StardewUiMenuHost? _stardewUiMenuHost;
     private bool _stardewUiLayoutReady;
+
+    public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+    {
+        if (!Context.IsWorldReady || Game1.activeClickableMenu is not null)
+            return;
+
+        var cfg = _config.Get();
+
+        if (cfg.OpenBreedingEditorKey.JustPressed())
+        {
+            OpenBreedingEditor();
+            return;
+        }
+
+        if (cfg.OpenColorsEditorKey.JustPressed())
+        {
+            OpenColorsEditor();
+            return;
+        }
+
+        if (cfg.OpenAdvancedMappingsEditorKey.JustPressed())
+            OpenAdvancedMappingsEditor();
+    }
 
     private void InitializeStardewUi()
     {

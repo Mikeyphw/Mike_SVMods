@@ -319,7 +319,7 @@ public sealed class ChosenEggAssignments
         try
         {
             var api = _registry.GetApi<ILetMeHatchApi>("Mikew.lmh");
-            if (api is null)
+            if (api is null || !api.FinishedEarlyStuff)
                 return;
 
             var pairs = api.GetClonedAnimalsInfo()?.ToList();

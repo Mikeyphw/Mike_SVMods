@@ -501,6 +501,8 @@
   "config.paragraph.wildAnimals.stardewUiStatus.disabled.text": "StardewUI not installed. WildAnimals editor launcher disabled.",
   "config.animalProgression.openEditor.name": "Open StardewUI Animal Progression editor",
   "config.animalProgression.openEditor.description": "Open the duplicate StardewUI Animal Progression editor.",
+  "config.animalProgression.openEditorKeybind.name": "Animal Progression editor keybind",
+  "config.animalProgression.openEditorKeybind.description": "Optional shortcut to open the duplicate StardewUI Animal Progression editor directly while in-game.",
   "config.paragraph.animalProgression.stardewUiStatus.enabled.text": "StardewUI editor available.",
   "config.paragraph.animalProgression.stardewUiStatus.disabled.text": "StardewUI not installed. Animal Progression editor launcher disabled.",
   "config.wildAnimals.index.group.all.name": "All (A–Z)",

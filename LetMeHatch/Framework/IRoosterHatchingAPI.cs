@@ -4,6 +4,7 @@ namespace LetMeHatch.Framework
 {
     public interface IRoosterHatchingAPI
     {
+        int ApiVersion { get; }
         List<string> ChosenFemales { get; }
     }
 }

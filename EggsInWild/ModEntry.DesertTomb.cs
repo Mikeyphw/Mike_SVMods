@@ -41,6 +41,10 @@ namespace EggsInWild;
 
 public sealed partial class ModEntry
 {
+    private void OnRenderedHud(object? sender, RenderedHudEventArgs e)
+    {
+        _desertTombDiagnostics?.RenderHud(e.SpriteBatch);
+    }
 
     
     private void TryInstallDesertTombHarmonyPatches(string reason, bool force = false)
@@ -127,6 +131,7 @@ public sealed partial class ModEntry
 
         // Generator currently doesn't depend on SpawnConfiguration values (kept for future expansion).
         var generator = new DesertTombLevelGenerator(new SpawnConfiguration());
+        _desertTombDiagnostics ??= new Infrastructure.DesertTomb.Diagnostics.DesertTombDiagnostics(Helper, _config, log);
 
         _desertTombRuntime = new DesertTombRuntime(
             config: _config,
@@ -135,7 +140,7 @@ public sealed partial class ModEntry
             isMainPlayer: () => Context.IsMainPlayer,
             generator: generator,
             spawnExecutor: spawnExecutor,
-            diagnostics: null
+            diagnostics: _desertTombDiagnostics
         );
 
         return _desertTombRuntime;

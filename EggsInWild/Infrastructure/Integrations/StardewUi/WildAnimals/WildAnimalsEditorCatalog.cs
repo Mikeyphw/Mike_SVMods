@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using EggsInWild.Infrastructure.Config;
 using EggsInWild.Infrastructure.ModData.Models;
+using Microsoft.Xna.Framework;
 
 namespace EggsInWild.Infrastructure.Integrations.StardewUi.WildAnimals;
 
@@ -18,7 +19,12 @@ public sealed record WildAnimalsEditorAnimalRecord(
     int EffectivePrice,
     bool EffectiveIsMagic,
     IReadOnlyList<WildAnimalsEditorLocationTypeRecord> LocationTypes,
-    IReadOnlyList<WildAnimalsEditorModGroupRecord> ModGroups);
+    IReadOnlyList<WildAnimalsEditorModGroupRecord> ModGroups,
+    WildAnimalsEditorPreviewRecord Preview,
+    bool HasValidEffectiveAnimalKeys,
+    bool HasOverrides,
+    bool HasWarnings,
+    IReadOnlyList<string> WarningMessages);
 
 public sealed record WildAnimalsEditorLocationTypeRecord(
     string Key,
@@ -30,7 +36,16 @@ public sealed record WildAnimalsEditorModGroupRecord(
     string ModId,
     IReadOnlyList<string> BaseKeys,
     IReadOnlyList<string>? OverrideKeys,
-    IReadOnlyList<string> EffectiveKeys);
+    IReadOnlyList<string> EffectiveKeys,
+    IReadOnlyList<string> UnknownEffectiveKeys,
+    bool HasWarnings);
+
+public sealed record WildAnimalsEditorPreviewRecord(
+    string? FarmAnimalKey,
+    string? TexturePath,
+    Rectangle? SourceRect,
+    bool HasPreview,
+    string StatusText);
 
 public sealed record WildAnimalDraft(
     string Key,
@@ -54,3 +69,15 @@ public sealed record WildAnimalDraftModGroup(
     string ModId,
     IReadOnlyList<string> BaseKeys,
     IReadOnlyList<string> Keys);
+
+public sealed record WildAnimalDraftVisualState(
+    WildAnimalsEditorPreviewRecord Preview,
+    IReadOnlyList<string> WarningMessages,
+    IReadOnlyList<WildAnimalDraftModGroupVisualState> ModGroups,
+    bool HasWarnings);
+
+public sealed record WildAnimalDraftModGroupVisualState(
+    string ModId,
+    IReadOnlyList<string> EffectiveKeys,
+    IReadOnlyList<string> UnknownKeys,
+    bool HasWarnings);

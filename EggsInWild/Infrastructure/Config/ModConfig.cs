@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using StardewModdingAPI.Utilities;
 
 namespace EggsInWild.Infrastructure.Config;
 
@@ -77,6 +78,16 @@ public sealed class ModConfig
     /// When Enabled is false, the animal is excluded from egg assignment and AnimalNotes progression.
     /// </summary>
     public Dictionary<string, WildAnimalOverrideConfig> WildAnimalOverrides { get; set; } = new();
+
+    /// <summary>
+    /// Optional shortcut to open the StardewUI WildAnimals editor directly.
+    /// </summary>
+    public KeybindList WildAnimalsEditorKeybind { get; set; } = new();
+
+    /// <summary>
+    /// Optional shortcut to open the duplicate StardewUI Animal Progression editor directly.
+    /// </summary>
+    public KeybindList AnimalProgressionEditorKeybind { get; set; } = new();
 
 
     /// <summary>

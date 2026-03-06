@@ -73,6 +73,7 @@ public sealed class EiwGmcmMenu
             root.Link("prices", tooltip: true);
             root.Link("animalNotes", tooltip: true);
             root.Link("animalProgression", tooltip: true);
+            root.KeybindList(cfg => cfg.AnimalProgressionEditorKeybind, optionId: "animalProgression.openEditorKeybind", tooltip: true);
             root.Action(
                 optionId: "animalProgression.openEditor",
                 onAction: () => _ctx.OpenAnimalProgressionEditor?.Invoke(),

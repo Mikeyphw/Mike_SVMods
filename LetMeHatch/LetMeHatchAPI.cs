@@ -11,6 +11,8 @@ namespace LetMeHatch;
 /// </summary>
 public sealed class LetMeHatchApi : ILetMeHatchApi
 {
+    public int ApiVersion => 1;
+
     public List<string> AnimalsWithClonedEggs { get; private set; } = new();
 
     public bool FinishedEarlyStuff { get; private set; }

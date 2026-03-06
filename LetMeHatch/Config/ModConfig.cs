@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Mikew.NestCore.Framework;
 using Mikew.NestCore.Helpers.Logging;
+using StardewModdingAPI.Utilities;
 using static LetMeHatch.EnumsAndStrings.Enums;
 
 using static LetMeHatch.ModEntry;
@@ -25,6 +26,10 @@ public class ModConfig : CoreModConfig
     public bool BreedingSystemEnabled { get; set; }
 
     public bool DeterministicBreedingRng { get; set; }
+
+    public KeybindList OpenBreedingEditorKey { get; set; } = new();
+    public KeybindList OpenColorsEditorKey { get; set; } = new();
+    public KeybindList OpenAdvancedMappingsEditorKey { get; set; } = new();
 
     public bool StabilizeFarmAnimalsAssetOrder { get; set; }
     public Dictionary<

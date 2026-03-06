@@ -225,7 +225,8 @@ internal sealed partial class RoosterCoordinator
             animalData: animalData,
             roosters: roosters,
             animalExclusions: _animalExclusions,
-            hatchApi: HatchApi
+            hatchApi: HatchApi,
+            wildEggsApi: WildEggsApi
         );
 
         FemaleAssignmentService.ApplyFemaleAssignmentsPlan(Config, RoosterHelper, plan);

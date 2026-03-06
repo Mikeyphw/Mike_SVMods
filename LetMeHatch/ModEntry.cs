@@ -89,6 +89,7 @@ namespace LetMeHatch
             helper.Events.GameLoop.GameLaunched += coordinator.OnGameLaunched;
             helper.Events.GameLoop.SaveLoaded += coordinator.OnSaveLoaded;
             helper.Events.Player.Warped += coordinator.OnWarped;
+            helper.Events.Input.ButtonPressed += coordinator.OnButtonPressed;
         }
     }
 }

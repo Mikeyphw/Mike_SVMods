@@ -38,10 +38,20 @@ internal sealed partial class RoosterCoordinator
         if (Game1.activeClickableMenu is not null)
             return;
 
-        if (!Config.General.OpenWhiteRoosterProduceEditorKey.JustPressed())
+        if (Config.General.OpenWhiteRoosterProduceEditorKey.JustPressed())
+        {
+            TryOpenWhiteRoosterProduceEditor();
             return;
+        }
 
-        TryOpenWhiteRoosterProduceEditor();
+        if (Config.General.OpenCompatEditorKey.JustPressed())
+        {
+            TryOpenCompatEditor();
+            return;
+        }
+
+        if (Config.General.OpenFemalesEditorKey.JustPressed())
+            TryOpenFemalesEditor();
     }
 
     private void TryOpenWhiteRoosterProduceEditor()
