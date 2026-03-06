@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using LetMeHatch.GameAssetManagement;
 using LetMeHatch.Integrations.StardewUi.Breeding;
+using LetMeHatch.Integrations.StardewUi.Colors;
 using Mikew.NestCore.Integrations.StardewUI;
 using Mikew.NestCore.Integrations.StardewUI.Dsl;
 using StardewModdingAPI;
@@ -12,6 +13,8 @@ public sealed partial class LmhCoordinator
 {
     private const string BreedingEditorMenuId = "lmh.breeding.editor";
     private const string BreedingEditorViewFile = "LmhBreedingEditor";
+    private const string ColorsEditorMenuId = "lmh.colors.editor";
+    private const string ColorsEditorViewFile = "LmhColorsEditor";
 
     private StardewUiHost? _stardewUiHost;
     private StardewUiMenuHost? _stardewUiMenuHost;
@@ -52,10 +55,27 @@ public sealed partial class LmhCoordinator
                             controller.EnableCloseButton();
                         });
                     });
+
+                layout.Menu(
+                    ColorsEditorMenuId,
+                    menu =>
+                    {
+                        menu.View(ColorsEditorViewFile);
+                        menu.Context(() => new LmhColorsEditorViewModel(
+                            new LmhColorsEditorService(),
+                            LoadColorsCatalog,
+                            SaveColorsDraft));
+                        menu.ConfigureController(controller =>
+                        {
+                            controller.DimmingAmount = 0.45f;
+                            controller.CloseOnOutsideClick = true;
+                            controller.EnableCloseButton();
+                        });
+                    });
             },
             assets: new StardewUiAssetsOptions(ViewsDir: "assets/views", SpritesDir: "assets/sprites"),
             preloadAssetsOnce: true,
-            preloadModels: new[] { typeof(LmhBreedingEditorViewModel) });
+            preloadModels: new[] { typeof(LmhBreedingEditorViewModel), typeof(LmhColorsEditorViewModel) });
 
         _stardewUiLayoutReady = true;
     }
@@ -67,6 +87,11 @@ public sealed partial class LmhCoordinator
         => HasStardewUiAvailable()
             ? "Duplicate StardewUI breeding editor is available."
             : "Duplicate StardewUI breeding editor requires StardewUI.";
+
+    public string GetColorsEditorAvailabilityText()
+        => HasStardewUiAvailable()
+            ? "Duplicate StardewUI colors editor is available."
+            : "Duplicate StardewUI colors editor requires StardewUI.";
 
     public void OpenBreedingEditor()
     {
@@ -87,6 +112,27 @@ public sealed partial class LmhCoordinator
         var handle = _stardewUiMenuHost.OpenAsActiveMenu(BreedingEditorMenuId);
         if (handle is null)
             _log.Log("Failed to open StardewUI breeding editor.", LogLevel.Error);
+    }
+
+    public void OpenColorsEditor()
+    {
+        if (!Context.IsWorldReady)
+            return;
+
+        _stardewUiHost ??= StardewUiHost.TryCreate(_core.Helper, _core.Manifest);
+        if (_stardewUiHost is null)
+        {
+            _log.Log("StardewUI isn't installed; colors editor unavailable.", LogLevel.Warn);
+            return;
+        }
+
+        if (!_stardewUiLayoutReady)
+            RebuildStardewUiLayout();
+
+        _stardewUiMenuHost ??= _stardewUiHost.CreateMenuHost();
+        var handle = _stardewUiMenuHost.OpenAsActiveMenu(ColorsEditorMenuId);
+        if (handle is null)
+            _log.Log("Failed to open StardewUI colors editor.", LogLevel.Error);
     }
 
     private IReadOnlyList<LmhBreedingPackRecord> LoadBreedingPacksSnapshot()
@@ -130,6 +176,16 @@ public sealed partial class LmhCoordinator
 
         new LmhBreedingEditorService().ApplyDraft(femaleData, femaleConfig, draft);
         GameAssetManager.SaveData(manager.BreedingConfigsByPack, "BreedingConfigsByPack");
+        InvalidateAllContent();
+        InvalidateGameContentCache();
+    }
+
+    private LmhColorsEditorCatalog LoadColorsCatalog()
+        => new LmhColorsEditorService().LoadCatalog(_core.Helper, _config.Get());
+
+    private void SaveColorsDraft(LmhColorsEditorDraft draft)
+    {
+        _config.Update(cfg => new LmhColorsEditorService().ApplyDraft(cfg, draft), save: true);
         InvalidateAllContent();
         InvalidateGameContentCache();
     }

@@ -8,12 +8,14 @@ Contract:
   - SelectedPaletteGroup
   - PreviewLabel
   - PreviewStatusText
+  - SelectedOverrideColorText
   - OverrideRows
   - CanSave
   - CanDiscard
 - Methods:
   - OpenPaletteGroup()
   - SelectOverrideRow()
+  - ToggleSelectedPaletteGroup()
   - ResetOverride()
   - Save()
   - Discard()
@@ -47,6 +49,9 @@ Contract:
                 <lane orientation="vertical">
                     <label text="Selected palette group" />
                     <label text={SelectedPaletteGroup} />
+                    <button text="Toggle group for selected egg" click=|ToggleSelectedPaletteGroup()| />
+                    <label text="Selected override color (hex)" />
+                    <textinput layout="220px 54px" text={<>SelectedOverrideColorText} />
                     <label text="Override rows" />
                     <lane *repeat={OverrideRows} orientation="vertical">
                         <button layout="stretch content"

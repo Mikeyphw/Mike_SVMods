@@ -5,6 +5,7 @@ using LetMeHatch.Application.Coordination;
 using LetMeHatch.Config;
 using LetMeHatch.GameAssetManagement;
 using LetMeHatch.Integrations.StardewUi.Breeding;
+using LetMeHatch.Integrations.StardewUi.Colors;
 using LetMeHatch.Models;
 using Mikew.NestCore.Framework;
 using Mikew.NestCore.Helpers.Config;
@@ -154,6 +155,9 @@ public static class LmhGmcmMenu
 
                 page.Separator(simple: true);
                 page.ParagraphDynamic(() => core.Translation.GetString("config.colors.paragraph"), id: "colors_intro");
+                page.Separator(simple: true);
+                page.Action("colors.openStardewUi", owner.OpenColorsEditor, tooltip: true, isEnabled: owner.HasStardewUiAvailable);
+                page.ParagraphDynamic(() => owner.GetColorsEditorAvailabilityText(), styled: true, id: "colors_openStardewUi_status");
                 page.Separator(simple: true);
 
                 page.Link("colors.eggPalette");

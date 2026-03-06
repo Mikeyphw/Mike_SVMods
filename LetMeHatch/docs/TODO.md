@@ -53,7 +53,9 @@
 - [x] Phase SUI-1: extract shared breeding editor service/catalog and route GMCM breeding snapshots through it
 - [x] Verify Phase SUI-1 build gates
 - [x] Phase SUI-2: register duplicate StardewUI breeding editor and GMCM launcher
-- [ ] Verify Phase SUI-2 build gates
+- [x] Verify Phase SUI-2 build gates
+- [x] Phase SUI-3: register duplicate StardewUI colors editor and GMCM launcher
+- [x] Verify Phase SUI-3 build gates
 
 ## R2 — Monolithic file splits
 

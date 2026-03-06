@@ -115,9 +115,20 @@
 - [x] Add `Integrations/StardewUi/Breeding/LmhBreedingEditorViewModel.cs`
 - [x] Add GMCM action `breeding.openStardewUi`
 - [x] Keep the GMCM breeding pages intact
-- [ ] Verify `LetMeHatch/LetMeHatch.csproj` build
-- [ ] Verify `Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj` build
-- [ ] Verify `Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj` build
+- [x] Verify `LetMeHatch/LetMeHatch.csproj` build
+- [x] Verify `Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj` build
+- [x] Verify `Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj` build
+
+## Phase SUI-3 — Duplicate colors editor wiring
+- [x] Add `Integrations/StardewUi/Colors/LmhColorsEditorService.cs`
+- [x] Add `Integrations/StardewUi/Colors/LmhColorsEditorCatalog.cs`
+- [x] Add `Integrations/StardewUi/Colors/LmhColorsEditorViewModel.cs`
+- [x] Register menu id `lmh.colors.editor`
+- [x] Add GMCM action `colors.openStardewUi`
+- [x] Keep the GMCM colors pages intact
+- [x] Verify `LetMeHatch/LetMeHatch.csproj` build
+- [x] Verify `Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj` build
+- [x] Verify `Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj` build
 
 ## R2 — Monolithic file splits
 

@@ -166,6 +166,15 @@ Status: completed (stable dump DTOs + more tests).
 4. Wire the existing `assets/views/LmhBreedingEditor.sml` shell to the real viewmodel.
 5. Add GMCM action `breeding.openStardewUi` while keeping the existing breeding GMCM pages.
 
+## Phase SUI-3 — Duplicate colors editor wiring
+
+1. Extend `Application/Coordination/LmhCoordinator.StardewUi.cs` with menu id `lmh.colors.editor`.
+2. Add `Integrations/StardewUi/Colors/LmhColorsEditorService.cs`.
+3. Add `Integrations/StardewUi/Colors/LmhColorsEditorCatalog.cs`.
+4. Add `Integrations/StardewUi/Colors/LmhColorsEditorViewModel.cs`.
+5. Wire the existing `assets/views/LmhColorsEditor.sml` shell to the real viewmodel.
+6. Add GMCM action `colors.openStardewUi` while keeping the existing colors GMCM pages.
+
 ### Appendix — Concrete `BreedingPlan` structure (Core)
 ```csharp
 public sealed record BreedingPlan(
