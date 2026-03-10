@@ -24,6 +24,9 @@ public sealed class EggSelectionUseCase
 
     public EggRecipient ChooseRecipient(double chanceForMale) => _selector.ChooseRecipient(chanceForMale);
 
+    public string? ChooseEggCandidateOrDefault(IEnumerable<string?> candidates, string? fallback = null)
+        => _selector.ChooseEggCandidateOrDefault(candidates, fallback);
+
     public T RollWeightedOrDefault<T>(IEnumerable<(T item, double weight)> entries, T fallback)
         => _selector.RollWeightedOrDefault(entries, fallback);
 }

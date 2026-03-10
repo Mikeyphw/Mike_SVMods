@@ -33,10 +33,10 @@ public sealed class WeggCommandDispatcher
             "spawn" => HandleSpawn(args),
             "notes" => HandleNotes(args),
             "schema" => HandleSchema(args),
+            "save" => HandleSave(args),
             "verify" => ToCommandResult(_facade.Verify(args)),
 #if WEGG_DEV
-            "tomb" => HandleTomb(args),
-            "wildanimals" => HandleWildAnimals(args),
+            "debug" => HandleDebug(args),
 #endif
             _ => new CommandResult(false, $"{T("command.wegg.error.unknownSubcommand", "Unknown subcommand '{0}'.", args[0])}\n\n{HelpText()}"),
         };
@@ -44,32 +44,51 @@ public sealed class WeggCommandDispatcher
 
 
 #if WEGG_DEV
-    private CommandResult HandleTomb(string[] args)
+    private CommandResult HandleDebug(string[] args)
     {
-        // Usage: wegg tomb force_patches
         if (args.Length < 2 || IsHelp(args[1]))
             return new CommandResult(true, DefaultHelpTextDev());
 
-        var sub = args[1].ToLowerInvariant();
-        return sub switch
+        var area = args[1].ToLowerInvariant();
+        return area switch
         {
-            "force_patches" => ToCommandResult(_facade.ForceInstallDesertTombHarmonyPatches()),
-            _ => new CommandResult(false, $"{T("command.wegg.error.tomb.unknown", "Unknown tomb subcommand '{0}'.", args[1])}\n\n{DefaultHelpTextDev()}"),
+            "tomb" => HandleTombDebug(args),
+            "wildanimals" => HandleWildAnimalsDebug(args),
+            "runtime" => ToCommandResult(_facade.RuntimeStatus()),
+            "pipeline" => ToCommandResult(_facade.PipelineStatus()),
+            "state_dump" => HandleStateDumpDebug(args),
+            _ => new CommandResult(false, $"Unknown debug subcommand '{args[1]}'.\n\n{DefaultHelpTextDev()}"),
         };
     }
 
-    private CommandResult HandleWildAnimals(string[] args)
+    private CommandResult HandleStateDumpDebug(string[] args)
+    {
+        string? pathArg = null;
+        if (args.Length >= 3 && !IsHelp(args[2]))
+            pathArg = args[2];
+
+        return ToCommandResult(_facade.WriteStateDump(pathArg));
+    }
+
+    private CommandResult HandleTombDebug(string[] args)
+    {
+        if (args.Length < 3 || IsHelp(args[2]))
+            return new CommandResult(true, DefaultHelpTextDev());
+
+        var sub = args[2].ToLowerInvariant();
+        return sub switch
+        {
+            "force_patches" => ToCommandResult(_facade.ForceInstallDesertTombHarmonyPatches()),
+            _ => new CommandResult(false, $"{T("command.wegg.error.tomb.unknown", "Unknown tomb subcommand '{0}'.", args[2])}\n\n{DefaultHelpTextDev()}"),
+        };
+    }
+
+    private CommandResult HandleWildAnimalsDebug(string[] args)
 {
-    // Usage:
-    //   wegg wildanimals dump_effective
-    //   wegg wildanimals status <wildAnimalKey>
-    //   wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>
-    //   wegg wildanimals export_effective_bulk <wildAnimalKey>
-    //   wegg wildanimals validate_bulk <wildAnimalKey> <rawBulk|@filePath>
-    if (args.Length < 2 || IsHelp(args[1]))
+    if (args.Length < 3 || IsHelp(args[2]))
         return new CommandResult(true, DefaultHelpTextDev());
 
-    var sub = args[1].ToLowerInvariant();
+    var sub = args[2].ToLowerInvariant();
     return sub switch
     {
         "dump_effective" => ToCommandResult(_facade.DumpEffectiveWildAnimals()),
@@ -77,48 +96,48 @@ public sealed class WeggCommandDispatcher
         "set_enabled" => HandleWildAnimalsSetEnabled(args),
         "export_effective_bulk" => HandleWildAnimalsExportEffectiveBulk(args),
         "validate_bulk" => HandleWildAnimalsValidateBulk(args),
-        _ => new CommandResult(false, $"{T("command.wegg.error.wildanimals.unknown", "Unknown wildanimals subcommand '{0}'.", args[1])}\n\n{DefaultHelpTextDev()}"),
+        _ => new CommandResult(false, $"{T("command.wegg.error.wildanimals.unknown", "Unknown wildanimals subcommand '{0}'.", args[2])}\n\n{DefaultHelpTextDev()}"),
     };
 }
 
 private CommandResult HandleWildAnimalsStatus(string[] args)
 {
-    if (args.Length < 3 || IsHelp(args[2]))
-        return new CommandResult(false, $"{T("command.wegg.usage.wildanimals.status", "Usage: wegg wildanimals status <wildAnimalKey>")}\n\n{DefaultHelpTextDev()}");
+    if (args.Length < 4 || IsHelp(args[3]))
+        return new CommandResult(false, $"{T("command.wegg.usage.wildanimals.status", "Usage: we debug wildanimals status <wildAnimalKey>")}\n\n{DefaultHelpTextDev()}");
 
-    return ToCommandResult(_facade.WildAnimalStatus(args[2]));
+    return ToCommandResult(_facade.WildAnimalStatus(args[3]));
 }
 
 private CommandResult HandleWildAnimalsSetEnabled(string[] args)
 {
-    if (args.Length < 4 || IsHelp(args[2]) || IsHelp(args[3]))
-        return new CommandResult(false, $"{T("command.wegg.usage.wildanimals.set_enabled", "Usage: wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>")}\n\n{DefaultHelpTextDev()}");
+    if (args.Length < 5 || IsHelp(args[3]) || IsHelp(args[4]))
+        return new CommandResult(false, $"{T("command.wegg.usage.wildanimals.set_enabled", "Usage: we debug wildanimals set_enabled <wildAnimalKey> <true|false|1|0>")}\n\n{DefaultHelpTextDev()}");
 
-    if (!TryParseBoolArg(args[3], out var enabled))
-        return new CommandResult(false, $"{T("command.wegg.error.wildanimals.invalidBool", "Invalid boolean '{0}'. Expected true/false/1/0.", args[3])}\n\n{DefaultHelpTextDev()}");
+    if (!TryParseBoolArg(args[4], out var enabled))
+        return new CommandResult(false, $"{T("command.wegg.error.wildanimals.invalidBool", "Invalid boolean '{0}'. Expected true/false/1/0.", args[4])}\n\n{DefaultHelpTextDev()}");
 
-    return ToCommandResult(_facade.SetWildAnimalEnabled(args[2], enabled));
+    return ToCommandResult(_facade.SetWildAnimalEnabled(args[3], enabled));
 }
 
 private CommandResult HandleWildAnimalsExportEffectiveBulk(string[] args)
 {
-    if (args.Length < 3 || IsHelp(args[2]))
-        return new CommandResult(false, $"{T("command.wegg.usage.wildanimals.export_effective_bulk", "Usage: wegg wildanimals export_effective_bulk <wildAnimalKey>")}\n\n{DefaultHelpTextDev()}");
+    if (args.Length < 4 || IsHelp(args[3]))
+        return new CommandResult(false, $"{T("command.wegg.usage.wildanimals.export_effective_bulk", "Usage: we debug wildanimals export_effective_bulk <wildAnimalKey>")}\n\n{DefaultHelpTextDev()}");
 
-    return ToCommandResult(_facade.ExportWildAnimalEffectiveBulk(args[2]));
+    return ToCommandResult(_facade.ExportWildAnimalEffectiveBulk(args[3]));
 }
 
 private CommandResult HandleWildAnimalsValidateBulk(string[] args)
 {
-    if (args.Length < 4 || IsHelp(args[2]) || IsHelp(args[3]))
+    if (args.Length < 5 || IsHelp(args[3]) || IsHelp(args[4]))
         return new CommandResult(
             false,
-            $"{T("command.wegg.usage.wildanimals.validate_bulk", "Usage: wegg wildanimals validate_bulk <wildAnimalKey> <rawBulk|@filePath>")}\n" +
+            $"{T("command.wegg.usage.wildanimals.validate_bulk", "Usage: we debug wildanimals validate_bulk <wildAnimalKey> <rawBulk|@filePath>")}\n" +
             "Notes: pass literal \\n escapes for multi-line input, or prefix with @ to read a file path.\n\n" +
             DefaultHelpTextDev());
 
-    var raw = string.Join(" ", args, 3, args.Length - 3);
-    return ToCommandResult(_facade.ValidateWildAnimalBulk(args[2], raw));
+    var raw = string.Join(" ", args, 4, args.Length - 4);
+    return ToCommandResult(_facade.ValidateWildAnimalBulk(args[3], raw));
 }
 #endif
 
@@ -141,7 +160,7 @@ private CommandResult HandleWildAnimalsValidateBulk(string[] args)
     private CommandResult HandleStepSet(string[] args)
     {
         if (args.Length < 3)
-            return new CommandResult(false, $"{T("command.wegg.usage.step.set", "Usage: wegg step set <PartI|PartII|...|PartVI> [--effects]")}\n\n{HelpText()}");
+            return new CommandResult(false, $"{T("command.wegg.usage.step.set", "Usage: we step set <PartI|PartII|...|PartVI> [--effects]")}\n\n{HelpText()}");
 
         if (!Enum.TryParse<ProgressionStep>(args[2], ignoreCase: true, out var step))
             return new CommandResult(false, $"{T("command.wegg.error.step.invalid", "Invalid step '{0}'.", args[2])}\n\n{HelpText()}");
@@ -155,7 +174,7 @@ private CommandResult HandleWildAnimalsValidateBulk(string[] args)
     private CommandResult HandleStepEffects(string[] args)
     {
         if (args.Length < 4)
-            return new CommandResult(false, $"{T("command.wegg.usage.step.effects.preview", "Usage: wegg step effects preview <PartI|PartII|...|PartVI>")}\n\n{HelpText()}");
+            return new CommandResult(false, $"{T("command.wegg.usage.step.effects.preview", "Usage: we step effects preview <PartI|PartII|...|PartVI>")}\n\n{HelpText()}");
 
         var action = args[2].ToLowerInvariant();
         if (action != "preview")
@@ -197,7 +216,7 @@ private CommandResult HandleWildAnimalsValidateBulk(string[] args)
     private CommandResult HandleSpawnPlace(string[] args)
     {
         if (args.Length < 4)
-            return new CommandResult(false, $"{T("command.wegg.usage.spawn.place", "Usage: wegg spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]")}\n\n{HelpText()}");
+            return new CommandResult(false, $"{T("command.wegg.usage.spawn.place", "Usage: we spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]")}\n\n{HelpText()}");
 
         var location = args[2];
         var itemId = args[3];
@@ -237,7 +256,7 @@ private CommandResult HandleWildAnimalsValidateBulk(string[] args)
         if (farmerIdx >= 0)
         {
             if (farmerIdx + 1 >= args.Length || !long.TryParse(args[farmerIdx + 1], out var parsed))
-                return new CommandResult(false, T("command.wegg.usage.notes.dump", "Usage: wegg notes dump [--json] [--farmer <id>] [--animal <token>]"));
+                return new CommandResult(false, T("command.wegg.usage.notes.dump", "Usage: we notes dump [--json] [--farmer <id>] [--animal <token>]"));
 
             farmerId = parsed;
         }
@@ -247,7 +266,7 @@ private CommandResult HandleWildAnimalsValidateBulk(string[] args)
         if (tokenIdx >= 0)
         {
             if (tokenIdx + 1 >= args.Length)
-                return new CommandResult(false, T("command.wegg.usage.notes.dump", "Usage: wegg notes dump [--json] [--farmer <id>] [--animal <token>]"));
+                return new CommandResult(false, T("command.wegg.usage.notes.dump", "Usage: we notes dump [--json] [--farmer <id>] [--animal <token>]"));
 
             token = args[tokenIdx + 1];
         }
@@ -279,6 +298,20 @@ private CommandResult HandleWildAnimalsValidateBulk(string[] args)
             "wipe" => ToCommandResult(_facade.WipeSchemaData(
                 confirmed: Array.Exists(args, x => string.Equals(x, "--yes", StringComparison.OrdinalIgnoreCase)))),
             _ => new CommandResult(false, $"{T("command.wegg.error.schema.unknown", "Unknown schema subcommand '{0}'.", args[1])}\n\n{HelpText()}"),
+        };
+    }
+
+    private CommandResult HandleSave(string[] args)
+    {
+        if (args.Length < 2)
+            return new CommandResult(false, $"{T("command.wegg.error.save.missing", "Missing save subcommand.")}\n\n{HelpText()}");
+
+        var sub = args[1].ToLowerInvariant();
+        return sub switch
+        {
+            "clear" => ToCommandResult(_facade.WipeSchemaData(
+                confirmed: Array.Exists(args, x => string.Equals(x, "--yes", StringComparison.OrdinalIgnoreCase)))),
+            _ => new CommandResult(false, $"{T("command.wegg.error.save.unknown", "Unknown save subcommand '{0}'.", args[1])}\n\n{HelpText()}"),
         };
     }
 
@@ -329,13 +362,17 @@ private CommandResult HandleWildAnimalsValidateBulk(string[] args)
             Environment.NewLine,
             "",
             "Dev-only Tomb tools:",
-            "  wegg tomb force_patches",
+            "  we debug tomb force_patches",
+            "Dev-only Runtime tools:",
+            "  we debug runtime",
+            "  we debug pipeline",
+            "  we debug state_dump [path]",
             "Dev-only WildAnimals tools:",
-            "  wegg wildanimals dump_effective",
-            "  wegg wildanimals status <wildAnimalKey>",
-            "  wegg wildanimals set_enabled <wildAnimalKey> <true|false|1|0>",
-            "  wegg wildanimals export_effective_bulk <wildAnimalKey>",
-            "  wegg wildanimals validate_bulk <wildAnimalKey> <rawBulk|@filePath>"
+            "  we debug wildanimals dump_effective",
+            "  we debug wildanimals status <wildAnimalKey>",
+            "  we debug wildanimals set_enabled <wildAnimalKey> <true|false|1|0>",
+            "  we debug wildanimals export_effective_bulk <wildAnimalKey>",
+            "  we debug wildanimals validate_bulk <wildAnimalKey> <rawBulk|@filePath>"
         );
 #endif
 
@@ -343,24 +380,21 @@ private CommandResult HandleWildAnimalsValidateBulk(string[] args)
         => string.Join(
             Environment.NewLine,
             "EggsInWild commands:",
-            "  wegg help",
-            "  wegg status",
-            "  wegg reload",
-            "  wegg step get",
-            "  wegg step set <PartI|PartII|PartIII|PartIV|PartV|PartVI> [--effects]",
-            "  wegg step effects preview <PartI|PartII|PartIII|PartIV|PartV|PartVI>",
-            "  wegg progression eval",
-            "  wegg spawn now",
-            "  wegg spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]",
-            "  wegg notes dump [--json] [--farmer <id>] [--animal <token>]",
-            "  wegg notes validate",
-            "  wegg notes repair [--force] [--no-mail] [--no-reconcile]",
-            "  wegg schema wipe --yes",
-            "  wegg verify [--json] [--full]",
-            "  wegg_notes dump [--json] [--farmer <id>] [--animal <token>]",
-            "  wegg_notes validate",
-            "  wegg_notes repair [--force] [--no-mail] [--no-reconcile]",
-            "  wegg_schema wipe --yes",
+            "  we help",
+            "  we status",
+            "  we reload",
+            "  we step get",
+            "  we step set <PartI|PartII|PartIII|PartIV|PartV|PartVI> [--effects]",
+            "  we step effects preview <PartI|PartII|PartIII|PartIV|PartV|PartVI>",
+            "  we progression eval",
+            "  we spawn now",
+            "  we spawn place <LocationName> <QualifiedItemId> [count] [maxAttempts]",
+            "  we notes dump [--json] [--farmer <id>] [--animal <token>]",
+            "  we notes validate",
+            "  we notes repair [--force] [--no-mail] [--no-reconcile]",
+            "  we save clear --yes",
+            "  we schema wipe --yes",
+            "  we verify [--json] [--full]",
             "",
             "Notes:",
             "  - --effects applies cumulative progression side effects and reconciles on rollback.",

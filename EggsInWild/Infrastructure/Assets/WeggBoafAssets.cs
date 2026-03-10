@@ -46,6 +46,11 @@ public enum WeggMineTexture
 
 public enum WeggMonsterTexture
 {
+    crawler,
+    crawler_curled,
+    hurricane,
+    matango,
+    matango_projectile,
     sandyduggy,
     brutemummy,
     skeletonmummy,

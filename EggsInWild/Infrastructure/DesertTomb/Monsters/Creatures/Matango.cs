@@ -1,37 +1,31 @@
 using System;
 using Microsoft.Xna.Framework;
-using Netcode;
 using StardewValley;
 using StardewValley.Monsters;
-using StardewValley.Projectiles;
 using EggsInWild.DesertTomb.Core.Configuration;
-using EggsInWild.Infrastructure.DesertTomb.Monsters.Base;
 using EggsInWild.Infrastructure.Config;
+using EggsInWild.Infrastructure.DesertTomb.Diagnostics;
+using EggsInWild.Infrastructure.DesertTomb.Monsters.Base;
+using EggsInWild.Infrastructure.DesertTomb.Projectiles;
 
 namespace EggsInWild.Infrastructure.DesertTomb.Monsters.Creatures;
 
 /// <summary>
-/// Fast straight-line walker that pauses to fire a high-speed spore shot when a player enters line of sight.
+/// ShadowShaman-derived caster that keeps vanilla shaman behavior,
+/// but replaces the offensive projectile with a custom spore shot.
 /// </summary>
-internal sealed class Matango : Monster
+internal sealed class Matango : ShadowShaman
 {
-    private enum MatangoState
-    {
-        Walking = 0,
-        Casting = 1,
-        Recover = 2,
-    }
-
-    private static int VisionTiles => DebugKnobs.MatangoVisionTiles;
+    private static int FrameWidth => DebugKnobs.MatangoFrameWidth;
+    private static int FrameHeight => DebugKnobs.MatangoFrameHeight;
+    private static int VisionDistance => DebugKnobs.MatangoVisionTiles;
+    private static int SpellCooldownMs => DebugKnobs.MatangoSpellCooldownMs;
     private static int CastWindupMs => DebugKnobs.MatangoCastWindupMs;
-    private static int RecoverMs => DebugKnobs.MatangoRecoverMs;
-    private static int ShotCooldownMs => DebugKnobs.MatangoShotCooldownMs;
-
-    private readonly NetInt _state = new((int)MatangoState.Walking);
-    private readonly NetInt _stateTimerMs = new(0);
-    private readonly NetInt _shotCooldownMs = new(0);
-    private readonly NetInt _walkDir = new(1); // 0 up, 1 right, 2 down, 3 left
-    private readonly NetString _spriteTexture = new();
+    private static int TileCenterTolerancePx => DebugKnobs.MatangoTileCenterTolerancePx;
+    private readonly string _spriteTexture;
+    private bool? _previousCasting;
+    private bool _previousSpottedPlayer;
+    private int _walkDir = 1;
 
     internal Matango(
         MonsterMultipliers multipliers,
@@ -41,15 +35,14 @@ internal sealed class Matango : Monster
         int speedToAdd = 0,
         string? customDropData = null
     )
-        : base("Matango", position)
+        : base(position)
     {
-        _spriteTexture.Value = $"Characters\\Monsters\\{textureName.Replace(" ", "")}";
+        _spriteTexture = $"Characters\\Monsters\\{textureName.Replace(" ", "")}";
 
-        MaxHealth = 120;
-        Health = MaxHealth;
         DamageToFarmer = 16;
         resilience.Value = 2;
-        Speed = 4;
+        Speed = 1;
+        coolDown = SpellCooldownMs;
 
         TombMonsterBuilder.SetupBasicMonster(
             this,
@@ -62,152 +55,207 @@ internal sealed class Matango : Monster
         );
 
         TombMonsterBuilder.SetMonsterNames(this, "Matango");
-    }
-
-    protected override void initNetFields()
-    {
-        base.initNetFields();
-        NetFields
-            .AddField(_state, nameof(_state))
-            .AddField(_stateTimerMs, nameof(_stateTimerMs))
-            .AddField(_shotCooldownMs, nameof(_shotCooldownMs))
-            .AddField(_walkDir, nameof(_walkDir))
-            .AddField(_spriteTexture, nameof(_spriteTexture));
+        reloadSprite();
     }
 
     public override void reloadSprite(bool onlyAppearance = false)
     {
-        Sprite = new AnimatedSprite(_spriteTexture.Value, 0, 16, 16);
+        Sprite = new AnimatedSprite(_spriteTexture, 0, FrameWidth, FrameHeight);
+        Sprite.SpriteHeight = FrameHeight;
+        Sprite.UpdateSourceRect();
+    }
+
+    public override int takeDamage(
+        int damage,
+        int xTrajectory,
+        int yTrajectory,
+        bool isBomb,
+        double addedPrecision,
+        Farmer who
+    )
+    {
+        var result = base.takeDamage(damage, xTrajectory, yTrajectory, isBomb, addedPrecision, who);
+        if (result > 0)
+            CustomMonsterDebug.Matango(this, $"took damage={result} hp={Health}/{MaxHealth} casting={casting.Value}");
+        else if (result < 0)
+            CustomMonsterDebug.Matango(this, "attack missed");
+
+        return result;
+    }
+
+    protected override void updateAnimation(GameTime time)
+    {
+        base.updateMonsterSlaveAnimation(time);
+        resetAnimationSpeed();
     }
 
     public override void behaviorAtGameTick(GameTime time)
     {
-        base.behaviorAtGameTick(time);
+        LogStateIfChanged();
+        CustomMonsterDebug.MatangoHeartbeat(this, "tick", $"heartbeat spotted={spottedPlayer} casting={casting.Value} cooldownMs={coolDown} moving={isMoving()} walkDir={_walkDir} invisible={IsInvisible}");
 
-        var elapsedMs = (int)Math.Max(0, time.ElapsedGameTime.TotalMilliseconds);
+        if (timeBeforeAIMovementAgain > 0f)
+            timeBeforeAIMovementAgain -= time.ElapsedGameTime.Milliseconds;
 
-        if (_shotCooldownMs.Value > 0)
-            _shotCooldownMs.Value = Math.Max(0, _shotCooldownMs.Value - elapsedMs);
-
-        if (_stateTimerMs.Value > 0)
-            _stateTimerMs.Value = Math.Max(0, _stateTimerMs.Value - elapsedMs);
-
-        switch ((MatangoState)_state.Value)
+        if (Player.isRafting && withinPlayerThreshold(4))
         {
-            case MatangoState.Casting:
-                IsWalkingTowardPlayer = false;
-                Halt();
+            IsWalkingTowardPlayer = false;
+            MoveAwayFromPlayer();
+            MovePosition(time, Game1.viewport, currentLocation);
+            return;
+        }
 
-                if (_stateTimerMs.Value <= 0 && Game1.IsMasterGame)
-                {
-                    FireSporeShot();
-                    _state.Value = (int)MatangoState.Recover;
-                    _stateTimerMs.Value = RecoverMs;
-                    _shotCooldownMs.Value = ShotCooldownMs;
-                }
+        if (timeBeforeAIMovementAgain <= 0f)
+            IsInvisible = false;
 
+        if (casting.Value)
+        {
+            IsWalkingTowardPlayer = false;
+            Halt();
+            Sprite.Animate(time, 16, 4, 200f);
+            rotationTimer = (float)((double)((float)time.TotalGameTime.Milliseconds * ((float)Math.PI / 128f) / 24f) % (Math.PI * 1024.0));
+            coolDown -= time.ElapsedGameTime.Milliseconds;
+            CustomMonsterDebug.MatangoHeartbeat(this, "casting_tick", $"casting tick cooldownMs={coolDown}", 10);
+            if (coolDown > 0)
                 return;
 
-            case MatangoState.Recover:
-                IsWalkingTowardPlayer = false;
-                Halt();
-
-                if (_stateTimerMs.Value <= 0)
-                    _state.Value = (int)MatangoState.Walking;
-
-                return;
-
-            case MatangoState.Walking:
-            default:
-                break;
+            Scale = 1f;
+            FireCustomProjectile();
+            casting.Value = false;
+            coolDown = SpellCooldownMs;
+            spottedPlayer = false;
+            IsWalkingTowardPlayer = false;
+            CustomMonsterDebug.Matango(this, $"cast resolved -> patrol cooldownMs={coolDown}");
+            return;
         }
 
-        if (Game1.IsMasterGame)
-            TryStartCasting();
+        coolDown -= time.ElapsedGameTime.Milliseconds;
 
-        WalkStraight();
+        if (TryStartCasting())
+        {
+            return;
+        }
+
+        IsWalkingTowardPlayer = false;
+        spottedPlayer = false;
+        controller = null;
+        PatrolStraight(time);
     }
 
-    protected override void updateMonsterSlaveAnimation(GameTime time)
+    private bool TryStartCasting()
     {
-        if ((MatangoState)_state.Value == MatangoState.Casting)
+        if (coolDown > 0)
         {
-            Sprite.Animate(time, 16, 4, 120f);
-            return;
+            CustomMonsterDebug.MatangoHeartbeat(this, "cast_blocked_cooldown", $"cast blocked: cooldownMs={coolDown}", 30);
+            return false;
         }
 
-        if (!isMoving())
+        if (Player is null)
         {
-            Sprite.StopAnimation();
-            return;
+            CustomMonsterDebug.MatangoHeartbeat(this, "cast_blocked_no_target", "cast blocked: no target", 30);
+            return false;
         }
-
-        switch (FacingDirection)
-        {
-            case 0:
-                Sprite.AnimateUp(time);
-                break;
-            case 1:
-                Sprite.AnimateRight(time);
-                break;
-            case 2:
-                Sprite.AnimateDown(time);
-                break;
-            case 3:
-                Sprite.AnimateLeft(time);
-                break;
-        }
-    }
-
-    private void TryStartCasting()
-    {
-        if (_shotCooldownMs.Value > 0)
-            return;
-
-        var target = Player;
-        if (target is null)
-            return;
 
         if (!IsCenteredInTile())
-            return;
+        {
+            var box = GetBoundingBox();
+            CustomMonsterDebug.MatangoHeartbeat(this, "cast_blocked_not_centered", $"cast blocked: not centered centerPx={Mod(box.Center.X, 64)},{Mod(box.Center.Y, 64)}", 20);
+            return false;
+        }
 
-        if (!IsPlayerInLineOfSight(target))
+        if (!IsPlayerInLineOfSight(Player))
+        {
+            CustomMonsterDebug.MatangoHeartbeat(this, "cast_blocked_los", $"cast blocked: no line of sight targetTile=({Player.TilePoint.X},{Player.TilePoint.Y})", 20);
+            return false;
+        }
+
+        spottedPlayer = true;
+        casting.Value = true;
+        controller = null;
+        IsWalkingTowardPlayer = false;
+        Halt();
+        FaceTargetInLine(Player);
+        _walkDir = FacingDirection;
+        coolDown = CastWindupMs;
+        currentLocation.playSound("debuffSpell");
+        CustomMonsterDebug.Matango(this, $"start casting targetTile=({Player.TilePoint.X},{Player.TilePoint.Y}) walkDir={_walkDir}");
+        return true;
+    }
+
+    private void PatrolStraight(GameTime time)
+    {
+        if (IsBlockedAhead())
+        {
+            var oldDir = _walkDir;
+            if (TryReverseDirection())
+                CustomMonsterDebug.Matango(this, $"reverse direction old={oldDir} new={_walkDir}");
+            else
+                ChooseNewDirection(oldDir);
+        }
+
+        SetMoveDirection(_walkDir);
+        MovePosition(time, Game1.viewport, currentLocation);
+    }
+
+    private bool TryReverseDirection()
+    {
+        var reverseDir = (_walkDir + 2) % 4;
+        if (IsDirectionPassable(reverseDir))
+        {
+            _walkDir = reverseDir;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void ChooseNewDirection(int oldDir)
+    {
+        foreach (var candidate in new[] { 0, 1, 2, 3 })
+        {
+            if (candidate == oldDir || candidate == (oldDir + 2) % 4)
+                continue;
+
+            if (!IsDirectionPassable(candidate))
+                continue;
+
+            _walkDir = candidate;
+            CustomMonsterDebug.Matango(this, $"turn direction old={oldDir} new={candidate}");
             return;
+        }
 
         Halt();
-        IsWalkingTowardPlayer = false;
+        CustomMonsterDebug.Matango(this, $"all directions blocked old={oldDir}");
+    }
 
-        FaceTargetInLine(target);
-        _walkDir.Value = FacingDirection;
-        _state.Value = (int)MatangoState.Casting;
-        _stateTimerMs.Value = CastWindupMs;
+    private bool IsBlockedAhead()
+        => !IsDirectionPassable(_walkDir);
 
-        currentLocation.playSound("debuffSpell");
+    private bool IsDirectionPassable(int dir)
+    {
+        var next = nextPosition(dir);
+        return currentLocation.isTilePassable(next, Game1.viewport)
+            && !currentLocation.isCollidingPosition(next, Game1.viewport, isFarmer: false, DamageToFarmer, isGlider.Value, this);
     }
 
     private bool IsPlayerInLineOfSight(Farmer target)
     {
-        if (target is null)
-            return false;
-
         var myTile = TilePoint;
         var playerTile = target.TilePoint;
-
         var aligned = myTile.X == playerTile.X || myTile.Y == playerTile.Y;
         if (!aligned)
             return false;
 
-        if (Math.Abs(myTile.X - playerTile.X) > VisionTiles || Math.Abs(myTile.Y - playerTile.Y) > VisionTiles)
+        if (Math.Abs(myTile.X - playerTile.X) > VisionDistance || Math.Abs(myTile.Y - playerTile.Y) > VisionDistance)
             return false;
 
-        return Utility.doesPointHaveLineOfSightInMine(currentLocation, Tile, target.Tile, VisionTiles);
+        return Utility.doesPointHaveLineOfSightInMine(currentLocation, Tile, target.Tile, VisionDistance);
     }
 
     private void FaceTargetInLine(Farmer target)
     {
         var myTile = TilePoint;
         var playerTile = target.TilePoint;
-
         if (playerTile.X > myTile.X) FacingDirection = 1;
         else if (playerTile.X < myTile.X) FacingDirection = 3;
         else if (playerTile.Y > myTile.Y) FacingDirection = 2;
@@ -216,99 +264,16 @@ internal sealed class Matango : Monster
 
     private bool IsCenteredInTile()
     {
-        var px = (int)Position.X % 64;
-        var py = (int)Position.Y % 64;
-        return Math.Abs(px - 32) <= 4 && Math.Abs(py - 32) <= 4;
+        var box = GetBoundingBox();
+        var centerPx = Mod(box.Center.X, 64);
+        var centerPy = Mod(box.Center.Y, 64);
+        return Math.Abs(centerPx - 32) <= TileCenterTolerancePx && Math.Abs(centerPy - 32) <= TileCenterTolerancePx;
     }
 
-    private void WalkStraight()
+    private static int Mod(int value, int divisor)
     {
-        IsWalkingTowardPlayer = false;
-
-        if (Game1.IsMasterGame && IsBlockedAhead())
-            ChooseNewDirection();
-
-        SetMoveDirection(_walkDir.Value);
-    }
-
-    private bool IsBlockedAhead()
-    {
-        var tile = TilePoint;
-        var next = tile;
-
-        switch (_walkDir.Value)
-        {
-            case 0:
-                next.Y -= 1;
-                break;
-            case 1:
-                next.X += 1;
-                break;
-            case 2:
-                next.Y += 1;
-                break;
-            case 3:
-                next.X -= 1;
-                break;
-        }
-
-        return !currentLocation.isTilePassable(new Vector2(next.X, next.Y));
-    }
-
-    private void ChooseNewDirection()
-    {
-        var old = _walkDir.Value;
-        var options = new[] { 0, 1, 2, 3 };
-
-        for (var i = 0; i < 8; i++)
-        {
-            var candidate = options[Game1.random.Next(options.Length)];
-            if (candidate == old)
-                continue;
-
-            _walkDir.Value = candidate;
-
-            if (!IsBlockedAhead())
-                return;
-        }
-
-        _walkDir.Value = (old + 2) % 4;
-    }
-
-    private void FireSporeShot()
-    {
-        var dir = _walkDir.Value;
-        var v = dir switch
-        {
-            0 => new Vector2(0f, -1f),
-            1 => new Vector2(1f, 0f),
-            2 => new Vector2(0f, 1f),
-            3 => new Vector2(-1f, 0f),
-            _ => Vector2.Zero,
-        };
-
-        v.Normalize();
-        v *= 12f;
-
-        var projectile = new BasicProjectile(
-            DamageToFarmer,
-            13,
-            0,
-            1,
-            (float)Math.PI / 32f,
-            v.X,
-            v.Y,
-            Position,
-            "hitEnemy",
-            "debuffSpell",
-            null,
-            explode: false,
-            damagesMonsters: false,
-            currentLocation,
-            this
-        );
-
-        currentLocation.projectiles.Add(projectile);
+        var result = value % divisor;
+        return result < 0 ? result + divisor : result;
     }
 
     private void SetMoveDirection(int dir)
@@ -317,7 +282,6 @@ internal sealed class Matango : Monster
         SetMovingDown(false);
         SetMovingLeft(false);
         SetMovingRight(false);
-
         FacingDirection = dir;
 
         switch (dir)
@@ -335,5 +299,55 @@ internal sealed class Matango : Monster
                 SetMovingLeft(true);
                 break;
         }
+    }
+
+    private void MoveAwayFromPlayer()
+    {
+        var monsterPixel = StandingPixel;
+        var playerPixel = Player.StandingPixel;
+        if (Math.Abs(playerPixel.Y - monsterPixel.Y) > 192)
+        {
+            if (playerPixel.X - monsterPixel.X > 0)
+                SetMovingLeft(true);
+            else
+                SetMovingRight(true);
+        }
+        else if (playerPixel.Y - monsterPixel.Y > 0)
+        {
+            SetMovingUp(true);
+        }
+        else
+        {
+            SetMovingDown(true);
+        }
+    }
+
+    private void LogStateIfChanged()
+    {
+        if (_previousSpottedPlayer != spottedPlayer)
+        {
+            CustomMonsterDebug.Matango(this, $"spottedPlayer -> {spottedPlayer}");
+            _previousSpottedPlayer = spottedPlayer;
+        }
+
+        if (_previousCasting != casting.Value)
+        {
+            CustomMonsterDebug.Matango(this, $"casting -> {casting.Value} cooldownMs={coolDown}");
+            _previousCasting = casting.Value;
+        }
+    }
+
+    private void FireCustomProjectile()
+    {
+        var monsterBounds = GetBoundingBox();
+        var velocityTowardPlayer = Utility.getVelocityTowardPlayer(monsterBounds.Center, 15f, Player);
+        currentLocation.projectiles.Add(new MatangoSporeProjectile(
+            DamageToFarmer,
+            velocityTowardPlayer.X,
+            velocityTowardPlayer.Y,
+            new Vector2(monsterBounds.X, monsterBounds.Y),
+            currentLocation,
+            this));
+        CustomMonsterDebug.Matango(this, $"fired spore projectile velocity=({velocityTowardPlayer.X:0.##},{velocityTowardPlayer.Y:0.##})");
     }
 }

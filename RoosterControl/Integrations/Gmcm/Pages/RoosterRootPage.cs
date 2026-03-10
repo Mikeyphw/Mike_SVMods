@@ -10,11 +10,9 @@ internal static class RoosterRootPage
     {
         b.Section("root.general");
         b.Enum(cfg => cfg.General.UpdateRate, optionId: "general.updateRate", tooltip: true);
-        b.Enum(cfg => cfg.General.HatchingMode, optionId: "general.hatchingMode", tooltip: true);
         b.Enum(cfg => cfg.General.HarvestType, optionId: "general.harvestType", tooltip: true);
         b.KeybindList(cfg => cfg.General.OpenWhiteRoosterProduceEditorKey, optionId: "whiteProduce.openEditorKeybind", tooltip: true);
         b.KeybindList(cfg => cfg.General.OpenCompatEditorKey, optionId: "compat.openEditorKeybind", tooltip: true);
-        b.KeybindList(cfg => cfg.General.OpenFemalesEditorKey, optionId: "females.openEditorKeybind", tooltip: true);
 
         b.Separator(simple: true);
 
@@ -23,7 +21,6 @@ internal static class RoosterRootPage
             tooltip: true,
             "compat",
             "probabilities",
-            "females",
             "debug"
         );
         b.Action(
@@ -34,12 +31,12 @@ internal static class RoosterRootPage
         );
         b.ParagraphDynamic(() => owner.GetCompatEditorAvailabilityText(), styled: true, id: "compat_openStardewUi_status");
         b.Action(
-            "females.openStardewUi",
-            onAction: owner.TryOpenFemalesEditor,
+            "whiteProduce.openStardewUi",
+            onAction: owner.TryOpenProduceEditor,
             tooltip: true,
             isEnabled: owner.HasStardewUiAvailable
         );
-        b.ParagraphDynamic(() => owner.GetFemalesEditorAvailabilityText(), styled: true, id: "females_openStardewUi_status");
+        b.ParagraphDynamic(() => owner.GetProduceEditorAvailabilityText(), styled: true, id: "whiteProduce_openStardewUi_status");
 
         b.Separator(simple: true);
 

@@ -11,6 +11,7 @@ using Mikew.NestCore.Helpers.Content;
 using Mikew.NestCore;
 using Mikew.NestCore.Framework;
 using EggsInWild.Infrastructure.ModData;
+using StardewModdingAPI;
 
 namespace EggsInWild.Infrastructure.Content.Editors;
 
@@ -82,6 +83,9 @@ public sealed class FarmAnimalsEditor : AssetEditorBase<ContentContext>, IPostPa
     {
         try
         {
+            if (!Context.IsGameLaunched)
+                return;
+
             var api = context.Helper.ModRegistry.GetApi<ILetMeHatchApi>("Mikew.lmh");
             if (api is null || !api.FinishedEarlyStuff)
                 return;
@@ -135,8 +139,11 @@ private void ApplyChosenEggs(
         ContentContext context,
         System.Collections.Generic.IDictionary<string, FarmAnimalData> data)
     {
+        var catalog = WildEggSpawnCatalogBuilder.Build(context.ModData.WildEggSpawnDefinitions, context.ModData.WildAnimals, data as System.Collections.Generic.IReadOnlyDictionary<string, FarmAnimalData>
+            ?? new System.Collections.Generic.Dictionary<string, FarmAnimalData>(data, System.StringComparer.OrdinalIgnoreCase), context.Helper.ModRegistry, context.Logger);
+
         var wildEggIds = new System.Collections.Generic.HashSet<string>(
-            SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas, context.Logger),
+            catalog.ActiveEggDefinitions.Select(def => def.EggItemId),
             System.StringComparer.OrdinalIgnoreCase);
 
         // Remove previous wild-egg assignments.

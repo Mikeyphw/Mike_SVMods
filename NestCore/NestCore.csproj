@@ -9,7 +9,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Dev'">
-    <DefineConstants>$(DefineConstants);WEGG_DEV</DefineConstants>
+    <DefineConstants>$(DefineConstants);NEST_DEV</DefineConstants>
     <NoWarn>$(NoWarn);CS8604;CS8625;CS0618</NoWarn>
   </PropertyGroup>
   <ItemGroup>

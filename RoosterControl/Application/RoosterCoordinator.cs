@@ -32,6 +32,7 @@ using RoosterControl.Infrastructure.Assets;
 using RoosterControl.Application.FarmAnimals;
 using NestAssetData = Mikew.NestCore.Models.AssetData;
 using NestModAssetHandler = Mikew.NestCore.Helpers.ModAssetHandler;
+using Mikew.NestCore.Diagnostics;
 
 using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
@@ -135,59 +136,10 @@ private NextTickScheduler _nextTick;
             Helper.WriteConfig(Config);
 
         Helper.ConsoleCommands.Add(
-            "roostercontrol_dump_state",
-            "Write a JSON snapshot of RoosterControl state to data/state-dumps. Add 'farmanimals' to include farm animal keys.",
-            DumpStateCommand
+            "ra",
+            "RoosterControl commands. Use: ra help",
+            RaCommand
         );
-
-        Helper.ConsoleCommands.Add(
-            "ra_plan",
-            "Daily hatching plan commands. Use: ra_plan help",
-            DailyPlanCommand
-        );
-
-        Helper.ConsoleCommands.Add(
-            "ra_catalog",
-            "Catalog commands. Use: ra_catalog help",
-            CatalogCommand
-        );
-
-        Helper.ConsoleCommands.Add(
-            "ra_compat",
-            "Compat selection commands. Use: ra_compat help",
-            CompatCommand
-        );
-
-        Helper.ConsoleCommands.Add(
-            "ra_status",
-            "Print RoosterControl runtime/integration status.",
-            (_, _) => PrintStatus()
-        );
-#if RCTRL_DEV
-        Helper.ConsoleCommands.Add(
-            "ra_debug_produce",
-            "Dev-only: dump deterministic chosen-produce decisions. Usage: ra_debug_produce [--full] [--json] <roosterType> [day] [locationName] [buildingType]",
-            DebugProduceCommand
-        );
-
-        Helper.ConsoleCommands.Add(
-            "ra_debug_plan",
-            "Dev-only: dump daily hatching plan decisions. Usage: ra_debug_plan [--full] [--json] [day] [locationName] [buildingType]",
-            DebugPlanCommand
-        );
-
-        Helper.ConsoleCommands.Add(
-            "ra_debug_diff",
-            "Dev-only: diff previous vs current daily decisions snapshot. Usage: ra_debug_diff [--full] [--json]",
-            DebugDiffCommand
-        );
-
-        Helper.ConsoleCommands.Add(
-            "ra_debug_pipeline",
-            "Dev-only: dump rooster produce/hatching pipeline state. Usage: ra_debug_pipeline",
-            DebugPipelineCommand
-        );
-#endif
 
         AssetHandler = new NestModAssetHandler(ModManifest.UniqueID, Monitor);
         AssetHandler.AddAssets(
@@ -432,21 +384,244 @@ private void QueueRefreshFarmAnimalsAfterDailyDecisions()
 
     private void PrintStatus()
     {
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WorldReady={Context.IsWorldReady}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"MainPlayer={Context.IsMainPlayer}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"LetMeHatchApiReady={HatchApi is not null}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"LetMeHatchApiVersion={(HatchApi is null ? "n/a" : HatchApi.ApiVersion)}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"LetMeHatchReady={(HatchApi is not null && HatchApi.FinishedEarlyStuff)}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WildEggsApiReady={WildEggsApi is not null}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WildEggsApiVersion={(WildEggsApi is null ? "n/a" : WildEggsApi.ApiVersion)}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"WildEggsParityAnimals={(WildEggsApi?.ValidAnimals.Count ?? 0)}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General,
-            $"Catalogs: roosters={_catalogs.Roosters.Roosters.Count}, produce={_catalogs.Produce.Roosters.Count}, hatching={_catalogs.Hatching.Roosters.Count}",
-            LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"InvalidateBatchPending~={_debugInvalidationsRequested.Count}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"FarmAnimalsRefreshQueued={_farmAnimalsRefreshQueued}", LogLevel.Info);
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.General, $"NeedsRoosterSetup={_needsRoosterSetup}", LogLevel.Info);
+        foreach (var line in BuildStatusText().Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.General, line, LogLevel.Info);
     }
+
+    internal string BuildStatusText()
+        => string.Join(
+            Environment.NewLine,
+            $"WorldReady={Context.IsWorldReady}",
+            $"MainPlayer={Context.IsMainPlayer}",
+            $"LetMeHatchApiReady={HatchApi is not null}",
+            $"LetMeHatchApiVersion={(HatchApi is null ? "n/a" : HatchApi.ApiVersion)}",
+            $"LetMeHatchReady={(HatchApi is not null && HatchApi.FinishedEarlyStuff)}",
+            $"WildEggsApiReady={WildEggsApi is not null}",
+            $"WildEggsApiVersion={(WildEggsApi is null ? "n/a" : WildEggsApi.ApiVersion)}",
+            $"WildEggsParityAnimals={(WildEggsApi?.ValidAnimals.Count ?? 0)}",
+            $"Catalogs: roosters={_catalogs.Roosters.Roosters.Count}, produce={_catalogs.Produce.Roosters.Count}, hatching={_catalogs.Hatching.Roosters.Count}",
+            $"InvalidateBatchPending~={_debugInvalidationsRequested.Count}",
+            $"FarmAnimalsRefreshQueued={_farmAnimalsRefreshQueued}",
+            $"NeedsRoosterSetup={_needsRoosterSetup}");
+
+    internal DiagnosticReport BuildVerifyReport()
+    {
+        var issues = new List<DiagnosticIssue>
+        {
+            new("WORLD_READY", Context.IsWorldReady ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "runtime", Context.IsWorldReady ? "World is ready." : "World not ready."),
+            new("MAIN_PLAYER", Context.IsMainPlayer ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "runtime", Context.IsMainPlayer ? "Running on host player." : "Running on farmhand or title screen."),
+            new("LMH_API", HatchApi is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "integration", HatchApi is not null ? $"LetMeHatch API ready ({HatchApi.ApiVersion})." : "LetMeHatch API not available."),
+            new("WILD_EGGS_API", WildEggsApi is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "integration", WildEggsApi is not null ? $"WildEggs API ready ({WildEggsApi.ApiVersion})." : "WildEggs API not available."),
+            new("CATALOG_ROOSTERS", _catalogs.Roosters.Roosters.Count > 0 ? DiagnosticSeverity.Pass : DiagnosticSeverity.Fail, "catalog", $"Roosters catalog count={_catalogs.Roosters.Roosters.Count}."),
+            new("CATALOG_PRODUCE", _catalogs.Produce.Roosters.Count > 0 ? DiagnosticSeverity.Pass : DiagnosticSeverity.Fail, "catalog", $"Produce catalog count={_catalogs.Produce.Roosters.Count}."),
+            new("CATALOG_HATCHING", _catalogs.Hatching.Roosters.Count > 0 ? DiagnosticSeverity.Pass : DiagnosticSeverity.Fail, "catalog", $"Hatching catalog count={_catalogs.Hatching.Roosters.Count}."),
+        };
+
+        return new DiagnosticReport("ra verify", issues);
+    }
+
+    private void RaCommand(string command, string[] args)
+    {
+        if (args.Length == 0 || IsHelpArg(args[0]))
+        {
+            Monitor.Log(BuildRaHelpText(), LogLevel.Info);
+            return;
+        }
+
+        switch (args[0].ToLowerInvariant())
+        {
+            case "help":
+                Monitor.Log(BuildRaHelpText(), LogLevel.Info);
+                return;
+            case "status":
+                PrintStatus();
+                return;
+            case "verify":
+                HandleRaVerify(args.Skip(1).ToArray());
+                return;
+            case "reload":
+                HandleRaReload(args.Skip(1).ToArray());
+                return;
+            case "save":
+                HandleSaveCommand(args.Skip(1).ToArray());
+                return;
+            case "compat":
+                CompatCommand(command, args.Skip(1).ToArray());
+                return;
+            case "catalog":
+                CatalogCommand(command, args.Skip(1).ToArray());
+                return;
+            case "plan":
+                DailyPlanCommand(command, args.Skip(1).ToArray());
+                return;
+            case "debug":
+#if RCTRL_DEV
+                HandleRaDebug(command, args.Skip(1).ToArray());
+#else
+                Monitor.Log("Dev-only commands are unavailable in this build.", LogLevel.Warn);
+#endif
+                return;
+            default:
+                Monitor.Log($"Unknown subcommand '{args[0]}'.\n\n{BuildRaHelpText()}", LogLevel.Warn);
+                return;
+        }
+    }
+
+    private void HandleRaVerify(string[] args)
+    {
+        var json = args.Any(static x => string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase));
+        var filteredArgs = args.Where(static x => !string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase)).ToArray();
+
+        if (filteredArgs.Length == 0)
+        {
+            var report = BuildVerifyReport();
+            var rendered = json
+                ? DiagnosticReportFormatter.FormatJson(report, "ra verify")
+                : DiagnosticReportFormatter.FormatText(report, "ra verify");
+            Monitor.Log(rendered, report.FailCount > 0 ? LogLevel.Warn : LogLevel.Info);
+            return;
+        }
+
+        switch (filteredArgs[0].ToLowerInvariant())
+        {
+            case "compat":
+                CompatCommand("ra", new[] { "validate" }.Concat(filteredArgs.Skip(1)).ToArray());
+                return;
+            case "catalog":
+                CatalogCommand("ra", new[] { "validate" }.Concat(filteredArgs.Skip(1)).ToArray());
+                return;
+            default:
+                Monitor.Log($"Unknown verify area '{filteredArgs[0]}'.\n\n{BuildRaHelpText()}", LogLevel.Warn);
+                return;
+        }
+    }
+
+    private void HandleRaReload(string[] args)
+    {
+        if (args.Length == 0 || string.Equals(args[0], "catalog", StringComparison.OrdinalIgnoreCase))
+        {
+            HandleCatalogReload();
+            return;
+        }
+
+        Monitor.Log($"Unknown reload area '{args[0]}'.\n\n{BuildRaHelpText()}", LogLevel.Warn);
+    }
+
+    private void HandleSaveCommand(string[] args)
+    {
+        if (args.Length == 0 || IsHelpArg(args[0]))
+        {
+            Monitor.Log("Usage: ra save clear --yes", LogLevel.Info);
+            return;
+        }
+
+        if (!string.Equals(args[0], "clear", StringComparison.OrdinalIgnoreCase))
+        {
+            Monitor.Log($"Unknown save subcommand '{args[0]}'.\n\n{BuildRaHelpText()}", LogLevel.Warn);
+            return;
+        }
+
+        if (!args.Any(static x => string.Equals(x, "--yes", StringComparison.OrdinalIgnoreCase)))
+        {
+            Monitor.Log("Refusing to clear save data without confirmation. Usage: ra save clear --yes", LogLevel.Warn);
+            return;
+        }
+
+        if (!Context.IsWorldReady)
+        {
+            Monitor.Log("Save not loaded.", LogLevel.Warn);
+            return;
+        }
+
+        if (!Context.IsMainPlayer)
+        {
+            Monitor.Log("Host-only.", LogLevel.Warn);
+            return;
+        }
+
+        _saveData.Delete(SaveStateKey);
+        _saveData.Delete(DailyPlanSaveKey);
+        _saveData.Delete(DailyPlanBackupSaveKey);
+
+        _saveState = new State.RoosterControlSaveState();
+        _dailyPlan = null;
+        _dailyDecisions = null;
+        _previousDailyDecisions = null;
+        _needsRoosterSetup = true;
+        _lastRoosterSetupDay = -1;
+        _lastDebugDumpDay = -1;
+
+        Monitor.Log("Cleared RoosterControl save data for this save.", LogLevel.Info);
+    }
+
+#if RCTRL_DEV
+    private void HandleRaDebug(string command, string[] args)
+    {
+        if (args.Length == 0 || IsHelpArg(args[0]))
+        {
+            Monitor.Log(BuildRaDebugHelpText(), LogLevel.Info);
+            return;
+        }
+
+        switch (args[0].ToLowerInvariant())
+        {
+            case "produce":
+                DebugProduceCommand(command, args.Skip(1).ToArray());
+                return;
+            case "plan":
+                DebugPlanCommand(command, args.Skip(1).ToArray());
+                return;
+            case "diff":
+                DebugDiffCommand(command, args.Skip(1).ToArray());
+                return;
+            case "pipeline":
+                DebugPipelineCommand(command, args.Skip(1).ToArray());
+                return;
+            case "state-dump":
+                DumpStateCommand(command, args.Skip(1).ToArray());
+                return;
+            default:
+                Monitor.Log($"Unknown debug subcommand '{args[0]}'.\n\n{BuildRaDebugHelpText()}", LogLevel.Warn);
+                return;
+        }
+    }
+#endif
+
+    private static bool IsHelpArg(string arg)
+        => string.Equals(arg, "help", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(arg, "-h", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(arg, "--help", StringComparison.OrdinalIgnoreCase);
+
+    private static string BuildRaHelpText()
+        => string.Join(
+            Environment.NewLine,
+            "ra help",
+            "ra status",
+            "ra verify [--json]",
+            "ra verify compat [EggKind]",
+            "ra verify catalog",
+            "ra reload",
+            "ra save clear --yes",
+            "ra compat ...",
+            "ra catalog ...",
+            "ra plan ...",
+#if RCTRL_DEV
+            "ra debug ...",
+#endif
+            "",
+            "Status prints a concise runtime snapshot.",
+            "Verify runs read-only RoosterControl diagnostics.");
+
+#if RCTRL_DEV
+    private static string BuildRaDebugHelpText()
+        => string.Join(
+            Environment.NewLine,
+            "ra debug produce ...",
+            "ra debug plan ...",
+            "ra debug diff ...",
+            "ra debug pipeline",
+            "ra debug state-dump [farmanimals]");
+#endif
 
 
     private void LoadExclusionsData()
@@ -514,7 +689,6 @@ private void DumpStateCommand(string command, string[] args)
             Luck = DailyLuck,
             Config = Config,
             SaveState = _saveState,
-            FemaleAssignments = Config.FemalesOptions,
             Exclusions = _animalExclusions.AnimalExclusions,
             Roosters = roosters,
             FarmAnimals = farmAnimals

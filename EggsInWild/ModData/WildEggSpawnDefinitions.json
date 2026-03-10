@@ -1,0 +1,6057 @@
+{
+  "Forest": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "Forest",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [
+            "0,96;119,119"
+          ],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeForest",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_Orchard",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "13,6;49,35"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_ArkOrchard",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SunberryForest",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Tarniyar.CP.WalkToDesert_Meadow",
+          "ModID": "Tarniyar.CP.WalkToDesert",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Clearing",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Lodge",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailSinuous",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailWoodland",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailPond",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailLong",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailShortcut",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeForest",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "Forest",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [
+            "0,96;119,119"
+          ],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeForest",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_Orchard",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "13,6;49,35"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_ArkOrchard",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SunberryForest",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Tarniyar.CP.WalkToDesert_Meadow",
+          "ModID": "Tarniyar.CP.WalkToDesert",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Clearing",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Lodge",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailSinuous",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailWoodland",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailPond",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailLong",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestTrailShortcut",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeForest",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    }
+  },
+  "Woods": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "Woods",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeFalls",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_DeepMountains",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SecretForest1",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeForest",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestJunimoClearing",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenFarm",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenHill",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenPeak",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenShrine",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenExit",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenPicnic",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": true
+        }
+      ],
+      "Magic": [
+        {
+          "MapName": "Woods",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeFalls",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_DeepMountains",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SecretForest1",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeForest",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestJunimoClearing",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenFarm",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenHill",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenPeak",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenShrine",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenExit",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenPicnic",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": true
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenCrypt",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": true
+        }
+      ]
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "Woods",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeFalls",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_DeepMountains",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SecretForest1",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeForest",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestJunimoClearing",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": [
+        {
+          "MapName": "Woods",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeFalls",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_DeepMountains",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SecretForest1",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgeForest",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestJunimoClearing",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenFarm",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenHill",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenPeak",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenShrine",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 1,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": false,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenExit",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenPicnic",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": true
+        },
+        {
+          "MapName": "Azathii.ForgottenWoods_ForgottenCrypt",
+          "ModID": "Azathii.ForgottenWoods",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": true
+        }
+      ]
+    }
+  },
+  "Beach": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "Beach",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "IslandWest",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "18,70;105,89",
+            "15,25;26,69"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_Village",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "85,93;98,110"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": true
+        },
+        {
+          "MapName": "BeachNightMarket",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeStardew",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "20,31;51,65"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "Beach",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "IslandWest",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "18,70;105,89",
+            "15,25;26,69"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "BeachNightMarket",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_Village",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "85,93;98,110"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeStardew",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "20,31;51,65"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    }
+  },
+  "Mountain": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "Mountain",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "4,6;92,37"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgePond",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_MineEntrance",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SunberryMountain",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_Ridge",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Cliff",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCrystalLake",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": [
+        {
+          "MapName": "Mountain",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "4,6;92,37"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgePond",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_MineEntrance",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SunberryMountain",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_Ridge",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Cliff",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCrystalLake",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ]
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "Mountain",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "4,6;92,37"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_MineEntrance",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SunberryMountain",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Cliff",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCrystalLake",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    }
+  },
+  "Town": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "Town",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RidgesideVillage",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_Village",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_SBV_SunberryVillage",
+          "ModID": "SunberryTeam.SBVSMAPI",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    },
+    "Large": {
+      "Common": null,
+      "Magic": null
+    }
+  },
+  "Island": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "IslandNorth",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "IslandWest",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "28,21;98,60",
+            "42,11;92,20"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Island",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "IslandNorth",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "IslandWest",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [
+            "28,21;98,60",
+            "42,11;92,20"
+          ],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Island",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    }
+  },
+  "DeepIsland": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "IslandEast",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "DeepIsland",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "IslandEast",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "DeepIsland",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": [
+        {
+          "MapName": "IslandEast",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "DeepIsland",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ]
+    }
+  },
+  "IslandBeach": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "IslandSouth",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "IslandBeach",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "IslandSouthEast",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "IslandSouth",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "IslandBeach",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "IslandSouthEast",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Dirt"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    }
+  },
+  "Cliff": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "Railroad",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [
+            "0,29;69,61"
+          ],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RSVWestCliff",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RSVCliff",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_SummitFarm",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Cliff",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "Railroad",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [
+            "0,29;69,61"
+          ],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RSVWestCliff",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_RSVCliff",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_Ridgeside_SummitFarm",
+          "ModID": "Rafseazz.RSVCP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Cliff",
+          "ModID": "Sun",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    }
+  },
+  "Desert": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "Desert",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Tarniyar.CP.WalkToDesert_Ghost_Town",
+          "ModID": "Tarniyar.CP.WalkToDesert",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    },
+    "Large": {
+      "Common": null,
+      "Magic": null
+    }
+  },
+  "BugLand": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "BugLand",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": [
+        {
+          "MapName": "BugLand",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ]
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "BugLand",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": [
+        {
+          "MapName": "BugLand",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ]
+    }
+  },
+  "Cave": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "Mine",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_SmugglerDen",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_DeepDark",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveLong",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveRock",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveHigh",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveLush",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveStar",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveShortcut",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveAmber",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveMoonPond",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveMarsh",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveWinterRift",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": [
+        {
+          "MapName": "Mine",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_SmugglerDen",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_DeepDark",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveLong",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveRock",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveHigh",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveLush",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveStar",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveShortcut",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveAmber",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveMoonPond",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveMarsh",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveWinterRift",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ]
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "Mine",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_SmugglerDen",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_DeepDark",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveLong",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveRock",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveHigh",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveLush",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveStar",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveShortcut",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveAmber",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveMoonPond",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveMarsh",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_ForestCaveWinterRift",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    }
+  },
+  "Swamp": {
+    "Normal": {
+      "Common": null,
+      "Magic": [
+        {
+          "MapName": "WitchSwamp",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ]
+    },
+    "Large": {
+      "Common": null,
+      "Magic": [
+        {
+          "MapName": "WitchSwamp",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ]
+    }
+  },
+  "Clearing": {
+    "Normal": {
+      "Common": [
+        {
+          "MapName": "Backwoods",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "BusStop",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_MeadowFarm",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Tarniyar.CP.WalkToDesert_Forest_Road",
+          "ModID": "Tarniyar.CP.WalkToDesert",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Tarniyar.CP.WalkToDesert_Winding_Road",
+          "ModID": "Tarniyar.CP.WalkToDesert",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Tarniyar.CP.WalkToDesert_Interchange",
+          "ModID": "Tarniyar.CP.WalkToDesert",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Hamlet",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Orchard",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Faycombe",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_FaycombeMeadow",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeBusStop",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeBusStop2",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [
+            "35,0;57,21",
+            "0,22;57,31"
+          ],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_AnnettaForest",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeMeadowForestSouth",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeMineCart",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeStardew",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [
+            "20,31;51,65",
+            "0,86;88,115"
+          ],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    },
+    "Large": {
+      "Common": [
+        {
+          "MapName": "Backwoods",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "BusStop",
+          "ModID": "Vanilla",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "EastScarp_MeadowFarm",
+          "ModID": "LemurKat.EastScarpe.CP",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Tarniyar.CP.WalkToDesert_Forest_Road",
+          "ModID": "Tarniyar.CP.WalkToDesert",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Tarniyar.CP.WalkToDesert_Winding_Road",
+          "ModID": "Tarniyar.CP.WalkToDesert",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Tarniyar.CP.WalkToDesert_Interchange",
+          "ModID": "Tarniyar.CP.WalkToDesert",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Hamlet",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Orchard",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_Faycombe",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Lumisteria.MtVapius_FaycombeMeadow",
+          "ModID": "Lumisteria.MtVapius",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeBusStop",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeBusStop2",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [
+            "35,0;57,21",
+            "0,22;57,31"
+          ],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_AnnettaForest",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 2,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeMeadowForestSouth",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 4,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeMineCart",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        },
+        {
+          "MapName": "Custom_CapeStardew",
+          "ModID": "dreamy.kickitspot",
+          "MinEggs": 1,
+          "MaxEggs": 2,
+          "EggsToSpawn": 3,
+          "RandomChance": 0.25,
+          "IncludeTerrainTypes": [
+            "Grass"
+          ],
+          "ExcludeTerrainTypes": [
+            "Wood"
+          ],
+          "IncludeCoordinates": [],
+          "ExcludeCoordinates": [
+            "20,31;51,65",
+            "0,86;88,115"
+          ],
+          "ExtraConditions": {
+            "StartYear": 1,
+            "Seasons": [],
+            "Days": [],
+            "GameStateQuery": "!SEASON Winter",
+            "WeatherYesterday": [],
+            "WeatherToday": [],
+            "WeatherTomorrow": []
+          },
+          "SpawnedEggs": 0,
+          "UseBaseRandomChance": true,
+          "HitMaxSpawnTries": false
+        }
+      ],
+      "Magic": null
+    }
+  }
+}

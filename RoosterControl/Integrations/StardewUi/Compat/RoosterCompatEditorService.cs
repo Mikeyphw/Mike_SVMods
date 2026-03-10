@@ -71,7 +71,7 @@ internal sealed class RoosterCompatEditorService
         var errors = 0;
         var parts = new List<string>();
 
-        foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+        foreach (var kind in CompatSelectionService.ManagedEggKinds)
         {
             if (_selectionService.TryResolveSelectedEggItemId(state, kind, data, out var itemId, out var err))
             {
@@ -134,7 +134,6 @@ internal sealed class RoosterCompatEditorService
         // Group by category
         var standardKinds = new[] { EggKind.BrownEgg, EggKind.WhiteEgg, EggKind.BlueEgg, EggKind.VoidEgg, EggKind.GoldEgg };
         var largeKinds = new[] { EggKind.LargeBrownEgg, EggKind.LargeWhiteEgg, EggKind.LargeBlueEgg, EggKind.LargeVoidEgg, EggKind.LargeGoldEgg };
-        var fertilizedKinds = new[] { EggKind.FertilizedBrownEgg, EggKind.FertilizedWhiteEgg, EggKind.FertilizedBlueEgg, EggKind.FertilizedVoidEgg, EggKind.FertilizedGoldEgg };
         var specialKinds = new[] { EggKind.RoosterEgg };
 
         var catalog = _selectionService.EggCatalog;
@@ -171,7 +170,6 @@ internal sealed class RoosterCompatEditorService
 
         AddGroup("Standard Eggs", "compat.sources.eggs.standard", standardKinds);
         AddGroup("Large Eggs", "compat.sources.eggs.large", largeKinds);
-        AddGroup("Fertilized Eggs", "compat.sources.eggs.fertilized", fertilizedKinds);
         AddGroup("Special Eggs", "compat.sources.eggs.special", specialKinds);
 
         return result;
@@ -190,8 +188,7 @@ internal sealed class RoosterCompatEditorService
             .Select(s => new RoosterCompatProviderRecord(
                 ProviderId: s.SourceId,
                 DisplayName: s.DisplayName,
-                IsEnabled: enabledSet.Contains(s.SourceId),
-                RoosterEggItemId: s.RoosterEggItemId
+                IsEnabled: enabledSet.Contains(s.SourceId)
             ))
             .OrderBy(r => r.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(r => r.ProviderId, StringComparer.OrdinalIgnoreCase)

@@ -7,10 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NestCore", "NestCore.csproj
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Dev|Any CPU = Dev|Any CPU
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1F230869-CDC2-4F8E-8CC5-2E7370308BCD}.Dev|Any CPU.ActiveCfg = Dev|Any CPU
+		{1F230869-CDC2-4F8E-8CC5-2E7370308BCD}.Dev|Any CPU.Build.0 = Dev|Any CPU
 		{1F230869-CDC2-4F8E-8CC5-2E7370308BCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1F230869-CDC2-4F8E-8CC5-2E7370308BCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F230869-CDC2-4F8E-8CC5-2E7370308BCD}.Release|Any CPU.ActiveCfg = Release|Any CPU

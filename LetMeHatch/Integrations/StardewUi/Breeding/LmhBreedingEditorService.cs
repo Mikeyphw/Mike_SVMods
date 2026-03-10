@@ -187,6 +187,13 @@ public sealed class LmhBreedingEditorService
             maleKey.EndsWith("_Male", StringComparison.OrdinalIgnoreCase) ? "config.breeding.males.cloned.label" : maleKey,
             maleKey.EndsWith("_Male", StringComparison.OrdinalIgnoreCase),
             maleData.AdjustableMaleChances,
+            maleData.EggsIDs.ToDictionary(
+                pair => pair.Key,
+                pair => (IReadOnlyList<string>)pair.Value.Values
+                    .Where(static value => !string.IsNullOrWhiteSpace(value))
+                    .Select(static value => value.Trim())
+                    .ToList(),
+                EqualityComparer<ItemType>.Default),
             new Dictionary<ItemType, string?>(maleData.GetEggIDs()),
             enabled,
             maleChance,

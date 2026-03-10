@@ -34,6 +34,7 @@ namespace LetMeHatch.Breeding
         private readonly List<IContentPack> _loadedContentPacks;
         private readonly List<ClonedAnimalInfo> _clonedAnimalsInfoList;
         private readonly HashSet<string> WildEggsIDs;
+        private readonly IRoosterControlApi? _roosterControlApi;
 
         public class ContentPackConfig
         {
@@ -50,6 +51,7 @@ namespace LetMeHatch.Breeding
 
         public BreedingDataLoader(
             IWildEggsApi? wildEggsApi,
+            IRoosterControlApi? roosterControlApi,
             Dictionary<string, Dictionary<string, BreedingDataFemale>> loadedFemaleBreedingData,
             List<IContentPack> loadedContentPacks,
             List<ClonedAnimalInfo> clonedAnimalsInfoList,
@@ -57,6 +59,7 @@ namespace LetMeHatch.Breeding
         )
         {
             WildEggsIDs = wildEggsApi != null ? wildEggsApi.WildEggsIDs : new();
+            _roosterControlApi = roosterControlApi;
             _loadedFemaleBreedingData = loadedFemaleBreedingData;
             _loadedContentPacks = loadedContentPacks;
             _clonedAnimalsInfoList = clonedAnimalsInfoList;
@@ -91,6 +94,7 @@ namespace LetMeHatch.Breeding
                 }
                 LoadBreedingDataFromContentPack(contentPack);
             }
+            ApplyRoosterControlOverrides();
             FilterOutDuplicateClones();
         }
 
@@ -210,7 +214,7 @@ namespace LetMeHatch.Breeding
                             AdjustableMaleChances = oldData.AdjustableMaleChances,
                             BoostByMale = oldData.BoostByMale,
                             MaleChance = oldData.MaleChance,
-                            EggsIDs = new(oldData.EggsIDs),
+                            EggsIDs = oldData.CloneConfiguredEggs(),
                             Enabled = oldData.Enabled
                         };
                         newMaleBreedingData.SetEggIDs(oldData.GetEggIDs());
@@ -307,6 +311,112 @@ namespace LetMeHatch.Breeding
             FilterOutEmptyFemaleBreedingData(_loadedFemaleBreedingData);
         }
 
+        private void ApplyRoosterControlOverrides()
+        {
+            if (_roosterControlApi is null || _roosterControlApi.ApiVersion < 3)
+                return;
+
+            if (!_loadedFemaleBreedingData.TryGetValue("Mikew.roostersaddon.smapi", out var roosterControlData))
+                return;
+
+            var eggIds = _roosterControlApi.GetResolvedEggItemIds();
+
+            foreach (var (femaleKey, femaleData) in roosterControlData)
+            {
+                foreach (var (maleKey, maleData) in femaleData.Males)
+                {
+                    var eggs = ResolveEggIdsForMaleKey(maleKey, eggIds);
+                    if (string.IsNullOrWhiteSpace(eggs.NormalEggId) && string.IsNullOrWhiteSpace(eggs.LargeEggId))
+                        continue;
+
+                    maleData.EggsIDs[ItemType.Normal] = eggs.NormalEggId ?? string.Empty;
+                    maleData.EggsIDs[ItemType.Large] = eggs.LargeEggId ?? string.Empty;
+                    maleData.EggsIDs[ItemType.FertilizedEgg] = string.Empty;
+
+                    var finalEggs = new Dictionary<ItemType, string?>
+                    {
+                        [ItemType.Normal] = eggs.NormalEggId,
+                        [ItemType.Large] = eggs.LargeEggId,
+                        [ItemType.FertilizedEgg] = ResolveFertilizedEggIdForOverride(femaleKey, maleKey, eggs.NormalEggId, eggs.LargeEggId)
+                    };
+
+                    maleData.SetEggIDs(finalEggs);
+                }
+            }
+        }
+
+        private static (string? NormalEggId, string? LargeEggId) ResolveEggIdsForMaleKey(
+            string maleKey,
+            IReadOnlyDictionary<string, string> eggIds)
+        {
+            return maleKey.Trim() switch
+            {
+                "cockwhite" or "White Rooster" => (
+                    GetEggId(eggIds, "WhiteEgg"),
+                    GetEggId(eggIds, "LargeWhiteEgg")
+                ),
+                "cockbrown" or "Rooster" => (
+                    GetEggId(eggIds, "BrownEgg"),
+                    GetEggId(eggIds, "LargeBrownEgg")
+                ),
+                "cockblue" or "Blue Rooster" => (
+                    GetEggId(eggIds, "BlueEgg"),
+                    GetEggId(eggIds, "LargeBlueEgg")
+                ),
+                "cockvoid" or "Cockatrice" => (
+                    GetEggId(eggIds, "VoidEgg"),
+                    GetEggId(eggIds, "LargeVoidEgg")
+                ),
+                "cockgold" => (
+                    GetEggId(eggIds, "GoldEgg"),
+                    GetEggId(eggIds, "LargeGoldEgg")
+                ),
+                _ => (null, null),
+            };
+        }
+
+        private string? ResolveFertilizedEggIdForOverride(
+            string femaleKey,
+            string maleKey,
+            string? normalEggId,
+            string? largeEggId)
+        {
+            var originalEgg = !string.IsNullOrWhiteSpace(largeEggId) ? largeEggId : normalEggId;
+            if (string.IsNullOrWhiteSpace(originalEgg))
+                return null;
+
+            if (ShouldUseNativeMearaFertilizedEgg(maleKey, normalEggId, largeEggId))
+                return GetMearaFertilizedEggID(femaleKey, maleKey);
+
+            return _cloningHelper.GetFertilizedClonedEggID(femaleKey, originalEgg);
+        }
+
+        private static bool ShouldUseNativeMearaFertilizedEgg(string maleKey, string? normalEggId, string? largeEggId)
+        {
+            if (!ModIdEvaluator.Evaluate("Meara.Roosters", HelperInstance.ModRegistry))
+                return false;
+
+            return maleKey switch
+            {
+                "cockwhite" => string.Equals(normalEggId, AnimalProducts.WhiteEgg, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(largeEggId, AnimalProducts.LargeWhiteEgg, StringComparison.OrdinalIgnoreCase),
+                "cockbrown" => string.Equals(normalEggId, AnimalProducts.BrownEgg, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(largeEggId, AnimalProducts.LargeBrownEgg, StringComparison.OrdinalIgnoreCase),
+                "cockblue" => string.Equals(normalEggId, CustomItems.MearaBlueEgg, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(largeEggId, CustomItems.MearaLargeBlueEgg, StringComparison.OrdinalIgnoreCase),
+                "cockvoid" => string.Equals(normalEggId, AnimalProducts.VoidEgg, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(largeEggId, CustomItems.MearaLargeVoidEgg, StringComparison.OrdinalIgnoreCase),
+                "cockgold" => string.Equals(normalEggId, AnimalProducts.GoldenEgg, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(largeEggId, CustomItems.MearaLargeGoldEgg, StringComparison.OrdinalIgnoreCase),
+                _ => false,
+            };
+        }
+
+        private static string? GetEggId(IReadOnlyDictionary<string, string> eggIds, string eggKind)
+            => eggIds.TryGetValue(eggKind, out var eggId) && !string.IsNullOrWhiteSpace(eggId)
+                ? eggId
+                : null;
+
         private void FilterOutEmptyFemaleBreedingData(
             Dictionary<string, Dictionary<string, BreedingDataFemale>> loadedBreedingData
         )
@@ -351,15 +461,16 @@ namespace LetMeHatch.Breeding
             string femaleKey
         )
         {
-            var eggs = male.Value.EggsIDs;
-            var foundEggs = FindEgg(femaleKey, Game1.farmAnimalData[femaleKey]);
-            foreach (var eggType in eggs.Keys.Where(e => e != ItemType.FertilizedEgg))
-            {
-                var foundEgg = eggs[eggType].IsEmptyOrWhitespace()
+                var eggs = male.Value.EggsIDs;
+                var foundEggs = FindEgg(femaleKey, Game1.farmAnimalData[femaleKey]);
+                foreach (var eggType in eggs.Keys.Where(e => e != ItemType.FertilizedEgg))
+                {
+                var configuredEgg = eggs[eggType].Primary;
+                var foundEgg = string.IsNullOrWhiteSpace(configuredEgg)
                     ? foundEggs[eggType]
-                    : eggs[eggType];
+                    : configuredEgg;
                 male.Value.SetEggID(eggType, foundEgg);
-            }
+                }
             var finalEggs = male.Value.GetEggIDs();
             var originalEgg = finalEggs[ItemType.Large] ?? finalEggs[ItemType.Normal];
             originalEgg ??= AnimalProducts.WhiteEgg;
@@ -385,7 +496,7 @@ namespace LetMeHatch.Breeding
             }
             else
             {
-                fertilizedEggID = eggs[ItemType.FertilizedEgg];
+                fertilizedEggID = eggs[ItemType.FertilizedEgg].Primary;
             }
             var fertilizedEgg = fertilizedEggID;
             male.Value.SetEggID(ItemType.FertilizedEgg, fertilizedEgg);

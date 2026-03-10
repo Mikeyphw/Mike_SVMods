@@ -9,8 +9,6 @@ using System.Collections.Generic;
 using System.Text;
 using StardewValley.GameData.FarmAnimals;
 using RoosterControl.Enums;
-using RoosterControl.Application.FertilizedEggs;
-using StardewValley.GameData.Objects;
 
 namespace RoosterControl.Application;
 
@@ -24,20 +22,20 @@ internal sealed partial class RoosterCoordinator
         if (verbLower is "help" or "-h" or "--help")
         {
             LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
-                "ra_compat usage (Phase 9B):\n" +
-                "  ra_compat list\n" +
+                "ra compat usage:\n" +
+                "  ra compat list\n" +
                 "    - prints current compat catalogs and per-save selections.\n" +
-                "  ra_compat status\n" +
+                "  ra compat status\n" +
                 "    - prints catalog health warnings + current selections (single block).\n" +
-                "  ra_compat cycle-egg <EggKind> [prev]\n" +
+                "  ra compat cycle-egg <EggKind> [prev]\n" +
                 "    - cycles selected egg source for the given EggKind.\n" +
-                "  ra_compat cycle-rooster [prev]\n" +
+                "  ra compat cycle-rooster [prev]\n" +
                 "    - cycles rooster provider in single-provider mode.\n" +
-                "  ra_compat enable-all-roosters\n" +
+                "  ra compat enable-all-roosters\n" +
                 "    - enables all rooster providers (union mode).\n" +
-                "  ra_compat validate [EggKind]\n" +
+                "  ra compat validate [EggKind]\n" +
                 "    - reports invalid FarmAnimalRef targets/indexes and shows resolved values.\n" +
-                "  ra_compat reset-help\n" +
+                "  ra compat reset-help\n" +
                 "    - prints reset commands + examples.\n" +
                 "\n" +
                 "Notes:\n" +
@@ -56,7 +54,7 @@ internal sealed partial class RoosterCoordinator
         if (!Context.IsWorldReady)
         {
             LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
-                "ra_compat is only available after a save is loaded.",
+                "ra compat is only available after a save is loaded.",
                 LogLevel.Info);
             return;
         }
@@ -82,9 +80,18 @@ if (verbLower == "validate")
     {
         if (!Enum.TryParse<EggKind>(args[1], ignoreCase: true, out var parsed))
         {
-            var kinds = string.Join(", ", Enum.GetNames(typeof(EggKind)));
+            var kinds = string.Join(", ", CompatSelectionService.ManagedEggKinds);
             LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
                 $"Unknown EggKind '{args[1]}'. Valid values: {kinds}",
+                LogLevel.Info);
+            return;
+        }
+
+        if (!CompatSelectionService.ManagedEggKinds.Contains(parsed))
+        {
+            var kinds = string.Join(", ", CompatSelectionService.ManagedEggKinds);
+            LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                $"EggKind '{parsed}' is not managed by compat. Valid values: {kinds}",
                 LogLevel.Info);
             return;
         }
@@ -107,10 +114,10 @@ if (verbLower == "validate")
 
     var kindsToCheck = filter.HasValue
         ? new[] { filter.Value }
-        : Enum.GetValues(typeof(EggKind)).Cast<EggKind>().ToArray();
+        : CompatSelectionService.ManagedEggKinds.ToArray();
 
     var sb = new StringBuilder();
-    sb.AppendLine("ra_compat validate:");
+    sb.AppendLine("ra compat validate:");
     sb.AppendLine($"  FarmAnimals loaded: {animalData.Count}");
     sb.AppendLine($"  EggKinds: {string.Join(", ", kindsToCheck)}");
 
@@ -137,8 +144,8 @@ if (verbLower == "validate")
                 warnings++;
 
             sb.AppendLine($"    Fix (GMCM): Compat → Egg sources → {kind}");
-            sb.AppendLine($"    Fix (console): ra_compat cycle-egg {kind}");
-            sb.AppendLine($"    Fix (reset): ra_compat reset-eggs {kind}");
+            sb.AppendLine($"    Fix (console): ra compat cycle-egg {kind}");
+            sb.AppendLine($"    Fix (reset): ra compat reset-eggs {kind}");
             sb.AppendLine($"    Fix (save data): Compat.SelectedEggSources[{kind}] = \"<SourceId>\"");
         }
 
@@ -171,114 +178,6 @@ if (verbLower == "validate")
 
         sb.AppendLine($"  Catalog: total={sources.Count}, directItemId={directCount}, farmAnimalRef={refSources.Count}, invalidRefs={invalidThisKind}");
     }
-
-
-    var fertilizedKinds = new HashSet<EggKind>(
-        kindsToCheck.Where(k => k.ToString().StartsWith("Fertilized", StringComparison.OrdinalIgnoreCase))
-    );
-
-    if (fertilizedKinds.Count > 0)
-    {
-        Dictionary<string, ObjectData> objects;
-        try
-        {
-            objects = Helper.GameContent.Load<Dictionary<string, ObjectData>>(ObjectsAssetName);
-        }
-        catch (Exception ex)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"Fertilized synthesis (planned): ERROR -> failed to load {ObjectsAssetName}: {ex.Message}");
-            objects = null!;
-        }
-
-        if (objects is not null)
-        {
-            var synthPlanned = 0;
-            var missingBase = 0;
-
-            sb.AppendLine();
-            sb.AppendLine("Fertilized synthesis (planned):");
-
-            foreach (var roosterType in Enum.GetValues(typeof(RoosterType)).Cast<RoosterType>())
-            {
-                if (!TryMapRoosterTypeToEggKinds(roosterType, out var normalKind, out var largeKind, out var fertilizedKind))
-                    continue;
-
-                if (!fertilizedKinds.Contains(fertilizedKind))
-                    continue;
-
-                var resolvedNormalId = _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, normalKind, animalData, out var normalId, out _)
-                    ? normalId
-                    : null;
-
-                var resolvedLargeId = _compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, largeKind, animalData, out var largeId, out _)
-                    ? largeId
-                    : null;
-
-                if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, fertilizedKind, animalData, out _, out _))
-                    continue;
-
-                var baseEggId = !string.IsNullOrWhiteSpace(resolvedLargeId) ? resolvedLargeId : resolvedNormalId;
-                if (string.IsNullOrWhiteSpace(baseEggId))
-                {
-                    missingBase++;
-                    continue;
-                }
-
-                var synthId = FertilizedEggsObjectEditService.GetSynthesizedFertilizedId(baseEggId);
-                sb.AppendLine($"  {roosterType}: {baseEggId} -> {synthId} (exists={objects.ContainsKey(synthId)})");
-                synthPlanned++;
-            }
-
-            if (synthPlanned == 0 && missingBase == 0)
-                sb.AppendLine("  (none)");
-
-            sb.AppendLine($"  Synthesis summary: planned={synthPlanned}, missingBase={missingBase}");
-        }
-    }
-
-    static bool TryMapRoosterTypeToEggKinds(RoosterType roosterType, out EggKind normal, out EggKind large, out EggKind fertilized)
-    {
-        switch (roosterType)
-        {
-            case RoosterType.Brown:
-                normal = EggKind.BrownEgg;
-                large = EggKind.LargeBrownEgg;
-                fertilized = EggKind.FertilizedBrownEgg;
-                return true;
-
-            case RoosterType.White:
-                normal = EggKind.WhiteEgg;
-                large = EggKind.LargeWhiteEgg;
-                fertilized = EggKind.FertilizedWhiteEgg;
-                return true;
-
-            case RoosterType.Blue:
-                normal = EggKind.BlueEgg;
-                large = EggKind.LargeBlueEgg;
-                fertilized = EggKind.FertilizedBlueEgg;
-                return true;
-
-            case RoosterType.Void:
-                normal = EggKind.VoidEgg;
-                large = EggKind.LargeVoidEgg;
-                fertilized = EggKind.FertilizedVoidEgg;
-                return true;
-
-            case RoosterType.Gold:
-                normal = EggKind.GoldEgg;
-                large = EggKind.LargeGoldEgg;
-                fertilized = EggKind.FertilizedGoldEgg;
-                return true;
-
-            default:
-                normal = default;
-                large = default;
-                fertilized = default;
-                return false;
-        }
-    }
-
     var enabledProviders = _saveState.Compat.EnabledRoosterSources?
         .Where(id => !string.IsNullOrWhiteSpace(id))
         .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -311,7 +210,7 @@ if (verbLower == "validate")
         {
             sb.AppendLine($"  WARN: EnabledRoosterSources contains unknown provider id '{id}'.");
         }
-        sb.AppendLine("    Fix (reset): ra_compat reset-roosters");
+        sb.AppendLine("    Fix (reset): ra compat reset-roosters");
         sb.AppendLine("    Fix (save data): Compat.EnabledRoosterSources = [ ... ]");
     }
 
@@ -376,7 +275,7 @@ if (verbLower == "validate")
             if (args.Length < 2 || string.IsNullOrWhiteSpace(args[1]))
             {
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
-                    "Usage: ra_compat reset-eggs <EggKind|all>",
+                    "Usage: ra compat reset-eggs <EggKind|all>",
                     LogLevel.Info);
                 return;
             }
@@ -399,9 +298,17 @@ if (verbLower == "validate")
 
             if (!Enum.TryParse<EggKind>(target, ignoreCase: true, out var kind))
             {
-                var kinds = string.Join(", ", Enum.GetNames(typeof(EggKind)));
+                var kinds = string.Join(", ", CompatSelectionService.ManagedEggKinds);
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
                     $"Unknown EggKind '{target}'. Valid values: {kinds} (or 'all')",
+                    LogLevel.Info);
+                return;
+            }
+
+            if (!CompatSelectionService.ManagedEggKinds.Contains(kind))
+            {
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    $"EggKind '{kind}' is not managed by compat.",
                     LogLevel.Info);
                 return;
             }
@@ -453,16 +360,24 @@ if (verbLower == "validate")
             if (args.Length < 2 || string.IsNullOrWhiteSpace(args[1]))
             {
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
-                    "Usage: ra_compat cycle-egg <EggKind> [prev]",
+                    "Usage: ra compat cycle-egg <EggKind> [prev]",
                     LogLevel.Info);
                 return;
             }
 
             if (!Enum.TryParse<EggKind>(args[1], ignoreCase: true, out var kind))
             {
-                var kinds = string.Join(", ", Enum.GetNames(typeof(EggKind)));
+                var kinds = string.Join(", ", CompatSelectionService.ManagedEggKinds);
                 LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
                     $"Unknown EggKind '{args[1]}'. Valid values: {kinds}",
+                    LogLevel.Info);
+                return;
+            }
+
+            if (!CompatSelectionService.ManagedEggKinds.Contains(kind))
+            {
+                LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
+                    $"EggKind '{kind}' is not managed by compat.",
                     LogLevel.Info);
                 return;
             }
@@ -548,7 +463,7 @@ if (verbLower == "validate")
         }
 
         LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
-            $"Unknown ra_compat verb '{verb}'. Use: ra_compat help",
+            $"Unknown ra compat verb '{verb}'. Use: ra compat help",
             LogLevel.Info);
     }
 
@@ -571,17 +486,17 @@ if (verbLower == "validate")
     private static string BuildCompatResetHelp()
     {
         return
-            "ra_compat reset commands (Phase 14 Step 3):\n" +
-            "  ra_compat reset-all\n" +
+            "ra compat reset commands:\n" +
+            "  ra compat reset-all\n" +
             "    - resets all per-save compat selections (egg sources + rooster providers) to defaults.\n" +
-            "  ra_compat reset-eggs <EggKind|all>\n" +
+            "  ra compat reset-eggs <EggKind|all>\n" +
             "    - resets egg sources for one EggKind (or all) to defaults.\n" +
-            "  ra_compat reset-roosters\n" +
+            "  ra compat reset-roosters\n" +
             "    - resets rooster providers to defaults (enable all if available).\n" +
             "\n" +
             "Examples:\n" +
-            "  ra_compat reset-eggs Standard\n" +
-            "  ra_compat reset-eggs all\n" +
+            "  ra compat reset-eggs BrownEgg\n" +
+            "  ra compat reset-eggs all\n" +
             "\n" +
             "Notes:\n" +
             "  - Mutating commands are host-only.\n" +
@@ -614,7 +529,10 @@ if (verbLower == "validate")
         int InvalidRefErrors,
         int SelectedEggErrors,
         int UnknownProviderWarnings,
-        int MissingRoosterKeyWarnings
+        int MissingRoosterKeyWarnings,
+        IReadOnlyList<string> SelectedEggErrorSamples,
+        IReadOnlyList<string> InvalidRefErrorSamples,
+        IReadOnlyList<string> MissingRoosterKeySamples
     );
 
     private void EnsureCompatValidationState(
@@ -646,12 +564,20 @@ if (verbLower == "validate")
         var errors = 0;
 
         var selectedEggErrors = 0;
-        foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+        var selectedEggErrorSamples = new List<string>();
+        foreach (var kind in CompatSelectionService.ManagedEggKinds)
         {
             if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, kind, farmAnimals, out _, out var err))
                 continue;
 
             selectedEggErrors++;
+            if (selectedEggErrorSamples.Count < 6)
+            {
+                var sample = string.IsNullOrWhiteSpace(err)
+                    ? kind.ToString()
+                    : $"{kind} ({err})";
+                selectedEggErrorSamples.Add(sample);
+            }
 
             if (IsMissingFarmAnimalKey(err))
                 warnings++;
@@ -660,7 +586,8 @@ if (verbLower == "validate")
         }
 
         var invalidRefErrors = 0;
-        foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+        var invalidRefErrorSamples = new List<string>();
+        foreach (var kind in CompatSelectionService.ManagedEggKinds)
         {
             foreach (var src in _compatSelection.EggCatalog.Sources.Where(s => s.EggKind == kind && s.FarmAnimalRef is not null))
             {
@@ -668,6 +595,16 @@ if (verbLower == "validate")
                     continue;
 
                 invalidRefErrors++;
+                if (invalidRefErrorSamples.Count < 6)
+                {
+                    var refText = src.FarmAnimalRef is null
+                        ? "INVALID(ref)"
+                        : $"{src.FarmAnimalRef.FarmAnimalKey}/{src.FarmAnimalRef.List}[{src.FarmAnimalRef.Index}]";
+                    var sample = string.IsNullOrWhiteSpace(err)
+                        ? $"{src.SourceId} -> {refText}"
+                        : $"{src.SourceId} -> {refText} ({err})";
+                    invalidRefErrorSamples.Add(sample);
+                }
 
                 if (IsMissingFarmAnimalKey(err))
                     warnings++;
@@ -691,6 +628,10 @@ if (verbLower == "validate")
 
         var roosterKeys = _compatSelection.GetEnabledRoosterFarmAnimalKeys(_saveState.Compat);
         var missingRoosterKeyWarnings = roosterKeys.Count(k => !farmAnimals.ContainsKey(k));
+        var missingRoosterKeySamples = roosterKeys
+            .Where(k => !farmAnimals.ContainsKey(k))
+            .Take(6)
+            .ToList();
         warnings += missingRoosterKeyWarnings;
 
         return new CompatValidationCounts(
@@ -699,7 +640,10 @@ if (verbLower == "validate")
             InvalidRefErrors: invalidRefErrors,
             SelectedEggErrors: selectedEggErrors,
             UnknownProviderWarnings: unknownProviderWarnings,
-            MissingRoosterKeyWarnings: missingRoosterKeyWarnings
+            MissingRoosterKeyWarnings: missingRoosterKeyWarnings,
+            SelectedEggErrorSamples: selectedEggErrorSamples,
+            InvalidRefErrorSamples: invalidRefErrorSamples,
+            MissingRoosterKeySamples: missingRoosterKeySamples
         );
     }
 
@@ -719,7 +663,7 @@ if (verbLower == "validate")
         var at = _compatValidationLastRunAt.Value.ToString("yyyy-MM-dd HH:mm:ss zzz");
         if (counts.Warnings == 0 && counts.Errors == 0)
         {
-            _compatValidationSummary = $"✅ Validation OK ({at})\nNo issues found.\nRun: ra_compat validate (details)";
+            _compatValidationSummary = $"✅ Validation OK ({at})\nNo issues found.\nRun: ra verify compat (details)";
             return;
         }
 
@@ -735,7 +679,13 @@ if (verbLower == "validate")
             sb.AppendLine($"- EggKinds with invalid selection: {counts.SelectedEggErrors}");
         if (counts.InvalidRefErrors > 0)
             sb.AppendLine($"- Egg sources with invalid FarmAnimalRef: {counts.InvalidRefErrors}");
-        sb.AppendLine("Run: ra_compat validate  (prints actionable fixes)");
+        if (counts.SelectedEggErrorSamples.Count > 0)
+            sb.AppendLine($"  Examples: {string.Join("; ", counts.SelectedEggErrorSamples)}");
+        if (counts.InvalidRefErrorSamples.Count > 0)
+            sb.AppendLine($"  Bad refs: {string.Join("; ", counts.InvalidRefErrorSamples)}");
+        if (counts.MissingRoosterKeySamples.Count > 0)
+            sb.AppendLine($"  Missing rooster keys: {string.Join(", ", counts.MissingRoosterKeySamples)}");
+        sb.AppendLine("Run: ra verify compat  (prints actionable fixes)");
         sb.AppendLine("Note: missing optional mods/packs are treated as WARN.");
 
         _compatValidationSummary = sb.ToString().TrimEnd();
@@ -746,9 +696,29 @@ if (verbLower == "validate")
         if (counts.Warnings == 0 && counts.Errors == 0)
             return $"Compat validation OK ({reason}).";
 
+        var details = new List<string>();
+        if (counts.UnknownProviderWarnings > 0)
+            details.Add($"unknown-provider={counts.UnknownProviderWarnings}");
+        if (counts.MissingRoosterKeyWarnings > 0)
+            details.Add($"missing-rooster-key={counts.MissingRoosterKeyWarnings}");
+        if (counts.SelectedEggErrors > 0)
+            details.Add($"invalid-selected-egg={counts.SelectedEggErrors}");
+        if (counts.InvalidRefErrors > 0)
+            details.Add($"invalid-farmanimal-ref={counts.InvalidRefErrors}");
+        if (counts.SelectedEggErrorSamples.Count > 0)
+            details.Add($"sample-eggs=[{string.Join("; ", counts.SelectedEggErrorSamples)}]");
+        if (counts.InvalidRefErrorSamples.Count > 0)
+            details.Add($"sample-refs=[{string.Join("; ", counts.InvalidRefErrorSamples)}]");
+        if (counts.MissingRoosterKeySamples.Count > 0)
+            details.Add($"missing-rooster-keys=[{string.Join(", ", counts.MissingRoosterKeySamples)}]");
+
+        var detailText = details.Count > 0
+            ? $" Details: {string.Join(", ", details)}."
+            : string.Empty;
+
         return
-            $"Compat validation found issues ({reason}): WARN={counts.Warnings}, ERR={counts.Errors}. " +
-            "Run: ra_compat validate";
+            $"Compat validation found issues ({reason}): WARN={counts.Warnings}, ERR={counts.Errors}.{detailText} " +
+            "Run: ra verify compat";
     }
 
 

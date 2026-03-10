@@ -208,7 +208,7 @@ namespace LetMeHatch.Integrations
         private static void AddMales(
             BreedingDataFemale group,
             string maleName,
-            Dictionary<ItemType, string?> eggIds
+            Dictionary<ItemType, EggIdCandidates> eggIds
         )
         {
             group.Males[maleName] = new()

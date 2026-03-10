@@ -38,11 +38,11 @@ Contract:
             <scrollable layout="360px stretch" peeking="48">
                 <lane orientation="vertical">
                     <label text="Animals" />
-                    <lane *repeat={Animals} orientation="vertical">
+                    <lane *repeat={:Animals} orientation="vertical">
                         <button layout="stretch content"
-                                text={ButtonText}
+                                text={:ButtonText}
                                 click=|OpenAnimal()| />
-                        <label text={MetaText} />
+                        <label text={:MetaText} />
                     </lane>
                 </lane>
             </scrollable>
@@ -58,11 +58,11 @@ Contract:
                     <label text="Effective mode" />
                     <label text={EffectiveModeText} />
                     <label text="Mode options" />
-                    <lane *repeat={ModeOptions} orientation="vertical">
+                    <lane *repeat={:ModeOptions} orientation="vertical">
                         <button layout="stretch content"
-                                text={ButtonText}
+                                text={:ButtonText}
                                 click=|SelectMode()| />
-                        <label text={DescriptionText} />
+                        <label text={:DescriptionText} />
                     </lane>
                 </lane>
             </scrollable>

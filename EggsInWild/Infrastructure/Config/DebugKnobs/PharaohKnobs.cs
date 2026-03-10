@@ -3,6 +3,9 @@ namespace EggsInWild.Infrastructure.Config;
 
 public sealed class PharaohKnobs
 {
+    public int TeleportAnimStartFrame { get; set; } = 32;
+    public int TeleportAnimFrames { get; set; } = 10;
+    public int TeleportAnimIntervalMs { get; set; } = 70;
     public int VisionTiles { get; set; } = 8;
     public int CastRangeTiles { get; set; } = 8;
     public int RewrapRangeTiles { get; set; } = 6;
@@ -29,4 +32,3 @@ public sealed class PharaohKnobs
     public int HealNormal { get; set; } = 80;
 }
 #endif
-

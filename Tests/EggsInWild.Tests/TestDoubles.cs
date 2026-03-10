@@ -44,6 +44,29 @@ internal sealed class FakeMods : IModAvailability
     public bool IsLoaded(string uniqueId) => _loaded.Contains(uniqueId);
 }
 
+internal sealed class FakeModRegistry : IModRegistry
+{
+    private readonly HashSet<string> _loaded;
+    public string ModID => "Tests.FakeRegistry";
+
+    public FakeModRegistry(IEnumerable<string> loaded)
+        => _loaded = new HashSet<string>(loaded, StringComparer.OrdinalIgnoreCase);
+
+    public bool IsLoaded(string uniqueId) => _loaded.Contains(uniqueId);
+
+    public IModInfo? Get(string uniqueID) => null;
+
+    public IEnumerable<IModInfo> GetAll() => Array.Empty<IModInfo>();
+
+    public object? GetApi(string uniqueID) => null;
+
+    public TInterface? GetApi<TInterface>(string uniqueID)
+        where TInterface : class
+        => null;
+
+    public IModInfo? GetFromNamespacedId(string? namespacedId, bool requirePrefix = false) => null;
+}
+
 internal sealed class FakeWorld : IWorldLocations
 {
     private readonly HashSet<string> _names;

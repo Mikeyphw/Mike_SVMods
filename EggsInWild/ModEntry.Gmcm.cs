@@ -50,8 +50,7 @@ public sealed partial class ModEntry
             return;
 
         var cfg = _config.Get();
-        if (!NormalizeLocationTypesOverrides(cfg))
-            return;
+        NormalizeLocationTypesOverrides(cfg);
 
         _config.Save();
         InvalidateGameAssets();

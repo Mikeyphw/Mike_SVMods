@@ -13,8 +13,13 @@ public sealed record LmhItemMappingsGroupRecord(
 
 public sealed record LmhItemMappingRecord(
     string AnimalKey,
-    string NormalItemId,
-    string LargeItemId);
+    string DisplayName,
+    string BaseNormalItemId,
+    string BaseLargeItemId,
+    string ConfiguredNormalItemId,
+    string ConfiguredLargeItemId,
+    string EffectiveNormalItemId,
+    string EffectiveLargeItemId);
 
 public sealed record LmhItemMappingsEditorDraft(
     IReadOnlyDictionary<CloneItemType, Dictionary<string, LmhItemMappingDraftRow>> Mappings);

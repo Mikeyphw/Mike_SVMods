@@ -79,6 +79,7 @@ public sealed partial class ModEntry
         var planner = new EggsInWild.Application.Spawning.SpawnPlanner(
             world,
             mods,
+            helper.ModRegistry,
             conditions,
             log);
         var spawnService = new EggsInWild.Application.Spawning.EggSpawnService(world, placer, tileFinder, log, histogram);
@@ -109,6 +110,7 @@ public sealed partial class ModEntry
         var verifier = new WeggVerifier(helper, saveData, _config, dataLoader, log);
 
         var facade = new ModFacade(
+            modDirectoryPath: Helper.DirectoryPath,
             store: saveData,
             config: _config,
             log: log,

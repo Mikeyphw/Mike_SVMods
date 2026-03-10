@@ -148,7 +148,6 @@ public static class ConfigManager
 
         cfg.General ??= new GeneralSettings();
         cfg.Roosters ??= new System.Collections.Generic.Dictionary<RoosterType, RoosterSettings>();
-        cfg.FemalesOptions ??= new System.Collections.Generic.Dictionary<string, FemaleRoosterAssignment>();
 
         foreach (var (key, def) in RoosterControlConfig.CreateDefaultRoosters())
             cfg.Roosters.TryAdd(key, def);
@@ -229,5 +228,4 @@ public static class ConfigManager
 
 
 }
-
 

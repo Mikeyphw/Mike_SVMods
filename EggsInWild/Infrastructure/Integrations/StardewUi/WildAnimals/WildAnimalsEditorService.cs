@@ -17,6 +17,7 @@ namespace EggsInWild.Infrastructure.Integrations.StardewUi.WildAnimals;
 public sealed class WildAnimalsEditorService
 {
     private readonly Func<Dictionary<string, WildAnimalJson>> _loadDefinitions;
+    private readonly Action<Dictionary<string, WildAnimalJson>>? _saveDefinitions;
     private readonly Func<ModConfig> _getConfig;
     private readonly Func<IReadOnlyDictionary<string, FarmAnimalData>> _loadFarmAnimals;
     private readonly Func<string, WildAnimalJson, WildAnimalsEditorPreviewRecord?> _resolvePreview;
@@ -43,6 +44,7 @@ public sealed class WildAnimalsEditorService
                 return new Dictionary<string, WildAnimalJson>(StringComparer.OrdinalIgnoreCase);
             }
         };
+        _saveDefinitions = definitions => helper.Data.WriteJsonFile(ModDataPaths.WildAnimalsList, definitions);
         _getConfig = getConfig;
         _loadFarmAnimals = () =>
         {
@@ -83,10 +85,12 @@ public sealed class WildAnimalsEditorService
         Func<ModConfig> getConfig,
         Func<IReadOnlyDictionary<string, FarmAnimalData>>? loadFarmAnimals = null,
         Func<string, WildAnimalJson, WildAnimalsEditorPreviewRecord?>? resolvePreview = null,
-        Func<string, Texture2D?>? loadTexture = null)
+        Func<string, Texture2D?>? loadTexture = null,
+        Action<Dictionary<string, WildAnimalJson>>? saveDefinitions = null)
     {
         _loadDefinitions = loadDefinitions ?? throw new ArgumentNullException(nameof(loadDefinitions));
         _getConfig = getConfig ?? throw new ArgumentNullException(nameof(getConfig));
+        _saveDefinitions = saveDefinitions;
         _loadFarmAnimals = loadFarmAnimals ?? (() => new Dictionary<string, FarmAnimalData>(StringComparer.OrdinalIgnoreCase));
         _resolvePreview = resolvePreview ?? ((key, _) => new WildAnimalsEditorPreviewRecord(null, null, null, false, $"No preview available for {key}."));
         _loadTexture = loadTexture ?? (_ => null);
@@ -235,6 +239,105 @@ public sealed class WildAnimalsEditorService
         }
 
         cfg.WildAnimalOverrides[draft.Key] = overrideConfig;
+    }
+
+    public IReadOnlyList<WildAnimalFarmAnimalPickerItemRecord> LoadFarmAnimalPickerItems(IEnumerable<string>? alreadyReferencedKeys = null)
+    {
+        var referenced = alreadyReferencedKeys is null
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(alreadyReferencedKeys.Where(key => !string.IsNullOrWhiteSpace(key)), StringComparer.OrdinalIgnoreCase);
+        var definitions = _loadDefinitions();
+        var farmAnimals = _loadFarmAnimals();
+
+        return farmAnimals
+            .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(pair =>
+            {
+                var displayName = string.IsNullOrWhiteSpace(pair.Value.DisplayName?.ToString())
+                    ? pair.Key
+                    : pair.Value.DisplayName!.ToString();
+                var suggestedModId = InferSuggestedModId(pair.Key, definitions);
+                var tooltip = referenced.Contains(pair.Key)
+                    ? $"{displayName}\n{pair.Key}\nAlready referenced"
+                    : $"{displayName}\n{pair.Key}";
+
+                return new WildAnimalFarmAnimalPickerItemRecord(
+                    pair.Key,
+                    displayName,
+                    tooltip,
+                    suggestedModId,
+                    new WildAnimalsEditorPreviewRecord(
+                        pair.Key,
+                        pair.Value.Texture,
+                        new Rectangle(0, 0, pair.Value.SpriteWidth, pair.Value.SpriteHeight),
+                        !string.IsNullOrWhiteSpace(pair.Value.Texture) && pair.Value.SpriteWidth > 0 && pair.Value.SpriteHeight > 0,
+                        $"Preview: {displayName}"));
+            })
+            .ToList();
+    }
+
+    public void CreateWildAnimalDefinition(string newKey, IReadOnlyList<string> farmAnimalKeys, IReadOnlyList<string> locationTypeKeys)
+    {
+        if (string.IsNullOrWhiteSpace(newKey))
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(newKey));
+        ArgumentNullException.ThrowIfNull(farmAnimalKeys);
+        ArgumentNullException.ThrowIfNull(locationTypeKeys);
+        EnsureCanWriteDefinitions();
+
+        var definitions = _loadDefinitions();
+        if (definitions.ContainsKey(newKey))
+            throw new InvalidOperationException($"Wild animal '{newKey}' already exists.");
+
+        var normalizedKeys = WildAnimalsEditorHelpers.ParseCsvKeyList(string.Join(", ", farmAnimalKeys)).ToList();
+        if (normalizedKeys.Count == 0)
+            throw new InvalidOperationException("Select at least one farm animal before creating a wild animal.");
+
+        var modId = InferSuggestedModId(normalizedKeys[0], definitions);
+        var locationTypes = locationTypeKeys
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(key => key, _ => false, StringComparer.OrdinalIgnoreCase);
+
+        var next = definitions.ToDictionary(pair => pair.Key, pair => CloneDefinition(pair.Value), StringComparer.OrdinalIgnoreCase);
+        next[newKey] = new WildAnimalJson
+        {
+            Enabled = true,
+            LargeEgg = false,
+            Price = 0,
+            IsMagic = false,
+            LocationTypes = locationTypes,
+            ExtraModAnimalKeys = new Dictionary<string, ExtraModAnimalKeysJson>(StringComparer.OrdinalIgnoreCase)
+            {
+                [modId] = new() { FarmAnimalKeys = normalizedKeys },
+            },
+        };
+
+        _saveDefinitions!(next);
+    }
+
+    public void AddOrUpdateModGroupDefinition(string wildAnimalKey, string modId, IReadOnlyList<string> farmAnimalKeys)
+    {
+        if (string.IsNullOrWhiteSpace(wildAnimalKey))
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(wildAnimalKey));
+        if (string.IsNullOrWhiteSpace(modId))
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(modId));
+        ArgumentNullException.ThrowIfNull(farmAnimalKeys);
+        EnsureCanWriteDefinitions();
+
+        var definitions = _loadDefinitions();
+        if (!definitions.TryGetValue(wildAnimalKey, out var definition))
+            throw new InvalidOperationException($"Wild animal '{wildAnimalKey}' was not found.");
+
+        var normalizedKeys = WildAnimalsEditorHelpers.ParseCsvKeyList(string.Join(", ", farmAnimalKeys)).ToList();
+        if (normalizedKeys.Count == 0)
+            throw new InvalidOperationException("Select at least one farm animal before adding a mod group.");
+
+        var next = definitions.ToDictionary(pair => pair.Key, pair => CloneDefinition(pair.Value), StringComparer.OrdinalIgnoreCase);
+        next[wildAnimalKey].ExtraModAnimalKeys[modId] = new ExtraModAnimalKeysJson
+        {
+            FarmAnimalKeys = normalizedKeys,
+        };
+
+        _saveDefinitions!(next);
     }
 
     private IReadOnlyList<WildAnimalsEditorLocationTypeRecord> BuildLocationTypes(
@@ -460,5 +563,25 @@ public sealed class WildAnimalsEditorService
                     },
                     StringComparer.OrdinalIgnoreCase),
         };
+    }
+
+    private static string InferSuggestedModId(string farmAnimalKey, IReadOnlyDictionary<string, WildAnimalJson> definitions)
+    {
+        foreach (var definition in definitions.Values)
+        {
+            foreach (var pair in definition.ExtraModAnimalKeys)
+            {
+                if (pair.Value.GetEffectiveFarmAnimalKeys().Contains(farmAnimalKey, StringComparer.OrdinalIgnoreCase))
+                    return pair.Key;
+            }
+        }
+
+        return "Vanilla";
+    }
+
+    private void EnsureCanWriteDefinitions()
+    {
+        if (_saveDefinitions is null)
+            throw new InvalidOperationException("WildAnimalsList authoring is not available in this editor context.");
     }
 }

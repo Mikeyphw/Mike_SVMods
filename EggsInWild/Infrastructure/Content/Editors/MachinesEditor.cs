@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using StardewValley;
+using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Machines;
 using Mikew.NestCore.EnumsAndStrings;
 using Mikew.NestCore.Helpers.Content;
@@ -80,7 +81,9 @@ public sealed class MachinesEditor : AssetEditorBase<ContentContext>, IPostPassA
 
     private static MachineData CreateIncubatorMachineData(ContentContext context)
     {
-        var eggItemIds = SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas, context.Logger);
+        var farmAnimals = context.Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+        var catalog = WildEggSpawnCatalogBuilder.Build(context.ModData.WildEggSpawnDefinitions, context.ModData.WildAnimals, farmAnimals, context.Helper.ModRegistry, context.Logger);
+        var eggItemIds = catalog.ActiveEggDefinitions.Select(def => def.EggItemId).ToList();
 
         var rules = new List<MachineOutputRule>();
         foreach (var eggId in eggItemIds.Where(x => !string.IsNullOrWhiteSpace(x)))

@@ -35,6 +35,7 @@ namespace EggsInWild.Application.DesertTomb.Runtime;
 public sealed class DesertTombRuntime
 {
     private const string ProcessedKey = Constants.ModId + "/deserttomb/processed";
+    private const string DecisionKey = Constants.ModId + "/deserttomb/decision";
 
     public const string LadderSuppressedKey = Constants.ModId + "/deserttomb/ladderSuppressed";
     public const string BreakableDropRateMultiplierKey = Constants.ModId + "/deserttomb/breakableDropRateMult";
@@ -72,6 +73,15 @@ public sealed class DesertTombRuntime
     private bool IsHookLoggingEnabled(ModConfig cfg)
         => cfg.DesertTombDebugLogging || IsDebugForce(cfg);
 
+    private LogLevel ResolveHookLevel(LogLevel requested)
+    {
+        var cfg = _config.Get();
+        if (IsHookLoggingEnabled(cfg) && requested == LogLevel.Trace)
+            return LogLevel.Info;
+
+        return requested;
+    }
+
     internal void TraceHook(string hook, MineShaft? mineShaft, string message, LogLevel level = LogLevel.Info)
     {
         var cfg = _config.Get();
@@ -79,7 +89,7 @@ public sealed class DesertTombRuntime
             return;
 
         var levelStr = mineShaft is null ? "<null>" : mineShaft.mineLevel.ToString();
-        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[Hook:{hook}] mineLevel={levelStr} {message}", level);
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[Hook:{hook}] mineLevel={levelStr} {message}", ResolveHookLevel(level));
     }
 
 
@@ -144,6 +154,12 @@ public bool ShouldEdit(MineShaft mineShaft)
     if (mineShaft.mineLevel == 77377)
         return false;
 
+    if (TryGetCachedDecision(mineShaft, out var cachedDecision))
+    {
+        TraceHook("ShouldEdit", mineShaft, $"cached={cachedDecision}", LogLevel.Trace);
+        return cachedDecision;
+    }
+
     var cfg = _config.Get();
     var force = IsDebugForce(cfg);
     var unrestricted = IsDebugUnrestricted(cfg);
@@ -151,12 +167,14 @@ public bool ShouldEdit(MineShaft mineShaft)
     if (!force && !cfg.DesertTombModuleEnabled)
     {
         TraceHook("ShouldEdit", mineShaft, "skip: module disabled", LogLevel.Trace);
+        SetCachedDecision(mineShaft, false);
         return false;
     }
 
     if (!unrestricted && !_isMainPlayer())
     {
         TraceHook("ShouldEdit", mineShaft, "skip: not main player", LogLevel.Trace);
+        SetCachedDecision(mineShaft, false);
         return false;
     }
 
@@ -165,31 +183,36 @@ public bool ShouldEdit(MineShaft mineShaft)
     if (!force && !DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step))
     {
         TraceHook("ShouldEdit", mineShaft, $"skip: progression gate (step={step})", LogLevel.Trace);
+        SetCachedDecision(mineShaft, false);
         return false;
     }
 
     if (!unrestricted && mineShaft.mineLevel <= 120)
     {
         TraceHook("ShouldEdit", mineShaft, "skip: mineLevel <= 120", LogLevel.Trace);
+        SetCachedDecision(mineShaft, false);
         return false;
     }
 
     if (!force)
     {
-        if (!DesertTombRuntimePolicy.RollTombChance(cfg.TombChance, mineShaft.mineLevel))
+        if (!DesertTombRuntimePolicy.RollTombChance(cfg.TombChance, mineShaft.mineLevel, CreateDecisionRandom(mineShaft)))
         {
             TraceHook("ShouldEdit", mineShaft, $"skip: tomb chance failed (tombChance={cfg.TombChance})", LogLevel.Trace);
+            SetCachedDecision(mineShaft, false);
             return false;
         }
 
         if (AlreadyProcessedToday(mineShaft))
         {
             TraceHook("ShouldEdit", mineShaft, "skip: already processed", LogLevel.Trace);
+            SetCachedDecision(mineShaft, false);
             return false;
         }
     }
 
     TraceHook("ShouldEdit", mineShaft, $"allow: force={force} unrestricted={unrestricted} step={step}", LogLevel.Trace);
+    SetCachedDecision(mineShaft, true);
     return true;
 }
 
@@ -205,25 +228,12 @@ public bool ShouldEdit(MineShaft mineShaft)
         if (mineShaft.mineLevel == 77377)
             return;
 
+        if (!ShouldEdit(mineShaft))
+            return;
+
         var cfg = _config.Get();
-        var force = IsDebugForce(cfg);
-        var unrestricted = IsDebugUnrestricted(cfg);
-
-        if (!force && !cfg.DesertTombModuleEnabled)
-            return;
-
-        if (!unrestricted && !_isMainPlayer())
-            return;
-
         var step = _getStep();
-
-        if (!force && !DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step))
-            return;
-
-        if (!unrestricted && mineShaft.mineLevel <= 120)
-            return;
-
-        var chosen = force ? WeggGameAssetNames.DesertTombMap : ChooseTombMapPath(mineShaft, cfg.ProgressionMode, step);
+        var chosen = IsDebugForce(cfg) ? WeggGameAssetNames.DesertTombMap : ChooseTombMapPath(mineShaft, cfg.ProgressionMode, step);
 
         var before = mineShaft.mapPath.Value;
 
@@ -255,70 +265,17 @@ public bool ShouldEdit(MineShaft mineShaft)
         if (mineShaft.mineLevel == 77377)
             return;
 
+        if (!ShouldEdit(mineShaft))
+            return;
+
         var cfg = _config.Get();
-        var force = IsDebugForce(cfg);
-        var unrestricted = IsDebugUnrestricted(cfg);
+        var before = mineShaft.mapPath.Value;
+        var chosen = IsDebugForce(cfg) ? WeggGameAssetNames.DesertTombMap : ChooseTombMapPath(mineShaft, cfg.ProgressionMode, _getStep());
 
-        if (!force && !cfg.DesertTombModuleEnabled)
-            return;
-
-        if (!unrestricted && !_isMainPlayer())
-            return;
-
-        var step = _getStep();
-
-        var eligibleByProgression =
-            force
-            || (cfg.DesertTombForcePatch && cfg.DesertTombIgnoreProgressionGate)
-            || DesertTombRuntimePolicy.IsEligibleByProgression(cfg.ProgressionMode, cfg.KeepMineLevel, step);
-
-        if (!eligibleByProgression)
-            return;
-
-        if (!unrestricted && mineShaft.mineLevel <= 120)
-            return;
-
-        if (force)
+        if (!string.Equals(before, chosen, StringComparison.OrdinalIgnoreCase))
         {
-            var chosen = WeggGameAssetNames.DesertTombMap;
-            var before = mineShaft.mapPath.Value;
-
-            if (!string.Equals(before, chosen, StringComparison.OrdinalIgnoreCase))
-            {
-                mineShaft.mapPath.Value = chosen;
-                mineShaft.loadedMapNumber = DesertTombRuntimePolicy.ParseLoadedMapNumber(chosen);
-            }
-
-            ResetVanillaSpecialFlagsForTomb(mineShaft);
-            return;
-        }
-
-        if (mineShaft.mineLevel == 77377)
-            return;
-
-        if (!cfg.DesertTombForcePatch)
-        {
-            // Only touch floors that are (or are about to become) tomb layouts.
-            if (!DesertTombRuntimePolicy.IsTombCandidate(mineShaft.mineLevel))
-                return;
-
-            if (!DesertTombRuntimePolicy.RollTombChance(cfg.TombChance, mineShaft.mineLevel))
-                return;
-
-            if (AlreadyProcessedToday(mineShaft))
-                return;
-        }
-        else
-        {
-            // Hard-force the layout selection at chooseLevelType time, so vanilla doesn't drift into another layout.
-            var chosen = WeggGameAssetNames.DesertTombMap;
-            var before = mineShaft.mapPath.Value;
-
-            if (!string.Equals(before, chosen, StringComparison.OrdinalIgnoreCase))
-            {
-                mineShaft.mapPath.Value = chosen;
-                mineShaft.loadedMapNumber = DesertTombRuntimePolicy.ParseLoadedMapNumber(chosen);
-            }
+            mineShaft.mapPath.Value = chosen;
+            mineShaft.loadedMapNumber = DesertTombRuntimePolicy.ParseLoadedMapNumber(chosen);
         }
 
         ResetVanillaSpecialFlagsForTomb(mineShaft);
@@ -511,21 +468,26 @@ internal void HookAfterChooseLevelType(MineShaft? mineShaft)
         }
 
         // Remove any vanilla mons.
-        RemoveExistingMonsters(mineShaft);
+        var removedMonsters = RemoveExistingMonsters(mineShaft);
+        TraceHook("activate", mineShaft, $"removedVanillaMonsters={removedMonsters}", LogLevel.Info);
 
         var config = new SpawnConfiguration();
         config.DeepCopySpawnConfiguration(SpawnConfiguration.Default, MapDifficulty(cfg.TombDifficulty));
         WriteActiveBreakableLootMultipliers(mineShaft, config.Multipliers);
 
+        TraceHook("activate", mineShaft, $"begin mapPath={mapPath} guessedLayout={layoutLevel} step={step} difficulty={cfg.TombDifficulty}", LogLevel.Info);
         _generator.Generate(mineShaft);
+        TraceHook("activate", mineShaft, $"generated layout tiles mapPath={mineShaft.mapPath.Value}", LogLevel.Info);
 
         var planner = new TombSpawnPlanner(new SystemRandomProvider(mineShaft.mineRandom));
         var progressionFlags = new TombSpawnProgressionFlags(cfg.ProgressionMode, step);
         var plan = planner.BuildPlan(layout, config, config.Difficulty, progressionFlags, mapTags: null);
+        LogPlanSummary(mineShaft, plan);
 
         TrySuppressLadderForPharaoh(mineShaft, plan);
 
         var areaStates = TombAreaStateBuilder.Build(mineShaft, plan);
+        LogAreaStateSummary(mineShaft, areaStates);
 
         var population = new TombPopulationManager(
             mineShaft: mineShaft,
@@ -533,7 +495,8 @@ internal void HookAfterChooseLevelType(MineShaft? mineShaft)
             config: config,
             areas: areaStates,
             executor: _spawnExecutor,
-            log: _log
+            log: _log,
+            isDebugLoggingEnabled: () => IsHookLoggingEnabled(_config.Get())
 #if WEGG_DEV
             , initialWaveFraction: DebugKnobs.TombPopulationInitialWaveFraction
             , reconcileIntervalTicks: DebugKnobs.TombPopulationReconcileIntervalTicks
@@ -544,6 +507,7 @@ internal void HookAfterChooseLevelType(MineShaft? mineShaft)
         );
 
         var spawnedInitial = population.SpawnInitialWave();
+        LogAreaSpawnSummary(mineShaft, areaStates, "initial-wave");
 
         _activeFloor = new ActiveTombFloorState(
             mineShaft: mineShaft,
@@ -560,9 +524,63 @@ internal void HookAfterChooseLevelType(MineShaft? mineShaft)
         _diagnostics?.OnActivated((int)layoutLevel, mapPath, mineShaft, plan, spawnedInitial);
 
         var plannedTotal = plan.Areas.Sum(a => a.Spawns.Sum(s => s.Count));
+        var spawnedAreas = areaStates.Count(area => area.SpawnedThisInstance.Values.Sum() > 0);
+        var skippedAreas = areaStates.Count - spawnedAreas;
 
         LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] Activated on MineLevel={mineShaft.mineLevel} MapPath='{mapPath}'. " +
-            $"Layout={layoutLevel} SpawnedInitial={spawnedInitial} (Planned={plannedTotal}).", LogLevel.Info);
+            $"Layout={layoutLevel} SpawnedInitial={spawnedInitial} (Planned={plannedTotal}) SpawnedAreas={spawnedAreas}/{areaStates.Count} SkippedAreas={skippedAreas}.", LogLevel.Info);
+    }
+
+    private void LogPlanSummary(MineShaft mineShaft, TombSpawnPlan plan)
+    {
+        if (!IsHookLoggingEnabled(_config.Get()))
+            return;
+
+        var totals = string.Join(", ", plan.TotalsByMonsterType
+            .OrderByDescending(p => p.Value)
+            .Select(p => $"{p.Key}={p.Value}"));
+
+        TraceHook("activate", mineShaft, $"plan areas={plan.Areas.Count} total={plan.TotalCount} byType=[{totals}]", LogLevel.Info);
+    }
+
+    private void LogAreaStateSummary(MineShaft mineShaft, IReadOnlyList<TombAreaState> areaStates)
+    {
+        if (!IsHookLoggingEnabled(_config.Get()))
+            return;
+
+        foreach (var area in areaStates)
+        {
+            var desired = string.Join(", ", area.DesiredCountByType
+                .OrderByDescending(p => p.Value)
+                .Select(p => $"{p.Key}={p.Value}"));
+
+            TraceHook(
+                "activate",
+                mineShaft,
+                $"area id={area.AreaId} type={area.AreaType} rect={area.Rect} tiles={area.ValidSpawnTiles.Count} capacity={area.CapacityChosen} desired=[{desired}]",
+                LogLevel.Info
+            );
+        }
+    }
+
+    private void LogAreaSpawnSummary(MineShaft mineShaft, IReadOnlyList<TombAreaState> areaStates, string phase)
+    {
+        if (!IsHookLoggingEnabled(_config.Get()))
+            return;
+
+        foreach (var area in areaStates)
+        {
+            var spawned = string.Join(", ", area.SpawnedThisInstance
+                .OrderByDescending(p => p.Value)
+                .Select(p => $"{p.Key}={p.Value}"));
+
+            TraceHook(
+                "spawn",
+                mineShaft,
+                $"{phase} area id={area.AreaId} type={area.AreaType} rect={area.Rect} spawned=[{spawned}] remainingTiles={area.SpawnTiles.Remaining}",
+                LogLevel.Info
+            );
+        }
     }
 
     
@@ -593,13 +611,19 @@ internal void HookAfterChooseLevelType(MineShaft? mineShaft)
         mineShaft.modData[LadderSuppressedKey] = "1";
     }
 
-    private static void RemoveExistingMonsters(MineShaft mineShaft)
+    private static int RemoveExistingMonsters(MineShaft mineShaft)
     {
+        var removed = 0;
         for (int i = mineShaft.characters.Count - 1; i >= 0; i--)
         {
             if (mineShaft.characters[i] is Monster)
+            {
                 mineShaft.characters.Remove(mineShaft.characters[i]);
+                removed++;
+            }
         }
+
+        return removed;
     }
 
     private static bool AlreadyProcessedToday(MineShaft mineShaft)
@@ -612,6 +636,38 @@ internal void HookAfterChooseLevelType(MineShaft? mineShaft)
 
     private static void MarkProcessedToday(MineShaft mineShaft)
         => mineShaft.modData[ProcessedKey] = TodayMarker(mineShaft);
+
+    private static Random CreateDecisionRandom(MineShaft mineShaft)
+        => Utility.CreateDaySaveRandom(Game1.stats.DaysPlayed, mineShaft.mineLevel, 77377);
+
+    private static bool TryGetCachedDecision(MineShaft mineShaft, out bool result)
+    {
+        result = false;
+        if (!mineShaft.modData.TryGetValue(DecisionKey, out var value))
+            return false;
+
+        var expectedPrefix = TodayMarker(mineShaft) + "|";
+        if (!value.StartsWith(expectedPrefix, StringComparison.Ordinal))
+            return false;
+
+        var tail = value.Substring(expectedPrefix.Length);
+        if (tail == "1")
+        {
+            result = true;
+            return true;
+        }
+
+        if (tail == "0")
+        {
+            result = false;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void SetCachedDecision(MineShaft mineShaft, bool result)
+        => mineShaft.modData[DecisionKey] = TodayMarker(mineShaft) + "|" + (result ? "1" : "0");
 
     private static void WriteActiveBreakableLootMultipliers(MineShaft mineShaft, MonsterMultipliers multipliers)
     {

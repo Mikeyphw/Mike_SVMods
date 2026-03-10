@@ -3,13 +3,16 @@ using Mikew.NestCore.Integrations.StardewUI.Dsl;
 using RoosterControl.Application.Hatching;
 using RoosterControl.Enums;
 using RoosterControl.Framework.Config;
-using RoosterControl.Integrations.StardewUi.Compat;
-using RoosterControl.Integrations.StardewUi.Females;
 using RoosterControl.Integrations.StardewUi;
+using RoosterControl.Integrations.StardewUi.Compat;
+using RoosterControl.Integrations.StardewUi.Produce;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.GameData.FarmAnimals;
+using StardewValley.GameData.Objects;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
@@ -17,18 +20,15 @@ namespace RoosterControl.Application;
 
 internal sealed partial class RoosterCoordinator
 {
-    private const string WhiteProduceEditorMenuId = "rooster.white.produceEditor";
-    private const string WhiteProduceEditorViewFile = "RoosterWhiteProduceEditor";
-    private const string CompatEditorMenuId = "rooster.compat.editor";
-    private const string CompatEditorViewFile = "RoosterCompatEditor";
-    private const string FemalesEditorMenuId = "rooster.females.editor";
-    private const string FemalesEditorViewFile = "RoosterFemalesEditor";
+    private const string EditorHubMenuId = "rooster.editorHub";
+    private const string EditorHubViewFile = "RoosterEditorHub";
 
     private StardewUiHost? _stardewUiHost;
-    private StardewUI.Framework.IMenuController? _whiteProduceEditorController;
-    private StardewUI.Framework.IMenuController? _compatEditorController;
-    private StardewUI.Framework.IMenuController? _femalesEditorController;
+    private StardewUI.Framework.IMenuController? _editorHubController;
     private bool _stardewUiLayoutInitialized;
+    private RoosterEditorHubTab _requestedHubTab = RoosterEditorHubTab.Compat;
+    private RoosterType _requestedProduceRoosterType = RoosterType.White;
+    private RoosterProduceSection _requestedProduceSection = RoosterProduceSection.Normal;
 
     public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
     {
@@ -50,49 +50,34 @@ internal sealed partial class RoosterCoordinator
             return;
         }
 
-        if (Config.General.OpenFemalesEditorKey.JustPressed())
-            TryOpenFemalesEditor();
     }
 
     private void TryOpenWhiteRoosterProduceEditor()
-    {
-        _stardewUiHost ??= StardewUiHost.TryCreate(Helper, ModManifest);
-        if (_stardewUiHost is null)
-        {
-            Monitor.Log("StardewUI isn't installed; White rooster produce editor unavailable.", StardewModdingAPI.LogLevel.Warn);
-            return;
-        }
-
-        EnsureStardewUiLayoutInitialized();
-
-        if (_whiteProduceEditorController is not null)
-            return;
-
-        var controller = _stardewUiHost.CreateMenuController(WhiteProduceEditorMenuId);
-        if (controller is null)
-        {
-            Monitor.Log("Failed to create White rooster produce editor menu controller.", StardewModdingAPI.LogLevel.Error);
-            return;
-        }
-
-        _whiteProduceEditorController = controller;
-        Game1.activeClickableMenu = controller.Menu;
-    }
+        => TryOpenEditorHub(RoosterEditorHubTab.Produce, RoosterType.White, RoosterProduceSection.Normal);
 
     internal bool HasStardewUiAvailable()
         => StardewUiHost.TryCreate(Helper, ModManifest) is not null;
 
     internal string GetCompatEditorAvailabilityText()
         => HasStardewUiAvailable()
-            ? "Duplicate StardewUI compat editor is available."
-            : "Duplicate StardewUI compat editor requires StardewUI.";
+            ? "StardewUI editor hub is available and can open the Compat tab."
+            : "StardewUI editor hub requires StardewUI.";
 
-    internal string GetFemalesEditorAvailabilityText()
+    internal string GetProduceEditorAvailabilityText()
         => HasStardewUiAvailable()
-            ? "Duplicate StardewUI females editor is available."
-            : "Duplicate StardewUI females editor requires StardewUI.";
+            ? "StardewUI editor hub is available and can open the Produce tab."
+            : "StardewUI editor hub requires StardewUI.";
 
     internal void TryOpenCompatEditor()
+        => TryOpenEditorHub(RoosterEditorHubTab.Compat, RoosterType.White, RoosterProduceSection.Normal);
+
+    internal void TryOpenProduceEditor()
+        => TryOpenEditorHub(RoosterEditorHubTab.Produce, RoosterType.White, RoosterProduceSection.Normal);
+
+    internal void TryOpenSettingsEditor()
+        => TryOpenEditorHub(RoosterEditorHubTab.Settings, RoosterType.White, RoosterProduceSection.Normal);
+
+    private void TryOpenEditorHub(RoosterEditorHubTab tab, RoosterType produceRoosterType, RoosterProduceSection produceSection)
     {
         if (!Context.IsWorldReady)
             return;
@@ -100,7 +85,7 @@ internal sealed partial class RoosterCoordinator
         _stardewUiHost ??= StardewUiHost.TryCreate(Helper, ModManifest);
         if (_stardewUiHost is null)
         {
-            Monitor.Log("StardewUI isn't installed; compat editor unavailable.", StardewModdingAPI.LogLevel.Warn);
+            Monitor.Log("StardewUI isn't installed; RoosterControl editor hub unavailable.", StardewModdingAPI.LogLevel.Warn);
             return;
         }
 
@@ -108,47 +93,21 @@ internal sealed partial class RoosterCoordinator
         EnsureRoostersSetup();
         EnsureStardewUiLayoutInitialized();
 
-        if (_compatEditorController is not null)
+        _requestedHubTab = tab;
+        _requestedProduceRoosterType = produceRoosterType;
+        _requestedProduceSection = produceSection;
+
+        if (_editorHubController is not null)
             return;
 
-        var controller = _stardewUiHost.CreateMenuController(CompatEditorMenuId);
+        var controller = _stardewUiHost.CreateMenuController(EditorHubMenuId);
         if (controller is null)
         {
-            Monitor.Log("Failed to create compat editor menu controller.", StardewModdingAPI.LogLevel.Error);
+            Monitor.Log("Failed to create RoosterControl editor hub menu controller.", StardewModdingAPI.LogLevel.Error);
             return;
         }
 
-        _compatEditorController = controller;
-        Game1.activeClickableMenu = controller.Menu;
-    }
-
-    internal void TryOpenFemalesEditor()
-    {
-        if (!Context.IsWorldReady)
-            return;
-
-        _stardewUiHost ??= StardewUiHost.TryCreate(Helper, ModManifest);
-        if (_stardewUiHost is null)
-        {
-            Monitor.Log("StardewUI isn't installed; females editor unavailable.", StardewModdingAPI.LogLevel.Warn);
-            return;
-        }
-
-        EnsureCompatInitialized();
-        EnsureRoostersSetup();
-        EnsureStardewUiLayoutInitialized();
-
-        if (_femalesEditorController is not null)
-            return;
-
-        var controller = _stardewUiHost.CreateMenuController(FemalesEditorMenuId);
-        if (controller is null)
-        {
-            Monitor.Log("Failed to create females editor menu controller.", StardewModdingAPI.LogLevel.Error);
-            return;
-        }
-
-        _femalesEditorController = controller;
+        _editorHubController = controller;
         Game1.activeClickableMenu = controller.Menu;
     }
 
@@ -163,12 +122,12 @@ internal sealed partial class RoosterCoordinator
             define: layout =>
             {
                 layout.Menu(
-                    WhiteProduceEditorMenuId,
+                    EditorHubMenuId,
                     menu =>
                     {
-                        var viewName = $"Mods/{ModManifest.UniqueID}/Views/{WhiteProduceEditorViewFile}";
+                        var viewName = $"Mods/{ModManifest.UniqueID}/Views/{EditorHubViewFile}";
                         menu.View(viewName);
-                        menu.Context(() => new WhiteRoosterProduceEditorViewModel(Config.Roosters[RoosterType.White]));
+                        menu.Context(CreateEditorHubViewModel);
                         menu.ConfigureController(controller =>
                         {
                             controller.DimmingAmount = 0.6f;
@@ -177,61 +136,46 @@ internal sealed partial class RoosterCoordinator
                         });
                         menu.OnClosed(() =>
                         {
-                            _whiteProduceEditorController = null;
-                            Helper.WriteConfig(Config);
-                        });
-                    });
-
-                layout.Menu(
-                    CompatEditorMenuId,
-                    menu =>
-                    {
-                        var viewName = $"Mods/{ModManifest.UniqueID}/Views/{CompatEditorViewFile}";
-                        menu.View(viewName);
-                        menu.Context(() => new RoosterCompatEditorViewModel(
-                            GetCompatEditorService(),
-                            _saveState.Compat,
-                            LoadFarmAnimalsForCompatEditor,
-                            () => PersistAndApplyCompatChange("stardewui compat editor save")));
-                        menu.ConfigureController(controller =>
-                        {
-                            controller.DimmingAmount = 0.6f;
-                            controller.CloseOnOutsideClick = true;
-                            controller.EnableCloseButton();
-                        });
-                        menu.OnClosed(() =>
-                        {
-                            _compatEditorController = null;
-                        });
-                    });
-
-                layout.Menu(
-                    FemalesEditorMenuId,
-                    menu =>
-                    {
-                        var viewName = $"Mods/{ModManifest.UniqueID}/Views/{FemalesEditorViewFile}";
-                        menu.View(viewName);
-                        menu.Context(() => new RoosterFemalesEditorViewModel(
-                            new RoosterFemalesEditorService(),
-                            Config,
-                            LoadFemalesEditorSnapshot,
-                            () => PersistAndApplyFemalesAssignmentsChange("stardewui females editor save")));
-                        menu.ConfigureController(controller =>
-                        {
-                            controller.DimmingAmount = 0.6f;
-                            controller.CloseOnOutsideClick = true;
-                            controller.EnableCloseButton();
-                        });
-                        menu.OnClosed(() =>
-                        {
-                            _femalesEditorController = null;
+                            _editorHubController = null;
                         });
                     });
             },
             assets: new StardewUiAssetsOptions(ViewsDir: "assets/views", SpritesDir: "assets/sprites"),
             preloadAssetsOnce: true,
-            preloadModels: new[] { typeof(WhiteRoosterProduceEditorViewModel), typeof(RoosterCompatEditorViewModel), typeof(RoosterFemalesEditorViewModel) });
+            preloadModels: new[]
+            {
+                typeof(RoosterEditorHubViewModel),
+                typeof(RoosterCompatEditorViewModel),
+                typeof(RoosterProduceEditorViewModel),
+                typeof(RoosterSettingsEditorViewModel),
+                typeof(RoosterDebugEditorViewModel),
+            });
     }
+
+    private RoosterEditorHubViewModel CreateEditorHubViewModel()
+        => new(
+            new RoosterCompatEditorViewModel(
+                GetCompatEditorService(),
+                _saveState.Compat,
+                LoadFarmAnimalsForCompatEditor,
+                () => PersistAndApplyCompatChange("stardewui compat editor save")),
+            new RoosterProduceEditorViewModel(
+                new RoosterProduceEditorService(),
+                Config,
+                () => PersistAndApplyProduceChange("stardewui produce editor save"),
+                _requestedProduceRoosterType,
+                _requestedProduceSection,
+                TryLoadFarmAnimalPreviewSprite,
+                TryLoadObjectPreviewSprite),
+            new RoosterSettingsEditorViewModel(
+                Config,
+                () => PersistAndApplyProduceChange("stardewui settings editor save"),
+                GetCompatEditorAvailabilityText,
+                GetProduceEditorAvailabilityText),
+            new RoosterDebugEditorViewModel(
+                Config,
+                () => PersistAndApplyProduceChange("stardewui debug editor save")),
+            _requestedHubTab);
 
     private IDictionary<string, FarmAnimalData> LoadFarmAnimalsForCompatEditor()
     {
@@ -241,47 +185,66 @@ internal sealed partial class RoosterCoordinator
         return new Dictionary<string, FarmAnimalData>(StringComparer.OrdinalIgnoreCase);
     }
 
-    private RoosterFemalesEditorSnapshot LoadFemalesEditorSnapshot()
+    private void PersistAndApplyProduceChange(string reason)
     {
-        var service = new RoosterFemalesEditorService();
-
-        if (!TryLoadFarmAnimals(out var farmAnimals, out _))
-        {
-            return service.LoadSnapshot(
-                Config,
-                new Dictionary<string, FarmAnimalData>(StringComparer.OrdinalIgnoreCase),
-                RoosterHelper.Roosters,
-                _animalExclusions,
-                HatchApi,
-                WildEggsApi);
-        }
-
-        ApplyCompatSelectionsToRuntime(farmAnimals);
-        return service.LoadSnapshot(Config, farmAnimals, RoosterHelper.Roosters, _animalExclusions, HatchApi, WildEggsApi);
-    }
-
-    private void PersistAndApplyFemalesAssignmentsChange(string reason)
-    {
-        EnsureRoostersSetup();
-
-        if (TryLoadFarmAnimals(out var farmAnimals, out _))
-        {
-            ApplyCompatSelectionsToRuntime(farmAnimals);
-            var plan = FemaleAssignmentService.ComputeFemaleAssignmentsPlan(
-                Config,
-                farmAnimals,
-                RoosterHelper.Roosters,
-                _animalExclusions,
-                HatchApi,
-                WildEggsApi);
-            FemaleAssignmentService.ApplyFemaleAssignmentsPlan(Config, RoosterHelper, plan);
-        }
-
-        FemaleAssignmentService.UpdateChosenFemalesApi(Config);
-        _femaleAssignmentsDirty = false;
         ConfigManager.Save(Helper, Config);
         InvalidateDailyPlanCache(reason);
+        _needsRoosterSetup = true;
+        EnsureRoostersSetup();
         RequestInvalidate(FarmAnimalsAssetName);
         RequestInvalidate(ObjectsAssetName);
+    }
+
+    private Tuple<Texture2D, Rectangle>? TryLoadFarmAnimalPreviewSprite(string animalKey)
+    {
+        try
+        {
+            animalKey = animalKey switch
+            {
+                nameof(RoosterType.White) => "White Chicken",
+                nameof(RoosterType.Brown) => "Brown Chicken",
+                nameof(RoosterType.Blue) => "Blue Chicken",
+                nameof(RoosterType.Void) => "Void Chicken",
+                nameof(RoosterType.Gold) => "Golden Chicken",
+                _ => animalKey,
+            };
+
+            if (!Game1.farmAnimalData.TryGetValue(animalKey, out var data))
+                return null;
+
+            if (string.IsNullOrWhiteSpace(data.Texture) || data.SpriteWidth <= 0 || data.SpriteHeight <= 0)
+                return null;
+
+            var texture = Game1.content.Load<Texture2D>(data.Texture);
+            return Tuple.Create(texture, new Rectangle(0, 0, data.SpriteWidth, data.SpriteHeight));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private Tuple<Texture2D, Rectangle>? TryLoadObjectPreviewSprite(string itemId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(itemId))
+                return null;
+
+            var objects = Helper.GameContent.Load<Dictionary<string, ObjectData>>("Data/Objects");
+            if (!objects.TryGetValue(itemId, out var data))
+                return null;
+
+            var textureName = string.IsNullOrWhiteSpace(data.Texture) ? "Maps/springobjects" : data.Texture;
+            var texture = Game1.content.Load<Texture2D>(textureName);
+            var columns = Math.Max(1, texture.Width / 16);
+            var spriteIndex = Math.Max(0, data.SpriteIndex);
+            var rect = new Rectangle((spriteIndex % columns) * 16, (spriteIndex / columns) * 16, 16, 16);
+            return Tuple.Create(texture, rect);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

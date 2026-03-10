@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Text;
 using Mikew.NestCore.Helpers.Logging;
 using StardewModdingAPI;
@@ -17,6 +18,21 @@ namespace RoosterControl.Application.Compat;
 /// </summary>
 internal sealed class CompatSelectionService
 {
+    public static readonly IReadOnlyList<EggKind> ManagedEggKinds = new[]
+    {
+        EggKind.BrownEgg,
+        EggKind.LargeBrownEgg,
+        EggKind.WhiteEgg,
+        EggKind.LargeWhiteEgg,
+        EggKind.VoidEgg,
+        EggKind.GoldEgg,
+        EggKind.LargeVoidEgg,
+        EggKind.LargeGoldEgg,
+        EggKind.BlueEgg,
+        EggKind.LargeBlueEgg,
+        EggKind.RoosterEgg,
+    };
+
     private readonly IModHelper _helper;
     private readonly IManifest _manifest;
     private readonly ILog _log;
@@ -45,6 +61,14 @@ internal sealed class CompatSelectionService
             state.SelectedEggSources = new Dictionary<EggKind, string>();
             changed = true;
         }
+        else
+        {
+            foreach (var unsupported in state.SelectedEggSources.Keys.Except(ManagedEggKinds).ToList())
+            {
+                state.SelectedEggSources.Remove(unsupported);
+                changed = true;
+            }
+        }
 
         if (state.EnabledRoosterSources is null)
         {
@@ -56,10 +80,10 @@ internal sealed class CompatSelectionService
     }
 
 
-        public bool InitializeOrRepair(CompatSelectionState state, out string? repairSummary)
+    public bool InitializeOrRepair(CompatSelectionState state, out string? repairSummary)
     {
-        _eggCatalog = LoadCatalog<EggSourcesCatalog>(GetEggCatalogAssetName());
-        _roosterCatalog = LoadCatalog<RoosterSourcesCatalog>(GetRoosterCatalogAssetName());
+        _eggCatalog = NormalizeEggCatalog(LoadCatalog<EggSourcesCatalog>(GetEggCatalogAssetName()));
+        _roosterCatalog = NormalizeRoosterCatalog(LoadCatalog<RoosterSourcesCatalog>(GetRoosterCatalogAssetName()));
 
         var notes = new List<string>();
         var changed = NormalizeState(state);
@@ -89,7 +113,7 @@ internal sealed class CompatSelectionService
         sb.AppendLine();
 
         sb.AppendLine("EggKind selections:");
-        foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+        foreach (var kind in ManagedEggKinds)
         {
             var sources = EggCatalog.Sources
                 .Where(s => s.EggKind == kind && !string.IsNullOrWhiteSpace(s.SourceId))
@@ -118,9 +142,8 @@ internal sealed class CompatSelectionService
         {
             var on = enabled.Contains(src.SourceId) ? "ENABLED" : "disabled";
             sb.AppendLine($"  - {src.SourceId} :: {src.DisplayName} :: {on}");
-
-            if (!string.IsNullOrWhiteSpace(src.RoosterEggItemId))
-                sb.AppendLine($"      RoosterEggItemId: {src.RoosterEggItemId}");
+            if (!string.IsNullOrWhiteSpace(src.ModId))
+                sb.AppendLine($"      ModId: {src.ModId}");
 
             foreach (var key in src.FarmAnimalKeys ?? new List<RoosterFarmAnimalKeyDef>())
             {
@@ -129,7 +152,7 @@ internal sealed class CompatSelectionService
         }
 
         sb.AppendLine();
-        sb.AppendLine("Note: selections are applied at runtime; use ra_compat validate for detailed diagnostics.");
+        sb.AppendLine("Note: selections are applied at runtime; use ra verify compat for detailed diagnostics.");
         return sb.ToString();
     }
 
@@ -152,11 +175,277 @@ internal sealed class CompatSelectionService
         }
     }
 
+    private EggSourcesCatalog NormalizeEggCatalog(EggSourcesCatalog? catalog)
+    {
+        catalog ??= new EggSourcesCatalog();
+
+        var sources = BuildDefaultEggSources().ToList();
+
+        if (catalog.Sources is not null)
+            sources.AddRange(catalog.Sources);
+
+        if (catalog.Eggs is not null)
+        {
+            foreach (var group in catalog.Eggs)
+            {
+                foreach (var egg in group.Eggs ?? new List<EggSourceOptionDef>())
+                {
+                    sources.Add(new EggSourceDef
+                    {
+                        SourceId = egg.SourceId,
+                        ModId = egg.ModId,
+                        DisplayName = egg.DisplayName,
+                        EggKind = group.EggKind,
+                        ItemId = egg.ItemId,
+                        FarmAnimalRef = egg.FarmAnimalRef
+                    });
+                }
+            }
+        }
+
+        var normalized = sources
+            .Where(s => ManagedEggKinds.Contains(s.EggKind))
+            .Where(IsModInstalled)
+            .Select(NormalizeEggSource)
+            .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
+            .GroupBy(s => $"{s.EggKind}|{s.SourceId}", StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .OrderBy(s => s.EggKind)
+            .ThenBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return new EggSourcesCatalog
+        {
+            SchemaVersion = Math.Max(catalog.SchemaVersion, 2),
+            Sources = normalized
+        };
+    }
+
+    private IEnumerable<EggSourceDef> BuildDefaultEggSources()
+    {
+        foreach (var def in GetDefaultFarmAnimalEggMappings())
+            yield return def;
+
+        foreach (var def in GetDefaultCompatEggMappings())
+            yield return def;
+    }
+
+    private static IEnumerable<EggSourceDef> GetDefaultFarmAnimalEggMappings()
+    {
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.BrownEgg, "Brown Chicken", EggSourceRefList.EggItemIds, 0);
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.LargeBrownEgg, "Brown Chicken", EggSourceRefList.EggItemIds, 1);
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.WhiteEgg, "White Chicken", EggSourceRefList.EggItemIds, 0);
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.LargeWhiteEgg, "White Chicken", EggSourceRefList.EggItemIds, 1);
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.BlueEgg, "Blue Chicken", EggSourceRefList.EggItemIds, 0);
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.LargeBlueEgg, "Blue Chicken", EggSourceRefList.EggItemIds, 1);
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.VoidEgg, "Void Chicken", EggSourceRefList.EggItemIds, 0);
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.LargeVoidEgg, "Void Chicken", EggSourceRefList.EggItemIds, 1);
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.GoldEgg, "Golden Chicken", EggSourceRefList.EggItemIds, 0);
+        yield return CreateDefaultFarmAnimalEggSource(EggKind.LargeGoldEgg, "Golden Chicken", EggSourceRefList.EggItemIds, 1);
+    }
+
+    private static IEnumerable<EggSourceDef> GetDefaultCompatEggMappings()
+    {
+        yield return new EggSourceDef
+        {
+            ModId = "Meara.Roosters",
+            DisplayName = "Meara Roosters: Blue Egg",
+            EggKind = EggKind.BlueEgg,
+            ItemId = "Meara.RoostersBlueEgg"
+        };
+        yield return new EggSourceDef
+        {
+            ModId = "6480.blueegg",
+            DisplayName = "6480's Blue Egg",
+            EggKind = EggKind.BlueEgg,
+            ItemId = "6480.blueegg_BlueEgg"
+        };
+        yield return new EggSourceDef
+        {
+            ModId = "Meara.Roosters",
+            DisplayName = "Meara Roosters: Large Blue Egg",
+            EggKind = EggKind.LargeBlueEgg,
+            ItemId = "Meara.RoostersLargeBlueEgg"
+        };
+        yield return new EggSourceDef
+        {
+            ModId = "Meara.Roosters",
+            DisplayName = "Meara Roosters: Large Void Egg",
+            EggKind = EggKind.LargeVoidEgg,
+            ItemId = "Meara.RoostersLargevoidEgg"
+        };
+        yield return new EggSourceDef
+        {
+            ModId = "Meara.Roosters",
+            DisplayName = "Meara Roosters: Large Gold Egg",
+            EggKind = EggKind.LargeGoldEgg,
+            ItemId = "Meara.RoostersLargegoldEgg"
+        };
+        yield return new EggSourceDef
+        {
+            ModId = "Blaklyte.CP.Rooster",
+            DisplayName = "Blaklyte Roosters: Rooster Egg",
+            EggKind = EggKind.RoosterEgg,
+            ItemId = "Blaklyte.CP.Rooster_rooster_egg"
+        };
+    }
+
+    private static EggSourceDef CreateDefaultFarmAnimalEggSource(EggKind kind, string farmAnimalKey, EggSourceRefList list, int index)
+        => new()
+        {
+            SourceId = string.Empty,
+            DisplayName = $"{farmAnimalKey} ({list}[{index}])",
+            EggKind = kind,
+            FarmAnimalRef = new FarmAnimalEggRef(farmAnimalKey, list, index)
+        };
+
+    private RoosterSourcesCatalog NormalizeRoosterCatalog(RoosterSourcesCatalog? catalog)
+    {
+        catalog ??= new RoosterSourcesCatalog();
+
+        var sources = BuildDefaultRoosterSources().ToList();
+        if (catalog.Sources is not null)
+            sources.AddRange(catalog.Sources);
+
+        var normalized = sources
+            .Where(IsModInstalled)
+            .Select(NormalizeRoosterSource)
+            .Where(s => !string.IsNullOrWhiteSpace(s.SourceId))
+            .GroupBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .OrderBy(s => s.SourceId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return new RoosterSourcesCatalog
+        {
+            SchemaVersion = Math.Max(catalog.SchemaVersion, 2),
+            Sources = normalized
+        };
+    }
+
+    private static IEnumerable<RoosterSourceDef> BuildDefaultRoosterSources()
+    {
+        yield return new RoosterSourceDef
+        {
+            ModId = "Meara.Roosters",
+            DisplayName = "Meara Roosters",
+            FarmAnimalKeys = new List<RoosterFarmAnimalKeyDef>
+            {
+                new() { Key = "cockbrown", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+                new() { Key = "cockwhite", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+                new() { Key = "cockblue", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+                new() { Key = "cockvoid", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+                new() { Key = "cockgold", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+            }
+        };
+
+        yield return new RoosterSourceDef
+        {
+            ModId = "Blaklyte.CP.Rooster",
+            DisplayName = "Blaklyte Roosters",
+            FarmAnimalKeys = new List<RoosterFarmAnimalKeyDef>
+            {
+                new() { Key = "Rooster", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+                new() { Key = "White Rooster", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+                new() { Key = "Blue Rooster", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+                new() { Key = "Desert Rooster", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+                new() { Key = "Trans Rooster", BreedingRole = BreedingRole.None, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+                new() { Key = "Cockatrice", BreedingRole = BreedingRole.Male, EggLayerRole = EggLayerRole.InheritFromFarmAnimalData },
+            }
+        };
+    }
+
+    private bool IsModInstalled(EggSourceDef source) => IsModInstalled(source.ModId);
+
+    private bool IsModInstalled(RoosterSourceDef source) => IsModInstalled(source.ModId);
+
+    private bool IsModInstalled(string? modId)
+        => string.IsNullOrWhiteSpace(modId) || _helper.ModRegistry.IsLoaded(modId.Trim());
+
+    private EggSourceDef NormalizeEggSource(EggSourceDef source)
+        => source with
+        {
+            SourceId = NormalizeEggSourceId(source),
+            DisplayName = NormalizeDisplayName(source.DisplayName, source.ModId, source.ItemId, source.FarmAnimalRef)
+        };
+
+    private RoosterSourceDef NormalizeRoosterSource(RoosterSourceDef source)
+        => source with
+        {
+            SourceId = NormalizeRoosterSourceId(source),
+            DisplayName = NormalizeDisplayName(source.DisplayName, source.ModId, null, null)
+        };
+
+    private static string NormalizeDisplayName(string? displayName, string? modId, string? itemId, FarmAnimalEggRef? farmAnimalRef)
+    {
+        if (!string.IsNullOrWhiteSpace(displayName))
+            return displayName.Trim();
+
+        if (!string.IsNullOrWhiteSpace(itemId))
+            return itemId.Trim();
+
+        if (farmAnimalRef is not null)
+            return $"{farmAnimalRef.FarmAnimalKey} ({farmAnimalRef.List}[{farmAnimalRef.Index}])";
+
+        if (!string.IsNullOrWhiteSpace(modId))
+            return modId.Trim();
+
+        return "Unknown";
+    }
+
+    private static string NormalizeEggSourceId(EggSourceDef source)
+    {
+        if (!string.IsNullOrWhiteSpace(source.SourceId))
+            return source.SourceId.Trim();
+
+        if (source.FarmAnimalRef is not null)
+        {
+            var listAlias = source.FarmAnimalRef.List switch
+            {
+                EggSourceRefList.EggItemIds => $"egg{source.FarmAnimalRef.Index}",
+                EggSourceRefList.ProduceItemIds => $"produce{source.FarmAnimalRef.Index}",
+                EggSourceRefList.DeluxeProduceItemIds => $"deluxe{source.FarmAnimalRef.Index}",
+                _ => $"{source.FarmAnimalRef.List}:{source.FarmAnimalRef.Index}"
+            };
+
+            return $"farmanimal:{Slugify(source.FarmAnimalRef.FarmAnimalKey)}:{listAlias}";
+        }
+
+        var modSegment = !string.IsNullOrWhiteSpace(source.ModId)
+            ? Slugify(source.ModId)
+            : "vanilla";
+        var itemSegment = !string.IsNullOrWhiteSpace(source.ItemId)
+            ? Slugify(source.ItemId)
+            : "unknown";
+
+        return $"{modSegment}:{itemSegment}";
+    }
+
+    private static string NormalizeRoosterSourceId(RoosterSourceDef source)
+    {
+        if (!string.IsNullOrWhiteSpace(source.SourceId))
+            return source.SourceId.Trim();
+
+        if (!string.IsNullOrWhiteSpace(source.ModId))
+            return source.ModId.Trim();
+
+        if (!string.IsNullOrWhiteSpace(source.DisplayName))
+            return Slugify(source.DisplayName);
+
+        return "provider";
+    }
+
+    private static string Slugify(string value)
+    {
+        var slug = Regex.Replace(value.Trim().ToLowerInvariant(), @"[^a-z0-9._-]+", "-");
+        return slug.Trim('-');
+    }
+
         private bool RepairEggSelections(CompatSelectionState state, ICollection<string>? notes)
     {
         var changed = false;
 
-        foreach (var kind in Enum.GetValues(typeof(EggKind)).Cast<EggKind>())
+        foreach (var kind in ManagedEggKinds)
         {
             var options = EggCatalog.Sources
                 .Where(s => s.EggKind == kind && !string.IsNullOrWhiteSpace(s.SourceId) && IsEggSourceValid(s))

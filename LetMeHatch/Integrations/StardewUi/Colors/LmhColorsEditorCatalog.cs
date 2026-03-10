@@ -5,17 +5,20 @@ namespace LetMeHatch.Integrations.StardewUi.Colors;
 
 public sealed record LmhColorsEditorCatalog(
     IReadOnlyList<LmhColorPaletteGroupRecord> PaletteGroups,
-    IReadOnlyList<LmhColorOverrideRecord> Overrides);
+    IReadOnlyList<LmhColorOverrideRecord> SourceEggs,
+    IReadOnlyList<LmhColorOverrideRecord> ClonedEggs);
 
 public sealed record LmhColorPaletteGroupRecord(
     string Key,
-    string DisplayName);
+    string DisplayName,
+    Color RepresentativeColor);
 
 public sealed record LmhColorOverrideRecord(
     string EggId,
     string Label,
     IReadOnlyDictionary<string, bool> EnabledPaletteGroups,
-    Color OverrideColor);
+    Color OverrideColor,
+    bool IsClonedEgg);
 
 public sealed record LmhColorsEditorDraft(
     IReadOnlyDictionary<string, Dictionary<string, bool>> PaletteSelections,

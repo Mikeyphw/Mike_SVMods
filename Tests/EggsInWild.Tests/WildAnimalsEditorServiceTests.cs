@@ -196,6 +196,76 @@ public sealed class WildAnimalsEditorServiceTests
         Assert.Empty(config.WildAnimalOverrides);
     }
 
+    [Fact]
+    public void CreateWildAnimalDefinition_AppendsNewEntryWithSuggestedModGroup()
+    {
+        var config = new ModConfig();
+        var definitions = new Dictionary<string, WildAnimalJson>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Chicken"] = new()
+            {
+                LocationTypes = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase) { ["Farm"] = true },
+                ExtraModAnimalKeys = new Dictionary<string, ExtraModAnimalKeysJson>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["Vanilla"] = new() { FarmAnimalKeys = new List<string> { "White Chicken" } },
+                },
+            },
+        };
+        Dictionary<string, WildAnimalJson>? saved = null;
+
+        var service = new WildAnimalsEditorService(
+            () => definitions.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase),
+            () => config,
+            () => new Dictionary<string, FarmAnimalData>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["White Chicken"] = new() { Texture = "Animals/WhiteChicken", SpriteWidth = 16, SpriteHeight = 16, DisplayName = "White Chicken" },
+            },
+            null,
+            null,
+            value => saved = value);
+
+        service.CreateWildAnimalDefinition("SnowHen", new[] { "White Chicken" }, new[] { "Farm", "Forest" });
+
+        Assert.NotNull(saved);
+        Assert.True(saved!.ContainsKey("SnowHen"));
+        Assert.True(saved["SnowHen"].Enabled);
+        Assert.Equal(0, saved["SnowHen"].Price);
+        Assert.Equal(new[] { "Farm", "Forest" }, saved["SnowHen"].LocationTypes.Keys);
+        Assert.Equal(new[] { "White Chicken" }, saved["SnowHen"].ExtraModAnimalKeys["Vanilla"].FarmAnimalKeys);
+    }
+
+    [Fact]
+    public void AddOrUpdateModGroupDefinition_WritesSelectedFarmAnimalKeys()
+    {
+        var config = new ModConfig();
+        var definitions = new Dictionary<string, WildAnimalJson>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Chicken"] = new()
+            {
+                ExtraModAnimalKeys = new Dictionary<string, ExtraModAnimalKeysJson>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["Vanilla"] = new() { FarmAnimalKeys = new List<string> { "White Chicken" } },
+                },
+            },
+        };
+        Dictionary<string, WildAnimalJson>? saved = null;
+
+        var service = new WildAnimalsEditorService(
+            () => definitions.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase),
+            () => config,
+            null,
+            null,
+            null,
+            value => saved = value);
+
+        service.AddOrUpdateModGroupDefinition("Chicken", "Custom.Mod", new[] { "Blue Chicken", "Brown Chicken" });
+
+        Assert.NotNull(saved);
+        Assert.Equal(
+            new[] { "Blue Chicken", "Brown Chicken" },
+            saved!["Chicken"].ExtraModAnimalKeys["Custom.Mod"].FarmAnimalKeys);
+    }
+
     private static WildAnimalsEditorService CreateService(
         Dictionary<string, WildAnimalJson> definitions,
         ModConfig config,

@@ -63,7 +63,7 @@ internal sealed partial class RoosterCoordinator
         if (_gmcmHost is null)
             return;
 
-        _gmcmMenu = new RoosterControlGmcmMenu(this, BuildCompatPage, BuildFemalesPage);
+        _gmcmMenu = new RoosterControlGmcmMenu(this, BuildCompatPage);
 
         _gmcmHost.RebuildLayout(
             define: _gmcmMenu.DefineLayout,
@@ -534,26 +534,8 @@ private bool TryBuildRoosterProviderChoices(
     var list = new List<(Func<string?> label, Texture2D sheet, Rectangle? sourceRect)>();
 
     foreach (var value in allowed)
-    {
+    { 
         var captured = value;
-
-        var src = _compatSelection.RoosterCatalog.Sources
-            .FirstOrDefault(s => s.SourceId.Equals(captured, StringComparison.OrdinalIgnoreCase));
-
-        if (src is not null && !string.IsNullOrWhiteSpace(src.RoosterEggItemId))
-        {
-            try
-            {
-                var itemData = ItemRegistry.GetDataOrErrorItem(src.RoosterEggItemId);
-                list.Add((() => FormatRoosterProviderValue(captured), itemData.GetTexture(), itemData.GetSourceRect()));
-                continue;
-            }
-            catch
-            {
-                // fall through
-            }
-        }
-
         list.Add((() => FormatRoosterProviderValue(captured), Game1.mouseCursors, new Rectangle(0, 0, 1, 1)));
     }
 
@@ -752,131 +734,6 @@ private void PersistAndApplyCompatChange(string reason)
 
     RequestGmcmRebuild();
 }
-
-
-
-    private void BuildFemalesPage(GmcmPageBuilder<RoosterControlConfig> b)
-    {
-        if (!Context.IsWorldReady)
-        {
-            b.Paragraph("females.placeholder");
-            return;
-        }
-
-        EnsureRoostersSetup();
-
-        _invalidations.Flush();
-
-        Dictionary<string, FarmAnimalData> data;
-        try
-        {
-            data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
-        }
-        catch (Exception ex)
-        {
-            LogScopedHelper.Log(_log, ModRoosterControlCategory.Gmcm, $"Failed to load {FarmAnimalsAssetName} for GMCM females page: {ex}", LogLevel.Error);
-            b.Paragraph("females.error");
-            return;
-        }
-
-
-        ApplyCompatSelectionsToRuntime(data);
-
-        var plan = FemaleAssignmentService.ComputeFemaleAssignmentsPlan(
-            config: Config,
-            animalData: data,
-            roosters: RoosterHelper.Roosters,
-            animalExclusions: _animalExclusions,
-            hatchApi: HatchApi,
-            wildEggsApi: WildEggsApi
-        );
-
-        // Keep the config dictionary aligned with the game-derived list to avoid missing entries.
-        if (plan.ConfigChanged || Config.FemalesOptions is null)
-        {
-            Config.FemalesOptions = new Dictionary<string, FemaleRoosterAssignment>(plan.FemalesOptions, StringComparer.OrdinalIgnoreCase);
-            _femaleAssignmentsDirty = true;
-        }
-
-        b.Section("females.assignments");
-
-        foreach (var femaleKey in plan.FemalesOptions.Keys.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
-        {
-            var elementId = GmcmDynamicIds.ElementId("females.assignment", femaleKey);
-
-            b.EnumLabel<FemaleRoosterAssignment>(
-                elementId: elementId,
-                name: () => GetFemaleLabel(femaleKey, data),
-                getValue: () => GetFemaleAssignment(femaleKey, plan),
-                setValue: v => SetFemaleAssignment(femaleKey, v),
-                formatAllowedValue: FormatFemaleAssignmentAllowedValue,
-                tooltip: () => GetFemaleTooltip(femaleKey, plan)
-            );
-        }
-
-        b.Paragraph("females.note");
-    }
-
-    private FemaleRoosterAssignment GetFemaleAssignment(string femaleKey, FemaleAssignmentsPlanResult plan)
-    {
-        if (Config.FemalesOptions is not null && Config.FemalesOptions.TryGetValue(femaleKey, out var current))
-            return current;
-
-        if (plan.FemalesOptions.TryGetValue(femaleKey, out var planned))
-            return planned;
-
-        return FemaleRoosterAssignment.Off;
-    }
-
-    private void SetFemaleAssignment(string femaleKey, FemaleRoosterAssignment value)
-    {
-        Config.FemalesOptions ??= new Dictionary<string, FemaleRoosterAssignment>(StringComparer.OrdinalIgnoreCase);
-        Config.FemalesOptions[femaleKey] = value;
-    }
-
-    private string GetFemaleLabel(string femaleKey, IDictionary<string, FarmAnimalData> data)
-    {
-        if (!data.TryGetValue(femaleKey, out var entry) || entry is null)
-            return femaleKey;
-
-        var displayName = entry.DisplayName?.ToString() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(displayName) || string.Equals(displayName, femaleKey, StringComparison.OrdinalIgnoreCase))
-            return femaleKey;
-
-        return _i18n.GetString("config.females.dynamic.label", new { displayName, femaleKey });
-    }
-
-    private string GetFemaleTooltip(string femaleKey, FemaleAssignmentsPlanResult plan)
-    {
-        var normal = "";
-        var large = "";
-
-        if (plan.FemaleEggs.TryGetValue(femaleKey, out var eggs))
-        {
-            if (eggs.TryGetValue(EggTypeEntries.Normal, out var n) && !string.IsNullOrWhiteSpace(n))
-                normal = n;
-            if (eggs.TryGetValue(EggTypeEntries.Large, out var l) && !string.IsNullOrWhiteSpace(l))
-                large = l;
-        }
-
-        return _i18n.GetString(
-            "config.females.dynamic.tooltip",
-            new
-            {
-                femaleKey,
-                normalEgg = string.IsNullOrWhiteSpace(normal) ? "-" : normal,
-                largeEgg = string.IsNullOrWhiteSpace(large) ? "-" : large
-            }
-        );
-    }
-
-    private string FormatFemaleAssignmentAllowedValue(string raw)
-    {
-        var key = $"config.females.assignment.allowed.{raw}";
-        return _i18n.GetString(key);
-    }
-
-
     private void RequestGmcmRebuild()
     {
         if (_gmcmHost is null)

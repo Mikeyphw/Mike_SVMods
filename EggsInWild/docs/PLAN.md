@@ -32,7 +32,7 @@
 - **Effective WildAnimal**: the post-override runtime model used by the pipeline.
 
 ## Non-goals (for this iteration)
-- Editing complex collections beyond WildAnimalsList (e.g. SpawnAreas rules) from GMCM.
+- Editing complex collections beyond WildAnimalsList (e.g. WildEggSpawnDefinitions rules) from GMCM.
 - Any UI that hides/shows options dynamically (search, disabled-only filters, etc.).
 
 ## Done when

@@ -31,14 +31,20 @@ public sealed class DefaultBreedingPlanner : IBreedingPlanner
         var viable = candidates.Where(x => x.BreedingData?.Males?.Any() == true).ToList();
         if (viable.Count == 0)
         {
-            diagnostics.Add($"No viable breeding candidates for female '{input.FemaleKey}'.");
+            diagnostics.Add(
+                $"No viable breeding candidates for female '{input.FemaleKey}'. " +
+                $"Candidates={candidates.Count}; candidates with males={viable.Count}."
+            );
             return new BreedingPlan(PlanId: BuildPlanId(input), InGameDate: input.InGameDate, Seed: input.Seed, ScopeAnimalKeys: scopeKeys, Pairs: pairs, Mutations: mutations, Diagnostics: diagnostics);
         }
 
         var chosenFemale = viable.GetRandomItem(_ => 1, randomProvider: rng);
         if (string.IsNullOrEmpty(chosenFemale.ContentPackId) || chosenFemale.BreedingData is null)
         {
-            diagnostics.Add($"Skipped female '{input.FemaleKey}' because no chosen breeding data was available.");
+            diagnostics.Add(
+                $"Skipped female '{input.FemaleKey}' because the chosen breeding candidate was empty. " +
+                $"ViableCandidates={viable.Count}."
+            );
             return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, scopeKeys, pairs, mutations, diagnostics);
         }
 
@@ -49,17 +55,22 @@ public sealed class DefaultBreedingPlanner : IBreedingPlanner
 
         if (string.IsNullOrEmpty(chosenMale.Key) || chosenMale.Value is null)
         {
-            diagnostics.Add($"Skipped female '{input.FemaleKey}' because no male breeding data was available.");
+            diagnostics.Add(
+                $"Skipped female '{input.FemaleKey}' because no usable male breeding data was available. " +
+                $"ContentPack='{chosenFemale.ContentPackId}', MaleEntries={males.Count}."
+            );
             return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, scopeKeys, pairs, mutations, diagnostics);
         }
 
         if (!TryGetGeneralConfig(input.BreedingConfigsByPack, chosenFemale.ContentPackId, input.FemaleKey, out var generalConfig))
         {
-            diagnostics.Add($"Skipped female '{input.FemaleKey}' because no BreedingConfig was found for contentPack='{chosenFemale.ContentPackId}'.");
+            diagnostics.Add(
+                $"Skipped female '{input.FemaleKey}' because no BreedingConfig was found for contentPack='{chosenFemale.ContentPackId}'."
+            );
             return new BreedingPlan(BuildPlanId(input), input.InGameDate, input.Seed, scopeKeys, pairs, mutations, diagnostics);
         }
 
-        var eggs = GetEggs(generalConfig, chosenMale.Value);
+        var eggs = GetEggs(generalConfig, chosenMale.Value, selector);
         var maleKey = chosenMale.Key;
         var otherMales = males.Keys.Where(k => !string.Equals(k, maleKey, StringComparison.Ordinal)).ToList();
 
@@ -255,9 +266,9 @@ public sealed class DefaultBreedingPlanner : IBreedingPlanner
         return byAnimal.TryGetValue(femaleKey, out config!);
     }
 
-    private static EggSet GetEggs(BreedingConfig generalConfig, BreedingDataMale maleData)
+    private static EggSet GetEggs(BreedingConfig generalConfig, BreedingDataMale maleData, EggSelectionService selector)
     {
-        var eggIds = maleData.GetEggIDs();
+        var eggIds = maleData.GetResolvedEggIDs(selector.ChooseEggCandidateOrDefault);
         return new EggSet(
             NormalEggId: eggIds[ItemType.Normal],
             LargeEggId: eggIds[ItemType.Large],

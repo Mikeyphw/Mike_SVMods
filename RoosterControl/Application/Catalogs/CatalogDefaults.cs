@@ -24,7 +24,6 @@ public static class CatalogDefaults
                 ["White"] = new RoosterCatalogEntry
                 {
                     FarmAnimalKey = RoosterKeys.White,
-                    DefaultFemaleKey = "White Chicken",
                     Eggs = new EggCatalog
                     {
                         Normal = ItemIds.AnimalProducts.WhiteEgg,
@@ -35,7 +34,6 @@ public static class CatalogDefaults
                 ["Brown"] = new RoosterCatalogEntry
                 {
                     FarmAnimalKey = RoosterKeys.Brown,
-                    DefaultFemaleKey = "Brown Chicken",
                     Eggs = new EggCatalog
                     {
                         Normal = ItemIds.AnimalProducts.BrownEgg,
@@ -46,7 +44,6 @@ public static class CatalogDefaults
                 ["Blue"] = new RoosterCatalogEntry
                 {
                     FarmAnimalKey = RoosterKeys.Blue,
-                    DefaultFemaleKey = "Blue Chicken",
                     Eggs = new EggCatalog
                     {
                         Normal = ItemIds.CustomItems.MearaBlueEgg,
@@ -57,7 +54,6 @@ public static class CatalogDefaults
                 ["Void"] = new RoosterCatalogEntry
                 {
                     FarmAnimalKey = RoosterKeys.Void,
-                    DefaultFemaleKey = "Void Chicken",
                     Eggs = new EggCatalog
                     {
                         Normal = ItemIds.AnimalProducts.VoidEgg,
@@ -68,7 +64,6 @@ public static class CatalogDefaults
                 ["Gold"] = new RoosterCatalogEntry
                 {
                     FarmAnimalKey = RoosterKeys.Gold,
-                    DefaultFemaleKey = "Golden Chicken",
                     Eggs = new EggCatalog
                     {
                         Normal = ItemIds.AnimalProducts.GoldenEgg,

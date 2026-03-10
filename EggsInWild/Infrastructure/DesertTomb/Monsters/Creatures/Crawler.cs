@@ -5,6 +5,7 @@ using Netcode;
 using StardewValley;
 using StardewValley.Monsters;
 using EggsInWild.DesertTomb.Core.Configuration;
+using EggsInWild.Infrastructure.DesertTomb.Diagnostics;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Base;
 using EggsInWild.Infrastructure.Config;
 
@@ -22,12 +23,15 @@ internal sealed class Crawler : Monster
     }
 
     private static int CurlTriggerDistanceTiles => DebugKnobs.CrawlerCurlTriggerDistanceTiles;
-
-    private const int CurlAnimStartFrame = 12;
-    private const int CurlAnimFrames = 4;
-    private const int CurlAnimIntervalMs = 100;
-
-
+    private static int CurlAnimIntervalMs => DebugKnobs.CrawlerCurlAnimIntervalMs;
+    private static int FrameWidth => DebugKnobs.CrawlerFrameWidth;
+    private static int FrameHeight => DebugKnobs.CrawlerFrameHeight;
+    private static int CurledSpeedBonus => DebugKnobs.CrawlerCurledSpeedBonus;
+    private static int DeathFrame => DebugKnobs.CrawlerDeathFrame;
+    private static int DeathFrameLoops => DebugKnobs.CrawlerDeathFrameLoops;
+    private static int CurlHoldMs => DebugKnobs.CrawlerCurlHoldMs;
+    private static int CurledHaltGraceMs => DebugKnobs.CrawlerCurledHaltGraceMs;
+    private static float MovementDetectThresholdSquared => (float)DebugKnobs.CrawlerMovementDetectThresholdSquared;
     private static int CurlDurationMs => DebugKnobs.CrawlerCurlDurationMs;
     private static int CurlCooldownMs => DebugKnobs.CrawlerCurlCooldownMs;
 
@@ -35,8 +39,18 @@ internal sealed class Crawler : Monster
     private readonly NetInt _curlRemainingMs = new(0);
     private readonly NetInt _curlCooldownMs = new(0);
     private readonly NetString _spriteTexture = new();
-
     private readonly NetEvent1Field<bool, NetBool> _curlEvent = new();
+    private readonly string _crawlingSpriteTexture;
+    private readonly string _curledSpriteTexture;
+
+    private CrawlerState? _previousState;
+    private CrawlerState? _previousLoggedState;
+    private bool _pendingCrawlingTextureAfterTransition;
+    private bool _curledSpeedApplied;
+    private bool _deathAnimationStarted;
+    private bool _deathAnimationCompleted;
+    private Vector2 _lastTickPosition;
+    private int _curledHaltMs;
 
     internal Crawler(
         MonsterMultipliers multipliers,
@@ -48,7 +62,12 @@ internal sealed class Crawler : Monster
     )
         : base("Crawler", position)
     {
-        _spriteTexture.Value = $"Characters\\Monsters\\{textureName.Replace(" ", "")}";
+        _lastTickPosition = position;
+
+        var normalizedTextureName = textureName.Replace(" ", "");
+        _crawlingSpriteTexture = $"Characters\\Monsters\\{normalizedTextureName}";
+        _curledSpriteTexture = $"Characters\\Monsters\\{normalizedTextureName}_curled";
+        _spriteTexture.Value = _crawlingSpriteTexture;
 
         MaxHealth = 140;
         Health = MaxHealth;
@@ -67,6 +86,7 @@ internal sealed class Crawler : Monster
         );
 
         TombMonsterBuilder.SetMonsterNames(this, "Crawler");
+        reloadSprite();
     }
 
     protected override void initNetFields()
@@ -84,7 +104,9 @@ internal sealed class Crawler : Monster
 
     public override void reloadSprite(bool onlyAppearance = false)
     {
-        Sprite = new AnimatedSprite(_spriteTexture.Value, 0, 16, 16);
+        Sprite = new AnimatedSprite(_spriteTexture.Value, 0, FrameWidth, FrameHeight);
+        Sprite.SpriteHeight = FrameHeight;
+        Sprite.UpdateSourceRect();
     }
 
     public override void update(GameTime time, GameLocation location)
@@ -102,9 +124,6 @@ internal sealed class Crawler : Monster
         Farmer who
     )
     {
-        if ((CrawlerState)_state.Value == CrawlerState.Curled)
-            return -1;
-
         return base.takeDamage(damage, xTrajectory, yTrajectory, isBomb, addedPrecision, who);
     }
 
@@ -112,21 +131,48 @@ internal sealed class Crawler : Monster
     {
         base.behaviorAtGameTick(time);
 
+        if (Health <= 0)
+        {
+            StartDeathAnimationIfNeeded();
+            return;
+        }
+
+        HandleStateVisualTransitions();
+
         var elapsedMs = (int)Math.Max(0, time.ElapsedGameTime.TotalMilliseconds);
+        var movedThisTick = Vector2.DistanceSquared(Position, _lastTickPosition) > MovementDetectThresholdSquared;
+        _lastTickPosition = Position;
+
+        LogStateIfChanged();
+        CustomMonsterDebug.CrawlerHeartbeat(this, "tick", $"heartbeat state={(CrawlerState)_state.Value} curlRemainingMs={_curlRemainingMs.Value} cooldownMs={_curlCooldownMs.Value} moving={isMoving()} movedThisTick={movedThisTick} haltedMs={_curledHaltMs} spriteAnim={(Sprite.CurrentAnimation is not null)} speed={Speed}");
 
         if (_curlCooldownMs.Value > 0)
             _curlCooldownMs.Value = Math.Max(0, _curlCooldownMs.Value - elapsedMs);
 
         if ((CrawlerState)_state.Value == CrawlerState.Curled)
         {
-            IsWalkingTowardPlayer = false;
-            Halt();
+            IsWalkingTowardPlayer = true;
 
             if (_curlRemainingMs.Value > 0)
                 _curlRemainingMs.Value = Math.Max(0, _curlRemainingMs.Value - elapsedMs);
 
-            if (Game1.IsMasterGame && _curlRemainingMs.Value <= 0)
+            if (movedThisTick)
+                _curledHaltMs = 0;
+            else
+                _curledHaltMs += elapsedMs;
+
+            if (Game1.IsMasterGame && Sprite.CurrentAnimation is null && _curledHaltMs >= CurledHaltGraceMs)
+            {
+                CustomMonsterDebug.Crawler(this, $"curled but halted -> forcing uncurl haltedMs={_curledHaltMs}");
                 FireCurlEvent(reverse: true);
+                return;
+            }
+
+            if (Game1.IsMasterGame && _curlRemainingMs.Value <= 0)
+            {
+                CustomMonsterDebug.Crawler(this, "curl duration expired -> uncurl");
+                FireCurlEvent(reverse: true);
+            }
 
             return;
         }
@@ -137,26 +183,46 @@ internal sealed class Crawler : Monster
             return;
 
         if (_curlCooldownMs.Value > 0)
-            return;
-
-        if (!withinPlayerThreshold(CurlTriggerDistanceTiles))
-            return;
-
-        FireCurlEvent(reverse: false);
-    }
-
-    protected override void updateMonsterSlaveAnimation(GameTime time)
-    {
-        if ((CrawlerState)_state.Value == CrawlerState.Curled)
         {
-            if (Sprite.CurrentAnimation is null)
-                Sprite.Animate(time, CurlAnimStartFrame + CurlAnimFrames - 1, 1, 200f);
+            CustomMonsterDebug.CrawlerHeartbeat(this, "curl_blocked_cooldown", $"curl blocked: cooldownMs={_curlCooldownMs.Value}", 30);
             return;
         }
 
-        if (!isMoving())
+        if (!withinPlayerThreshold(CurlTriggerDistanceTiles))
+        {
+            CustomMonsterDebug.CrawlerHeartbeat(this, "curl_blocked_range", $"curl blocked: target out of range triggerTiles={CurlTriggerDistanceTiles}", 20);
+            return;
+        }
+
+        CustomMonsterDebug.Crawler(this, $"curl trigger met triggerTiles={CurlTriggerDistanceTiles}");
+        FireCurlEvent(reverse: false);
+    }
+
+    protected override void updateAnimation(GameTime time)
+    {
+        UpdateVisualAnimation(time);
+        resetAnimationSpeed();
+    }
+
+    protected override void updateMonsterSlaveAnimation(GameTime time)
+        => UpdateVisualAnimation(time);
+
+    private void UpdateVisualAnimation(GameTime time)
+    {
+        if (Health <= 0)
+        {
+            StartDeathAnimationIfNeeded();
+            return;
+        }
+
+        if (Sprite.CurrentAnimation is not null)
+            return;
+
+        var shouldAnimateMovement = isMoving() || ((CrawlerState)_state.Value == CrawlerState.Curled && _curledHaltMs < CurledHaltGraceMs);
+        if (!shouldAnimateMovement)
         {
             Sprite.StopAnimation();
+            ShowFacingFrame();
             return;
         }
 
@@ -182,6 +248,7 @@ internal sealed class Crawler : Monster
 
     private void PerformCurl(bool reverse)
     {
+        EnsureTexture(_curledSpriteTexture);
         Sprite.setCurrentAnimation(BuildCurlAnimation(reverse));
         Sprite.loop = false;
 
@@ -190,52 +257,214 @@ internal sealed class Crawler : Monster
             _state.Value = (int)CrawlerState.Curled;
             _curlRemainingMs.Value = CurlDurationMs;
             _curlCooldownMs.Value = CurlCooldownMs;
-
-            Halt();
-            IsWalkingTowardPlayer = false;
+            _curledHaltMs = 0;
+            ApplyCurledSpeedBonus();
+            IsWalkingTowardPlayer = true;
             currentLocation?.playSound("stoneCrack");
+            CustomMonsterDebug.Crawler(this, $"curl in start durationMs={CurlDurationMs} cooldownMs={CurlCooldownMs}");
         }
         else
         {
-            _state.Value = (int)CrawlerState.Crawling;
             _curlRemainingMs.Value = 0;
-
+            _curledHaltMs = 0;
+            RemoveCurledSpeedBonus();
+            _pendingCrawlingTextureAfterTransition = true;
+            _state.Value = (int)CrawlerState.Crawling;
             IsWalkingTowardPlayer = true;
             currentLocation?.playSound("skeletonDie");
+            CustomMonsterDebug.Crawler(this, "curl out start");
         }
     }
 
     private List<FarmerSprite.AnimationFrame> BuildCurlAnimation(bool reverse)
     {
-        var frames = new List<FarmerSprite.AnimationFrame>();
+        var sequence = GetCurlTransitionSequence();
+        var frames = new List<FarmerSprite.AnimationFrame>(sequence.Length);
 
-        if (!reverse)
+        if (reverse)
         {
-            for (var i = 0; i < CurlAnimFrames; i++)
-                frames.Add(new FarmerSprite.AnimationFrame(CurlAnimStartFrame + i, CurlAnimIntervalMs));
+            for (var i = sequence.Length - 1; i >= 0; i--)
+                frames.Add(new FarmerSprite.AnimationFrame(sequence[i], i == sequence.Length - 1 ? CurlHoldMs : CurlAnimIntervalMs));
 
-            frames.Add(new FarmerSprite.AnimationFrame(CurlAnimStartFrame + CurlAnimFrames - 1, CurlAnimIntervalMs, 0, false, false, OnCurlInComplete));
+            frames[frames.Count - 1] = new FarmerSprite.AnimationFrame(
+                sequence[0],
+                CurlAnimIntervalMs,
+                0,
+                false,
+                false,
+                OnCurlOutComplete);
+            return frames;
         }
-        else
-        {
-            for (var i = CurlAnimFrames - 1; i >= 0; i--)
-                frames.Add(new FarmerSprite.AnimationFrame(CurlAnimStartFrame + i, CurlAnimIntervalMs));
 
-            frames.Add(new FarmerSprite.AnimationFrame(CurlAnimStartFrame, CurlAnimIntervalMs, 0, false, false, OnCurlOutComplete));
-        }
+        for (var i = 0; i < sequence.Length - 1; i++)
+            frames.Add(new FarmerSprite.AnimationFrame(sequence[i], i == 0 ? CurlHoldMs : CurlAnimIntervalMs));
 
+        frames.Add(new FarmerSprite.AnimationFrame(
+            sequence[sequence.Length - 1],
+            CurlAnimIntervalMs,
+            0,
+            false,
+            false,
+            OnCurlInComplete));
         return frames;
     }
 
     private void OnCurlInComplete(Farmer who)
     {
-        Sprite.currentFrame = CurlAnimStartFrame + CurlAnimFrames - 1;
         Sprite.CurrentAnimation = null;
+        Sprite.currentFrame = GetCurledFacingFrame();
+        Sprite.UpdateSourceRect();
+        CustomMonsterDebug.Crawler(this, "curl in animation complete");
     }
 
     private void OnCurlOutComplete(Farmer who)
     {
-        Sprite.currentFrame = 0;
         Sprite.CurrentAnimation = null;
+        if (_pendingCrawlingTextureAfterTransition)
+        {
+            _pendingCrawlingTextureAfterTransition = false;
+            EnsureTexture(_crawlingSpriteTexture);
+        }
+        ShowFacingFrame();
+        CustomMonsterDebug.Crawler(this, "curl out animation complete");
+    }
+
+    private int[] GetCurlTransitionSequence()
+    {
+        return FacingDirection switch
+        {
+            3 => new[] { 16, 15, 14, 13, 12 },
+            1 => new[] { 17, 4, 5, 6, 7 },
+            2 => new[] { 18, 0, 1, 2, 3 },
+            0 => new[] { 19, 8, 9, 10, 11 },
+            _ => new[] { 18, 0, 1, 2, 3 },
+        };
+    }
+
+    private int GetCurledFacingFrame()
+    {
+        return FacingDirection switch
+        {
+            3 => 12,
+            1 => 7,
+            2 => 3,
+            0 => 11,
+            _ => 3,
+        };
+    }
+
+    private void HandleStateVisualTransitions()
+    {
+        var currentState = (CrawlerState)_state.Value;
+        if (_previousState is null)
+        {
+            _previousState = currentState;
+            EnsureTexture(currentState == CrawlerState.Curled ? _curledSpriteTexture : _crawlingSpriteTexture);
+            ApplyStateSpeed(currentState);
+            return;
+        }
+
+        if (_previousState.Value == currentState)
+            return;
+
+        ApplyStateSpeed(currentState);
+        _previousState = currentState;
+    }
+
+    private void ApplyStateSpeed(CrawlerState state)
+    {
+        if (state == CrawlerState.Curled)
+            ApplyCurledSpeedBonus();
+        else
+            RemoveCurledSpeedBonus();
+    }
+
+    private void ApplyCurledSpeedBonus()
+    {
+        if (_curledSpeedApplied)
+            return;
+
+        Speed += CurledSpeedBonus;
+        _curledSpeedApplied = true;
+    }
+
+    private void RemoveCurledSpeedBonus()
+    {
+        if (!_curledSpeedApplied)
+            return;
+
+        Speed = Math.Max(0, Speed - CurledSpeedBonus);
+        _curledSpeedApplied = false;
+    }
+
+    private void EnsureTexture(string texturePath)
+    {
+        if (string.Equals(_spriteTexture.Value, texturePath, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _spriteTexture.Value = texturePath;
+        reloadSprite();
+    }
+
+    private void ShowFacingFrame()
+    {
+        Sprite.currentFrame = (CrawlerState)_state.Value == CrawlerState.Curled
+            ? GetCurledFacingFrame()
+            : FacingDirection switch
+            {
+                0 => 8,
+                1 => 4,
+                2 => 0,
+                3 => 12,
+                _ => 0,
+            };
+        Sprite.UpdateSourceRect();
+    }
+
+    private void StartDeathAnimationIfNeeded()
+    {
+        if (_deathAnimationCompleted)
+            return;
+
+        EnsureTexture(_curledSpriteTexture);
+        if (_deathAnimationStarted)
+            return;
+
+        _deathAnimationStarted = true;
+        RemoveCurledSpeedBonus();
+        IsWalkingTowardPlayer = false;
+        Halt();
+        Sprite.StopAnimation();
+        Sprite.loop = false;
+        Sprite.setCurrentAnimation(BuildDeathAnimation());
+    }
+
+    private List<FarmerSprite.AnimationFrame> BuildDeathAnimation()
+    {
+        var frames = new List<FarmerSprite.AnimationFrame>(DeathFrameLoops);
+        for (var i = 0; i < DeathFrameLoops - 1; i++)
+            frames.Add(new FarmerSprite.AnimationFrame(DeathFrame, 140));
+
+        frames.Add(new FarmerSprite.AnimationFrame(DeathFrame, 140, 0, false, false, OnDeathAnimationComplete));
+        return frames;
+    }
+
+    private void OnDeathAnimationComplete(Farmer who)
+    {
+        _deathAnimationCompleted = true;
+        Sprite.CurrentAnimation = null;
+        Sprite.currentFrame = DeathFrame;
+        Sprite.UpdateSourceRect();
+        CustomMonsterDebug.Crawler(this, "death animation complete");
+    }
+
+    private void LogStateIfChanged()
+    {
+        var currentState = (CrawlerState)_state.Value;
+        if (_previousLoggedState == currentState)
+            return;
+
+        CustomMonsterDebug.Crawler(this, $"state -> {currentState} curlRemainingMs={_curlRemainingMs.Value} cooldownMs={_curlCooldownMs.Value} speed={Speed}");
+        _previousLoggedState = currentState;
     }
 }

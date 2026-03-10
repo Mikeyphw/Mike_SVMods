@@ -25,7 +25,7 @@ public static class DesertTombRuntimePolicy
     public static bool IsTombCandidate(int mineLevel)
         => mineLevel > 120;
 
-    public static bool RollTombChance(TombChance chance, int mineLevel)
+    public static bool RollTombChance(TombChance chance, int mineLevel, Random? random = null)
     {
         if (mineLevel <= 120)
             return false;
@@ -41,7 +41,7 @@ public static class DesertTombRuntimePolicy
             _ => 0.50,
         };
 
-        return Game1.random.NextDouble() <= probability;
+        return (random ?? Game1.random).NextDouble() <= probability;
     }
 
     public static bool TryParseMineLevel(string? mapPath, out MineLevel mineLevel)

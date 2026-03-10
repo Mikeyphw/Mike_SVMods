@@ -20,8 +20,6 @@ public sealed class RoosterCatalog
 public sealed class RoosterCatalogEntry
 {
     public string FarmAnimalKey { get; set; } = string.Empty;
-    public string DefaultFemaleKey { get; set; } = string.Empty;
-    public List<string> AdditionalFemaleKeys { get; set; } = new();
     public EggCatalog Eggs { get; set; } = new();
 }
 

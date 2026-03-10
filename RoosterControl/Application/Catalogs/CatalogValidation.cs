@@ -34,8 +34,6 @@ internal static class CatalogSanitizer
             entry ??= new RoosterCatalogEntry();
 
             entry.FarmAnimalKey = (entry.FarmAnimalKey ?? string.Empty).Trim();
-            entry.DefaultFemaleKey = (entry.DefaultFemaleKey ?? string.Empty).Trim();
-            entry.AdditionalFemaleKeys ??= new List<string>();
 
             entry.Eggs ??= new EggCatalog();
             entry.Eggs.Normal = (entry.Eggs.Normal ?? string.Empty).Trim();
@@ -251,9 +249,6 @@ internal static class CatalogValidator
 
             if (string.IsNullOrWhiteSpace(entry.FarmAnimalKey))
                 issues.Add(new CatalogIssue(CatalogIssueSeverity.Error, "roosters", $"Roosters['{key}'].FarmAnimalKey", "Missing FarmAnimalKey."));
-
-            if (string.IsNullOrWhiteSpace(entry.DefaultFemaleKey))
-                issues.Add(new CatalogIssue(CatalogIssueSeverity.Error, "roosters", $"Roosters['{key}'].DefaultFemaleKey", "Missing DefaultFemaleKey."));
 
             if (entry.Eggs is null)
             {
@@ -562,5 +557,4 @@ internal sealed class CatalogIssue
 
     public override string ToString() => $"{Severity}:{Catalog}:{Path}: {Message}";
 }
-
 

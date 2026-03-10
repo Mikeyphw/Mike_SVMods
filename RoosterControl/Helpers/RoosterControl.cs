@@ -116,7 +116,15 @@ public sealed partial class RoosterHelper
             var settings = Config.Roosters[roosterType];
 
             var farmAnimalName = GetFarmAnimalKey(roosterType);
-            var femaleKey = GetDefaultFemaleKey(roosterType);
+            var femaleKey = roosterType switch
+            {
+                RoosterType.White => "White Chicken",
+                RoosterType.Brown => "Brown Chicken",
+                RoosterType.Blue => "Blue Chicken",
+                RoosterType.Void => "Void Chicken",
+                RoosterType.Gold => "Golden Chicken",
+                _ => "White Chicken",
+            };
 
             var seedCtx = new RoosterSeedKey.Context(
                 FarmId: farmId,
@@ -153,7 +161,7 @@ public sealed partial class RoosterHelper
                 Eggs = eggs,
                 AllProduces = BuildProduces(settings, seedCtx),
                 Quantity = UpdateRoosterQuantity(farmAnimalName),
-                Females = GetAdditionalFemaleKeys(roosterType),
+                Females = new List<string>(),
             };
 
             RollChosenProduces(rooster, seedCtx);
@@ -927,39 +935,4 @@ public sealed partial class RoosterHelper
         };
     }
 
-    private string GetDefaultFemaleKey(RoosterType roosterType)
-    {
-        if (_roosterCatalog?.Roosters is not null
-            && _roosterCatalog.Roosters.TryGetValue(roosterType.ToString(), out var entry)
-            && !string.IsNullOrWhiteSpace(entry.DefaultFemaleKey))
-        {
-            return entry.DefaultFemaleKey.Trim();
-        }
-
-        return roosterType switch
-        {
-            RoosterType.White => "White Chicken",
-            RoosterType.Brown => "Brown Chicken",
-            RoosterType.Blue => "Blue Chicken",
-            RoosterType.Void => "Void Chicken",
-            RoosterType.Gold => "Golden Chicken",
-            _ => "White Chicken",
-        };
-    }
-
-    private List<string> GetAdditionalFemaleKeys(RoosterType roosterType)
-    {
-        if (_roosterCatalog?.Roosters is not null
-            && _roosterCatalog.Roosters.TryGetValue(roosterType.ToString(), out var entry)
-            && entry.AdditionalFemaleKeys is not null)
-        {
-            return entry.AdditionalFemaleKeys
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .Select(s => s.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        }
-
-        return new List<string>();
-    }
 }

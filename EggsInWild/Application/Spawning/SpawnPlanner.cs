@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using StardewModdingAPI;
+using StardewValley;
 using Mikew.NestCore.Framework.Random;
 using EggsInWild.Core.Enums;
 using EggsInWild.Infrastructure.Game;
@@ -8,6 +10,7 @@ using Mikew.NestCore.Helpers.Logging;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.Infrastructure.ModData.Models;
 using EggsInWild.Infrastructure.Mods;
+using StardewValley.GameData.FarmAnimals;
 using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
 using static Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
 
@@ -19,25 +22,33 @@ public sealed class SpawnPlanner
 
     private readonly IWorldLocations _world;
     private readonly IModAvailability _mods;
+    private readonly IModRegistry _registry;
     private readonly IAreaConditionsEvaluator _conditions;
     private readonly ILog _log;
+    private readonly Func<IReadOnlyDictionary<string, FarmAnimalData>> _getFarmAnimals;
 
     public SpawnPlanner(
         IWorldLocations world,
         IModAvailability mods,
+        IModRegistry registry,
         IAreaConditionsEvaluator conditions,
-        ILog log)
+        ILog log,
+        Func<IReadOnlyDictionary<string, FarmAnimalData>>? getFarmAnimals = null)
     {
         _world = world;
         _mods = mods;
+        _registry = registry;
         _conditions = conditions;
         _log = log;
+        _getFarmAnimals = getFarmAnimals ?? (() => Game1.content.Load<Dictionary<string, FarmAnimalData>>(Mikew.NestCore.EnumsAndStrings.Strings.AssetNames.FarmAnimals));
     }
 
     public SpawnPlan BuildPlan(ModDataSnapshot snapshot, long saveId, int dayNumber)
     {
         var parameters = snapshot.SpawnParameters;
         var chanceCalc = new SpawnChanceCalculator(parameters);
+        var farmAnimals = _getFarmAnimals();
+        var catalog = WildEggSpawnCatalogBuilder.Build(snapshot.WildEggSpawnDefinitions, snapshot.WildAnimals, farmAnimals, _registry, _log);
 
         var activePacks = snapshot.LocationPacks
             .Where(p => _mods.IsLoaded(p.Key))
@@ -47,11 +58,12 @@ public sealed class SpawnPlanner
 
         var jobsWithKey = new List<(double key, SpawnJob job)>();
 
-        foreach (var (eggItemId, rules) in SpawnAreaEggIds.Normalize(snapshot.SpawnAreas, _log))
+        foreach (var definition in catalog.ActiveEggDefinitions.Where(def => def.HasUsableRules))
         {
-            var kind = EggKindExtensions.FromEggItemId(eggItemId);
+            var eggItemId = definition.EggItemId;
+            var kind = definition.Kind;
 
-            foreach (var rule in rules)
+            foreach (var rule in definition.Rules)
             {
                 if (!activePacks.TryGetValue(rule.ModID, out var pack))
                     continue;

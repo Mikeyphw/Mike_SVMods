@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using Mikew.NestCore.Diagnostics;
 using Mikew.NestCore.Framework;
 using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Helpers.Config;
@@ -50,14 +52,9 @@ internal sealed class ModEntry : Mod
         Context = new CoreContext(helper, Monitor, ModManifest, translation, _log);
 
         helper.ConsoleCommands.Add(
-            "nestcore_status",
-            "Print NestCore runtime status.",
-            (_, _) => PrintStatus()
-        );
-        helper.ConsoleCommands.Add(
-            "nestcore_i18n_missing_values",
-            "Scan NestCore-dependent mods and print i18n keys with missing/empty values.",
-            (_, _) => PrintI18nMissingValues()
+            "nest",
+            "NestCore commands. Use: nest help",
+            (_, args) => ExecuteNestCommand(args)
         );
 
         helper.Events.GameLoop.GameLaunched += OnGameLaunched;
@@ -159,14 +156,132 @@ internal sealed class ModEntry : Mod
         }
     }
 
+    private void ExecuteNestCommand(string[] args)
+    {
+        if (_log is null)
+            return;
+
+        if (args.Length == 0 || IsHelp(args[0]))
+        {
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, BuildNestHelpText(), LogLevel.Info);
+            return;
+        }
+
+        var verb = args[0].ToLowerInvariant();
+        switch (verb)
+        {
+            case "help":
+                LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, BuildNestHelpText(), LogLevel.Info);
+                return;
+            case "status":
+                PrintStatus();
+                return;
+            case "verify":
+            {
+                var json = args.Any(x => string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase));
+                var report = BuildVerifyReport();
+                var message = json
+                    ? DiagnosticReportFormatter.FormatJson(report, "nest verify")
+                    : DiagnosticReportFormatter.FormatText(report, "nest verify");
+                LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, message, report.FailCount > 0 ? LogLevel.Warn : LogLevel.Info);
+                return;
+            }
+            case "save":
+                HandleSaveCommand(args.Skip(1).ToArray());
+                return;
+            case "debug":
+#if NEST_DEV
+                HandleDebugCommand(args.Skip(1).ToArray());
+#else
+                LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, "Dev-only commands are unavailable in this build.", LogLevel.Warn);
+#endif
+                return;
+            default:
+                LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"Unknown subcommand '{args[0]}'.\n\n{BuildNestHelpText()}", LogLevel.Warn);
+                return;
+        }
+    }
+
+    private string BuildNestHelpText()
+    {
+        return
+            "nest help\n" +
+            "nest status\n" +
+            "nest verify [--json]\n" +
+            "nest save clear --yes\n" +
+#if NEST_DEV
+            "nest debug i18n-missing-values\n" +
+#endif
+            "\nStatus prints a concise runtime snapshot.\n" +
+            "Verify runs read-only NestCore runtime/config checks.";
+    }
+
+    private DiagnosticReport BuildVerifyReport()
+    {
+        var report = new DiagnosticReport();
+        report.Add("GAME_LAUNCHED", StardewModdingAPI.Context.IsGameLaunched ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "runtime", $"GameLaunched={StardewModdingAPI.Context.IsGameLaunched}");
+        report.Add("WORLD_READY", StardewModdingAPI.Context.IsWorldReady ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "runtime", $"WorldReady={StardewModdingAPI.Context.IsWorldReady}");
+        report.Add("MAIN_PLAYER", StardewModdingAPI.Context.IsMainPlayer ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "runtime", $"MainPlayer={StardewModdingAPI.Context.IsMainPlayer}");
+        report.Add("HELPER", HelperInstance is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Fail, "runtime", $"HelperReady={HelperInstance is not null}");
+        report.Add("CONFIG_PROVIDER", _configProvider is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Fail, "config", $"ConfigProviderReady={_configProvider is not null}");
+        report.Add("TRANSLATION", Context?.Translation is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Fail, "runtime", $"TranslationReady={Context?.Translation is not null}");
+        report.Add("GMCM", _gmcm is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "integrations", $"GmcmRegistered={_gmcm is not null}", "Install/enable GMCM to use the NestCore config UI.");
+        report.Add("SCOPED_LOGGING", ModCfg.EnsureScopedLoggingDefaults() ? DiagnosticSeverity.Warn : DiagnosticSeverity.Pass, "config", "Scoped logging defaults are initialized.");
+        return report;
+    }
+
     private void PrintStatus()
     {
-        var cfg = _configProvider?.Get() ?? ModCfg;
         if (_log is not null)
         {
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"GameLaunched={StardewModdingAPI.Context.IsGameLaunched}", LogLevel.Info);
             LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"WorldReady={StardewModdingAPI.Context.IsWorldReady}", LogLevel.Info);
             LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"MainPlayer={StardewModdingAPI.Context.IsMainPlayer}", LogLevel.Info);
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"ConfigProviderReady={_configProvider is not null}", LogLevel.Info);
             LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"GmcmRegistered={_gmcm is not null}", LogLevel.Info);
+        }
+    }
+
+    private void HandleSaveCommand(string[] args)
+    {
+        if (_log is null)
+            return;
+
+        if (args.Length == 0 || IsHelp(args[0]))
+        {
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, "Usage: nest save clear --yes", LogLevel.Info);
+            return;
+        }
+
+        if (!string.Equals(args[0], "clear", StringComparison.OrdinalIgnoreCase))
+        {
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"Unknown save subcommand '{args[0]}'.\n\n{BuildNestHelpText()}", LogLevel.Warn);
+            return;
+        }
+
+        LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, "NestCore does not currently persist per-save data, so there is nothing to clear.", LogLevel.Info);
+    }
+
+#if NEST_DEV
+    private void HandleDebugCommand(string[] args)
+    {
+        if (_log is null)
+            return;
+
+        if (args.Length == 0 || IsHelp(args[0]))
+        {
+            LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, "nest debug i18n-missing-values", LogLevel.Info);
+            return;
+        }
+
+        switch (args[0].ToLowerInvariant())
+        {
+            case "i18n-missing-values":
+                PrintI18nMissingValues();
+                return;
+            default:
+                LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"Unknown debug subcommand '{args[0]}'.", LogLevel.Warn);
+                return;
         }
     }
 
@@ -199,4 +314,10 @@ internal sealed class ModEntry : Mod
                 LogScopedHelper.Log(_log, ModNestCoreCategory.Runtime, $"  {issue.Key} -> {issue.Issue}", LogLevel.Warn);
         }
     }
+#endif
+
+    private static bool IsHelp(string arg)
+        => string.Equals(arg, "help", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(arg, "-h", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(arg, "--help", StringComparison.OrdinalIgnoreCase);
 }

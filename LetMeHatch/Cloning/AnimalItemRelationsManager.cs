@@ -297,7 +297,7 @@ namespace LetMeHatch.Cloning
         {
             var produce = data.ProduceItemIds.Union(data.DeluxeProduceItemIds);
             var itemsToClone = produce
-                .Where(p => animalProducts.Contains(p.ItemId))
+                .Where(p => !string.IsNullOrWhiteSpace(p?.ItemId) && animalProducts.Contains(p.ItemId))
                 .Select(p => p.ItemId)
                 .Distinct();
 
@@ -325,39 +325,53 @@ namespace LetMeHatch.Cloning
             string largeItem2
         )
         {
-            if (itemsToClone.Contains(largeItem1) || itemsToClone.Contains(largeItem2))
+            var cloneItems = itemsToClone
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (cloneItems.Count == 0)
+                return (string.Empty, string.Empty);
+
+            if (cloneItems.Contains(largeItem1) || cloneItems.Contains(largeItem2))
             {
-                var largeItem = itemsToClone.Contains(largeItem1) ? largeItem1 : largeItem2;
-                var normalItem = itemsToClone.FirstOrDefault(e => e != largeItem, string.Empty);
+                var largeItem = cloneItems.Contains(largeItem1) ? largeItem1 : largeItem2;
+                var normalItem = cloneItems.FirstOrDefault(e => e != largeItem, string.Empty);
                 return (normalItem, largeItem);
             }
             else
             {
-                var normalItem = itemsToClone.First();
-                var largeItem =
-                    itemsToClone.Count() > 1 ? itemsToClone.Skip(1).First() : string.Empty;
+                var normalItem = cloneItems[0];
+                var largeItem = cloneItems.Count > 1 ? cloneItems[1] : string.Empty;
                 return (normalItem, largeItem);
             }
         }
 
         private (string, string) HandleDefaultType(IEnumerable<string> itemsToClone)
         {
+            var cloneItems = itemsToClone
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (cloneItems.Count == 0)
+                return (string.Empty, string.Empty);
+
             if (
-                itemsToClone.Contains(AnimalProducts.DuckFeather)
-                || itemsToClone.Contains(AnimalProducts.Wool)
+                cloneItems.Contains(AnimalProducts.DuckFeather)
+                || cloneItems.Contains(AnimalProducts.Wool)
             )
             {
-                var normalItem = itemsToClone.Contains(AnimalProducts.DuckFeather)
+                var normalItem = cloneItems.Contains(AnimalProducts.DuckFeather)
                     ? AnimalProducts.DuckFeather
                     : AnimalProducts.Wool;
-                var largeItem = itemsToClone.FirstOrDefault(e => e != normalItem, string.Empty);
+                var largeItem = cloneItems.FirstOrDefault(e => e != normalItem, string.Empty);
                 return (normalItem, largeItem);
             }
             else
             {
-                var normalItem = itemsToClone.First();
-                var largeItem =
-                    itemsToClone.Count() > 1 ? itemsToClone.Skip(1).First() : string.Empty;
+                var normalItem = cloneItems[0];
+                var largeItem = cloneItems.Count > 1 ? cloneItems[1] : string.Empty;
                 return (normalItem, largeItem);
             }
         }
@@ -378,11 +392,13 @@ namespace LetMeHatch.Cloning
             var produceItems = data
                 .ProduceItemIds.Where(p => filterFunc(category, animalProducts, p))
                 .Select(p => p.ItemId)
+                .Where(i => !string.IsNullOrWhiteSpace(i))
                 .ToList();
 
             var deluxeProduceItems = data
                 .DeluxeProduceItemIds.Where(p => filterFunc(category, animalProducts, p))
                 .Select(p => p.ItemId)
+                .Where(i => !string.IsNullOrWhiteSpace(i))
                 .ToList();
 
             if (produceItems.Any() && deluxeProduceItems.Any())
@@ -412,7 +428,10 @@ namespace LetMeHatch.Cloning
                 var bothProducesList = animalData
                     .ProduceItemIds.Union(animalData.DeluxeProduceItemIds)
                     .ToList();
-                return bothProducesList.Select(x => x.ItemId).Any(i => animalProducts.Contains(i));
+                return bothProducesList
+                    .Select(x => x.ItemId)
+                    .Where(i => !string.IsNullOrWhiteSpace(i))
+                    .Any(i => animalProducts.Contains(i));
             }
             else
             {
@@ -435,6 +454,7 @@ namespace LetMeHatch.Cloning
                     .ToList();
                 return bothProducesList
                     .Select(x => x.ItemId)
+                    .Where(i => !string.IsNullOrWhiteSpace(i))
                     .Any(i =>
                         Game1.objectData.ContainsKey(i)
                         && (animalProducts.Contains(i) || Game1.objectData[i].Category == category)
@@ -449,6 +469,8 @@ namespace LetMeHatch.Cloning
         private Func<int, string[], FarmAnimalProduce, bool> GetVanillaItemFilterFunc()
         {
             return (category, animalProducts, produce) =>
+                !string.IsNullOrWhiteSpace(produce?.ItemId)
+                &&
                 Game1.objectData.TryGetValue(produce.ItemId, out var item)
                 && item.Category == category
                 && animalProducts.Contains(produce.ItemId)
@@ -461,6 +483,8 @@ namespace LetMeHatch.Cloning
         private Func<int, string[], FarmAnimalProduce, bool> GetMiscItemFilterFunc()
         {
             return (_, _, produce) =>
+                !string.IsNullOrWhiteSpace(produce?.ItemId)
+                &&
                 Game1.objectData.TryGetValue(produce.ItemId, out var item)
                 && item.Category != Object.EggCategory
                 && item.Category != Object.MilkCategory
@@ -498,6 +522,7 @@ namespace LetMeHatch.Cloning
                     .ProduceItemIds.Concat(animalData.DeluxeProduceItemIds ?? new())
                     .Where(p => filterFunc(category, animalProducts, p))
                     .Select(p => p.ItemId)
+                    .Where(i => !string.IsNullOrWhiteSpace(i))
                     .ToList();
 
                 foreach (var itemId in allItemIds)

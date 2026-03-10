@@ -34,18 +34,18 @@ internal sealed partial class RoosterCoordinator
         if (verb.Equals("help", StringComparison.OrdinalIgnoreCase) || verb.Equals("-h", StringComparison.OrdinalIgnoreCase))
         {
             LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands,
-                "ra_catalog usage:\n" +
-                "  ra_catalog validate [--fix]\n" +
+                "ra catalog usage:\n" +
+                "  ra catalog validate [--fix]\n" +
                 "    - validates catalogs with per-file OK/MIGRATED/ERROR output.\n" +
                 "    - --fix writes normalized JSON (with backups) and repairs invalid/missing files.\n" +
-                "  ra_catalog diff\n" +
+                "  ra catalog diff\n" +
                 "    - writes a unified diff file showing what normalization would change.\n" +
-                "  ra_catalog export [snapshot]\n" +
+                "  ra catalog export [snapshot]\n" +
                 "    - writes current in-memory catalogs to disk (always backs up existing files).\n" +
                 "    - snapshot writes to data/catalogs/exports/<timestamp>/ without overwriting.\n" +
-                "  ra_catalog reload\n" +
+                "  ra catalog reload\n" +
                 "    - reload catalogs from disk, apply to config using current CatalogApplyMode, then invalidate assets.\n" +
-                "  ra_catalog mode [SeedOnly|RepairInvalid|MergeMissing|Authoritative]\n" +
+                "  ra catalog mode [SeedOnly|RepairInvalid|MergeMissing|Authoritative]\n" +
                 "    - prints or sets the catalog apply mode in config.json.",
                 LogLevel.Info
             );
@@ -84,7 +84,7 @@ internal sealed partial class RoosterCoordinator
             return;
         }
 
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"Unknown subcommand '{verb}'. Run: ra_catalog help", LogLevel.Warn);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Commands, $"Unknown subcommand '{verb}'. Run: ra catalog help", LogLevel.Warn);
     }
 
     private void HandleCatalogMode(string[] args)

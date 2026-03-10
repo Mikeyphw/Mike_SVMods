@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using LetMeHatch.Core.Breeding;
 using LetMeHatch.Core.Breeding.Diagnostics;
 using LetMeHatch.Application;
@@ -11,6 +12,7 @@ using System.Collections.Generic;
 using LetMeHatch.Config;
 using LetMeHatch.Framework;
 using LetMeHatch.GameAssetManagement;
+using Mikew.NestCore.Diagnostics;
 using Mikew.NestCore.Helpers.Config;
 using Mikew.NestCore.Helpers.Logging;
 using LetMeHatch.Infrastructure.Content;
@@ -20,9 +22,11 @@ using LetMeHatch.Integrations.Gmcm;
 using Mikew.NestCore.Framework;
 using Mikew.NestCore.Framework.Random;
 using Mikew.NestCore.Helpers;
+using LetMeHatch.Infrastructure.Content.Editors;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.GameData.FarmAnimals;
 using static LetMeHatch.EnumsAndStrings.Enums;
 using static LetMeHatch.EnumsAndStrings.Strings;
 using static Mikew.NestCore.EnumsAndStrings.Strings;
@@ -39,7 +43,7 @@ public sealed partial class LmhCoordinator
     private readonly AssetInvalidationBatcher _invalidation;
     private readonly LetMeHatchApi _api;
 
-    private IRoosterHatchingAPI? _roosterHatching;
+    private IRoosterControlApi? _roosterControl;
     private IWildEggsApi? _wildEggs;
 
     private GameAssetManager? _assetManager;
@@ -171,17 +175,27 @@ public sealed partial class LmhCoordinator
 
     public void PrintContentHandlers()
     {
-        if (_assetPipeline is null)
-        {
-            LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.ContentPipeline, "Content pipeline is not initialized yet.", LogLevel.Warn);
-            return;
-        }
+        PrintPipelineDiagnostics();
+    }
+
+    public void PrintPipelineDiagnostics()
+    {
+        var descriptors = GetContentHandlerDescriptors();
 
         LogScopedHelper.Log(
             _log,
             ScopedLogCatalog.ModLthteCategory.ContentPipeline,
-            "NestCore asset pipeline host is initialized and attached on early init.",
+            $"PipelineReady={_assetPipeline is not null} RegisteredHandlers={descriptors.Count} InvalidationTargets={descriptors.Select(static x => x.Handles).Distinct(StringComparer.OrdinalIgnoreCase).Count()}",
             LogLevel.Info);
+
+        foreach (var descriptor in descriptors)
+        {
+            LogScopedHelper.Log(
+                _log,
+                ScopedLogCatalog.ModLthteCategory.ContentPipeline,
+                $"[{descriptor.Kind}] {descriptor.Name} order={descriptor.Order} handles={descriptor.Handles} gates={descriptor.Gates}",
+                LogLevel.Info);
+        }
     }
 
     public void InvalidateAllContent()
@@ -197,7 +211,7 @@ public sealed partial class LmhCoordinator
         LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.ContentPipeline, "Invalidated caches for all registered content handlers.", LogLevel.Info);
     }
 
-    public void PrintStatus()
+    public string BuildStatusText()
     {
         var lines = new List<string>
         {
@@ -205,22 +219,85 @@ public sealed partial class LmhCoordinator
             $"MainPlayer={Context.IsMainPlayer}",
             $"EarlyInitRequested={_earlyInitRequested}",
             $"WildEggsApiReady={_wildEggs is not null}",
-            $"RoosterApiReady={_roosterHatching is not null}",
+            $"RoosterApiReady={_roosterControl is not null}",
             $"AssetManagerReady={_assetManager is not null}",
             $"AssetPipelineReady={_assetPipeline is not null}",
             $"ApplicationServicesReady={_app is not null}",
         };
 
-        foreach (var line in lines)
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    public void PrintStatus()
+    {
+        foreach (var line in BuildStatusText().Split(Environment.NewLine))
             LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.Runtime, line, LogLevel.Info);
+    }
+
+    public void PrintRuntimeDiagnostics()
+    {
+        foreach (var line in BuildRuntimeDiagnosticsText().Split(Environment.NewLine))
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.Runtime, line, LogLevel.Info);
+    }
+
+    public DiagnosticReport BuildVerifyReport()
+    {
+        var report = new DiagnosticReport();
+        report.Add("WORLD_READY", Context.IsWorldReady ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "runtime", $"WorldReady={Context.IsWorldReady}");
+        report.Add("MAIN_PLAYER", Context.IsMainPlayer ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "runtime", $"MainPlayer={Context.IsMainPlayer}");
+        report.Add("WE_API", _wildEggs is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Fail, "integrations", $"WildEggsApiReady={_wildEggs is not null}", "Install or enable EggsInWild.");
+        report.Add("RA_API", _roosterControl is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Fail, "integrations", $"RoosterApiReady={_roosterControl is not null}", "Install or enable RoosterControl.");
+        report.Add("ASSET_MANAGER", _assetManager is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "runtime", $"AssetManagerReady={_assetManager is not null}", "Load a save and run reload if assets are not initialized.");
+        report.Add("PIPELINE", _assetPipeline is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "content-pipeline", $"AssetPipelineReady={_assetPipeline is not null}");
+        report.Add("SERVICES", _app is not null ? DiagnosticSeverity.Pass : DiagnosticSeverity.Warn, "runtime", $"ApplicationServicesReady={_app is not null}");
+        return report;
+    }
+
+    public void DebugWriteStateDump(string[] args)
+    {
+        if (!Context.IsWorldReady)
+        {
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.Runtime, "Save not loaded; nothing to dump yet.", LogLevel.Info);
+            return;
+        }
+
+        var defaultName = $"lmh_state_{Game1.Date.Year}_{Game1.Date.Season}_{Game1.Date.DayOfMonth}.json";
+        var pathArg = args.FirstOrDefault(static x => !x.StartsWith("--", StringComparison.Ordinal));
+        var path = ResolveOutputPath(pathArg ?? string.Empty, Path.Combine("state-dumps", defaultName));
+        var runtimeLines = BuildRuntimeDiagnosticsText().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        var payload = new
+        {
+            GeneratedAtUtc = DateTime.UtcNow,
+            SaveId = Game1.uniqueIDForThisGame,
+            Date = new
+            {
+                Game1.Date.Year,
+                Season = Game1.Date.Season.ToString(),
+                Game1.Date.DayOfMonth
+            },
+            Status = BuildStatusText().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+            Runtime = runtimeLines,
+            Pipeline = GetContentHandlerDescriptors().Select(static x => new
+            {
+                x.Kind,
+                x.Name,
+                x.Order,
+                x.Handles,
+                x.Gates
+            }).ToArray()
+        };
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+        LogScopedHelper.Log(_log, ScopedLogCatalog.ModLthteCategory.Runtime, $"Wrote state dump: {path}", LogLevel.Info);
     }
 
     private void InitializeApis()
     {
-        _roosterHatching = _core.Helper.ModRegistry.GetApi<IRoosterHatchingAPI>("Mikew.roostersaddon.smapi");
+        _roosterControl = _core.Helper.ModRegistry.GetApi<IRoosterControlApi>("Mikew.roostersaddon.smapi");
         _wildEggs = _core.Helper.ModRegistry.GetApi<IWildEggsApi>("Mikew.eggsinwild");
 
-        if (_roosterHatching is null)
+        if (_roosterControl is null)
         {
             throw new InvalidOperationException(
                 "LetMeHatch requires Rooster's Addon (Mikew.roostersaddon.smapi). Install/enable it and try again."
@@ -242,7 +319,7 @@ private void InitializeAssetEditor()
         return;
     }
 
-    _assetManager = new GameAssetManager(_wildEggs);
+    _assetManager = new GameAssetManager(_wildEggs, _roosterControl);
     ModEntry.CurrentAssetManager = _assetManager;
     _assetManager.TextureManager.SetUpModAssets();
 
@@ -417,7 +494,71 @@ public void DebugBreedingValidatePlans(string femaleKeyArg)
     {
         _log.Log($"[breeding validate plans] OK ({plans.Count} plan(s)).", LogLevel.Info);
     }
-}
+    }
+#endif
+#if LMH_DEV
+
+    public void DebugBreedingExplain(string[] args)
+    {
+        if (!Context.IsWorldReady || _assetManager is null)
+        {
+            _log.Log("[breeding explain] World not ready or asset manager not initialized.", LogLevel.Warn);
+            return;
+        }
+
+        var json = args.Any(static x => string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase));
+        var positional = args.Where(static x => !string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase)).ToArray();
+        var femaleKeyFilter = positional.Length >= 1 ? positional[0].Trim() : string.Empty;
+
+        var plans = _assetManager.BreedingDataLoader.BuildPlansForToday(
+            Game1.farmAnimalData,
+            ModEntry.Config,
+            _assetManager.BreedingConfigsByPack,
+            string.IsNullOrWhiteSpace(femaleKeyFilter) ? null : femaleKeyFilter);
+
+        if (plans.Count == 0)
+        {
+            _log.Log(string.IsNullOrWhiteSpace(femaleKeyFilter)
+                ? "[breeding explain] No plans available for today."
+                : $"[breeding explain] No plan found for female '{femaleKeyFilter}'.",
+                LogLevel.Info);
+            return;
+        }
+
+        if (json)
+        {
+            _log.Log(BreedingDumpJson.SerializePlans(plans, indented: false), LogLevel.Info);
+            return;
+        }
+
+        foreach (var plan in plans)
+        {
+            _log.Log($"[breeding explain] planId={plan.PlanId} date={plan.InGameDate:yyyy-MM-dd} seed={plan.Seed} scope={plan.ScopeAnimalKeys.Count} pairs={plan.Pairs.Count} mutations={plan.Mutations.Count}", LogLevel.Info);
+
+            foreach (var pair in plan.Pairs)
+            {
+                var otherMales = pair.OtherMaleKeys.Count > 0
+                    ? string.Join(", ", pair.OtherMaleKeys)
+                    : "<none>";
+                _log.Log(
+                    $"[breeding explain] pair female={pair.FemaleAnimalKey} male={pair.MaleAnimalKey} others={otherMales} mode={pair.Mode} selectedEggType={pair.SelectedEggType ?? "<none>"} assign={pair.EggToAssignItemId ?? "<none>"} clear={pair.EggToClearItemId ?? "<none>"} fertilized={pair.FertilizedSucceeded} qty={pair.MaleQuantity}",
+                    LogLevel.Info);
+                _log.Log(
+                    $"[breeding explain] chances female={pair.FemaleAnimalKey} base={pair.BaseFertilizedChance:0.###} adjusted={pair.AdjustedFertilizedChance:0.###} maleChance={pair.MaleChance:0.###} boost={pair.BoostByMale:0.###} dailyLuckBoost={pair.ApplyDailyLuckBoost}",
+                    LogLevel.Info);
+            }
+
+            if (plan.Diagnostics.Count == 0)
+            {
+                _log.Log("[breeding explain] diagnostics=<none>", LogLevel.Info);
+            }
+            else
+            {
+                foreach (var diagnostic in plan.Diagnostics)
+                    _log.Log($"[breeding explain] diagnostic: {diagnostic}", LogLevel.Info);
+            }
+        }
+    }
 #endif
 
 
@@ -451,7 +592,7 @@ public void DebugCloneTexturePreview(string cloneId)
 {
     if (string.IsNullOrWhiteSpace(cloneId))
     {
-        _log.Log("[clone texture preview] Usage: lmh_clone_texture_preview <cloneId>", LogLevel.Info);
+        _log.Log("[clone texture preview] Usage: lmh debug clone-texture preview <cloneId>", LogLevel.Info);
         return;
     }
 
@@ -568,5 +709,92 @@ private static int TryParsePositiveInt(string? arg, int defaultValue, int maxVal
 
     return defaultValue;
 }
+
+    private string BuildRuntimeDiagnosticsText()
+    {
+        var lines = new List<string>(BuildStatusText().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
+
+        lines.Add($"Config.BreedingSystemEnabled={ModEntry.Config.BreedingSystemEnabled}");
+        lines.Add($"Config.CloneVanillaEggs={ModEntry.Config.CloneVanillaEggs}");
+        lines.Add($"Config.CloneMachineRules={ModEntry.Config.CloneMachineRules}");
+        lines.Add($"Config.OnlyFertilizedEggs={ModEntry.Config.OnlyFertilizedEggs}");
+        lines.Add($"Config.UseDynamicCloneTextures={ModEntry.Config.UseDynamicCloneTextures}");
+        lines.Add($"Config.DynamicCloneTintMode={ModEntry.Config.DynamicCloneTintMode}");
+        lines.Add($"DynamicTextureCacheCount={DynamicCloneObjectTextureLoader.CacheCount}");
+
+        if (_assetManager is null)
+        {
+            lines.Add("LoadedContentPacks=0");
+            lines.Add("LoadedFemaleEntries=0");
+            lines.Add("LoadedMaleEntries=0");
+            lines.Add("BreedingConfigPacks=0");
+            lines.Add("BreedingConfigEntries=0");
+            lines.Add("ClonedAnimals=0");
+            lines.Add("ItemsToAdd=0");
+            lines.Add("FertilizedEggsToAdd=0");
+            lines.Add("OutputItemsToClone=0");
+            lines.Add("SavedAnimalItemRelations=0");
+            lines.Add("SavedAnimalKeys=0");
+            lines.Add("MachineRules=0");
+            return string.Join(Environment.NewLine, lines);
+        }
+
+        var loadedFemaleEntries = _assetManager.LoadedFemaleBreedingData.Sum(static kvp => kvp.Value.Count);
+        var loadedMaleEntries = _assetManager.LoadedFemaleBreedingData.Sum(static kvp => kvp.Value.Sum(static inner => inner.Value.Males.Count));
+        var breedingConfigEntries = _assetManager.BreedingConfigsByPack.Sum(static kvp => kvp.Value.Count);
+        var itemsToAdd = _assetManager.ItemsToAdd.Sum(static byAnimal => byAnimal.Value.Sum(static byType => byType.Value.Count));
+        var foundItemCounts = _assetManager.SavedItemsData.FoundItems
+            .Select(kvp => $"{kvp.Key}={kvp.Value.Count}")
+            .ToArray();
+
+        lines.Add($"LoadedContentPacks={_assetManager.LoadedContentPacks.Count}");
+        lines.Add($"LoadedFemaleEntries={loadedFemaleEntries}");
+        lines.Add($"LoadedMaleEntries={loadedMaleEntries}");
+        lines.Add($"BreedingConfigPacks={_assetManager.BreedingConfigsByPack.Count}");
+        lines.Add($"BreedingConfigEntries={breedingConfigEntries}");
+        lines.Add($"ClonedAnimals={_assetManager.ClonedAnimalsInfoList.Count}");
+        lines.Add($"ItemsToAdd={itemsToAdd}");
+        lines.Add($"FertilizedEggsToAdd={_assetManager.FertilizedEggsToAdd.Count}");
+        lines.Add($"OutputItemsToClone={_assetManager.OutpuItemsToClone.Count}");
+        lines.Add($"SavedAnimalItemRelations={_assetManager.SavedItemsData.AnimalItemRelation.Count}");
+        lines.Add($"SavedAnimalKeys={_assetManager.SavedItemsData.AnimalKeys.Count}");
+        lines.Add($"MachineRules={_assetManager.MachineEditor.MachineRules.Count}");
+        lines.Add($"FoundItems={string.Join(", ", foundItemCounts)}");
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private IReadOnlyList<ContentHandlerDescriptor> GetContentHandlerDescriptors()
+    {
+        var descriptors = new List<ContentHandlerDescriptor>();
+
+        AddDescriptor(descriptors, "loader", 0, new DynamicCloneObjectTextureLoader(ModEntry.ModManifestInstance.UniqueID));
+        AddDescriptor(descriptors, "editor", 10, new FarmAnimalsBreedingSystemEditor());
+        AddDescriptor(descriptors, "editor", 20, new FarmAnimalsEggListByNameEditor());
+        AddDescriptor(descriptors, "editor", 30, new FarmAnimalsClonesEditor());
+        AddDescriptor(descriptors, "editor", 40, new FarmAnimalsBirthTextEditor());
+        AddDescriptor(descriptors, "editor", 50, new FarmAnimalsClonePlaceholdersEditor());
+        AddDescriptor(descriptors, "editor", 60, new FarmAnimalsReplaceOriginalItemsEditor());
+        AddDescriptor(descriptors, "editor", 70, new ObjectsClonedEggsEditor());
+        AddDescriptor(descriptors, "editor", 80, new ObjectsFertilizedEggsEditor());
+        AddDescriptor(descriptors, "editor", 90, new MachinesRulesEditor());
+
+        return descriptors;
+    }
+
+    private static void AddDescriptor(
+        ICollection<ContentHandlerDescriptor> descriptors,
+        string kind,
+        int order,
+        object handler)
+    {
+        if (handler is not IContentHandlerDebugInfo info)
+            return;
+
+        var name = handler.GetType().Name;
+        descriptors.Add(new ContentHandlerDescriptor(kind, name, order, info.DebugHandles, info.DebugGates));
+    }
+
+    private sealed record ContentHandlerDescriptor(string Kind, string Name, int Order, string Handles, string Gates);
 
 }

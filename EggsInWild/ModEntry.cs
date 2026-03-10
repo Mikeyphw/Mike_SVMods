@@ -33,6 +33,7 @@ using EggsInWild.Infrastructure.DesertTomb.Harmony;
 using EggsInWild.Infrastructure.DesertTomb.Loot;
 using EggsInWild.Infrastructure.DesertTomb.Loot.Definitions;
 using EggsInWild.Infrastructure.DesertTomb.Monsters;
+using EggsInWild.Infrastructure.DesertTomb.Diagnostics;
 using EggsInWild.DesertTomb.Core.Configuration;
 using EggsInWild.Infrastructure.ModData;
 using EggsInWild.Infrastructure.ModData.Models;
@@ -71,6 +72,7 @@ public sealed partial class ModEntry : Mod
         _config.ConfigUpdated += OnConfigUpdated;
 
         DebugKnobs.Initialize(() => _config.Get());
+        CustomMonsterDebug.Initialize(() => _config.Get(), Monitor);
 
         EnsureNoLocalNestCoreDuplicates(helper);
         RegisterConsoleCommands(helper);
@@ -184,9 +186,11 @@ private void SyncApiState()
         var dataLoader = _contentDataLoader
             ?? new ConfiguredModDataLoader(new ModDataLoader(JsonFileReaderFactory.Create(Helper), log), _config, log);
         var snapshot = dataLoader.Load();
+        var farmAnimals = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(AssetNames.FarmAnimals);
+        var catalog = WildEggSpawnCatalogBuilder.Build(snapshot.WildEggSpawnDefinitions, snapshot.WildAnimals, farmAnimals, Helper.ModRegistry, log);
 
         _api.SetWildEggsIDs(new HashSet<string>(
-            SpawnAreaEggIds.GetEggItemIds(snapshot.SpawnAreas, log),
+            catalog.ActiveEggDefinitions.Select(def => def.EggItemId),
             StringComparer.OrdinalIgnoreCase));
 
         _api.SetValidAnimals(ComputeParityVisibleAnimals(snapshot));

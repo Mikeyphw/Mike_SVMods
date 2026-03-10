@@ -75,7 +75,7 @@ public sealed class StardewUiIntegration
             Engine.RegisterCustomData(CustomDataPrefix, options.CustomDataDir!);
     }
 
-#if WEGG_DEV
+#if NEST_DEV
     /// <summary>
     /// Enables StardewUI hot reloading. Dev-only: do not ship in Release builds.
     /// </summary>

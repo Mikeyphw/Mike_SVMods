@@ -25,7 +25,6 @@
 
 ## Wiring follow-up
 - [x] Wire AnimalNotes runtime services into normal `ModEntry` flow (save/day/warp/message handling).
-- [x] Wire `Phase8HealthReporter` at startup.
 - [x] Wire `WeggDiagnosticsState` for current NestCore API version + GMCM registration state.
 - [x] Wire `WildAnimalPreviewResolver` into GMCM as preview-source text.
 - [x] Replace text-only WildAnimals preview info with StardewUI sprite previews in the WildAnimals editor.

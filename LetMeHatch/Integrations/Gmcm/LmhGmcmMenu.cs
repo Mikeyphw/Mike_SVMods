@@ -1007,16 +1007,32 @@ public static class LmhGmcmMenu
     }
 
     
-    private static string BuildMaleEggsParagraph(I18TranslationHelper i18n, BreedingDataMale maleData)
+private static string BuildMaleEggsParagraph(I18TranslationHelper i18n, BreedingDataMale maleData)
 {
     var header = i18n.GetString("config.breeding.maleEggs.header");
 
-    var lines = maleData.GetEggIDs()
+    var lines = maleData.EggsIDs
         .OrderBy(x => x.Key)
-        .Select(x => string.Format(i18n.GetString("config.breeding.maleEggs.entry"), x.Key, x.Value));
+        .Select(x => string.Format(i18n.GetString("config.breeding.maleEggs.entry"), x.Key, FormatEggDisplay(x.Value, maleData.GetEggID(x.Key))));
 
     return header + Environment.NewLine + string.Join(Environment.NewLine, lines);
 }
+
+    private static string FormatEggDisplay(EggIdCandidates candidates, string? resolved)
+    {
+        var values = candidates.Values
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .Select(static value => value.Trim())
+            .ToList();
+
+        if (values.Count == 0)
+            return resolved ?? "-";
+
+        if (values.Count == 1)
+            return values[0];
+
+        return $"random from [{string.Join(", ", values)}]";
+    }
 
     private static string BuildPackPageId(string contentPackId)
         => "breeding.pack." + Slug(contentPackId);

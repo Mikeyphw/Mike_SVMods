@@ -99,12 +99,12 @@ private static string NormalizeBuildingKey(string raw)
         if (positional.Count == 0 || positional[0].Equals("help", StringComparison.OrdinalIgnoreCase))
         {
             Monitor.Log(
-                "Usage: ra_debug_produce [--full] [--json] <roosterType> [day] [locationName] [buildingType]\n" +
+                "Usage: ra debug produce [--full] [--json] <roosterType> [day] [locationName] [buildingType]\n" +
                 "Examples:\n" +
-                "  ra_debug_produce WhiteRooster\n" +
-                "  ra_debug_produce WhiteRooster --full\n" +
-                "  ra_debug_produce WhiteRooster --json\n" +
-                "  ra_debug_produce WhiteRooster 1234 Farm DeluxeCoop --full",
+                "  ra debug produce WhiteRooster\n" +
+                "  ra debug produce WhiteRooster --full\n" +
+                "  ra debug produce WhiteRooster --json\n" +
+                "  ra debug produce WhiteRooster 1234 Farm DeluxeCoop --full",
                 LogLevel.Info
             );
             return;
@@ -112,13 +112,13 @@ private static string NormalizeBuildingKey(string raw)
 
         if (RoosterHelper is null)
         {
-            Monitor.Log("[ra_debug_produce] RoosterHelper is not initialized yet.", LogLevel.Warn);
+            Monitor.Log("[ra debug produce] RoosterHelper is not initialized yet.", LogLevel.Warn);
             return;
         }
 
         if (!Enum.TryParse<RoosterType>(positional[0], ignoreCase: true, out var roosterType))
         {
-            Monitor.Log($"[ra_debug_produce] Unknown roosterType '{positional[0]}'. Valid: {string.Join(", ", Enum.GetNames(typeof(RoosterType)))}", LogLevel.Warn);
+            Monitor.Log($"[ra debug produce] Unknown roosterType '{positional[0]}'. Valid: {string.Join(", ", Enum.GetNames(typeof(RoosterType)))}", LogLevel.Warn);
             return;
         }
 
@@ -149,11 +149,11 @@ private static string NormalizeBuildingKey(string raw)
         if (positional.Count > 0 && positional[0].Equals("help", StringComparison.OrdinalIgnoreCase))
         {
             Monitor.Log(
-                "Usage: ra_debug_plan [--full] [--json] [day] [locationName] [buildingType]\n" +
+                "Usage: ra debug plan [--full] [--json] [day] [locationName] [buildingType]\n" +
                 "Examples:\n" +
-                "  ra_debug_plan\n" +
-                "  ra_debug_plan 1234 Farm DeluxeCoop\n" +
-                "  ra_debug_plan --json",
+                "  ra debug plan\n" +
+                "  ra debug plan 1234 Farm DeluxeCoop\n" +
+                "  ra debug plan --json",
                 LogLevel.Info
             );
             return;
@@ -161,13 +161,13 @@ private static string NormalizeBuildingKey(string raw)
 
         if (!Context.IsWorldReady)
         {
-            Monitor.Log("[ra_debug_plan] Save not loaded.", LogLevel.Info);
+            Monitor.Log("[ra debug plan] Save not loaded.", LogLevel.Info);
             return;
         }
 
         if (RoosterHelper is null)
         {
-            Monitor.Log("[ra_debug_plan] RoosterHelper is not initialized yet.", LogLevel.Warn);
+            Monitor.Log("[ra debug plan] RoosterHelper is not initialized yet.", LogLevel.Warn);
             return;
         }
 
@@ -205,7 +205,7 @@ private static string NormalizeBuildingKey(string raw)
         }
         catch (Exception ex)
         {
-            Monitor.Log($"[ra_debug_plan] Failed to load {FarmAnimalsAssetName}: {ex}", LogLevel.Error);
+            Monitor.Log($"[ra debug plan] Failed to load {FarmAnimalsAssetName}: {ex}", LogLevel.Error);
             return;
         }
 
@@ -241,7 +241,7 @@ private static string NormalizeBuildingKey(string raw)
         }
 if (plan is null)
         {
-            Monitor.Log("[ra_debug_plan] No plan available.", LogLevel.Info);
+            Monitor.Log("[ra debug plan] No plan available.", LogLevel.Info);
             return;
         }
 
@@ -262,11 +262,11 @@ if (plan is null)
         if (positional.Count > 0 && positional[0].Equals("help", StringComparison.OrdinalIgnoreCase))
         {
             Monitor.Log(
-                "Usage: ra_debug_diff [--full] [--json]\n" +
+                "Usage: ra debug diff [--full] [--json]\n" +
                 "Examples:\n" +
-                "  ra_debug_diff\n" +
-                "  ra_debug_diff --full\n" +
-                "  ra_debug_diff --json",
+                "  ra debug diff\n" +
+                "  ra debug diff --full\n" +
+                "  ra debug diff --json",
                 LogLevel.Info
             );
             return;
@@ -274,13 +274,13 @@ if (plan is null)
 
         if (_dailyDecisions is null)
         {
-            Monitor.Log("[ra_debug_diff] No current daily decisions snapshot.", LogLevel.Info);
+            Monitor.Log("[ra debug diff] No current daily decisions snapshot.", LogLevel.Info);
             return;
         }
 
         if (_previousDailyDecisions is null)
         {
-            Monitor.Log("[ra_debug_diff] No previous daily decisions snapshot (nothing to diff yet).", LogLevel.Info);
+            Monitor.Log("[ra debug diff] No previous daily decisions snapshot (nothing to diff yet).", LogLevel.Info);
             return;
         }
 

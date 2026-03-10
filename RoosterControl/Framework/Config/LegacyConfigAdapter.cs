@@ -37,7 +37,6 @@ internal static class LegacyConfigAdapter
             var cfg = RoosterControlConfig.CreateDefault();
             MapGeneral(root, cfg);
             MapRoosters(root, cfg);
-            MapFemales(root, cfg);
             cfg.SchemaVersion = ConfigSchema.CurrentVersion;
 
             migrated = cfg;
@@ -122,24 +121,6 @@ internal static class LegacyConfigAdapter
             settings.ProduceEntries = BuildEntries(prop.Value, deluxe: false);
             settings.DeluxeProduceEntries = BuildEntries(prop.Value, deluxe: true);
         }
-    }
-
-    private static void MapFemales(JsonElement root, RoosterControlConfig cfg)
-    {
-        if (!TryGetProperty(root, "FemalesOptions", out var females) || females.ValueKind != JsonValueKind.Object)
-            return;
-
-        var mapped = new Dictionary<string, FemaleRoosterAssignment>(StringComparer.OrdinalIgnoreCase);
-        foreach (var prop in females.EnumerateObject())
-        {
-            if (prop.Value.ValueKind != JsonValueKind.String)
-                continue;
-
-            var raw = prop.Value.GetString() ?? string.Empty;
-            mapped[prop.Name] = ParseFemaleAssignment(raw);
-        }
-
-        cfg.FemalesOptions = mapped;
     }
 
     private static List<ProduceEntry> BuildEntries(JsonElement rooster, bool deluxe)
@@ -304,20 +285,4 @@ internal static class LegacyConfigAdapter
             : DeluxeProduceMode.CustomizeBelow;
     }
 
-    private static FemaleRoosterAssignment ParseFemaleAssignment(string raw)
-    {
-        var text = raw?.Trim();
-        if (string.IsNullOrEmpty(text) || text.Equals("Off", StringComparison.OrdinalIgnoreCase))
-            return FemaleRoosterAssignment.Off;
-
-        return text.ToLowerInvariant() switch
-        {
-            "white" or "cockwhite" => FemaleRoosterAssignment.White,
-            "brown" or "cockbrown" => FemaleRoosterAssignment.Brown,
-            "blue" or "cockblue" => FemaleRoosterAssignment.Blue,
-            "void" or "cockvoid" => FemaleRoosterAssignment.Void,
-            "gold" or "cockgold" => FemaleRoosterAssignment.Gold,
-            _ => FemaleRoosterAssignment.Off,
-        };
-    }
 }

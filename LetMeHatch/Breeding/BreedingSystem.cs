@@ -60,7 +60,7 @@ namespace LetMeHatch.Breeding
 
             _gameDataFemale = _gameAnimalData[femaleKey];
             _gameDataMale = _gameAnimalData[chosenMaleData.Key];
-            _eggs = GetEggs(generalConfig.EggChances, chosenMaleData.Value.GetEggIDs());
+            _eggs = GetEggs(generalConfig.EggChances, chosenMaleData.Value);
             _otherMales = GetOtherMalesFarmAnimalData(
                 chosenFemaleData.BreedingData.Males,
                 chosenMaleData.Key
@@ -83,9 +83,10 @@ namespace LetMeHatch.Breeding
 
         private Dictionary<ItemType, (string? ID, float Chance)> GetEggs(
             Dictionary<ItemType, float> eggChances,
-            Dictionary<ItemType, string?> eggIDs
+            BreedingDataMale maleData
         )
         {
+            var eggIDs = maleData.GetResolvedEggIDs(_eggSelector.ChooseEggCandidateOrDefault);
             return new()
             {
                 { ItemType.Normal, (eggIDs[ItemType.Normal], eggChances[ItemType.Normal]) },

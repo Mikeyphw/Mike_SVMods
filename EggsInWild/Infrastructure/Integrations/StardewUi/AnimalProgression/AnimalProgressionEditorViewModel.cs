@@ -15,6 +15,7 @@ public sealed class AnimalProgressionEditorViewModel : INotifyPropertyChanged
     private IReadOnlyList<AnimalProgressionAnimalRecord> _catalog = Array.Empty<AnimalProgressionAnimalRecord>();
     private AnimalProgressionDraft _draft = new(new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase));
     private string? _selectedAnimalId;
+    private bool _isBrowsing = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -49,12 +50,16 @@ public sealed class AnimalProgressionEditorViewModel : INotifyPropertyChanged
     public IReadOnlyList<AnimalProgressionAnimalItemViewModel> Animals { get; private set; } = Array.Empty<AnimalProgressionAnimalItemViewModel>();
     public string SelectedAnimal => SelectedAnimalRecord?.DisplayName ?? string.Empty;
     public bool HasSelectedAnimal => SelectedAnimalRecord is not null;
+    public bool IsBrowsing => _isBrowsing;
+    public bool IsShowingDetail => !_isBrowsing && SelectedAnimalRecord is not null;
     public string CurrentModeText => GetEffectiveModeText(SelectedAnimalRecord);
     public string DefaultModeText => SelectedAnimalRecord is null ? string.Empty : FormatMode(SelectedAnimalRecord.DefaultEnabled);
     public string EffectiveModeText => GetEffectiveModeText(SelectedAnimalRecord);
     public IReadOnlyList<AnimalProgressionModeOptionViewModel> ModeOptions { get; private set; } = Array.Empty<AnimalProgressionModeOptionViewModel>();
     public bool CanSave => HasChanges;
     public bool CanDiscard => HasChanges;
+    public bool CanOpenPreviousAnimal => GetSelectedAnimalIndex() > 0;
+    public bool CanOpenNextAnimal => GetSelectedAnimalIndex() >= 0 && GetSelectedAnimalIndex() < Animals.Count - 1;
 
     private AnimalProgressionAnimalRecord? SelectedAnimalRecord => _catalog.FirstOrDefault(x => x.AnimalId == _selectedAnimalId);
 
@@ -87,11 +92,25 @@ public sealed class AnimalProgressionEditorViewModel : INotifyPropertyChanged
     public void Reload()
     {
         _catalog = _loadCatalog();
-        _selectedAnimalId ??= _catalog.FirstOrDefault()?.AnimalId;
+        if (_selectedAnimalId is not null && !_catalog.Any(x => x.AnimalId == _selectedAnimalId))
+            _selectedAnimalId = null;
         RebuildAnimals();
         RebuildModeOptions();
         NotifyAll();
     }
+
+    public void BackToBrowser()
+    {
+        if (_isBrowsing)
+            return;
+
+        _isBrowsing = true;
+        NotifyAll();
+    }
+
+    public void OpenPreviousAnimal() => OpenAdjacentAnimal(-1);
+
+    public void OpenNextAnimal() => OpenAdjacentAnimal(1);
 
     private void RebuildAnimals()
     {
@@ -109,6 +128,7 @@ public sealed class AnimalProgressionEditorViewModel : INotifyPropertyChanged
                 () =>
                 {
                     _selectedAnimalId = record.AnimalId;
+                    _isBrowsing = false;
                     RebuildModeOptions();
                     NotifyAll();
                 }))
@@ -176,12 +196,46 @@ public sealed class AnimalProgressionEditorViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Animals));
         OnPropertyChanged(nameof(SelectedAnimal));
         OnPropertyChanged(nameof(HasSelectedAnimal));
+        OnPropertyChanged(nameof(IsBrowsing));
+        OnPropertyChanged(nameof(IsShowingDetail));
         OnPropertyChanged(nameof(CurrentModeText));
         OnPropertyChanged(nameof(DefaultModeText));
         OnPropertyChanged(nameof(EffectiveModeText));
         OnPropertyChanged(nameof(ModeOptions));
         OnPropertyChanged(nameof(CanSave));
         OnPropertyChanged(nameof(CanDiscard));
+        OnPropertyChanged(nameof(CanOpenPreviousAnimal));
+        OnPropertyChanged(nameof(CanOpenNextAnimal));
+    }
+
+    private int GetSelectedAnimalIndex()
+    {
+        if (SelectedAnimalRecord is null)
+            return -1;
+
+        for (var i = 0; i < Animals.Count; i++)
+        {
+            if (string.Equals(Animals[i].AnimalId, SelectedAnimalRecord.AnimalId, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+
+        return -1;
+    }
+
+    private void OpenAdjacentAnimal(int delta)
+    {
+        var currentIndex = GetSelectedAnimalIndex();
+        if (currentIndex < 0)
+            return;
+
+        var nextIndex = currentIndex + delta;
+        if (nextIndex < 0 || nextIndex >= Animals.Count)
+            return;
+
+        _selectedAnimalId = Animals[nextIndex].AnimalId;
+        _isBrowsing = false;
+        RebuildModeOptions();
+        NotifyAll();
     }
 
     private void OnPropertyChanged(string propertyName)

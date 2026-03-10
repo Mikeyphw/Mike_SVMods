@@ -50,7 +50,6 @@ public sealed class CatalogValidationTests
                     ["White"] = new RoosterCatalogEntry
                     {
                         FarmAnimalKey = "Chicken",
-                        DefaultFemaleKey = "Chicken",
                         Eggs = new EggCatalog { Normal = "176", Large = "174", Fertilized = "174" }
                     }
                 }

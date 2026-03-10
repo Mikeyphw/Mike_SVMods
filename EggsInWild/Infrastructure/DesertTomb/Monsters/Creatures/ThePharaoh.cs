@@ -9,6 +9,7 @@ using StardewValley.Monsters;
 using StardewValley.Pathfinding;
 using StardewValley.Projectiles;
 using EggsInWild.DesertTomb.Core.Configuration;
+using EggsInWild.Infrastructure.DesertTomb.Diagnostics;
 using EggsInWild.Infrastructure.DesertTomb.Monsters.Base;
 using EggsInWild.Infrastructure.Config;
 
@@ -20,12 +21,22 @@ namespace EggsInWild.Infrastructure.DesertTomb.Monsters.Creatures;
 /// </summary>
 internal sealed class ThePharaoh : Mummy
 {
+    private const int FrameWidth = 16;
+    private const int FrameHeight = 24;
+
     private enum PharaohState
     {
         Dormant = 0,
         Chase = 1,
         Casting = 2,
         Recover = 3,
+    }
+
+    private enum TeleportPhase
+    {
+        None = 0,
+        Vanishing = 1,
+        Reappearing = 2,
     }
 
     private static int VisionTiles => DebugKnobs.PharaohVisionTiles;
@@ -44,6 +55,9 @@ internal sealed class ThePharaoh : Mummy
 
     private static int LeashRadiusTiles => DebugKnobs.PharaohLeashRadiusTiles;
     private static int LeashTicksBeforeReturn => DebugKnobs.PharaohLeashTicksBeforeReturn;
+    private static int TeleportAnimStartFrame => DebugKnobs.PharaohTeleportAnimStartFrame;
+    private static int TeleportAnimFrames => DebugKnobs.PharaohTeleportAnimFrames;
+    private static int TeleportAnimIntervalMs => DebugKnobs.PharaohTeleportAnimIntervalMs;
 
     private readonly NetBool _spotted = new(false);
     private readonly NetBool _casting = new(false);
@@ -55,14 +69,21 @@ internal sealed class ThePharaoh : Mummy
     private readonly NetInt _recoverRemainingMs = new(0);
     private readonly NetInt _castCooldownMs = new(BaseCastCooldownMs);
     private readonly NetInt _sandStepCooldownMs = new(0);
+    private readonly NetInt _teleportPhase = new((int)TeleportPhase.None);
+    private readonly NetInt _teleportTargetX = new(0);
+    private readonly NetInt _teleportTargetY = new(0);
 
     private readonly NetString _spriteTexture = new();
+    private readonly string _normalSpriteTexture;
+    private readonly string _combatSpriteTexture;
 
     private float _rotationTimer;
     private Vector2 _lastPosition;
     private int _stuckTicks;
     private Point _homeTile;
     private int _outOfLeashTicks;
+    private TeleportPhase? _previousTeleportPhase;
+    private PharaohState? _previousLoggedState;
 
     internal ThePharaoh(
         MonsterMultipliers multipliers,
@@ -77,7 +98,10 @@ internal sealed class ThePharaoh : Mummy
         _homeTile = new Point((int)(position.X / 64f), (int)(position.Y / 64f));
         _lastPosition = position;
 
-        _spriteTexture.Value = $"Characters\\Monsters\\{textureName.Replace(" ", "")}";
+        var normalizedTextureName = textureName.Replace(" ", "");
+        _normalSpriteTexture = $"Characters\\Monsters\\{normalizedTextureName}";
+        _combatSpriteTexture = $"Characters\\Monsters\\{normalizedTextureName}_combatmode";
+        _spriteTexture.Value = _normalSpriteTexture;
 
         // Boss baseline stats (scaled further by multipliers + BuffForAdditionalDifficulty).
         MaxHealth = 1200;
@@ -98,6 +122,7 @@ internal sealed class ThePharaoh : Mummy
         );
 
         TombMonsterBuilder.SetMonsterNames(this, "Pharaoh");
+        reloadSprite();
     }
 
     protected override void initNetFields()
@@ -113,13 +138,16 @@ internal sealed class ThePharaoh : Mummy
             .AddField(_recoverRemainingMs, nameof(_recoverRemainingMs))
             .AddField(_castCooldownMs, nameof(_castCooldownMs))
             .AddField(_sandStepCooldownMs, nameof(_sandStepCooldownMs))
+            .AddField(_teleportPhase, nameof(_teleportPhase))
+            .AddField(_teleportTargetX, nameof(_teleportTargetX))
+            .AddField(_teleportTargetY, nameof(_teleportTargetY))
             .AddField(_spriteTexture, nameof(_spriteTexture));
     }
 
     public override void reloadSprite(bool onlyAppearance = false)
     {
-        Sprite = new AnimatedSprite(_spriteTexture.Value);
-        Sprite.SpriteHeight = 32;
+        Sprite = new AnimatedSprite(_spriteTexture.Value, 0, FrameWidth, FrameHeight);
+        Sprite.SpriteHeight = FrameHeight;
         Sprite.UpdateSourceRect();
         Sprite.ignoreStopAnimation = true;
     }
@@ -204,13 +232,28 @@ internal sealed class ThePharaoh : Mummy
     public override void behaviorAtGameTick(GameTime time)
     {
         base.behaviorAtGameTick(time);
+        EnsureSpriteTextureForCurrentState();
 
         var elapsedMs = (int)Math.Max(0, time.ElapsedGameTime.TotalMilliseconds);
 
         TickTimers(elapsedMs);
+        LogStateIfChanged();
+        CustomMonsterDebug.PharaohHeartbeat(this, "tick", $"heartbeat state={(PharaohState)_state.Value} spotted={_spotted.Value} casting={_casting.Value} enraged={_enraged.Value} castCooldownMs={_castCooldownMs.Value} recoverMs={_recoverRemainingMs.Value} stuckTicks={_stuckTicks} leashTicks={_outOfLeashTicks}");
 
         if (reviveTimer.Value > 0)
+        {
+            CustomMonsterDebug.PharaohHeartbeat(this, "reviving", $"reviving reviveTimer={reviveTimer.Value}", 20);
             return;
+        }
+
+        HandleTeleportVisualTransitions();
+
+        if ((TeleportPhase)_teleportPhase.Value != TeleportPhase.None)
+        {
+            IsWalkingTowardPlayer = false;
+            Halt();
+            return;
+        }
 
         if (_hasRevivedOnce.Value && !_enraged.Value)
             TryEnterEnrage();
@@ -218,6 +261,7 @@ internal sealed class ThePharaoh : Mummy
         var target = GetTargetPlayer();
         if (target is null)
         {
+            CustomMonsterDebug.PharaohHeartbeat(this, "no_target", "no target player found", 30);
             defaultMovementBehavior(time);
             return;
         }
@@ -226,6 +270,7 @@ internal sealed class ThePharaoh : Mummy
         {
             if (!CanSpotPlayer(target))
             {
+                CustomMonsterDebug.PharaohHeartbeat(this, "spot_blocked", $"cannot spot targetTile=({target.TilePoint.X},{target.TilePoint.Y})", 20);
                 defaultMovementBehavior(time);
                 return;
             }
@@ -235,6 +280,7 @@ internal sealed class ThePharaoh : Mummy
             controller = null;
             Halt();
             facePlayer(target);
+            CustomMonsterDebug.Pharaoh(this, $"spotted player targetTile=({target.TilePoint.X},{target.TilePoint.Y})");
 
             if (Game1.random.NextDouble() < 0.3)
                 currentLocation.playSound("shadowpeep");
@@ -247,6 +293,7 @@ internal sealed class ThePharaoh : Mummy
 
         if (_casting.Value || (PharaohState)_state.Value == PharaohState.Casting)
         {
+            CustomMonsterDebug.PharaohHeartbeat(this, "casting_tick", $"casting tick windupMs={_castWindupRemainingMs.Value}", 10);
             TickCasting(time, elapsedMs, target);
             return;
         }
@@ -255,6 +302,7 @@ internal sealed class ThePharaoh : Mummy
         {
             IsWalkingTowardPlayer = false;
             Halt();
+            CustomMonsterDebug.PharaohHeartbeat(this, "recover_tick", $"recover tick remainingMs={_recoverRemainingMs.Value}", 10);
             return;
         }
 
@@ -264,8 +312,20 @@ internal sealed class ThePharaoh : Mummy
         HandleMovement(time, target);
     }
 
-    protected override void updateMonsterSlaveAnimation(GameTime time)
+    protected override void updateAnimation(GameTime time)
     {
+        UpdateVisualAnimation(time);
+        resetAnimationSpeed();
+    }
+
+    protected override void updateMonsterSlaveAnimation(GameTime time)
+        => UpdateVisualAnimation(time);
+
+    private void UpdateVisualAnimation(GameTime time)
+    {
+        if ((TeleportPhase)_teleportPhase.Value != TeleportPhase.None)
+            return;
+
         if (_casting.Value)
         {
             Sprite.Animate(time, 16, 4, 200f);
@@ -310,6 +370,7 @@ internal sealed class ThePharaoh : Mummy
             {
                 _state.Value = (int)PharaohState.Chase;
                 IsWalkingTowardPlayer = true;
+                EnsureSpriteTextureForCurrentState();
             }
         }
 
@@ -322,6 +383,8 @@ internal sealed class ThePharaoh : Mummy
         _enraged.Value = true;
         _castCooldownMs.Value = Math.Min(_castCooldownMs.Value, DebugKnobs.PharaohEnrageCooldownCapMs);
         currentLocation?.playSound("furnace");
+        EnsureSpriteTextureForCurrentState();
+        CustomMonsterDebug.Pharaoh(this, $"enraged castCooldownMs={_castCooldownMs.Value}");
     }
 
     private Farmer? GetTargetPlayer()
@@ -366,16 +429,28 @@ internal sealed class ThePharaoh : Mummy
             return false;
 
         if (_castCooldownMs.Value > 0)
+        {
+            CustomMonsterDebug.PharaohHeartbeat(this, "cast_blocked_cooldown", $"cast blocked: cooldownMs={_castCooldownMs.Value}", 20);
             return false;
+        }
 
         if (!withinPlayerThreshold(CastRangeTiles))
+        {
+            CustomMonsterDebug.PharaohHeartbeat(this, "cast_blocked_range", $"cast blocked: out of range castRangeTiles={CastRangeTiles}", 20);
             return false;
+        }
 
         if (!Utility.doesPointHaveLineOfSightInMine(currentLocation, Tile, target.Tile, VisionTiles))
+        {
+            CustomMonsterDebug.PharaohHeartbeat(this, "cast_blocked_los", $"cast blocked: no line of sight targetTile=({target.TilePoint.X},{target.TilePoint.Y})", 20);
             return false;
+        }
 
         if (Game1.random.NextDouble() > 0.12)
+        {
+            CustomMonsterDebug.PharaohHeartbeat(this, "cast_blocked_rng", "cast blocked: rng gate failed", 20);
             return false;
+        }
 
         _casting.Value = true;
         _state.Value = (int)PharaohState.Casting;
@@ -383,11 +458,13 @@ internal sealed class ThePharaoh : Mummy
         IsWalkingTowardPlayer = false;
         Halt();
         facePlayer(target);
+        EnsureSpriteTextureForCurrentState();
 
         _castWindupRemainingMs.Value = CastWindupMs;
         _recoverRemainingMs.Value = 0;
 
         currentLocation.playSound("shadowpeep");
+        CustomMonsterDebug.Pharaoh(this, $"start casting targetTile=({target.TilePoint.X},{target.TilePoint.Y}) windupMs={CastWindupMs}");
         return true;
     }
 
@@ -406,10 +483,12 @@ internal sealed class ThePharaoh : Mummy
 
         _casting.Value = false;
         _state.Value = (int)PharaohState.Recover;
+        EnsureSpriteTextureForCurrentState();
 
         _recoverRemainingMs.Value = RecoverMs;
         _castCooldownMs.Value = _enraged.Value ? EnragedCastCooldownMs : BaseCastCooldownMs;
         IsWalkingTowardPlayer = true;
+        CustomMonsterDebug.Pharaoh(this, $"cast complete -> recover recoverMs={RecoverMs} nextCooldownMs={_castCooldownMs.Value}");
     }
 
     private void PerformCastAction(Farmer target)
@@ -417,6 +496,7 @@ internal sealed class ThePharaoh : Mummy
         if (TryRoyalRewrap(target))
             return;
 
+        CustomMonsterDebug.Pharaoh(this, "cast action -> bandage curse");
         CastBandageCurse(target);
     }
 
@@ -450,9 +530,15 @@ internal sealed class ThePharaoh : Mummy
             return false;
 
         if (targetMummy.reviveTimer.Value > 0)
+        {
             targetMummy.reviveTimer.Value = Math.Min(targetMummy.reviveTimer.Value, DebugKnobs.PharaohReviveTimerMax);
+            CustomMonsterDebug.Pharaoh(this, $"rewrap revived mummy targetTile=({targetMummy.TilePoint.X},{targetMummy.TilePoint.Y}) reviveTimer={targetMummy.reviveTimer.Value}");
+        }
         else
+        {
             targetMummy.Health = Math.Min(targetMummy.MaxHealth, targetMummy.Health + (_enraged.Value ? DebugKnobs.PharaohHealEnraged : DebugKnobs.PharaohHealNormal));
+            CustomMonsterDebug.Pharaoh(this, $"rewrap healed mummy targetTile=({targetMummy.TilePoint.X},{targetMummy.TilePoint.Y}) targetHp={targetMummy.Health}/{targetMummy.MaxHealth}");
+        }
 
         currentLocation.playSound("healSound");
         Game1.Multiplayer.broadcastSprites(
@@ -499,25 +585,34 @@ internal sealed class ThePharaoh : Mummy
 
         if (controller is null && !Utility.doesPointHaveLineOfSightInMine(currentLocation, Tile, target.Tile, VisionTiles))
         {
+            CustomMonsterDebug.PharaohHeartbeat(this, "pathfind_start", $"starting pathfind targetTile=({target.TilePoint.X},{target.TilePoint.Y})", 20);
             controller = new PathFindController(this, currentLocation, target.TilePoint, -1, null, 300);
             if (controller?.pathToEndPoint is null || controller.pathToEndPoint.Count == 0)
+            {
+                CustomMonsterDebug.PharaohHeartbeat(this, "pathfind_fail", "pathfind failed or empty", 20);
                 controller = null;
+            }
         }
 
         if (_stuckTicks >= SandStepAfterTicks && _sandStepCooldownMs.Value <= 0)
         {
+            CustomMonsterDebug.Pharaoh(this, $"sand step trigger stuckTicks={_stuckTicks}");
             TrySandStepAwayFrom(target);
             return;
         }
 
         if (_stuckTicks >= PathfindUnstuckAfterTicks)
         {
+            CustomMonsterDebug.Pharaoh(this, $"pathfind unstuck trigger stuckTicks={_stuckTicks}");
             TryPathfindUnstuck(target);
             return;
         }
 
         if (_stuckTicks >= MicroUnstuckAfterTicks)
+        {
+            CustomMonsterDebug.PharaohHeartbeat(this, "micro_unstuck", $"micro unstuck trigger stuckTicks={_stuckTicks}", 15);
             TryMicroUnstuck(target);
+        }
     }
 
     private void UpdateStuckTracking(Farmer target)
@@ -573,15 +668,8 @@ internal sealed class ThePharaoh : Mummy
         if (destination is null)
             return;
 
-        Halt();
-        controller = null;
-        IsWalkingTowardPlayer = false;
-
-        Position = new Vector2(destination.Value.X * 64f, destination.Value.Y * 64f);
-        _sandStepCooldownMs.Value = SandStepCooldownMs;
-        _stuckTicks = 0;
-
-        currentLocation.playSound("wand");
+        StartTeleport(destination.Value, consumeSandStepCooldown: true);
+        CustomMonsterDebug.Pharaoh(this, $"sand step targetTile=({destination.Value.X},{destination.Value.Y})");
     }
 
     private bool HandleLeash(Farmer target)
@@ -604,10 +692,8 @@ internal sealed class ThePharaoh : Mummy
         _outOfLeashTicks = 0;
 
         var destination = FindLeashReturnTile();
-        Position = new Vector2(destination.X * 64f, destination.Y * 64f);
-        controller = null;
-        Halt();
-        currentLocation.playSound("wand");
+        StartTeleport(destination, consumeSandStepCooldown: false);
+        CustomMonsterDebug.Pharaoh(this, $"leash return targetTile=({destination.X},{destination.Y})");
         return true;
     }
 
@@ -738,5 +824,133 @@ internal sealed class ThePharaoh : Mummy
         else if (dir.X < 0) SetMovingLeft(true);
         else if (dir.Y > 0) SetMovingDown(true);
         else if (dir.Y < 0) SetMovingUp(true);
+    }
+
+    private void StartTeleport(Point destination, bool consumeSandStepCooldown)
+    {
+        if (!Game1.IsMasterGame)
+            return;
+
+        if ((TeleportPhase)_teleportPhase.Value != TeleportPhase.None)
+            return;
+
+        _teleportTargetX.Value = destination.X;
+        _teleportTargetY.Value = destination.Y;
+        _teleportPhase.Value = (int)TeleportPhase.Vanishing;
+
+        if (consumeSandStepCooldown)
+            _sandStepCooldownMs.Value = SandStepCooldownMs;
+
+        _stuckTicks = 0;
+        controller = null;
+        IsWalkingTowardPlayer = false;
+        Halt();
+        currentLocation.playSound("wand");
+        CustomMonsterDebug.Pharaoh(this, $"teleport start phase=Vanishing targetTile=({destination.X},{destination.Y}) consumeSandStepCooldown={consumeSandStepCooldown}");
+    }
+
+    private void HandleTeleportVisualTransitions()
+    {
+        var currentPhase = (TeleportPhase)_teleportPhase.Value;
+        if (_previousTeleportPhase is null)
+        {
+            _previousTeleportPhase = currentPhase;
+            if (currentPhase != TeleportPhase.None)
+                Sprite.setCurrentAnimation(BuildTeleportAnimation(reverse: currentPhase == TeleportPhase.Reappearing));
+            return;
+        }
+
+        if (_previousTeleportPhase.Value == currentPhase)
+            return;
+
+        if (currentPhase == TeleportPhase.None)
+        {
+            Sprite.CurrentAnimation = null;
+            _previousTeleportPhase = currentPhase;
+            return;
+        }
+
+        Sprite.setCurrentAnimation(BuildTeleportAnimation(reverse: currentPhase == TeleportPhase.Reappearing));
+        Sprite.loop = false;
+        _previousTeleportPhase = currentPhase;
+        CustomMonsterDebug.Pharaoh(this, $"teleport phase -> {currentPhase}");
+    }
+
+    private List<FarmerSprite.AnimationFrame> BuildTeleportAnimation(bool reverse)
+    {
+        var frames = new List<FarmerSprite.AnimationFrame>(TeleportAnimFrames);
+
+        if (!reverse)
+        {
+            for (var i = 0; i < TeleportAnimFrames - 1; i++)
+                frames.Add(new FarmerSprite.AnimationFrame(TeleportAnimStartFrame + i, TeleportAnimIntervalMs));
+
+            frames.Add(new FarmerSprite.AnimationFrame(
+                TeleportAnimStartFrame + TeleportAnimFrames - 1,
+                TeleportAnimIntervalMs,
+                0,
+                false,
+                false,
+                OnTeleportOutComplete));
+            return frames;
+        }
+
+        for (var i = TeleportAnimFrames - 1; i > 0; i--)
+            frames.Add(new FarmerSprite.AnimationFrame(TeleportAnimStartFrame + i, TeleportAnimIntervalMs));
+
+        frames.Add(new FarmerSprite.AnimationFrame(
+            TeleportAnimStartFrame,
+            TeleportAnimIntervalMs,
+            0,
+            false,
+            false,
+            OnTeleportInComplete));
+        return frames;
+    }
+
+    private void OnTeleportOutComplete(Farmer who)
+    {
+        Sprite.CurrentAnimation = null;
+        if (!Game1.IsMasterGame || (TeleportPhase)_teleportPhase.Value != TeleportPhase.Vanishing)
+            return;
+
+        Position = new Vector2(_teleportTargetX.Value * 64f, _teleportTargetY.Value * 64f);
+        _teleportPhase.Value = (int)TeleportPhase.Reappearing;
+        CustomMonsterDebug.Pharaoh(this, $"teleport moved targetTile=({_teleportTargetX.Value},{_teleportTargetY.Value})");
+    }
+
+    private void OnTeleportInComplete(Farmer who)
+    {
+        Sprite.CurrentAnimation = null;
+        if (Game1.IsMasterGame && (TeleportPhase)_teleportPhase.Value == TeleportPhase.Reappearing)
+            _teleportPhase.Value = (int)TeleportPhase.None;
+
+        EnsureSpriteTextureForCurrentState();
+        CustomMonsterDebug.Pharaoh(this, "teleport complete");
+    }
+
+    private void EnsureSpriteTextureForCurrentState()
+    {
+        var desiredTexture = ShouldUseCombatSprite() ? _combatSpriteTexture : _normalSpriteTexture;
+        if (string.Equals(_spriteTexture.Value, desiredTexture, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _spriteTexture.Value = desiredTexture;
+        reloadSprite();
+    }
+
+    private bool ShouldUseCombatSprite()
+        => _enraged.Value
+           || _casting.Value
+           || (PharaohState)_state.Value is PharaohState.Casting or PharaohState.Recover or PharaohState.Chase;
+
+    private void LogStateIfChanged()
+    {
+        var currentState = (PharaohState)_state.Value;
+        if (_previousLoggedState == currentState)
+            return;
+
+        CustomMonsterDebug.Pharaoh(this, $"state -> {currentState} casting={_casting.Value} enraged={_enraged.Value} castCooldownMs={_castCooldownMs.Value} recoverMs={_recoverRemainingMs.Value}");
+        _previousLoggedState = currentState;
     }
 }

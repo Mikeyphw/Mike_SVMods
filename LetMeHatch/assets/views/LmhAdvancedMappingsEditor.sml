@@ -35,11 +35,11 @@ Contract:
             <scrollable layout="340px stretch" peeking="48">
                 <lane orientation="vertical">
                     <label text="Mapping groups" />
-                    <lane *repeat={MappingGroups} orientation="vertical">
+                    <lane *repeat={:MappingGroups} orientation="vertical">
                         <button layout="stretch content"
-                                text={ButtonText}
+                                text={:ButtonText}
                                 click=|OpenGroup()| />
-                        <label text={MetaText} />
+                        <label text={:MetaText} />
                     </lane>
                 </lane>
             </scrollable>
@@ -58,11 +58,11 @@ Contract:
                         <textinput layout="260px 54px" text={<>LargeItemText} />
                         <button text="Reset mapping" click=|ResetMapping()| />
                     </lane>
-                    <lane *repeat={MappingGroups} orientation="vertical">
+                    <lane *repeat={:MappingGroups} orientation="vertical">
                         <button layout="stretch content"
-                                text={OpenText}
+                                text={:OpenText}
                                 click=|OpenMapping()| />
-                        <label text={StateText} />
+                        <label text={:MetaText} />
                     </lane>
                 </lane>
             </scrollable>

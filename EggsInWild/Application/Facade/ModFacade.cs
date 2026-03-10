@@ -28,6 +28,7 @@ namespace EggsInWild.Application.Facade;
 
 public sealed class ModFacade : IModFacade
 {
+    private readonly string _modDirectoryPath;
     private readonly ISaveDataStore _store;
     private readonly SmapiConfigProvider<ModConfig> _config;
     private readonly ILog _log;
@@ -59,6 +60,7 @@ public sealed class ModFacade : IModFacade
     private readonly ITileSearchHistogram _histogram;
 
     public ModFacade(
+        string modDirectoryPath,
         ISaveDataStore store,
         SmapiConfigProvider<ModConfig> config,
         ILog log,
@@ -83,6 +85,7 @@ public sealed class ModFacade : IModFacade
 #endif
     )
     {
+        _modDirectoryPath = modDirectoryPath ?? throw new ArgumentNullException(nameof(modDirectoryPath));
         _store = store;
         _config = config;
         _log = log;
@@ -365,7 +368,7 @@ public FacadeResult Verify(string[] args)
             return new FacadeResult(false, "Host-only.");
 
         if (!confirmed)
-            return new FacadeResult(false, "Refusing to wipe without confirmation. Usage: wegg schema wipe --yes");
+            return new FacadeResult(false, "Refusing to wipe without confirmation. Usage: we save clear --yes");
 
         try
         {
@@ -383,6 +386,116 @@ public FacadeResult Verify(string[] args)
     }
 
 #if WEGG_DEV
+    public FacadeResult RuntimeStatus()
+    {
+        try
+        {
+            var cfg = _config.Get();
+            var snapshot = _dataLoader.Load();
+            var enabledWildAnimals = snapshot.WildAnimals.Count(static kvp => kvp.Value.Enabled);
+
+            var lines = new[]
+            {
+                $"WorldReady={_isWorldReady()}",
+                $"MainPlayer={_isMainPlayer()}",
+                $"ProgressionStep={GetProgressionStep()}",
+                $"ProgressionMode={cfg.ProgressionMode}",
+                $"DesertTombEnabled={cfg.DesertTombModuleEnabled}",
+                $"AnimalNotesDebugMode={cfg.AnimalNotesDebugMode}",
+                $"QuestCompletionTracked={GetQuestCompletionDays().Count}",
+                $"WildAnimalsTotal={snapshot.WildAnimals.Count}",
+                $"WildAnimalsEnabled={enabledWildAnimals}",
+                $"SpawnAreas={snapshot.WildEggSpawnDefinitions.Count}",
+                $"LocationPacks={snapshot.LocationPacks.Count}",
+                $"AnimalNotesServiceReady={_animalNotes is not null}",
+                $"AnimalNotesValidatorReady={_animalNotesValidator is not null}",
+                $"SpawnerReady={_spawner is not null}",
+                $"VerifierReady=True",
+            };
+
+            return new FacadeResult(true, string.Join(Environment.NewLine, lines));
+        }
+        catch (Exception ex)
+        {
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.General, $"RuntimeStatus failed: {ex}", StardewModdingAPI.LogLevel.Error);
+            return new FacadeResult(false, "Failed building runtime diagnostics (see log).");
+        }
+    }
+
+    public FacadeResult PipelineStatus()
+    {
+        try
+        {
+            var editorAssets = NestCorePipelineSnapshot.EditorAssets;
+            var modAssetPaths = NestCorePipelineSnapshot.ModAssetPaths;
+
+            var lines = new List<string>
+            {
+                $"PipelineAttached={NestCorePipelineSnapshot.IsAttached}",
+                $"EditorCount={editorAssets.Count}",
+                $"ModAssetPathCount={modAssetPaths.Count}",
+            };
+
+            foreach (var asset in editorAssets)
+                lines.Add($"EditorAsset={asset}");
+
+            foreach (var path in modAssetPaths)
+                lines.Add($"ModAssetPath={path}");
+
+            return new FacadeResult(true, string.Join(Environment.NewLine, lines));
+        }
+        catch (Exception ex)
+        {
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.General, $"PipelineStatus failed: {ex}", StardewModdingAPI.LogLevel.Error);
+            return new FacadeResult(false, "Failed building pipeline diagnostics (see log).");
+        }
+    }
+
+    public FacadeResult WriteStateDump(string? pathArg)
+    {
+        try
+        {
+            if (!_isWorldReady())
+                return new FacadeResult(false, "World not ready.");
+
+            if (!_isMainPlayer())
+                return new FacadeResult(false, "Host-only.");
+
+            var runtime = RuntimeStatus();
+            if (!runtime.Success)
+                return runtime;
+
+            var pipeline = PipelineStatus();
+            if (!pipeline.Success)
+                return pipeline;
+
+            var defaultName = $"we_state_{Game1.Date.Year}_{Game1.Date.Season}_{Game1.Date.DayOfMonth}.json";
+            var path = ResolveOutputPath(pathArg, Path.Combine("state-dumps", defaultName));
+            var payload = new
+            {
+                GeneratedAtUtc = DateTime.UtcNow,
+                SaveId = Game1.uniqueIDForThisGame,
+                Date = new
+                {
+                    Game1.Date.Year,
+                    Season = Game1.Date.Season.ToString(),
+                    Game1.Date.DayOfMonth
+                },
+                Runtime = runtime.Message.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+                Pipeline = pipeline.Message.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries),
+            };
+
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+            return new FacadeResult(true, $"Wrote state dump: {path}");
+        }
+        catch (Exception ex)
+        {
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.General, $"WriteStateDump failed: {ex}", StardewModdingAPI.LogLevel.Error);
+            return new FacadeResult(false, "Failed writing state dump (see log).");
+        }
+    }
+
     public FacadeResult ForceInstallDesertTombHarmonyPatches()
         => _forceInstallDesertTombPatches is null
             ? new FacadeResult(false, "DesertTomb patch installer is not available.")
@@ -1369,6 +1482,23 @@ private sealed record WildAnimalEffectiveDumpEntry(
     WildAnimalOverridesDump Overrides,
     WildAnimalSourcesDump Sources
 );
+
+private string ResolveOutputPath(string? pathArg, string defaultFileName)
+{
+    var baseDir = Path.Combine(_modDirectoryPath, "data");
+
+    if (string.IsNullOrWhiteSpace(pathArg))
+        return Path.Combine(baseDir, defaultFileName);
+
+    var candidate = pathArg.Trim();
+    if (!Path.IsPathRooted(candidate))
+        candidate = Path.Combine(baseDir, candidate);
+
+    if (Directory.Exists(candidate))
+        return Path.Combine(candidate, Path.GetFileName(defaultFileName));
+
+    return candidate;
+}
 #endif
 
 

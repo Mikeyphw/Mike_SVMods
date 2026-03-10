@@ -17,7 +17,7 @@ public sealed class WildAnimalsEditorViewModelTests
     {
         var config = new ModConfig();
         var service = CreateService(config);
-        var viewModel = new WildAnimalsEditorViewModel(service, () => config, service.ApplyDraft);
+        var viewModel = new WildAnimalsEditorViewModel(service, () => config, (cfg, draft, _) => service.ApplyDraft(cfg, draft));
 
         Assert.Equal(1, viewModel.FilteredAnimalCount);
 
@@ -41,7 +41,7 @@ public sealed class WildAnimalsEditorViewModelTests
     {
         var config = new ModConfig();
         var service = CreateService(config);
-        var viewModel = new WildAnimalsEditorViewModel(service, () => config, service.ApplyDraft);
+        var viewModel = new WildAnimalsEditorViewModel(service, () => config, (cfg, draft, _) => service.ApplyDraft(cfg, draft));
 
         Assert.False(viewModel.SaveCommand.CanExecute(null));
 
@@ -65,7 +65,7 @@ public sealed class WildAnimalsEditorViewModelTests
     {
         var config = new ModConfig();
         var service = CreateService(config);
-        var viewModel = new WildAnimalsEditorViewModel(service, () => config, service.ApplyDraft);
+        var viewModel = new WildAnimalsEditorViewModel(service, () => config, (cfg, draft, _) => service.ApplyDraft(cfg, draft));
 
         var selected = Assert.IsType<WildAnimalDraftViewModel>(viewModel.SelectedAnimal);
         selected.PriceText = "250";
@@ -88,7 +88,7 @@ public sealed class WildAnimalsEditorViewModelTests
     {
         var config = new ModConfig();
         var service = CreateService(config);
-        var viewModel = new WildAnimalsEditorViewModel(service, () => config, service.ApplyDraft);
+        var viewModel = new WildAnimalsEditorViewModel(service, () => config, (cfg, draft, _) => service.ApplyDraft(cfg, draft));
 
         var selected = Assert.IsType<WildAnimalDraftViewModel>(viewModel.SelectedAnimal);
         selected.PriceText = "999";
@@ -105,7 +105,7 @@ public sealed class WildAnimalsEditorViewModelTests
     {
         var config = new ModConfig();
         var service = CreateService(config);
-        var viewModel = new WildAnimalsEditorViewModel(service, () => config, service.ApplyDraft);
+        var viewModel = new WildAnimalsEditorViewModel(service, () => config, (cfg, draft, _) => service.ApplyDraft(cfg, draft));
 
         var selected = Assert.IsType<WildAnimalDraftViewModel>(viewModel.SelectedAnimal);
         selected.PriceText = "999";
@@ -116,23 +116,67 @@ public sealed class WildAnimalsEditorViewModelTests
     }
 
     [Fact]
-    public void SelectedAnimal_UsesTabbedDetailSections()
+    public void SelectedAnimal_UsesMergedProgressionSection()
     {
         var config = new ModConfig();
         var service = CreateService(config);
-        var viewModel = new WildAnimalsEditorViewModel(service, () => config, service.ApplyDraft);
+        var viewModel = new WildAnimalsEditorViewModel(service, () => config, (cfg, draft, _) => service.ApplyDraft(cfg, draft));
 
         var selected = Assert.IsType<WildAnimalDraftViewModel>(viewModel.SelectedAnimal);
-        Assert.True(selected.IsOverviewTab);
+        Assert.True(selected.HasProgressionSettings);
+        Assert.Equal("Enabled", selected.ProgressionDefaultText);
+        Assert.Equal("Default (Enabled)", selected.ProgressionCurrentText);
+        Assert.False(selected.ProgressionDirty);
 
-        selected.ShowModKeysTab();
-        Assert.True(selected.IsModKeysTab);
+        selected.ForceProgressionDisabled();
 
-        selected.ShowWarningsTab();
-        Assert.True(selected.IsWarningsTab);
+        Assert.Equal("Force disabled", selected.ProgressionCurrentText);
+        Assert.True(selected.ProgressionDirty);
+        Assert.Equal("Disabled", selected.ProgressionEffectiveText);
     }
 
-    private static WildAnimalsEditorService CreateService(ModConfig config)
+    [Fact]
+    public void StartAddWildAnimal_UsesPickerAndWritesNewDefinition()
+    {
+        var config = new ModConfig();
+        Dictionary<string, WildAnimalJson>? saved = null;
+        var service = CreateService(config, value => saved = value);
+        var viewModel = new WildAnimalsEditorViewModel(service, () => config, (cfg, draft, _) => service.ApplyDraft(cfg, draft));
+
+        viewModel.StartAddWildAnimal();
+        Assert.True(viewModel.IsAuthoringNewAnimal);
+
+        var pickerItem = Assert.Single(viewModel.PickerItems);
+        pickerItem.ToggleSelection();
+        viewModel.NewWildAnimalKey = "SnowHen";
+        viewModel.ConfirmAuthoring();
+
+        Assert.NotNull(saved);
+        Assert.True(saved!.ContainsKey("SnowHen"));
+        Assert.Equal("SnowHen", viewModel.SelectedAnimal?.Key);
+    }
+
+    [Fact]
+    public void StartAddModGroup_UsesPickerAndWritesDefinition()
+    {
+        var config = new ModConfig();
+        Dictionary<string, WildAnimalJson>? saved = null;
+        var service = CreateService(config, value => saved = value);
+        var viewModel = new WildAnimalsEditorViewModel(service, () => config, (cfg, draft, _) => service.ApplyDraft(cfg, draft));
+
+        viewModel.StartAddModGroup();
+        Assert.True(viewModel.IsAuthoringNewGroup);
+
+        var pickerItem = Assert.Single(viewModel.PickerItems);
+        pickerItem.ToggleSelection();
+        viewModel.AuthoringModGroupId = "Custom.Mod";
+        viewModel.ConfirmAuthoring();
+
+        Assert.NotNull(saved);
+        Assert.True(saved!["Chicken"].ExtraModAnimalKeys.ContainsKey("Custom.Mod"));
+    }
+
+    private static WildAnimalsEditorService CreateService(ModConfig config, Action<Dictionary<string, WildAnimalJson>>? saveDefinitions = null)
     {
         return new WildAnimalsEditorService(
             () => new Dictionary<string, WildAnimalJson>(StringComparer.OrdinalIgnoreCase)
@@ -181,6 +225,8 @@ public sealed class WildAnimalsEditorViewModelTests
                 }
 
                 return new WildAnimalsEditorPreviewRecord(null, null, null, false, $"No preview available for {key}.");
-            });
+            },
+            null,
+            saveDefinitions);
     }
 }

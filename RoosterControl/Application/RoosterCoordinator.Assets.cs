@@ -2,13 +2,21 @@ using RoosterControl.Application.Assets;
 using RoosterControl.Application.Objects;
 using RoosterControl.Application.Compat;
 using Mikew.NestCore.Helpers.Content;
+using Mikew.NestCore.Helpers;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using System.Text.Json;
+#if !RCTRL_DEV
+using RoosterControl.Generated;
+#endif
 
 namespace RoosterControl.Application;
 
 internal sealed partial class RoosterCoordinator
 {
+    private const string CompatEggSourcesAssetSuffix = "compat/egg_sources";
+    private const string CompatRoosterSourcesAssetSuffix = "compat/rooster_sources";
+
     private FarmAnimalsAssetEditor? _farmAnimalsEditor;
     private ObjectsAssetEditor? _objectsEditor;
     private FertilizedEggsAssetEditor? _fertilizedEggsEditor;
@@ -28,12 +36,12 @@ internal sealed partial class RoosterCoordinator
             AssetRequestRegistration<RoosterCoordinator>.FromHandler(
                 debugName: "CompatEggSourcesCatalog",
                 order: -50,
-                isMatch: e => e.NameWithoutLocale.BaseName.Equals(GetCompatAssetName(RoosterControl.Application.Compat.CompatDefaults.EggSourcesAssetSuffix), System.StringComparison.OrdinalIgnoreCase),
+                isMatch: e => e.NameWithoutLocale.BaseName.Equals(GetCompatAssetName(CompatEggSourcesAssetSuffix), System.StringComparison.OrdinalIgnoreCase),
                 shouldApply: (_, _) => true,
                 handle: (ctx, e) =>
                 {
                     e.LoadFrom(
-                        () => RoosterControl.Application.Compat.CompatDefaults.CreateEggSourcesCatalog(),
+                        () => LoadCompatJsonAsset<EggSourcesCatalog>("data/compat/egg_sources.json"),
                         AssetLoadPriority.Exclusive
                     );
                 })
@@ -43,12 +51,12 @@ internal sealed partial class RoosterCoordinator
             AssetRequestRegistration<RoosterCoordinator>.FromHandler(
                 debugName: "CompatRoosterSourcesCatalog",
                 order: -49,
-                isMatch: e => e.NameWithoutLocale.BaseName.Equals(GetCompatAssetName(RoosterControl.Application.Compat.CompatDefaults.RoosterSourcesAssetSuffix), System.StringComparison.OrdinalIgnoreCase),
+                isMatch: e => e.NameWithoutLocale.BaseName.Equals(GetCompatAssetName(CompatRoosterSourcesAssetSuffix), System.StringComparison.OrdinalIgnoreCase),
                 shouldApply: (_, _) => true,
                 handle: (ctx, e) =>
                 {
                     e.LoadFrom(
-                        () => RoosterControl.Application.Compat.CompatDefaults.CreateRoosterSourcesCatalog(),
+                        () => LoadCompatJsonAsset<RoosterSourcesCatalog>("data/compat/rooster_sources.json"),
                         AssetLoadPriority.Exclusive
                     );
                 })
@@ -91,5 +99,21 @@ internal sealed partial class RoosterCoordinator
         );
 
         _assetPipeline.Attach();
+    }
+
+    private static readonly JsonSerializerOptions CompatJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private T LoadCompatJsonAsset<T>(string relativePath)
+        where T : class, new()
+    {
+#if RCTRL_DEV
+        return Helper.Data.ReadJsonFile<T>(relativePath) ?? new T();
+#else
+        var json = EmbeddedTextStore.GetOrThrow(EmbeddedTextFiles.Files, relativePath, context: "RoosterControl compat");
+        return JsonSerializer.Deserialize<T>(json, CompatJsonOptions) ?? new T();
+#endif
     }
 }

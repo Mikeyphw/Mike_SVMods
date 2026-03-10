@@ -1,6 +1,7 @@
 using System;
 using Mikew.NestCore.Helpers.Logging;
 using StardewModdingAPI;
+using StardewValley;
 
 using LogScopedHelper = Mikew.NestCore.Helpers.Logging.LogScopedHelper;
 using ScopedLogCatalog = Mikew.NestCore.Helpers.Logging.ScopedLogCatalog;
@@ -28,6 +29,9 @@ namespace Mikew.NestCore.Helpers.SaveData
 
         public T? Read<T>(string key) where T : class
         {
+            if (!Context.IsWorldReady)
+                return null;
+
             var normalizedKey = NormalizeKey(key);
             try
             {
@@ -45,6 +49,9 @@ namespace Mikew.NestCore.Helpers.SaveData
             if (factory == null)
                 throw new ArgumentNullException(nameof(factory));
 
+            if (!Context.IsWorldReady)
+                return factory();
+
             var existing = Read<T>(key);
             if (existing != null)
                 return existing;
@@ -56,6 +63,9 @@ namespace Mikew.NestCore.Helpers.SaveData
 
         public void Write<T>(string key, T data) where T : class
         {
+            if (!Context.IsWorldReady)
+                return;
+
             var normalizedKey = NormalizeKey(key);
             try
             {
@@ -69,6 +79,9 @@ namespace Mikew.NestCore.Helpers.SaveData
 
         public void Delete(string key)
         {
+            if (!Context.IsWorldReady)
+                return;
+
             var normalizedKey = NormalizeKey(key);
             try
             {
@@ -99,4 +112,3 @@ namespace Mikew.NestCore.Helpers.SaveData
         }
     }
 }
-

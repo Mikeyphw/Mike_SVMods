@@ -47,6 +47,13 @@ public sealed record WildAnimalsEditorPreviewRecord(
     bool HasPreview,
     string StatusText);
 
+public sealed record WildAnimalFarmAnimalPickerItemRecord(
+    string Key,
+    string DisplayName,
+    string TooltipText,
+    string SuggestedModId,
+    WildAnimalsEditorPreviewRecord Preview);
+
 public sealed record WildAnimalDraft(
     string Key,
     bool BaseEnabled,

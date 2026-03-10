@@ -77,4 +77,24 @@ public sealed class EggSelectionServiceTests
         var result = svc.RollWeightedOrDefault(entries, "fallback");
         Assert.Equal("high", result);
     }
+
+    [Fact]
+    public void ChooseEggCandidateOrDefault_ReturnsRandomCandidateFromPool()
+    {
+        var rng = new SequenceRandomProvider(ints: new[] { 1 });
+        var svc = new EggSelectionService(rng);
+
+        var result = svc.ChooseEggCandidateOrDefault(new[] { "176", "174" }, fallback: "fallback");
+        Assert.Equal("174", result);
+    }
+
+    [Fact]
+    public void ChooseEggCandidateOrDefault_ReturnsFallbackWhenPoolEmpty()
+    {
+        var rng = new SequenceRandomProvider();
+        var svc = new EggSelectionService(rng);
+
+        var result = svc.ChooseEggCandidateOrDefault(Array.Empty<string>(), fallback: "fallback");
+        Assert.Equal("fallback", result);
+    }
 }

@@ -1,6 +1,9 @@
 using System;
-using StardewModdingAPI;
+using System.Linq;
 using LetMeHatch.Application.Coordination;
+using Mikew.NestCore.Diagnostics;
+using StardewModdingAPI;
+using static LetMeHatch.ModEntry;
 
 namespace LetMeHatch.Infrastructure.Commands;
 
@@ -12,88 +15,215 @@ public static class LmhConsoleCommands
         if (coordinator is null) throw new ArgumentNullException(nameof(coordinator));
 
         helper.ConsoleCommands.Add(
-            "lmh_reloadcp",
-            "Reloads the content packs for Let Me Hatch.\n\nUsage: lmh_reloadcp.",
-            (_, _) => coordinator.RequestEarlyInit()
-        );
-
- 
-#if LMH_DEV
-        helper.ConsoleCommands.Add(
-            "lmh_checki18n",
-            "Checks internationalization keys for the mod.\n\nUsage: lmh_checki18n.",
-            (_, _) => coordinator.CheckI18n()
-        );
-
-
-        helper.ConsoleCommands.Add(
-            "lmh_content_handlers",
-            "Prints the registered content loaders/editors and their priorities.\n\nUsage: lmh_content_handlers.",
-            (_, _) => coordinator.PrintContentHandlers()
-        );
-
-        helper.ConsoleCommands.Add(
-            "lmh_invalidate_all",
-            "Invalidates all game content caches touched by registered content handlers.\n\nUsage: lmh_invalidate_all.",
-            (_, _) => coordinator.InvalidateAllContent()
-        );
-
-#endif
-
-        helper.ConsoleCommands.Add(
-            "lmh_status",
-            "Print LetMeHatch runtime/integration status.\n\nUsage: lmh_status.",
-            (_, _) => coordinator.PrintStatus()
-        );
-
-
-#if LMH_DEV
-        helper.ConsoleCommands.Add(
-            "lmh_clone_texture_preview",
-            "Preview dynamic clone texture details.\n\nUsage: lmh_clone_texture_preview <cloneId>.",
-            (_, args) => coordinator.DebugCloneTexturePreview(args.Length >= 1 ? args[0] : string.Empty)
-        );
-        helper.ConsoleCommands.Add(
-            "lmh_clone_texture_healthcheck",
-            "Healthcheck dynamic clone texture generation by attempting to load N clone textures.\n\nUsage: lmh_clone_texture_healthcheck [count].",
-            (_, args) => coordinator.DebugCloneTextureHealthcheck(args.Length >= 1 ? args[0] : string.Empty)
-        );
-
-        helper.ConsoleCommands.Add(
-            "lmh_clone_texture_stats",
-            "Print dynamic clone texture cache stats.\n\nUsage: lmh_clone_texture_stats [maxKeys].",
-            (_, args) => coordinator.DebugCloneTextureStats(args.Length >= 1 ? args[0] : string.Empty)
-        );
-
-        helper.ConsoleCommands.Add(
-            "lmh_clone_texture_clear_cache",
-            "Clear the dynamic clone texture cache.\n\nUsage: lmh_clone_texture_clear_cache.",
-            (_, _) => coordinator.DebugCloneTextureClearCache()
-        );
-
-
-        helper.ConsoleCommands.Add(
-            "lmh_breeding_dump_plans",
-            "Dumps the computed breeding plans for today to JSON.\n\nUsage: lmh_breeding_dump_plans [path] [femaleKey].",
-            (_, args) => coordinator.DebugBreedingDumpPlans(
-                args.Length >= 1 ? args[0] : string.Empty,
-                args.Length >= 2 ? args[1] : string.Empty
-            )
-        );
-
-        helper.ConsoleCommands.Add(
-            "lmh_breeding_dump_coop_index",
-            "Dumps the coop adult-count breeding index for today to JSON.\n\nUsage: lmh_breeding_dump_coop_index [path].",
-            (_, args) => coordinator.DebugBreedingDumpCoopIndex(args.Length >= 1 ? args[0] : string.Empty)
-        );
-
-        helper.ConsoleCommands.Add(
-            "lmh_breeding_validate_plans",
-            "Validates today's breeding plans and prints any invariant violations.\n\nUsage: lmh_breeding_validate_plans [femaleKey].",
-            (_, args) => coordinator.DebugBreedingValidatePlans(args.Length >= 1 ? args[0] : string.Empty)
-        );
-#endif
-
-
+            "lmh",
+            "LetMeHatch commands. Use: lmh help",
+            (_, args) => Execute(coordinator, args));
     }
+
+    private static void Execute(LmhCoordinator coordinator, string[] args)
+    {
+        if (args.Length == 0 || IsHelp(args[0]))
+        {
+            MonitorInstance.Log(BuildHelpText(), LogLevel.Info);
+            return;
+        }
+
+        switch (args[0].ToLowerInvariant())
+        {
+            case "help":
+                MonitorInstance.Log(BuildHelpText(), LogLevel.Info);
+                return;
+            case "status":
+                coordinator.PrintStatus();
+                return;
+            case "verify":
+                HandleVerify(coordinator, args.Skip(1).ToArray());
+                return;
+            case "reload":
+                coordinator.RequestEarlyInit();
+                return;
+            case "save":
+                HandleSave(args.Skip(1).ToArray());
+                return;
+            case "debug":
+#if LMH_DEV
+                HandleDebug(coordinator, args.Skip(1).ToArray());
+#else
+                MonitorInstance.Log("Dev-only commands are unavailable in this build.", LogLevel.Warn);
+#endif
+                return;
+            default:
+                MonitorInstance.Log($"Unknown subcommand '{args[0]}'.\n\n{BuildHelpText()}", LogLevel.Warn);
+                return;
+        }
+    }
+
+    private static void HandleVerify(LmhCoordinator coordinator, string[] args)
+    {
+        var json = args.Any(x => string.Equals(x, "--json", StringComparison.OrdinalIgnoreCase));
+        var report = coordinator.BuildVerifyReport();
+        var text = json
+            ? DiagnosticReportFormatter.FormatJson(report, "lmh verify")
+            : DiagnosticReportFormatter.FormatText(report, "lmh verify");
+        MonitorInstance.Log(text, report.FailCount > 0 ? LogLevel.Warn : LogLevel.Info);
+    }
+
+    private static void HandleSave(string[] args)
+    {
+        if (args.Length == 0 || IsHelp(args[0]))
+        {
+            MonitorInstance.Log("Usage: lmh save clear --yes", LogLevel.Info);
+            return;
+        }
+
+        if (!string.Equals(args[0], "clear", StringComparison.OrdinalIgnoreCase))
+        {
+            MonitorInstance.Log($"Unknown save subcommand '{args[0]}'.\n\n{BuildHelpText()}", LogLevel.Warn);
+            return;
+        }
+
+        MonitorInstance.Log("LetMeHatch does not currently persist per-save data, so there is nothing to clear.", LogLevel.Info);
+    }
+
+#if LMH_DEV
+    private static void HandleDebug(LmhCoordinator coordinator, string[] args)
+    {
+        if (args.Length == 0 || IsHelp(args[0]))
+        {
+            MonitorInstance.Log(BuildDebugHelpText(), LogLevel.Info);
+            return;
+        }
+
+        switch (args[0].ToLowerInvariant())
+        {
+            case "i18n-check":
+                coordinator.CheckI18n();
+                return;
+            case "content-handlers":
+                coordinator.PrintContentHandlers();
+                return;
+            case "pipeline":
+                coordinator.PrintPipelineDiagnostics();
+                return;
+            case "runtime":
+                coordinator.PrintRuntimeDiagnostics();
+                return;
+            case "invalidate-all":
+                coordinator.InvalidateAllContent();
+                return;
+            case "state-dump":
+                coordinator.DebugWriteStateDump(args.Skip(1).ToArray());
+                return;
+            case "clone-texture":
+                HandleCloneTextureDebug(coordinator, args.Skip(1).ToArray());
+                return;
+            case "breeding":
+                HandleBreedingDebug(coordinator, args.Skip(1).ToArray());
+                return;
+            default:
+                MonitorInstance.Log($"Unknown debug subcommand '{args[0]}'.\n\n{BuildDebugHelpText()}", LogLevel.Warn);
+                return;
+        }
+    }
+
+    private static void HandleCloneTextureDebug(LmhCoordinator coordinator, string[] args)
+    {
+        if (args.Length == 0 || IsHelp(args[0]))
+        {
+            MonitorInstance.Log(
+                "lmh debug clone-texture preview <cloneId>\n" +
+                "lmh debug clone-texture healthcheck [count]\n" +
+                "lmh debug clone-texture stats [maxKeys]\n" +
+                "lmh debug clone-texture clear-cache",
+                LogLevel.Info);
+            return;
+        }
+
+        switch (args[0].ToLowerInvariant())
+        {
+            case "preview":
+                coordinator.DebugCloneTexturePreview(args.Length >= 2 ? args[1] : string.Empty);
+                return;
+            case "healthcheck":
+                coordinator.DebugCloneTextureHealthcheck(args.Length >= 2 ? args[1] : string.Empty);
+                return;
+            case "stats":
+                coordinator.DebugCloneTextureStats(args.Length >= 2 ? args[1] : string.Empty);
+                return;
+            case "clear-cache":
+                coordinator.DebugCloneTextureClearCache();
+                return;
+            default:
+                MonitorInstance.Log($"Unknown clone-texture debug subcommand '{args[0]}'.", LogLevel.Warn);
+                return;
+        }
+    }
+
+    private static void HandleBreedingDebug(LmhCoordinator coordinator, string[] args)
+    {
+        if (args.Length == 0 || IsHelp(args[0]))
+        {
+            MonitorInstance.Log(
+                "lmh debug breeding dump-plans [path] [femaleKey]\n" +
+                "lmh debug breeding dump-coop-index [path]\n" +
+                "lmh debug breeding validate-plans [femaleKey]\n" +
+                "lmh debug breeding explain [femaleKey] [--json]",
+                LogLevel.Info);
+            return;
+        }
+
+        switch (args[0].ToLowerInvariant())
+        {
+            case "dump-plans":
+                coordinator.DebugBreedingDumpPlans(args.Length >= 2 ? args[1] : string.Empty, args.Length >= 3 ? args[2] : string.Empty);
+                return;
+            case "dump-coop-index":
+                coordinator.DebugBreedingDumpCoopIndex(args.Length >= 2 ? args[1] : string.Empty);
+                return;
+            case "validate-plans":
+                coordinator.DebugBreedingValidatePlans(args.Length >= 2 ? args[1] : string.Empty);
+                return;
+            case "explain":
+                coordinator.DebugBreedingExplain(args.Skip(1).ToArray());
+                return;
+            default:
+                MonitorInstance.Log($"Unknown breeding debug subcommand '{args[0]}'.", LogLevel.Warn);
+                return;
+        }
+    }
+#endif
+
+    private static string BuildHelpText()
+        => string.Join(
+            Environment.NewLine,
+            "lmh help",
+            "lmh status",
+            "lmh verify [--json]",
+            "lmh reload",
+            "lmh save clear --yes",
+#if LMH_DEV
+            "lmh debug ...",
+#endif
+            "",
+            "Status prints a concise runtime snapshot.",
+            "Verify runs read-only LetMeHatch diagnostics.");
+
+#if LMH_DEV
+    private static string BuildDebugHelpText()
+        => string.Join(
+            Environment.NewLine,
+            "lmh debug i18n-check",
+            "lmh debug content-handlers",
+            "lmh debug pipeline",
+            "lmh debug runtime",
+            "lmh debug invalidate-all",
+            "lmh debug state-dump [path]",
+            "lmh debug clone-texture ...",
+            "lmh debug breeding ...");
+#endif
+
+    private static bool IsHelp(string arg)
+        => string.Equals(arg, "help", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(arg, "-h", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(arg, "--help", StringComparison.OrdinalIgnoreCase);
 }

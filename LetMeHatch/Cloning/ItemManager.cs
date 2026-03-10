@@ -179,13 +179,13 @@ namespace LetMeHatch.Cloning
 
         public void CloneEggsFromGame(CloneItemType cloneItemType)
         {
+            var gameFarmAnimaldata = Game1.farmAnimalData;
             foreach (
                 var (animalKey, animalItems) in _savedItemsData
                     .AnimalItemRelation.Where(a => a.Value[cloneItemType] != null)
                     .Select(a => (a.Key, a.Value[cloneItemType]!))
             )
             {
-                var gameFarmAnimaldata = Game1.farmAnimalData;
                 if (
                     animalItems[ItemType.Normal] == string.Empty
                     && animalItems[ItemType.Large] == string.Empty
@@ -197,7 +197,16 @@ namespace LetMeHatch.Cloning
                     // );
                     continue;
                 }
-                var animal = gameFarmAnimaldata[animalKey];
+
+                if (!gameFarmAnimaldata.TryGetValue(animalKey, out var animal))
+                {
+                    LoggerHelper.VerboseLog(
+                        $"Skipping {animalKey}'s {cloneItemType} cloning because the animal key is not present in Data/FarmAnimals.",
+                        LogLevel.Warn
+                    );
+                    continue;
+                }
+
                 animal.CustomFields ??= new();
                 animal.ProduceItemIds ??= new();
                 animal.DeluxeProduceItemIds ??= new();
@@ -1002,9 +1011,12 @@ namespace LetMeHatch.Cloning
                     {
                         if (!objectData.ContainsKey(originalEgg))
                         {
+                            var level = CloningHelper.IsClonedEgg(originalEgg) ? LogLevel.Trace : LogLevel.Error;
                             LoggerHelper.VerboseLog(
-                                $"Couldn't create fertilized egg for male {male.Key} with original egg {originalEgg}",
-                                LogLevel.Error
+                                $"Couldn't create fertilized egg for female '{femaleKey}' with male '{male.Key}': " +
+                                $"source egg '{originalEgg}' was not found in Data/Objects. " +
+                                $"ClonedSource={CloningHelper.IsClonedEgg(originalEgg)}",
+                                level
                             );
                             continue;
                         }

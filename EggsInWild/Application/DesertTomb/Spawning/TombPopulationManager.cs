@@ -27,6 +27,7 @@ public sealed class TombPopulationManager
     private readonly IReadOnlyList<TombAreaState> _areas;
     private readonly DesertTombSpawnExecutor _executor;
     private readonly ILog _log;
+    private readonly Func<bool> _isDebugLoggingEnabled;
 
     private readonly Dictionary<int, TombAreaState> _areasById;
 
@@ -47,6 +48,7 @@ public sealed class TombPopulationManager
         IReadOnlyList<TombAreaState> areas,
         DesertTombSpawnExecutor executor,
         ILog log,
+        Func<bool>? isDebugLoggingEnabled = null,
         double initialWaveFraction = 0.75,
         int reconcileIntervalTicks = 30,
         int maxSpawnsPerTick = 6,
@@ -62,6 +64,7 @@ public sealed class TombPopulationManager
         _log = log ?? throw new ArgumentNullException(nameof(log));
 
         _areasById = _areas.ToDictionary(a => a.AreaId, a => a);
+        _isDebugLoggingEnabled = isDebugLoggingEnabled ?? (() => false);
 
         _initialWaveFraction = Math.Clamp(initialWaveFraction, 0.0, 1.0);
         _reconcileIntervalTicks = Math.Max(1, reconcileIntervalTicks);
@@ -79,6 +82,7 @@ public sealed class TombPopulationManager
     public int SpawnInitialWave()
     {
         var spawned = 0;
+        var relaxedPlacements = 0;
 
         foreach (var areaPlan in _plan.Areas)
         {
@@ -91,14 +95,35 @@ public sealed class TombPopulationManager
             if (wave.Count == 0)
                 continue;
 
+            if (_isDebugLoggingEnabled())
+            {
+                var waveSummary = string.Join(", ", wave
+                    .GroupBy(s => s.Type)
+                    .OrderByDescending(g => g.Sum(x => x.Count))
+                    .Select(g => $"{g.Key}={g.Sum(x => x.Count)}"));
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] InitialWave area={state.Rect} type={state.AreaType} wave=[{waveSummary}] tiles={state.ValidSpawnTiles.Count}", StardewModdingAPI.LogLevel.Info);
+            }
+
             spawned += _executor.SpawnIntoArea(
                 mineShaft: _mineShaft,
                 areaState: state,
                 specs: wave,
                 config: _config,
                 minDistanceToPlayerTiles: _minDistanceToPlayerTiles,
-                maxSpawnCount: int.MaxValue
+                maxSpawnCount: int.MaxValue,
+                relaxedPlacements: out var areaRelaxedPlacements
             );
+
+            relaxedPlacements += areaRelaxedPlacements;
+        }
+
+        if (_isDebugLoggingEnabled())
+        {
+            LogScopedHelper.Log(
+                _log,
+                ScopedLogCatalog.ModWeCategory.DesertTomb,
+                $"[DesertTomb] InitialWave summary spawned={spawned} relaxed={relaxedPlacements} planned={_plan.TotalCount}",
+                StardewModdingAPI.LogLevel.Info);
         }
 
         return spawned;
@@ -156,6 +181,14 @@ public sealed class TombPopulationManager
             return;
         }
 
+        if (_isDebugLoggingEnabled())
+        {
+            var deficitSummary = string.Join(", ", globalDeficit
+                .OrderByDescending(p => p.Value)
+                .Select(p => $"{p.Key}={p.Value}"));
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] Reconcile tick={_ticks} liveDeficit=[{deficitSummary}] budget={_maxSpawnsPerTick}", StardewModdingAPI.LogLevel.Info);
+        }
+
         UpdateAreaLiveCounts(_mineShaft, _areas);
 
         var budget = _maxSpawnsPerTick;
@@ -178,7 +211,8 @@ public sealed class TombPopulationManager
                 config: _config,
                 minDistanceToPlayerTiles: _minDistanceToPlayerTiles,
                 maxSpawnCount: budget,
-                spawnedByType: spawnedByType
+                spawnedByType: spawnedByType,
+                relaxedPlacements: out _
             );
 
             budget -= spawned;
@@ -311,7 +345,10 @@ public sealed class TombPopulationManager
             if (s.Count <= 0)
                 continue;
 
-            var count = (int)Math.Floor(s.Count * fraction);
+            var count = (int)Math.Round(s.Count * fraction, MidpointRounding.AwayFromZero);
+            if (fraction > 0d && s.Count > 0)
+                count = Math.Max(1, count);
+
             count = Math.Clamp(count, 0, s.Count);
 
             if (count <= 0)

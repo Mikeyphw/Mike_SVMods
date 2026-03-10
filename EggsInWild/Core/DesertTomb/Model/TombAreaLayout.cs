@@ -37,13 +37,16 @@ public sealed class TombAreaLayout
     private static IReadOnlySet<TombMonsterType> GetDefaultAllowedMonsters(TombAreaType areaType) =>
         areaType switch
         {
-            TombAreaType.DuggyArea => new HashSet<TombMonsterType> { TombMonsterType.Duggy },
+            TombAreaType.DuggyArea => new HashSet<TombMonsterType> { TombMonsterType.Duggy, TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango },
             TombAreaType.MummyArea => new HashSet<TombMonsterType> { TombMonsterType.TheTombPharaoh },
             TombAreaType.SmallArea => new HashSet<TombMonsterType>
             {
                 TombMonsterType.Mummy,
                 TombMonsterType.AssassinBug,
                 TombMonsterType.Spider,
+                TombMonsterType.Hurricane,
+                TombMonsterType.Crawler,
+                TombMonsterType.Matango,
             },
             _ => new HashSet<TombMonsterType>(),
         };

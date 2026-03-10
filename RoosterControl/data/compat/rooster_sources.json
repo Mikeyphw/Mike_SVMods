@@ -1,8 +1,8 @@
 {
-  "SchemaVersion": 1,
+  "SchemaVersion": 2,
   "Sources": [
     {
-      "SourceId": "meara",
+      "ModId": "Meara.Roosters",
       "DisplayName": "Meara Roosters",
       "FarmAnimalKeys": [
         {
@@ -33,9 +33,8 @@
       ]
     },
     {
-      "SourceId": "blaklyte",
+      "ModId": "Blaklyte.CP.Rooster",
       "DisplayName": "Blaklyte Roosters",
-      "RoosterEggItemId": "Blaklyte.CP.Rooster_rooster_egg",
       "FarmAnimalKeys": [
         {
           "Key": "Rooster",

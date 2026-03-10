@@ -127,7 +127,20 @@ public sealed partial class ModEntry
 
         var monsterFactory = new DesertTombMonsterFactory(monsterDefinitions, dropTables, dropEngine, log);
 
-        var spawnExecutor = new DesertTombSpawnExecutor(monsterFactory, log);
+        var spawnExecutor = new DesertTombSpawnExecutor(
+            monsterFactory,
+            log,
+            () =>
+            {
+                var cfg = _config.Get();
+                return cfg.DesertTombDebugLogging
+#if WEGG_DEV
+                    || cfg.DebugForceDesertTombHandler
+                    || cfg.DebugForceDesertTombUnrestricted
+#endif
+                    ;
+            }
+        );
 
         // Generator currently doesn't depend on SpawnConfiguration values (kept for future expansion).
         var generator = new DesertTombLevelGenerator(new SpawnConfiguration());

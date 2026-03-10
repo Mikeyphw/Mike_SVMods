@@ -52,11 +52,34 @@ public sealed record FarmAnimalEggRef(string FarmAnimalKey, EggSourceRefList Lis
 public sealed record EggSourceDef
 {
     public string SourceId { get; init; } = string.Empty;
+    public string? ModId { get; init; }
     public string DisplayName { get; init; } = string.Empty;
     public EggKind EggKind { get; init; }
 
     public string? ItemId { get; init; }
     public FarmAnimalEggRef? FarmAnimalRef { get; init; }
+}
+
+/// <summary>
+/// Defines one candidate egg object for a logical egg kind.
+/// </summary>
+public sealed record EggSourceOptionDef
+{
+    public string SourceId { get; init; } = string.Empty;
+    public string? ModId { get; init; }
+    public string DisplayName { get; init; } = string.Empty;
+
+    public string? ItemId { get; init; }
+    public FarmAnimalEggRef? FarmAnimalRef { get; init; }
+}
+
+/// <summary>
+/// Groups egg candidates by logical egg kind.
+/// </summary>
+public sealed record EggSourceGroupDef
+{
+    public EggKind EggKind { get; init; }
+    public List<EggSourceOptionDef> Eggs { get; init; } = new();
 }
 
 /// <summary>
@@ -101,11 +124,10 @@ public sealed record RoosterFarmAnimalKeyDef
 public sealed record RoosterSourceDef
 {
     public string SourceId { get; init; } = string.Empty;
+    public string? ModId { get; init; }
     public string DisplayName { get; init; } = string.Empty;
 
     public List<RoosterFarmAnimalKeyDef> FarmAnimalKeys { get; init; } = new();
-
-    public string? RoosterEggItemId { get; init; }
 }
 
 /// <summary>
@@ -113,8 +135,9 @@ public sealed record RoosterSourceDef
 /// </summary>
 public sealed record EggSourcesCatalog
 {
-    public int SchemaVersion { get; init; } = 1;
+    public int SchemaVersion { get; init; } = 2;
     public List<EggSourceDef> Sources { get; init; } = new();
+    public List<EggSourceGroupDef> Eggs { get; init; } = new();
 }
 
 /// <summary>
@@ -122,6 +145,6 @@ public sealed record EggSourcesCatalog
 /// </summary>
 public sealed record RoosterSourcesCatalog
 {
-    public int SchemaVersion { get; init; } = 1;
+    public int SchemaVersion { get; init; } = 2;
     public List<RoosterSourceDef> Sources { get; init; } = new();
 }

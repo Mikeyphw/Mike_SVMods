@@ -3,8 +3,6 @@
   "Roosters": {
     "White": {
       "FarmAnimalKey": "cockwhite",
-      "DefaultFemaleKey": "White Chicken",
-      "AdditionalFemaleKeys": [],
       "Eggs": {
         "Normal": "White Egg",
         "Large": "Large White Egg",
@@ -13,8 +11,6 @@
     },
     "Brown": {
       "FarmAnimalKey": "cockbrown",
-      "DefaultFemaleKey": "Brown Chicken",
-      "AdditionalFemaleKeys": [],
       "Eggs": {
         "Normal": "Brown Egg",
         "Large": "Large Brown Egg",
@@ -23,8 +19,6 @@
     },
     "Blue": {
       "FarmAnimalKey": "cockblue",
-      "DefaultFemaleKey": "Blue Chicken",
-      "AdditionalFemaleKeys": [],
       "Eggs": {
         "Normal": "MearaBlueEgg",
         "Large": "MearaLargeBlueEgg",
@@ -33,8 +27,6 @@
     },
     "Void": {
       "FarmAnimalKey": "cockvoid",
-      "DefaultFemaleKey": "Void Chicken",
-      "AdditionalFemaleKeys": [],
       "Eggs": {
         "Normal": "Void Egg",
         "Large": "MearaLargeVoidEgg",
@@ -43,8 +35,6 @@
     },
     "Gold": {
       "FarmAnimalKey": "cockgold",
-      "DefaultFemaleKey": "Golden Chicken",
-      "AdditionalFemaleKeys": [],
       "Eggs": {
         "Normal": "Golden Egg",
         "Large": "MearaLargeGoldEgg",

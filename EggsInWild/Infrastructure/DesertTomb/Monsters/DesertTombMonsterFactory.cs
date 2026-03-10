@@ -48,8 +48,8 @@ public sealed class DesertTombMonsterFactory : IDesertTombMonsterFactory
 
         var definition = ResolveDefinition(monsterType);
 
-        var effectiveDifficulty = difficulty + definition.Stats.DifficultyAdd;
-        var effectiveSpeed = speedToAdd + definition.Stats.SpeedAdd;
+        const int effectiveDifficulty = 0;
+        const int effectiveSpeed = 0;
 
         var baseType = ResolveBaseMonsterType(monsterType, definition.BaseMonsterKey);
 

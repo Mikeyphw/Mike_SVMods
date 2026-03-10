@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
@@ -32,11 +33,13 @@ public sealed class DesertTombSpawnExecutor
 
     private readonly IDesertTombMonsterFactory _factory;
     private readonly ILog _log;
+    private readonly Func<bool> _isDebugLoggingEnabled;
 
-    public DesertTombSpawnExecutor(IDesertTombMonsterFactory factory, ILog log)
+    public DesertTombSpawnExecutor(IDesertTombMonsterFactory factory, ILog log, Func<bool>? isDebugLoggingEnabled = null)
     {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _log = log ?? throw new ArgumentNullException(nameof(log));
+        _isDebugLoggingEnabled = isDebugLoggingEnabled ?? (() => false);
     }
 
     public int Execute(
@@ -75,7 +78,8 @@ public sealed class DesertTombSpawnExecutor
                 specs: areaPlan.Spawns,
                 config: config,
                 minDistanceToPlayerTiles: 0,
-                maxSpawnCount: int.MaxValue
+                maxSpawnCount: int.MaxValue,
+                relaxedPlacements: out _
             );
         }
 
@@ -89,6 +93,7 @@ public sealed class DesertTombSpawnExecutor
         SpawnConfiguration config,
         int minDistanceToPlayerTiles,
         int maxSpawnCount,
+        out int relaxedPlacements,
         Dictionary<TombMonsterType, int>? spawnedByType = null
     )
     {
@@ -103,6 +108,7 @@ public sealed class DesertTombSpawnExecutor
 
         var spawned = 0;
         var max = Math.Max(0, maxSpawnCount);
+        relaxedPlacements = 0;
 
         foreach (var spec in specs)
         {
@@ -111,15 +117,29 @@ public sealed class DesertTombSpawnExecutor
 
             for (int i = 0; i < spec.Count && spawned < max; i++)
             {
+                var usedRelaxedPlacement = false;
+
                 if (!areaState.SpawnTiles.TryTakeTile(
                         mineShaft,
                         accept: t => IsFarFromPlayer(t, minDistanceToPlayerTiles),
                         out var tile
                     ))
                 {
-                    LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] No valid spawn tile for {spec.Type} in area {areaState.Rect}. " +
-                        $"Requested={spec.Count}, RemainingTiles={areaState.SpawnTiles.Remaining}, MineLevel={mineShaft.mineLevel}", LogLevel.Trace);
-                    break;
+                    if (minDistanceToPlayerTiles > 0
+                        && areaState.SpawnTiles.TryTakeTile(
+                            mineShaft,
+                            accept: static _ => true,
+                            out tile))
+                    {
+                        usedRelaxedPlacement = true;
+                        relaxedPlacements++;
+                    }
+                    else
+                    {
+                        LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] No valid spawn tile for {spec.Type} in area {areaState.Rect}. " +
+                            $"Requested={spec.Count}, RemainingTiles={areaState.SpawnTiles.Remaining}, MineLevel={mineShaft.mineLevel}", _isDebugLoggingEnabled() ? LogLevel.Info : LogLevel.Trace);
+                        break;
+                    }
                 }
 
                 var pixelPos = new Vector2(tile.X, tile.Y) * 64f;
@@ -153,7 +173,24 @@ public sealed class DesertTombSpawnExecutor
                     spawnedByType[spec.Type] = (spawnedByType.TryGetValue(spec.Type, out var c) ? c : 0) + 1;
 
                 spawned++;
+
+                if (usedRelaxedPlacement && _isDebugLoggingEnabled())
+                {
+                    LogScopedHelper.Log(
+                        _log,
+                        ScopedLogCatalog.ModWeCategory.DesertTomb,
+                        $"[DesertTomb] Relaxed player-distance spawn for {spec.Type} in area {areaState.Rect} at tile {tile}.",
+                        LogLevel.Info);
+                }
             }
+        }
+
+        if (_isDebugLoggingEnabled() && spawnedByType is not null && spawnedByType.Count > 0)
+        {
+            var summary = string.Join(", ", spawnedByType
+                .OrderByDescending(p => p.Value)
+                .Select(p => $"{p.Key}={p.Value}"));
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.DesertTomb, $"[DesertTomb] SpawnIntoArea area={areaState.Rect} spawned=[{summary}] max={maxSpawnCount} relaxed={relaxedPlacements}", LogLevel.Info);
         }
 
         return spawned;

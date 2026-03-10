@@ -1,6 +1,6 @@
 using System;
 using EggsInWild.Infrastructure.Config;
-using EggsInWild.Infrastructure.Integrations.StardewUi.AnimalProgression;
+using EggsInWild.Infrastructure.Integrations.StardewUi;
 using EggsInWild.Infrastructure.Integrations.StardewUi.WildAnimals;
 using Mikew.NestCore.Framework;
 using Mikew.NestCore.Integrations.StardewUI;
@@ -11,13 +11,14 @@ namespace EggsInWild;
 
 public sealed partial class ModEntry
 {
-    private const string WildAnimalsEditorMenuId = "wildAnimalsEditor";
-    private const string AnimalProgressionEditorMenuId = "animalProgressionEditor";
+    private const string EditorsHubMenuId = "editorsHub";
+    private const string WildAnimalsTabKey = "wildAnimals";
 
     private StardewUiHost? _wildAnimalsStardewUiHost;
     private StardewUiMenuHost? _wildAnimalsMenuHost;
     private WildAnimalsEditorViewModel? _currentWildAnimalsEditorViewModel;
-    private AnimalProgressionEditorViewModel? _currentAnimalProgressionEditorViewModel;
+    private EggsInWildEditorHubViewModel? _currentEditorsHubViewModel;
+    private string _pendingEditorsHubTab = WildAnimalsTabKey;
     private bool _wildAnimalsLayoutReady;
 
     private void InitializeWildAnimalsStardewUi()
@@ -40,54 +41,38 @@ public sealed partial class ModEntry
             define: layout =>
             {
                 layout.Menu(
-                    WildAnimalsEditorMenuId,
+                    EditorsHubMenuId,
                     menu =>
                     {
-                        menu.View("wildAnimals/editor");
+                        menu.View("editorHub/editor");
                         menu.Context(() =>
                         {
                             _currentWildAnimalsEditorViewModel = new WildAnimalsEditorViewModel(
                                 new WildAnimalsEditorService(Helper, Monitor, () => _config.Get()),
                                 () => _config.Get(),
                                 SaveWildAnimalsDraft);
-                            return _currentWildAnimalsEditorViewModel;
+                            _currentEditorsHubViewModel = new EggsInWildEditorHubViewModel(
+                                _currentWildAnimalsEditorViewModel,
+                                _pendingEditorsHubTab);
+                            return _currentEditorsHubViewModel;
                         });
                         menu.ConfigureController(controller =>
                         {
                             controller.DimmingAmount = 0.45f;
                             controller.CloseOnOutsideClick = true;
                             controller.EnableCloseButton();
-                            controller.CanClose = () => _currentWildAnimalsEditorViewModel?.CanCloseMenu() ?? true;
+                            controller.CanClose = () => _currentEditorsHubViewModel?.CanCloseMenu() ?? true;
                         });
-                        menu.OnClosed(() => _currentWildAnimalsEditorViewModel = null);
-                    });
-
-                layout.Menu(
-                    AnimalProgressionEditorMenuId,
-                    menu =>
-                    {
-                        menu.View("animalProgression/editor");
-                        menu.Context(() =>
+                        menu.OnClosed(() =>
                         {
-                            _currentAnimalProgressionEditorViewModel = new AnimalProgressionEditorViewModel(
-                                new AnimalProgressionEditorService(),
-                                () => new AnimalProgressionEditorService().LoadCatalog(Helper, _config!.Get()),
-                                () => new AnimalProgressionEditorService().CreateDraft(_config!.Get()),
-                                SaveAnimalProgressionDraft);
-                            return _currentAnimalProgressionEditorViewModel;
+                            _currentEditorsHubViewModel = null;
+                            _currentWildAnimalsEditorViewModel = null;
                         });
-                        menu.ConfigureController(controller =>
-                        {
-                            controller.DimmingAmount = 0.45f;
-                            controller.CloseOnOutsideClick = true;
-                            controller.EnableCloseButton();
-                        });
-                        menu.OnClosed(() => _currentAnimalProgressionEditorViewModel = null);
                     });
             },
             assets: new StardewUiAssetsOptions(ViewsDir: "assets/views", SpritesDir: "assets/sprites"),
             preloadAssetsOnce: true,
-            preloadModels: new[] { typeof(WildAnimalsEditorViewModel), typeof(WildAnimalDraftViewModel), typeof(AnimalProgressionEditorViewModel) });
+            preloadModels: new[] { typeof(EggsInWildEditorHubViewModel), typeof(WildAnimalsEditorViewModel), typeof(WildAnimalDraftViewModel) });
 
         _wildAnimalsLayoutReady = true;
     }
@@ -100,24 +85,16 @@ public sealed partial class ModEntry
             return;
         }
 
+        _pendingEditorsHubTab = WildAnimalsTabKey;
         _wildAnimalsMenuHost ??= _wildAnimalsStardewUiHost.CreateMenuHost();
-        var handle = _wildAnimalsMenuHost.OpenAsActiveMenu(WildAnimalsEditorMenuId);
+        var handle = _wildAnimalsMenuHost.OpenAsActiveMenu(EditorsHubMenuId);
         if (handle is null)
             Monitor.Log("Failed to open the WildAnimals StardewUI editor.", LogLevel.Error);
     }
 
     private void OpenAnimalProgressionEditor()
     {
-        if (_wildAnimalsStardewUiHost is null || !_wildAnimalsLayoutReady)
-        {
-            Monitor.Log("StardewUI isn't installed; Animal Progression editor unavailable.", LogLevel.Warn);
-            return;
-        }
-
-        _wildAnimalsMenuHost ??= _wildAnimalsStardewUiHost.CreateMenuHost();
-        var handle = _wildAnimalsMenuHost.OpenAsActiveMenu(AnimalProgressionEditorMenuId);
-        if (handle is null)
-            Monitor.Log("Failed to open the Animal Progression StardewUI editor.", LogLevel.Error);
+        OpenWildAnimalsEditor();
     }
 
     private void DisposeWildAnimalsEditor()
@@ -127,25 +104,20 @@ public sealed partial class ModEntry
         _wildAnimalsMenuHost = null;
     }
 
-    private void SaveWildAnimalsDraft(ModConfig cfg, WildAnimalDraft draft)
+    private void SaveWildAnimalsDraft(ModConfig cfg, WildAnimalDraft draft, WildAnimalProgressionOverride? progression)
     {
         var service = new WildAnimalsEditorService(Helper, Monitor, () => cfg);
         service.ApplyDraft(cfg, draft);
+        if (progression is not null && !string.IsNullOrWhiteSpace(progression.FarmAnimalKey))
+        {
+            cfg.AnimalProgressionMode ??= new System.Collections.Generic.Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            if (progression.ConfiguredEnabled is null)
+                cfg.AnimalProgressionMode.Remove(progression.FarmAnimalKey);
+            else
+                cfg.AnimalProgressionMode[progression.FarmAnimalKey] = progression.ConfiguredEnabled.Value;
+        }
         NormalizeLocationTypesOverrides(cfg);
         _config?.Save();
-        InvalidateGameAssets();
-        SyncApiState();
-        UpdateDiagnosticsState();
-    }
-
-    private void SaveAnimalProgressionDraft(AnimalProgressionDraft draft, IReadOnlyList<AnimalProgressionAnimalRecord> catalog)
-    {
-        if (_config is null)
-            return;
-
-        var cfg = _config.Get();
-        new AnimalProgressionEditorService().ApplyDraft(cfg, draft, catalog);
-        _config.Save();
         InvalidateGameAssets();
         SyncApiState();
         UpdateDiagnosticsState();

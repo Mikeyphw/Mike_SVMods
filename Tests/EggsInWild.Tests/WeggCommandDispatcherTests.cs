@@ -20,7 +20,7 @@ public sealed class WeggCommandDispatcherTests
         var res = dispatcher.Execute(Array.Empty<string>());
 
         Assert.True(res.Success);
-        Assert.Contains("wegg step get", res.Message);
+        Assert.Contains("we step get", res.Message);
     }
 
     [Fact]
@@ -141,5 +141,8 @@ public sealed class WeggCommandDispatcherTests
         public FacadeResult SetWildAnimalEnabled(string wildAnimalKey, bool enabled) => new(true, "ok");
         public FacadeResult ExportWildAnimalEffectiveBulk(string wildAnimalKey) => new(true, "");
         public FacadeResult ValidateWildAnimalBulk(string wildAnimalKey, string rawOrPath) => new(true, "");
+        public FacadeResult RuntimeStatus() => new(true, "runtime");
+        public FacadeResult PipelineStatus() => new(true, "pipeline");
+        public FacadeResult WriteStateDump(string? pathArg) => new(true, pathArg ?? "state");
     }
 }

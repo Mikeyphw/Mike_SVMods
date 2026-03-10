@@ -406,6 +406,27 @@ internal static class DebugKnobs
         8;
 #endif
 
+    internal static int PharaohTeleportAnimStartFrame =>
+#if WEGG_DEV
+        I(c => c.Monsters.Pharaoh.TeleportAnimStartFrame, 32);
+#else
+        32;
+#endif
+
+    internal static int PharaohTeleportAnimFrames =>
+#if WEGG_DEV
+        I(c => c.Monsters.Pharaoh.TeleportAnimFrames, 10);
+#else
+        10;
+#endif
+
+    internal static int PharaohTeleportAnimIntervalMs =>
+#if WEGG_DEV
+        I(c => c.Monsters.Pharaoh.TeleportAnimIntervalMs, 70);
+#else
+        70;
+#endif
+
     internal static int PharaohCastRangeTiles =>
 #if WEGG_DEV
         I(c => c.Monsters.Pharaoh.CastRangeTiles, 8);
@@ -553,6 +574,69 @@ internal static class DebugKnobs
         3;
 #endif
 
+    internal static int CrawlerCurlAnimIntervalMs =>
+#if WEGG_DEV
+        I(c => c.Monsters.Crawler.CurlAnimIntervalMs, 100);
+#else
+        100;
+#endif
+
+    internal static int CrawlerFrameWidth =>
+#if WEGG_DEV
+        I(c => c.Monsters.Crawler.FrameWidth, 24);
+#else
+        24;
+#endif
+
+    internal static int CrawlerFrameHeight =>
+#if WEGG_DEV
+        I(c => c.Monsters.Crawler.FrameHeight, 32);
+#else
+        32;
+#endif
+
+    internal static int CrawlerCurledSpeedBonus =>
+#if WEGG_DEV
+        I(c => c.Monsters.Crawler.CurledSpeedBonus, 2);
+#else
+        2;
+#endif
+
+    internal static int CrawlerDeathFrame =>
+#if WEGG_DEV
+        I(c => c.Monsters.Crawler.DeathFrame, 20);
+#else
+        20;
+#endif
+
+    internal static int CrawlerDeathFrameLoops =>
+#if WEGG_DEV
+        I(c => c.Monsters.Crawler.DeathFrameLoops, 6);
+#else
+        6;
+#endif
+
+    internal static int CrawlerCurlHoldMs =>
+#if WEGG_DEV
+        I(c => c.Monsters.Crawler.CurlHoldMs, 500);
+#else
+        500;
+#endif
+
+    internal static int CrawlerCurledHaltGraceMs =>
+#if WEGG_DEV
+        I(c => c.Monsters.Crawler.CurledHaltGraceMs, 250);
+#else
+        250;
+#endif
+
+    internal static double CrawlerMovementDetectThresholdSquared =>
+#if WEGG_DEV
+        F(c => c.Monsters.Crawler.MovementDetectThresholdSquared, 1.0);
+#else
+        1.0;
+#endif
+
     internal static int CrawlerCurlDurationMs =>
 #if WEGG_DEV
         I(c => c.Monsters.Crawler.CurlDurationMs, 1800);
@@ -574,25 +658,67 @@ internal static class DebugKnobs
         10;
 #endif
 
+    internal static int HurricaneFrameWidth =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.FrameWidth, 16);
+#else
+        16;
+#endif
+
+    internal static int HurricaneFrameHeight =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.FrameHeight, 24);
+#else
+        24;
+#endif
+
+    internal static int HurricaneSpinAnimStartFrame =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.SpinAnimStartFrame, 17);
+#else
+        17;
+#endif
+
+    internal static int HurricaneSpinAnimFrames =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.SpinAnimFrames, 5);
+#else
+        5;
+#endif
+
+    internal static int HurricaneSuckLoopStartFrame =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.SuckLoopStartFrame, 20);
+#else
+        20;
+#endif
+
+    internal static int HurricaneSuckLoopFrames =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.SuckLoopFrames, 2);
+#else
+        2;
+#endif
+
+    internal static int HurricaneSpinAnimIntervalMs =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.SpinAnimIntervalMs, 90);
+#else
+        90;
+#endif
+
+    internal static int HurricaneSuckLoopIntervalMs =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.SuckLoopIntervalMs, 45);
+#else
+        45;
+#endif
+
     internal static int HurricaneSuckDistanceTiles =>
 #if WEGG_DEV
         I(c => c.Monsters.Hurricane.SuckDistanceTiles, 2);
 #else
         2;
-#endif
-
-    internal static int HurricaneSwirlSegmentMs =>
-#if WEGG_DEV
-        I(c => c.Monsters.Hurricane.SwirlSegmentMs, 600);
-#else
-        600;
-#endif
-
-    internal static int HurricaneChargeMs =>
-#if WEGG_DEV
-        I(c => c.Monsters.Hurricane.ChargeMs, 900);
-#else
-        900;
 #endif
 
     internal static int HurricaneSuckMs =>
@@ -602,6 +728,41 @@ internal static class DebugKnobs
         1600;
 #endif
 
+    internal static int HurricaneDeathAnimStartFrame =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.DeathAnimStartFrame, 24);
+#else
+        24;
+#endif
+
+    internal static int HurricaneDeathAnimFrames =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.DeathAnimFrames, 4);
+#else
+        4;
+#endif
+
+    internal static int HurricaneDefaultFacingFrame =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.DefaultFacingFrame, 8);
+#else
+        8;
+#endif
+
+    internal static int HurricaneFacingFrameStride =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.FacingFrameStride, 4);
+#else
+        4;
+#endif
+
+    internal static int HurricaneSuckLaneToleranceTiles =>
+#if WEGG_DEV
+        I(c => c.Monsters.Hurricane.SuckLaneToleranceTiles, 1);
+#else
+        1;
+#endif
+
     internal static int MatangoVisionTiles =>
 #if WEGG_DEV
         I(c => c.Monsters.Matango.VisionTiles, 8);
@@ -609,11 +770,39 @@ internal static class DebugKnobs
         8;
 #endif
 
+    internal static int MatangoFrameWidth =>
+#if WEGG_DEV
+        I(c => c.Monsters.Matango.FrameWidth, 16);
+#else
+        16;
+#endif
+
+    internal static int MatangoFrameHeight =>
+#if WEGG_DEV
+        I(c => c.Monsters.Matango.FrameHeight, 16);
+#else
+        16;
+#endif
+
+    internal static int MatangoSpellCooldownMs =>
+#if WEGG_DEV
+        I(c => c.Monsters.Matango.SpellCooldownMs, 1500);
+#else
+        1500;
+#endif
+
     internal static int MatangoCastWindupMs =>
 #if WEGG_DEV
-        I(c => c.Monsters.Matango.CastWindupMs, 450);
+        I(c => c.Monsters.Matango.CastWindupMs, 500);
 #else
-        450;
+        500;
+#endif
+
+    internal static int MatangoTileCenterTolerancePx =>
+#if WEGG_DEV
+        I(c => c.Monsters.Matango.TileCenterTolerancePx, 10);
+#else
+        10;
 #endif
 
     internal static int MatangoRecoverMs =>
@@ -630,4 +819,3 @@ internal static class DebugKnobs
         2200;
 #endif
 }
-

@@ -36,11 +36,11 @@ Contract:
             <scrollable layout="340px stretch" peeking="48">
                 <lane orientation="vertical">
                     <label text="Palette groups" />
-                    <lane *repeat={PaletteGroups} orientation="vertical">
+                    <lane *repeat={:PaletteGroups} orientation="vertical">
                         <button layout="stretch content"
-                                text={ButtonText}
+                                text={:ButtonText}
                                 click=|OpenPaletteGroup()| />
-                        <label text={MetaText} />
+                        <label text={:MetaText} />
                     </lane>
                 </lane>
             </scrollable>
@@ -53,11 +53,11 @@ Contract:
                     <label text="Selected override color (hex)" />
                     <textinput layout="220px 54px" text={<>SelectedOverrideColorText} />
                     <label text="Override rows" />
-                    <lane *repeat={OverrideRows} orientation="vertical">
+                    <lane *repeat={:OverrideRows} orientation="vertical">
                         <button layout="stretch content"
-                                text={ButtonText}
+                                text={:ButtonText}
                                 click=|SelectOverrideRow()| />
-                        <label text={DescriptionText} />
+                        <label text={:DescriptionText} />
                         <button text="Reset override" click=|ResetOverride()| />
                     </lane>
                 </lane>

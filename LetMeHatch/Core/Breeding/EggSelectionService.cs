@@ -63,6 +63,26 @@ public sealed class EggSelectionService
         return RollChance(chanceForMale) ? EggRecipient.Male : EggRecipient.Female;
     }
 
+    public string? ChooseEggCandidateOrDefault(IEnumerable<string?> candidates, string? fallback = null)
+    {
+        if (candidates is null)
+        {
+            throw new ArgumentNullException(nameof(candidates));
+        }
+
+        var list = candidates
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .Select(static value => value!.Trim())
+            .ToList();
+
+        if (list.Count == 0)
+        {
+            return string.IsNullOrWhiteSpace(fallback) ? null : fallback.Trim();
+        }
+
+        return list[_rng.Next(list.Count)];
+    }
+
     public T RollWeightedOrDefault<T>(IEnumerable<(T item, double weight)> entries, T fallback)
     {
         if (entries is null)

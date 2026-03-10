@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using RoosterControl.Constants;
 using RoosterControl.Enums;
-using StardewModdingAPI;
-using StardewModdingAPI.Utilities;
 
 namespace RoosterControl.Framework.Config;
 
@@ -26,9 +24,6 @@ public sealed class RoosterControlConfig
     /// <summary>Per-rooster settings. Only base rooster types are used by the mod today.</summary>
     public Dictionary<RoosterType, RoosterSettings> Roosters { get; set; } = CreateDefaultRoosters();
 
-    /// <summary>Female animal key -> assigned rooster type (or <see cref="FemaleRoosterAssignment.Off"/>).</summary>
-    public Dictionary<string, FemaleRoosterAssignment> FemalesOptions { get; set; } = new();
-
     public static RoosterControlConfig CreateDefault() => new();
 
     internal static Dictionary<RoosterType, RoosterSettings> CreateDefaultRoosters()
@@ -42,24 +37,9 @@ public sealed class RoosterControlConfig
         };
 }
 
-public sealed class GeneralSettings
+public sealed partial class GeneralSettings
 {
     public UpdateRateMode UpdateRate { get; set; } = UpdateRateMode.OnDayStart;
-
-    /// <summary>
-    /// Keybind to open the StardewUI editor for White rooster produce entries.
-    /// </summary>
-    public KeybindList OpenWhiteRoosterProduceEditorKey { get; set; } = new(SButton.F7);
-
-    /// <summary>
-    /// Optional shortcut to open the duplicate StardewUI compat editor directly.
-    /// </summary>
-    public KeybindList OpenCompatEditorKey { get; set; } = new();
-
-    /// <summary>
-    /// Optional shortcut to open the duplicate StardewUI females editor directly.
-    /// </summary>
-    public KeybindList OpenFemalesEditorKey { get; set; } = new();
 
     public CatalogApplyMode CatalogApplyMode { get; set; } = CatalogApplyMode.RepairInvalid;
 
@@ -197,16 +177,6 @@ public enum DeluxeProduceMode
     Off,
     KeepOriginalProduce,
     CustomizeBelow
-}
-
-public enum FemaleRoosterAssignment
-{
-    Off,
-    White,
-    Brown,
-    Blue,
-    Void,
-    Gold
 }
 
 #if RCTRL_DEV

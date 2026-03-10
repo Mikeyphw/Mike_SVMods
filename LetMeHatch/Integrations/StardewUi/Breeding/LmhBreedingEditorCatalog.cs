@@ -12,6 +12,7 @@ public sealed record LmhBreedingMaleRecord(
     string DisplayName,
     bool IsCloned,
     bool AdjustableMaleChances,
+    IReadOnlyDictionary<Enums.ItemType, IReadOnlyList<string>> EggCandidatePools,
     IReadOnlyDictionary<Enums.ItemType, string?> EggIds,
     bool Enabled,
     float MaleChance,

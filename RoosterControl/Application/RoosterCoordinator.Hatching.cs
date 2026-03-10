@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Helpers.GameStateQueries;
-using RoosterControl.Application.Hatching;
 using RoosterControl.Application.Planning;
 using RoosterControl.Application.Compat;
 using RoosterControl.Application.FertilizedEggs;
@@ -156,16 +155,6 @@ internal sealed partial class RoosterCoordinator
                         fertilizedEgg[RoosterItemDataEntries.Name] = FertilizedEggsObjectEditService.GetSynthesizedFertilizedId(baseEggId);
                 }
             }
-
-            RoosterHelper.UpdateFemaleEggs(rooster, animalData);
-
-            if (rooster.Eggs.TryGetValue(EggTypeEntries.Fertilized, out var fertEggEntry)
-                && fertEggEntry.TryGetValue(RoosterItemDataEntries.Name, out var fertEggId)
-                && !string.IsNullOrWhiteSpace(fertEggId))
-            {
-                RoosterHelper.FemaleEggs.TryAdd(rooster.Female, new Dictionary<EggTypeEntries, string>());
-                RoosterHelper.FemaleEggs[rooster.Female][EggTypeEntries.Fertilized] = fertEggId;
-            }
         }
     }
 
@@ -216,28 +205,36 @@ internal sealed partial class RoosterCoordinator
         }
     }
 
-    internal void GetRoostersFemales(
-        IDictionary<string, FarmAnimalData> animalData,
-        Dictionary<RoosterType, RoosterData> roosters)
-    {
-        var plan = FemaleAssignmentService.ComputeFemaleAssignmentsPlan(
-            config: Config,
-            animalData: animalData,
-            roosters: roosters,
-            animalExclusions: _animalExclusions,
-            hatchApi: HatchApi,
-            wildEggsApi: WildEggsApi
-        );
-
-        FemaleAssignmentService.ApplyFemaleAssignmentsPlan(Config, RoosterHelper, plan);
-
-        if (plan.ConfigChanged)
-            _femaleAssignmentsDirty = true;
-    }
-
     private void UpdateRoosterHatchingApi()
+        => RoosterHatchingApi.Instance.UpdateResolvedEggItemIds(BuildResolvedCompatEggItemIds());
+
+    private Dictionary<string, string> BuildResolvedCompatEggItemIds()
     {
-        FemaleAssignmentService.UpdateChosenFemalesApi(Config);
+        var resolved = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (!Context.IsWorldReady)
+            return resolved;
+
+        try
+        {
+            var data = Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(FarmAnimalsAssetName);
+            if (data is null)
+                return resolved;
+
+            foreach (var kind in CompatSelectionService.ManagedEggKinds)
+            {
+                if (_compatSelection.TryResolveSelectedEggItemId(_saveState.Compat, kind, data, out var itemId, out _)
+                    && !string.IsNullOrWhiteSpace(itemId))
+                {
+                    resolved[kind.ToString()] = itemId;
+                }
+            }
+        }
+        catch
+        {
+            // best effort only; the API can still expose female assignments.
+        }
+
+        return resolved;
     }
 
     private void RunHatchingSystem(
@@ -245,24 +242,8 @@ internal sealed partial class RoosterCoordinator
         IDictionary<string, FarmAnimalData> data,
         DailyHatchingPlanEnvelope? plan)
     {
-        var ctx = new HatchingContext(Config, RoosterHelper, _animalExclusions, HatchApi);
-
-        if (plan is null)
-        {
-            _farmAnimalHatching.ApplyForRooster(ctx, rooster, data);
-            return;
-        }
-
-        var buildingKey = ResolveBuildingKey(rooster, data);
-        var otherAnimals = GetOtherAnimalsSharingEggsCached(data, rooster, plan);
-
-        _planApplier.Apply(
-            plan: plan,
-            buildingKey: buildingKey,
-            rooster: rooster,
-            data: data,
-            otherAnimalsSharingEggs: otherAnimals
-        );
+        // RoosterControl now owns egg arbitration only. Breeding/hatching edits belong to LetMeHatch.
+        return;
     }
 
     private bool TryApplyDailyFarmAnimalsEdits(IDictionary<string, FarmAnimalData> data)
@@ -330,7 +311,6 @@ internal sealed partial class RoosterCoordinator
         ApplyCompatSelectionsToRuntime(data);
 
         RoosterHelper.UpdateRoosterQuantity_All();
-        GetRoostersFemales(data, RoosterHelper.Roosters);
         UpdateRoosterHatchingApi();
 
         var plan = EnsureDailyPlanForToday(
@@ -347,8 +327,7 @@ internal sealed partial class RoosterCoordinator
 
         // Apply the plan through the asset editor (single source of truth).
         RequestInvalidate(FarmAnimalsAssetName);
-        if (RoosterHelper.FemaleEggs.Count > 0)
-            RequestInvalidate(ObjectsAssetName);
+        RequestInvalidate(ObjectsAssetName);
 
         QueueRefreshFarmAnimalsAfterDailyDecisions();
     }

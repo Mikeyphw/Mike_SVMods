@@ -143,6 +143,26 @@ public bool DebugForceDesertTombHandler { get; set; } = false;
 /// </summary>
 public bool DebugForceDesertTombUnrestricted { get; set; } = false;
 
+/// <summary>
+/// Dev-only: verbose SMAPI logging for Matango behavior.
+/// </summary>
+public bool DebugMonsterMatangoLogging { get; set; } = false;
+
+/// <summary>
+/// Dev-only: verbose SMAPI logging for Pharaoh behavior.
+/// </summary>
+public bool DebugMonsterPharaohLogging { get; set; } = false;
+
+/// <summary>
+/// Dev-only: verbose SMAPI logging for Crawler behavior.
+/// </summary>
+public bool DebugMonsterCrawlerLogging { get; set; } = false;
+
+/// <summary>
+/// Dev-only: verbose SMAPI logging for Hurricane behavior.
+/// </summary>
+public bool DebugMonsterHurricaneLogging { get; set; } = false;
+
     /// <summary>
     /// Centralized tuning knobs exposed only in debug builds (GMCM Debug page).
     /// </summary>

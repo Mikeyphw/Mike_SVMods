@@ -74,17 +74,6 @@ internal sealed partial class RoosterCoordinator
         if (farmAnimals is not null)
         {
             ValidateRequiredFarmAnimalsKeys(farmAnimals, errors);
-
-            foreach (var (femaleKey, assignment) in Config.FemalesOptions)
-            {
-                if (assignment == FemaleRoosterAssignment.Off)
-                    continue;
-
-                if (!farmAnimals.ContainsKey(femaleKey))
-                    warnings.Add(
-                        $"FemalesOptions key '{femaleKey}' not found in {FarmAnimalsAssetName} (assigned {assignment})."
-                    );
-            }
         }
 
         if (warnings.Count > 0)
@@ -182,5 +171,4 @@ internal sealed partial class RoosterCoordinator
             warnings.Add($"Roosters[{roosterType}].{fieldName} weights sum to {sum}; treated as relative weights (normalization implied).");
     }
 }
-
 

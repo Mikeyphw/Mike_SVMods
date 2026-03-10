@@ -37,8 +37,7 @@ public sealed record RoosterCompatEggKindRecord(
 public sealed record RoosterCompatProviderRecord(
     string ProviderId,
     string DisplayName,
-    bool IsEnabled,
-    string? RoosterEggItemId
+    bool IsEnabled
 );
 
 /// <summary>

@@ -7,13 +7,13 @@
         <banner text={Title} />
         <scrollable layout="stretch stretch">
             <lane layout="stretch content" orientation="vertical">
-                <frame *repeat={Slots}
+                <frame *repeat={:Slots}
                        layout="stretch content"
                        margin="0,0,0,8"
                        background={@Mods/StardewUI/Sprites/ControlBorder}
                        padding="16,12,16,12">
                     <lane layout="stretch content" orientation="vertical">
-                        <label font="dialogue" text={SlotTitle} margin="0,0,0,8" />
+                        <label font="dialogue" text={:SlotTitle} margin="0,0,0,8" />
 
                         <lane layout="stretch content" orientation="horizontal" margin="0,0,0,8">
                             <label layout="200px content" text={#config.produceEntry.choice.name} />

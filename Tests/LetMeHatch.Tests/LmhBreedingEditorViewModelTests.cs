@@ -79,6 +79,7 @@ public sealed class LmhBreedingEditorViewModelTests
                                 "BlueChicken",
                                 false,
                                 true,
+                                new Dictionary<ItemType, IReadOnlyList<string>>(),
                                 new Dictionary<ItemType, string?>(),
                                 true,
                                 0.5f,

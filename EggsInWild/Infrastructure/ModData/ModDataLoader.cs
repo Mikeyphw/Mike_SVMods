@@ -28,10 +28,7 @@ public sealed class ModDataLoader : IModDataLoader
             ModDataPaths.WildAnimalsList,
             () => new Dictionary<string, WildAnimalJson>());
 
-        var spawnAreas = ReadOrDefault<Dictionary<string, List<SpawnAreaRuleJson>>>(
-            ModDataPaths.SpawnAreas,
-            () => new Dictionary<string, List<SpawnAreaRuleJson>>());
-
+        var wildEggSpawnDefinitions = ReadWildEggSpawnDefinitions();
         var spawnParameters = ReadOrDefault(
             ModDataPaths.SpawnParameters,
             () => new SpawnParametersJson());
@@ -40,13 +37,61 @@ public sealed class ModDataLoader : IModDataLoader
             ModDataPaths.LocationPacks,
             () => new Dictionary<string, LocationPackJson>());
 
-        Validate(wildAnimals, spawnAreas, spawnParameters, locationPacks);
+        Validate(wildAnimals, wildEggSpawnDefinitions, spawnParameters, locationPacks);
 
         return new ModDataSnapshot(
             WildAnimals: wildAnimals,
-            SpawnAreas: spawnAreas,
+            WildEggSpawnDefinitions: wildEggSpawnDefinitions,
             SpawnParameters: spawnParameters,
             LocationPacks: locationPacks);
+    }
+
+    private Dictionary<string, WildEggSpawnLocationJson> ReadWildEggSpawnDefinitions()
+    {
+#if WEGG_DEV
+        try
+        {
+            var model = _reader.ReadJsonFile<Dictionary<string, WildEggSpawnLocationJson>>(ModDataPaths.WildEggSpawnDefinitions);
+            if (model is not null)
+                return model;
+
+            var legacyModel = _reader.ReadJsonFile<Dictionary<string, List<SpawnAreaRuleJson>>>(ModDataPaths.LegacySpawnAreas);
+            if (legacyModel is not null)
+            {
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.SaveData, $"Using legacy mod data path {ModDataPaths.LegacySpawnAreas}. Rename to {ModDataPaths.WildEggSpawnDefinitions} when convenient.", StardewModdingAPI.LogLevel.Warn);
+                return new Dictionary<string, WildEggSpawnLocationJson>(
+                    WildEggSpawnDefinitionEggIds.FromLegacyFlat(legacyModel),
+                    StringComparer.OrdinalIgnoreCase);
+            }
+
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.SaveData, $"Mod data missing: {ModDataPaths.WildEggSpawnDefinitions}. Using defaults.", StardewModdingAPI.LogLevel.Warn);
+            return new Dictionary<string, WildEggSpawnLocationJson>(StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.SaveData, $"Failed reading mod data: {ModDataPaths.WildEggSpawnDefinitions}. Using defaults. {ex}", StardewModdingAPI.LogLevel.Error);
+            return new Dictionary<string, WildEggSpawnLocationJson>(StringComparer.OrdinalIgnoreCase);
+        }
+#else
+        try
+        {
+            var model = _reader.ReadJsonFile<Dictionary<string, WildEggSpawnLocationJson>>(ModDataPaths.WildEggSpawnDefinitions);
+            if (model is not null)
+                return model;
+
+            var legacyModel = _reader.ReadJsonFile<Dictionary<string, List<SpawnAreaRuleJson>>>(ModDataPaths.LegacySpawnAreas);
+            if (legacyModel is not null)
+                return new Dictionary<string, WildEggSpawnLocationJson>(
+                    WildEggSpawnDefinitionEggIds.FromLegacyFlat(legacyModel),
+                    StringComparer.OrdinalIgnoreCase);
+
+            throw new InvalidOperationException($"Required mod data missing: {ModDataPaths.WildEggSpawnDefinitions}. Release builds embed JSON; check @(MikeEmbedText) and build targets.");
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed reading required mod data: {ModDataPaths.WildEggSpawnDefinitions}. Release builds embed JSON.", ex);
+        }
+#endif
     }
 
     private T ReadOrDefault<T>(string path, Func<T> fallback) where T : class
@@ -81,9 +126,10 @@ public sealed class ModDataLoader : IModDataLoader
         }
 #endif
     }
+
 private void Validate(
         IDictionary<string, WildAnimalJson> wildAnimals,
-        IDictionary<string, List<SpawnAreaRuleJson>> spawnAreas,
+        IDictionary<string, WildEggSpawnLocationJson> wildEggSpawnDefinitions,
         SpawnParametersJson spawnParameters,
         IDictionary<string, LocationPackJson> locationPacks)
     {
@@ -103,27 +149,43 @@ private void Validate(
                 LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.SaveData, "WildAnimalsList contains an empty key.", StardewModdingAPI.LogLevel.Warn);
         }
 
-        foreach (var (areaKey, rules) in spawnAreas)
+        foreach (var (areaKey, definition) in wildEggSpawnDefinitions)
         {
-            if (rules is null)
+            if (definition is null)
             {
-                spawnAreas[areaKey] = new List<SpawnAreaRuleJson>();
-                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.SaveData, $"SpawnAreas '{areaKey}' had null rules list; defaulted to empty.", StardewModdingAPI.LogLevel.Warn);
+                wildEggSpawnDefinitions[areaKey] = new WildEggSpawnLocationJson();
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.SaveData, $"WildEggSpawnDefinitions '{areaKey}' had null definition; defaulted to empty.", StardewModdingAPI.LogLevel.Warn);
                 continue;
             }
 
-            foreach (var rule in rules)
+            definition.Normal ??= new WildEggSpawnSizeJson();
+            definition.Large ??= new WildEggSpawnSizeJson();
+
+            NormalizeRuleList(definition.Normal.Common);
+            NormalizeRuleList(definition.Normal.Magic);
+            NormalizeRuleList(definition.Large.Common);
+            NormalizeRuleList(definition.Large.Magic);
+
+            void NormalizeRuleList(IList<SpawnAreaRuleJson>? rules)
             {
-                rule.IncludeTerrainTypes ??= new List<string>();
-                rule.ExcludeTerrainTypes ??= new List<string>();
-                rule.IncludeCoordinates ??= new List<string>();
-                rule.ExcludeCoordinates ??= new List<string>();
-                rule.ExtraConditions ??= new ExtraConditionsJson();
-                rule.ExtraConditions.Seasons ??= new List<string>();
-                rule.ExtraConditions.Days ??= new List<int>();
-                rule.ExtraConditions.WeatherToday ??= new List<string>();
-                rule.ExtraConditions.WeatherTomorrow ??= new List<string>();
-                rule.ExtraConditions.WeatherYesterday ??= new List<string>();
+                if (rules is null)
+                    return;
+
+                foreach (var rule in rules)
+                {
+                    rule.IncludeTerrainTypes ??= new List<string>();
+                    rule.ExcludeTerrainTypes ??= new List<string>();
+                    rule.IncludeCoordinates ??= new List<string>();
+                    rule.ExcludeCoordinates ??= new List<string>();
+                    rule.ExtraConditions ??= new ExtraConditionsJson();
+                    rule.ExtraConditions.Seasons ??= new List<string>();
+                    rule.ExtraConditions.Days ??= new List<int>();
+                    rule.ExtraConditions.WeatherToday ??= new List<string>();
+                    rule.ExtraConditions.WeatherTomorrow ??= new List<string>();
+                    rule.ExtraConditions.WeatherYesterday ??= new List<string>();
+                    rule.Location = string.Empty;
+                    rule.EggTypeToken = string.Empty;
+                }
             }
         }
 

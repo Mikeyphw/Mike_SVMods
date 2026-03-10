@@ -12,8 +12,12 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "176",
-          "Large": "174",
+          "Normal": [
+            "176"
+          ],
+          "Large": [
+            "174"
+          ],
           "FertilizedEgg": "Meara.Roosters_FertEggWhite"
         },
         "Enabled": false,
@@ -23,8 +27,12 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "176",
-          "Large": "174",
+          "Normal": [
+            "176"
+          ],
+          "Large": [
+            "174"
+          ],
           "FertilizedEgg": ""
         },
         "Enabled": false,
@@ -47,8 +55,12 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "180",
-          "Large": "182",
+          "Normal": [
+            "180"
+          ],
+          "Large": [
+            "182"
+          ],
           "FertilizedEgg": "Meara.Roosters_FertEggBrown"
         },
         "Enabled": false,
@@ -58,8 +70,12 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "180",
-          "Large": "182",
+          "Normal": [
+            "180"
+          ],
+          "Large": [
+            "182"
+          ],
           "FertilizedEgg": ""
         },
         "Enabled": false,
@@ -82,8 +98,12 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "Meara.RoostersBlueEgg",
-          "Large": "Meara.RoostersLargeBlueEgg",
+          "Normal": [
+            "Meara.RoostersBlueEgg"
+          ],
+          "Large": [
+            "Meara.RoostersLargeBlueEgg"
+          ],
           "FertilizedEgg": "Meara.Roosters_FertEggBlue"
         },
         "Enabled": false,
@@ -93,8 +113,8 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "",
-          "Large": "",
+          "Normal": [],
+          "Large": [],
           "FertilizedEgg": ""
         },
         "Enabled": false,
@@ -117,8 +137,12 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "305",
-          "Large": "Meara.RoostersLargevoidEgg",
+          "Normal": [
+            "305"
+          ],
+          "Large": [
+            "Meara.RoostersLargevoidEgg"
+          ],
           "FertilizedEgg": "Meara.Roosters_FertEggVoid"
         },
         "Enabled": false,
@@ -128,8 +152,8 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "",
-          "Large": "",
+          "Normal": [],
+          "Large": [],
           "FertilizedEgg": ""
         },
         "Enabled": false,
@@ -152,8 +176,12 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "928",
-          "Large": "Meara.RoostersLargegoldEgg",
+          "Normal": [
+            "928"
+          ],
+          "Large": [
+            "Meara.RoostersLargegoldEgg"
+          ],
           "FertilizedEgg": "Meara.Roosters_FertEggGold"
         },
         "Enabled": false,
@@ -176,8 +204,8 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "",
-          "Large": "",
+          "Normal": [],
+          "Large": [],
           "FertilizedEgg": ""
         },
         "Enabled": false,
@@ -187,8 +215,8 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "",
-          "Large": "",
+          "Normal": [],
+          "Large": [],
           "FertilizedEgg": ""
         },
         "Enabled": false,
@@ -198,8 +226,8 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "",
-          "Large": "",
+          "Normal": [],
+          "Large": [],
           "FertilizedEgg": ""
         },
         "Enabled": false,
@@ -209,8 +237,8 @@
         "MaleChance": 0.4,
         "BoostByMale": 0.1,
         "EggsIDs": {
-          "Normal": "",
-          "Large": "",
+          "Normal": [],
+          "Large": [],
           "FertilizedEgg": ""
         },
         "Enabled": false,

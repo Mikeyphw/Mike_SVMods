@@ -28,7 +28,7 @@ public static class DefaultTombLayouts
                 new(
                     area: new Rectangle(32, 5, 14, 15),
                     capacity: new CapacityRange(4, 6),
-                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.Spider }
+                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.Spider, TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango }
                 ),
                 new(
                     area: new Rectangle(32, 20, 14, 18),
@@ -38,6 +38,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Mummy,
                         TombMonsterType.AssassinBug,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -53,6 +54,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.SkeletonMage,
                         TombMonsterType.RoyalSerpent,
                         TombMonsterType.HauntedSkull,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -71,6 +73,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.HauntedSkull,
                         TombMonsterType.Ghost,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(area: new Rectangle(35, 16, 4, 3), type: TombAreaType.DuggyArea),
@@ -91,12 +94,12 @@ public static class DefaultTombLayouts
                 new(
                     area: new Rectangle(9, 5, 14, 4),
                     capacity: new CapacityRange(1, 3),
-                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.AssassinBug }
+                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.AssassinBug, TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango }
                 ),
                 new(
                     area: new Rectangle(23, 5, 15, 4),
                     capacity: new CapacityRange(1, 3),
-                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.AssassinBug }
+                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.AssassinBug, TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango }
                 ),
                 new(
                     area: new Rectangle(40, 8, 8, 14),
@@ -106,6 +109,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Mummy,
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Spider,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -116,6 +120,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Mummy,
                         TombMonsterType.Spider,
                         TombMonsterType.BruteMummy,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -128,6 +133,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Ghost,
                         TombMonsterType.HauntedSkull,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -140,6 +146,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Ghost,
                         TombMonsterType.HauntedSkull,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -152,6 +159,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Ghost,
                         TombMonsterType.HauntedSkull,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -164,6 +172,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Spider,
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -176,6 +185,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Skeleton,
                         TombMonsterType.Ghost,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -188,6 +198,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Spider,
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -204,6 +215,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.RoyalSerpent,
                         TombMonsterType.HauntedSkull,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -222,6 +234,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.HauntedSkull,
                         TombMonsterType.Ghost,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(area: new Rectangle(11, 31, 3, 2), type: TombAreaType.DuggyArea),
@@ -241,7 +254,7 @@ public static class DefaultTombLayouts
                 new(
                     area: new Rectangle(2, 14, 6, 16),
                     capacity: new CapacityRange(1, 3),
-                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.Spider }
+                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.Spider, TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango }
                 ),
                 new(
                     area: new Rectangle(9, 39, 12, 9),
@@ -253,6 +266,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Spider,
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -265,6 +279,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Spider,
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -281,6 +296,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.HauntedSkull,
                         TombMonsterType.Ghost,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -296,6 +312,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.SkeletonMage,
                         TombMonsterType.RoyalSerpent,
                         TombMonsterType.HauntedSkull,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -314,6 +331,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.HauntedSkull,
                         TombMonsterType.Ghost,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(area: new Rectangle(6, 9, 4, 3), type: TombAreaType.DuggyArea),
@@ -332,7 +350,7 @@ public static class DefaultTombLayouts
                 new(
                     area: new Rectangle(9, 6, 11, 10),
                     capacity: new CapacityRange(3, 5),
-                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.AssassinBug }
+                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.AssassinBug, TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango }
                 ),
                 new(
                     area: new Rectangle(3, 16, 17, 12),
@@ -344,6 +362,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Spider,
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -359,6 +378,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.SkeletonMage,
                         TombMonsterType.RoyalSerpent,
                         TombMonsterType.HauntedSkull,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -377,6 +397,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.HauntedSkull,
                         TombMonsterType.Ghost,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(area: new Rectangle(9, 22, 1, 1), type: TombAreaType.DuggyArea),
@@ -394,7 +415,7 @@ public static class DefaultTombLayouts
                 new(
                     area: new Rectangle(0, 79, 35, 11),
                     capacity: new CapacityRange(1, 3),
-                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.AssassinBug }
+                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Mummy, TombMonsterType.AssassinBug, TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango }
                 ),
                 new(
                     area: new Rectangle(35, 62, 12, 21),
@@ -404,6 +425,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Mummy,
                         TombMonsterType.AssassinBug,
                         TombMonsterType.Spider,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -414,6 +436,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Mummy,
                         TombMonsterType.Spider,
                         TombMonsterType.BruteMummy,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -426,6 +449,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Ghost,
                         TombMonsterType.HauntedSkull,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -438,6 +462,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.Spider,
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -450,6 +475,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.BruteMummy,
                         TombMonsterType.Skeleton,
                         TombMonsterType.Ghost,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -466,6 +492,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.RoyalSerpent,
                         TombMonsterType.HauntedSkull,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(
@@ -484,6 +511,7 @@ public static class DefaultTombLayouts
                         TombMonsterType.HauntedSkull,
                         TombMonsterType.Ghost,
                         TombMonsterType.Bat,
+                        TombMonsterType.Hurricane, TombMonsterType.Crawler, TombMonsterType.Matango,
                     }
                 ),
                 new(area: new Rectangle(66, 31, 5, 4), type: TombAreaType.DuggyArea),

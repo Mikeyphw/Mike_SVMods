@@ -305,13 +305,14 @@ public sealed class ObjectsEditor : AssetEditorBase<ContentContext>
 
     private static IReadOnlyList<EggDefinition> GetEggDefinitions(ContentContext context)
     {
-        var ids = SpawnAreaEggIds.GetEggItemIds(context.ModData.SpawnAreas);
+        var farmAnimals = context.Helper.GameContent.Load<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals);
+        var catalog = WildEggSpawnCatalogBuilder.Build(context.ModData.WildEggSpawnDefinitions, context.ModData.WildAnimals, farmAnimals, context.Helper.ModRegistry, context.Logger);
 
-        return ids
-            .Select(id => new EggDefinition(
-                EggItemId: id,
-                LocationToken: ExtractRegionToken(id),
-                Kind: EggKindExtensions.FromEggItemId(id)))
+        return catalog.ActiveEggDefinitions
+            .Select(def => new EggDefinition(
+                EggItemId: def.EggItemId,
+                LocationToken: def.LocationToken,
+                Kind: def.Kind))
             .ToList();
     }
 

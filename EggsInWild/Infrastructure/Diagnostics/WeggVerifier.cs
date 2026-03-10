@@ -421,19 +421,24 @@ public sealed class WeggVerifier
         TryProbe<Texture2D>(report, "probe/tex/tracker", WeggGameAssetNames.DesertTombTrackerTexture);
         TryProbe<Texture2D>(report, "probe/tex/object-note", $"Mods/{Constants.ModId}/objects/note");
 
-        // ID validation: SpawnAreas egg IDs must exist in Data/Objects; progression IDs must match injected assets.
+        // ID validation: wild egg spawn definition IDs must exist in Data/Objects; progression IDs must match injected assets.
         try
         {
             var snapshot = _dataLoader.Load();
-            var eggIds = SpawnAreaEggIds.GetEggItemIds(snapshot.SpawnAreas, _log)
+            var farmAnimals = SafeLoad<Dictionary<string, FarmAnimalData>>(Strings.AssetNames.FarmAnimals)
+                ?? new Dictionary<string, FarmAnimalData>(StringComparer.OrdinalIgnoreCase);
+            var catalog = WildEggSpawnCatalogBuilder.Build(snapshot.WildEggSpawnDefinitions, snapshot.WildAnimals, farmAnimals, _helper.ModRegistry, _log);
+            var eggIds = catalog.ActiveEggDefinitions
+                .Select(def => def.EggItemId)
                 .Where(id => !string.IsNullOrWhiteSpace(id))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
             var objects = SafeLoad<Dictionary<string, ObjectData>>(Strings.AssetNames.Objects);
-            var (eggStatus, eggMsg) = EggIdsValidator.Validate(eggIds, objects, full: options.Full);
+            var (eggStatus, eggMsg) = EggIdsValidator.Validate(eggIds, catalog.DeclaredEggDefinitions.Count, catalog.ActiveEggDefinitions.Count, objects, full: options.Full);
             report.Add("ids/eggs", eggStatus, eggMsg);
+            report.Add("ids/eggs/declared", WeggVerifyStatus.Pass, $"Declared wild egg variants={catalog.DeclaredEggDefinitions.Count}, active variants={catalog.ActiveEggDefinitions.Count}.");
         }
         catch (Exception ex)
         {
@@ -482,36 +487,10 @@ public sealed class WeggVerifier
                 report.Add("cp/recipes", hasRecipe ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn,
                     hasRecipe ? "Incubator recipe key present." : "Incubator recipe key not found (if expected, content edits may be missing).");
 
-                // Best-effort: ask Content Patcher for patch list (reflection; may fail depending on CP version).
-                try
-                {
-                    var cpApi = _helper.ModRegistry.GetApi<IContentPatcherApiProbe>("Pathoschild.ContentPatcher");
-                    if (cpApi is not null)
-                    {
-                        var patches = cpApi.GetPatches();
-                        var found = false;
-                        if (patches is not null)
-                        {
-                            foreach (var p in patches)
-                            {
-                                var ownerProp = p.GetType().GetProperty("Owner") ?? p.GetType().GetProperty("ContentPack");
-                                var owner = ownerProp?.GetValue(p)?.ToString() ?? string.Empty;
-                                if (owner.Contains("yourdorkbrains.cp.wildeggsforage", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        report.Add("cp/patches", found ? WeggVerifyStatus.Pass : WeggVerifyStatus.Warn,
-                            found ? "Content Patcher reports wildeggsforage patches present." : "Content Patcher did not report wildeggsforage patches (pack may be disabled/outdated).");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    report.Add("cp/patches", WeggVerifyStatus.Warn, $"Could not query Content Patcher patches (best-effort): {ex.GetType().Name}");
-                }
+                report.Add(
+                    "cp/patches",
+                    WeggVerifyStatus.Pass,
+                    "Content Patcher patch-list probe skipped; object/recipe validation is used instead for compatibility across CP API versions.");
             }
             catch (Exception ex)
             {

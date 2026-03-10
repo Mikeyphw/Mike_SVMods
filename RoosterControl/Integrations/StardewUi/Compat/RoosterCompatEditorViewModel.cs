@@ -335,13 +335,11 @@ internal sealed class RoosterCompatProviderViewModel
         ProviderId = record.ProviderId;
         DisplayName = record.DisplayName;
         IsEnabled = record.IsEnabled;
-        RoosterEggItemId = record.RoosterEggItemId;
     }
 
     public string ProviderId { get; }
     public string DisplayName { get; }
     public bool IsEnabled { get; }
-    public string? RoosterEggItemId { get; }
 
     public string ButtonText => DisplayName;
     public string DescriptionText => IsEnabled ? "Enabled" : "Disabled";

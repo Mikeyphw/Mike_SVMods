@@ -1,5 +1,5 @@
 // FILE: NestCore/Examples/StardewUi/HudOverlayViewModelExample.cs
-#if WEGG_DEV
+#if NEST_DEV
 using System;
 using System.Threading.Tasks;
 using Mikew.NestCore.Helpers.UI;
@@ -11,7 +11,7 @@ namespace Mikew.NestCore.Examples.StardewUi;
 /// </summary>
 public sealed class HudOverlayViewModelExample : ObservableObject
 {
-    private string _message = "WEGG_DEV HUD example";
+    private string _message = "NEST_DEV HUD example";
 
     public string Message
     {

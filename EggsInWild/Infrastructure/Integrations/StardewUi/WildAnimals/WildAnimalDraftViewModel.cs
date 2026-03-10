@@ -10,14 +10,14 @@ namespace EggsInWild.Infrastructure.Integrations.StardewUi.WildAnimals;
 public sealed class WildAnimalDraftViewModel : ObservableObject
 {
     private readonly WildAnimalsEditorService _service;
-    private const string OverviewTabKey = "overview";
-    private const string LocationTypesTabKey = "locationTypes";
-    private const string ModKeysTabKey = "modKeys";
-    private const string WarningsTabKey = "warnings";
+    private readonly string? _progressionAnimalKey;
+    private readonly bool _progressionDefaultEnabled;
+    private readonly bool? _baseProgressionConfigured;
 
     private bool _enabled;
     private bool _largeEgg;
     private bool _isMagic;
+    private bool? _progressionConfiguredEnabled;
     private string _priceText;
     private string _newModGroupId = "";
     private string _priceError = "";
@@ -26,22 +26,32 @@ public sealed class WildAnimalDraftViewModel : ObservableObject
     private string _previewStatus = "";
     private string _warningSummary = "";
     private bool _hasWarnings;
-    private string _currentTab = OverviewTabKey;
+    private IReadOnlyList<WildAnimalLocationTypeEditorViewModel> _locationTypes = Array.Empty<WildAnimalLocationTypeEditorViewModel>();
+    private IReadOnlyList<WildAnimalModGroupEditorViewModel> _modGroups = Array.Empty<WildAnimalModGroupEditorViewModel>();
 
-    public WildAnimalDraftViewModel(WildAnimalsEditorService service, WildAnimalDraft draft)
+    public WildAnimalDraftViewModel(
+        WildAnimalsEditorService service,
+        WildAnimalDraft draft,
+        string? progressionAnimalKey,
+        bool progressionDefaultEnabled,
+        bool? progressionConfiguredEnabled)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         Draft = draft ?? throw new ArgumentNullException(nameof(draft));
+        _progressionAnimalKey = progressionAnimalKey;
+        _progressionDefaultEnabled = progressionDefaultEnabled;
+        _baseProgressionConfigured = progressionConfiguredEnabled;
         _enabled = draft.Enabled;
         _largeEgg = draft.LargeEgg;
         _isMagic = draft.IsMagic;
+        _progressionConfiguredEnabled = progressionConfiguredEnabled;
         _priceText = draft.Price.ToString();
 
-        LocationTypes = draft.LocationTypes
+        _locationTypes = draft.LocationTypes
             .Select(location => new WildAnimalLocationTypeEditorViewModel(location.Key, location.BaseAllowed, location.Allowed, RefreshState))
             .ToList();
 
-        ModGroups = draft.ModGroups
+        _modGroups = draft.ModGroups
             .Select(group => new WildAnimalModGroupEditorViewModel(group.ModId, group.BaseKeys, group.Keys, RefreshState, RemoveModGroup))
             .ToList();
 
@@ -50,29 +60,43 @@ public sealed class WildAnimalDraftViewModel : ObservableObject
         ResetLargeEggCommand = new RelayCommand(() => LargeEgg = Draft.BaseLargeEgg, () => LargeEgg != Draft.BaseLargeEgg);
         ResetIsMagicCommand = new RelayCommand(() => IsMagic = Draft.BaseIsMagic, () => IsMagic != Draft.BaseIsMagic);
         ResetPriceCommand = new RelayCommand(() => PriceText = Draft.BasePrice.ToString(), () => PriceText != Draft.BasePrice.ToString());
+        UseDefaultProgressionCommand = new RelayCommand(UseDefaultProgressionCore, () => HasProgressionSettings && ProgressionConfiguredEnabled is not null);
+        ForceProgressionEnabledCommand = new RelayCommand(ForceProgressionEnabledCore, () => HasProgressionSettings && ProgressionConfiguredEnabled != true);
+        ForceProgressionDisabledCommand = new RelayCommand(ForceProgressionDisabledCore, () => HasProgressionSettings && ProgressionConfiguredEnabled != false);
         RefreshState();
     }
 
     public WildAnimalDraft Draft { get; }
     public string Key => Draft.Key;
-    public IReadOnlyList<WildAnimalLocationTypeEditorViewModel> LocationTypes { get; }
-    public List<WildAnimalModGroupEditorViewModel> ModGroups { get; }
+    public IReadOnlyList<WildAnimalLocationTypeEditorViewModel> LocationTypes
+    {
+        get => _locationTypes;
+        private set => SetProperty(ref _locationTypes, value);
+    }
+
+    public IReadOnlyList<WildAnimalModGroupEditorViewModel> ModGroups
+    {
+        get => _modGroups;
+        private set => SetProperty(ref _modGroups, value);
+    }
 
     public RelayCommand AddModGroupCommand { get; }
     public RelayCommand ResetEnabledCommand { get; }
     public RelayCommand ResetLargeEggCommand { get; }
     public RelayCommand ResetIsMagicCommand { get; }
     public RelayCommand ResetPriceCommand { get; }
+    public RelayCommand UseDefaultProgressionCommand { get; }
+    public RelayCommand ForceProgressionEnabledCommand { get; }
+    public RelayCommand ForceProgressionDisabledCommand { get; }
 
     public void AddModGroup() => AddModGroupCommand.Execute(null);
     public void ResetEnabled() => ResetEnabledCommand.Execute(null);
     public void ResetLargeEgg() => ResetLargeEggCommand.Execute(null);
     public void ResetIsMagic() => ResetIsMagicCommand.Execute(null);
     public void ResetPrice() => ResetPriceCommand.Execute(null);
-    public void ShowOverviewTab() => SetTab(OverviewTabKey);
-    public void ShowLocationTypesTab() => SetTab(LocationTypesTabKey);
-    public void ShowModKeysTab() => SetTab(ModKeysTabKey);
-    public void ShowWarningsTab() => SetTab(WarningsTabKey);
+    public void UseDefaultProgression() => UseDefaultProgressionCommand.Execute(null);
+    public void ForceProgressionEnabled() => ForceProgressionEnabledCommand.Execute(null);
+    public void ForceProgressionDisabled() => ForceProgressionDisabledCommand.Execute(null);
 
     public bool Enabled
     {
@@ -168,21 +192,26 @@ public sealed class WildAnimalDraftViewModel : ObservableObject
     public bool HasPreviewSprite => PreviewSprite is not null;
     public bool MissingPreviewSprite => !HasPreviewSprite;
 
+    public bool HasProgressionSettings => !string.IsNullOrWhiteSpace(_progressionAnimalKey);
+    public string ProgressionAnimalKey => _progressionAnimalKey ?? "";
+    public bool? ProgressionConfiguredEnabled => _progressionConfiguredEnabled;
+    public bool ProgressionEffectiveEnabled => _progressionConfiguredEnabled ?? _progressionDefaultEnabled;
+    public string ProgressionDefaultText => _progressionDefaultEnabled ? "Enabled" : "Disabled";
+    public string ProgressionCurrentText => _progressionConfiguredEnabled is null
+        ? $"Default ({ProgressionDefaultText})"
+        : (_progressionConfiguredEnabled.Value ? "Force enabled" : "Force disabled");
+    public string ProgressionEffectiveText => ProgressionEffectiveEnabled ? "Enabled" : "Disabled";
+    public bool ProgressionDirty => _progressionConfiguredEnabled != _baseProgressionConfigured;
+    public string ProgressionSectionLabel => ProgressionDirty ? "Progression *" : "Progression";
+    public string ProgressionSummaryText => !HasProgressionSettings
+        ? "No linked farm-animal progression target was resolved for this wild animal."
+        : $"Farm animal: {ProgressionAnimalKey} | Current: {ProgressionCurrentText} | Effective: {ProgressionEffectiveText}";
+
     public string WarningSummary
     {
         get => _warningSummary;
         private set => SetProperty(ref _warningSummary, value);
     }
-
-    public string CurrentTab => _currentTab;
-    public bool IsOverviewTab => string.Equals(CurrentTab, OverviewTabKey, StringComparison.Ordinal);
-    public bool IsLocationTypesTab => string.Equals(CurrentTab, LocationTypesTabKey, StringComparison.Ordinal);
-    public bool IsModKeysTab => string.Equals(CurrentTab, ModKeysTabKey, StringComparison.Ordinal);
-    public bool IsWarningsTab => string.Equals(CurrentTab, WarningsTabKey, StringComparison.Ordinal);
-    public string OverviewTabText => IsOverviewTab ? "[Overview]" : "Overview";
-    public string LocationTypesTabText => IsLocationTypesTab ? "[Location Types]" : "Location Types";
-    public string ModKeysTabText => IsModKeysTab ? "[Mod Keys]" : "Mod Keys";
-    public string WarningsTabText => IsWarningsTab ? "[Warnings]" : "Warnings";
 
     public string ScalarSummary => $"Enabled {EnabledText} | Large Egg {LargeEggText} | Magic {MagicText} | Price {PriceText}";
     public string EnabledText => Enabled ? "On" : "Off";
@@ -196,6 +225,7 @@ public sealed class WildAnimalDraftViewModel : ObservableObject
     public bool IsDirty => Enabled != Draft.Enabled
         || LargeEgg != Draft.LargeEgg
         || IsMagic != Draft.IsMagic
+        || ProgressionDirty
         || PriceText != Draft.Price.ToString()
         || LocationTypes.Any(location => location.IsDirty)
         || ModGroups.Any(group => group.IsDirty)
@@ -224,15 +254,24 @@ public sealed class WildAnimalDraftViewModel : ObservableObject
         return true;
     }
 
+    public WildAnimalProgressionOverride? BuildProgressionOverride()
+    {
+        if (!HasProgressionSettings)
+            return null;
+
+        return new WildAnimalProgressionOverride(_progressionAnimalKey!, _progressionConfiguredEnabled);
+    }
+
     private void AddModGroupCore()
     {
         var modId = NewModGroupId.Trim();
         if (modId.Length == 0 || ModGroups.Any(group => string.Equals(group.ModId, modId, StringComparison.OrdinalIgnoreCase)))
             return;
 
-        ModGroups.Add(new WildAnimalModGroupEditorViewModel(modId, Array.Empty<string>(), Array.Empty<string>(), RefreshState, RemoveModGroup));
+        ModGroups = ModGroups
+            .Concat(new[] { new WildAnimalModGroupEditorViewModel(modId, Array.Empty<string>(), Array.Empty<string>(), RefreshState, RemoveModGroup) })
+            .ToList();
         NewModGroupId = "";
-        OnPropertyChanged(nameof(ModGroups));
         RefreshState();
     }
 
@@ -242,27 +281,12 @@ public sealed class WildAnimalDraftViewModel : ObservableObject
         return modId.Length > 0 && ModGroups.All(group => !string.Equals(group.ModId, modId, StringComparison.OrdinalIgnoreCase));
     }
 
-    private void SetTab(string tabKey)
-    {
-        if (!SetProperty(ref _currentTab, tabKey, propertyName: nameof(CurrentTab)))
-            return;
-
-        OnPropertyChanged(nameof(IsOverviewTab));
-        OnPropertyChanged(nameof(IsLocationTypesTab));
-        OnPropertyChanged(nameof(IsModKeysTab));
-        OnPropertyChanged(nameof(IsWarningsTab));
-        OnPropertyChanged(nameof(OverviewTabText));
-        OnPropertyChanged(nameof(LocationTypesTabText));
-        OnPropertyChanged(nameof(ModKeysTabText));
-        OnPropertyChanged(nameof(WarningsTabText));
-    }
-
     private void RemoveModGroup(WildAnimalModGroupEditorViewModel group)
     {
-        if (!ModGroups.Remove(group))
+        if (!ModGroups.Contains(group))
             return;
 
-        OnPropertyChanged(nameof(ModGroups));
+        ModGroups = ModGroups.Where(existing => !ReferenceEquals(existing, group)).ToList();
         RefreshState();
     }
 
@@ -296,6 +320,15 @@ public sealed class WildAnimalDraftViewModel : ObservableObject
         OnPropertyChanged(nameof(LargeEggComparison));
         OnPropertyChanged(nameof(MagicComparison));
         OnPropertyChanged(nameof(PriceComparison));
+        OnPropertyChanged(nameof(HasProgressionSettings));
+        OnPropertyChanged(nameof(ProgressionAnimalKey));
+        OnPropertyChanged(nameof(ProgressionConfiguredEnabled));
+        OnPropertyChanged(nameof(ProgressionDefaultText));
+        OnPropertyChanged(nameof(ProgressionCurrentText));
+        OnPropertyChanged(nameof(ProgressionEffectiveText));
+        OnPropertyChanged(nameof(ProgressionDirty));
+        OnPropertyChanged(nameof(ProgressionSectionLabel));
+        OnPropertyChanged(nameof(ProgressionSummaryText));
         OnPropertyChanged(nameof(HasPreviewSprite));
         OnPropertyChanged(nameof(IsDirty));
         OnPropertyChanged(nameof(ScalarsDirty));
@@ -311,6 +344,9 @@ public sealed class WildAnimalDraftViewModel : ObservableObject
         ResetLargeEggCommand.NotifyCanExecuteChanged();
         ResetIsMagicCommand.NotifyCanExecuteChanged();
         ResetPriceCommand.NotifyCanExecuteChanged();
+        UseDefaultProgressionCommand.NotifyCanExecuteChanged();
+        ForceProgressionEnabledCommand.NotifyCanExecuteChanged();
+        ForceProgressionDisabledCommand.NotifyCanExecuteChanged();
     }
 
     private WildAnimalDraft BuildDraft(int parsedPrice)
@@ -334,7 +370,38 @@ public sealed class WildAnimalDraftViewModel : ObservableObject
                     WildAnimalsEditorHelpers.ParseCsvKeyList(group.KeysText).ToList()))
                 .ToList());
     }
+
+    private void UseDefaultProgressionCore()
+    {
+        if (!HasProgressionSettings)
+            return;
+
+        _progressionConfiguredEnabled = null;
+        RefreshState();
+    }
+
+    private void ForceProgressionEnabledCore()
+    {
+        if (!HasProgressionSettings)
+            return;
+
+        _progressionConfiguredEnabled = true;
+        RefreshState();
+    }
+
+    private void ForceProgressionDisabledCore()
+    {
+        if (!HasProgressionSettings)
+            return;
+
+        _progressionConfiguredEnabled = false;
+        RefreshState();
+    }
 }
+
+public sealed record WildAnimalProgressionOverride(
+    string FarmAnimalKey,
+    bool? ConfiguredEnabled);
 
 public sealed class WildAnimalLocationTypeEditorViewModel : ObservableObject
 {
@@ -352,6 +419,7 @@ public sealed class WildAnimalLocationTypeEditorViewModel : ObservableObject
     public string Key { get; }
     public bool BaseAllowed { get; }
     public string Label => $"{Key} | Base {(BaseAllowed ? "On" : "Off")} | Effective {(Allowed ? "On" : "Off")}";
+    public string ComparisonText => $"Base: {(BaseAllowed ? "On" : "Off")}\nCurrent: {(Allowed ? "On" : "Off")}";
     public bool IsDirty => Allowed != BaseAllowed;
 
     public bool Allowed
@@ -370,6 +438,7 @@ public sealed class WildAnimalLocationTypeEditorViewModel : ObservableObject
     public void Refresh()
     {
         OnPropertyChanged(nameof(Label));
+        OnPropertyChanged(nameof(ComparisonText));
         OnPropertyChanged(nameof(IsDirty));
     }
 }

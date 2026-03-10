@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using static LetMeHatch.EnumsAndStrings.Enums;
 
 namespace LetMeHatch.Integrations.StardewUi.Breeding;
@@ -13,6 +15,7 @@ public sealed class LmhBreedingEditorViewModel : INotifyPropertyChanged
     private readonly Func<IReadOnlyList<LmhBreedingPackRecord>> _loadPacks;
     private readonly Func<string, string, LmhBreedingFemaleRecord?> _loadFemale;
     private readonly Action<string, string, LmhBreedingDraft> _saveDraft;
+    private readonly Func<string, Tuple<Texture2D, Rectangle>?>? _loadPreviewSprite;
 
     private List<LmhBreedingPackRecord> _packRecords = new();
     private LmhBreedingFemaleRecord? _selectedFemaleRecord;
@@ -34,17 +37,36 @@ public sealed class LmhBreedingEditorViewModel : INotifyPropertyChanged
         LmhBreedingEditorService service,
         Func<IReadOnlyList<LmhBreedingPackRecord>> loadPacks,
         Func<string, string, LmhBreedingFemaleRecord?> loadFemale,
-        Action<string, string, LmhBreedingDraft> saveDraft)
+        Action<string, string, LmhBreedingDraft> saveDraft,
+        Func<string, Tuple<Texture2D, Rectangle>?>? loadPreviewSprite = null)
     {
         _service = service;
         _loadPacks = loadPacks;
         _loadFemale = loadFemale;
         _saveDraft = saveDraft;
+        _loadPreviewSprite = loadPreviewSprite;
         Reload();
     }
 
     public string Title => "Breeding Editor";
     public string SelectedPack => SelectedPackRecord?.DisplayName ?? string.Empty;
+    public IReadOnlyList<string> PackOptions => _packRecords.Select(x => x.ContentPackId).ToList();
+    public string SelectedPackOption
+    {
+        get => _selectedPackId ?? string.Empty;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || string.Equals(_selectedPackId, value, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            _selectedPackId = value;
+            _selectedFemaleKey = null;
+            _selectedMaleKey = null;
+            _isOverviewTab = true;
+            LoadSelectedFemale();
+            RebuildLists();
+        }
+    }
     public string SelectedFemale => SelectedFemaleRecord?.FemaleKey ?? string.Empty;
     public bool HasSelectedFemale => SelectedFemaleRecord is not null;
     public bool IsOverviewTab => _isOverviewTab;
@@ -63,6 +85,28 @@ public sealed class LmhBreedingEditorViewModel : INotifyPropertyChanged
             return $"{SelectedFemaleRecord.FemaleKey} | Males: {maleCount} | Pack: {SelectedPack}";
         }
     }
+    public string SelectedFemaleSummaryText
+        => SelectedFemaleRecord is null
+            ? "Select a female to edit breeding rules."
+            : $"Pack: {SelectedPack} | Female: {SelectedFemaleRecord.FemaleKey} | Adjustable eggs: {(SelectedFemaleRecord.AdjustableEggChances ? "Yes" : "No")}";
+    public string EggChanceSummaryText
+        => Draft is null
+            ? string.Empty
+            : $"Normal: {NormalEggChanceText} | Large: {LargeEggChanceText} | Fertilized: {FertilizedEggChanceText}";
+    public string SelectedMaleSummaryText
+    {
+        get
+        {
+            if (SelectedMaleRecord is null)
+                return "Select a male to edit male-specific rules.";
+
+            return $"Male: {SelectedMaleRecord.DisplayName} | Enabled: {GetDraftEnabled(SelectedMaleRecord.MaleKey)} | Chance: {SelectedMaleChanceText} | Boost: {SelectedMaleBoostText}";
+        }
+    }
+    public bool HasValidationErrors => !TryParseDraftValues(out _, out _, out _, out _, out _);
+    public string ValidationText => HasValidationErrors
+        ? "One or more chance or boost values are invalid."
+        : "All numeric values are valid.";
 
     public IReadOnlyList<LmhBreedingPackItemViewModel> Packs { get; private set; } = Array.Empty<LmhBreedingPackItemViewModel>();
     public IReadOnlyList<LmhBreedingFemaleItemViewModel> Females { get; private set; } = Array.Empty<LmhBreedingFemaleItemViewModel>();
@@ -80,7 +124,7 @@ public sealed class LmhBreedingEditorViewModel : INotifyPropertyChanged
     public string SelectedMaleBoostText { get => _selectedMaleBoostText; set { if (_selectedMaleBoostText != value) { _selectedMaleBoostText = value; OnPropertyChanged(nameof(SelectedMaleBoostText)); OnPropertyChanged(nameof(CanSave)); } } }
     public string SelectedMaleEggsText => SelectedMaleRecord is null
         ? string.Empty
-        : string.Join(" | ", SelectedMaleRecord.EggIds.OrderBy(x => x.Key).Select(x => $"{x.Key}: {x.Value ?? "-"}"));
+        : string.Join(" | ", SelectedMaleRecord.EggIds.OrderBy(x => x.Key).Select(BuildEggSummary));
 
     private LmhBreedingPackRecord? SelectedPackRecord => _packRecords.FirstOrDefault(x => x.ContentPackId == _selectedPackId);
     private LmhBreedingFemaleRecord? SelectedFemaleRecord => _selectedFemaleRecord;
@@ -88,8 +132,17 @@ public sealed class LmhBreedingEditorViewModel : INotifyPropertyChanged
     private LmhBreedingDraft? Draft => _draft;
     private bool SelectedMaleEnabled => SelectedMaleRecord is not null && Draft is not null && Draft.Enabled.TryGetValue(SelectedMaleRecord.MaleKey, out var enabled) ? enabled : SelectedMaleRecord?.Enabled ?? false;
 
-    private bool HasValidationErrors
-        => !TryParseDraftValues(out _, out _, out _, out _, out _);
+    private string BuildEggSummary(KeyValuePair<ItemType, string?> pair)
+    {
+        if (SelectedMaleRecord is null)
+            return $"{pair.Key}: {pair.Value ?? "-"}";
+
+        if (!SelectedMaleRecord.EggCandidatePools.TryGetValue(pair.Key, out var pool) || pool.Count <= 1)
+            return $"{pair.Key}: {pair.Value ?? "-"}";
+
+        var values = string.Join(", ", pool);
+        return $"{pair.Key}: random from [{values}]";
+    }
 
     private bool HasChanges
     {
@@ -227,7 +280,6 @@ public sealed class LmhBreedingEditorViewModel : INotifyPropertyChanged
     {
         _packRecords = _loadPacks().ToList();
         _selectedPackId ??= _packRecords.FirstOrDefault()?.ContentPackId;
-        _selectedFemaleKey ??= SelectedPackRecord?.FemaleKeys.FirstOrDefault();
         LoadSelectedFemale();
         RebuildLists();
     }
@@ -272,7 +324,12 @@ public sealed class LmhBreedingEditorViewModel : INotifyPropertyChanged
             .ToList();
 
         Females = SelectedPackRecord?.FemaleKeys
-            .Select(key => new LmhBreedingFemaleItemViewModel(key, key, "Open female rules", OpenFemale))
+            .Select(key => new LmhBreedingFemaleItemViewModel(
+                key,
+                key,
+                "Open female rules",
+                _loadPreviewSprite?.Invoke(key),
+                OpenFemale))
             .ToList()
             ?? new List<LmhBreedingFemaleItemViewModel>();
 
@@ -343,12 +400,17 @@ public sealed class LmhBreedingEditorViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasSelectedFemale));
         OnPropertyChanged(nameof(SelectedPack));
         OnPropertyChanged(nameof(SummaryText));
+        OnPropertyChanged(nameof(SelectedFemaleSummaryText));
+        OnPropertyChanged(nameof(EggChanceSummaryText));
         OnPropertyChanged(nameof(ApplyDailyLuckBoostLabel));
         OnPropertyChanged(nameof(SelectedMale));
         OnPropertyChanged(nameof(HasSelectedMale));
+        OnPropertyChanged(nameof(SelectedMaleSummaryText));
         OnPropertyChanged(nameof(SelectedMaleEnabledLabel));
         OnPropertyChanged(nameof(SelectedMaleAlternatePurchaseLabel));
         OnPropertyChanged(nameof(SelectedMaleEggsText));
+        OnPropertyChanged(nameof(HasValidationErrors));
+        OnPropertyChanged(nameof(ValidationText));
         OnPropertyChanged(nameof(CanSave));
         OnPropertyChanged(nameof(CanDiscard));
     }
@@ -356,6 +418,8 @@ public sealed class LmhBreedingEditorViewModel : INotifyPropertyChanged
     private void NotifyAll()
     {
         OnPropertyChanged(nameof(Packs));
+        OnPropertyChanged(nameof(PackOptions));
+        OnPropertyChanged(nameof(SelectedPackOption));
         OnPropertyChanged(nameof(Females));
         OnPropertyChanged(nameof(Males));
         NotifyDetailState();
@@ -385,16 +449,26 @@ public sealed class LmhBreedingPackItemViewModel
 public sealed class LmhBreedingFemaleItemViewModel
 {
     private readonly Action<LmhBreedingFemaleItemViewModel> _open;
-    public LmhBreedingFemaleItemViewModel(string femaleKey, string buttonText, string metaText, Action<LmhBreedingFemaleItemViewModel> open)
+    public LmhBreedingFemaleItemViewModel(
+        string femaleKey,
+        string buttonText,
+        string metaText,
+        Tuple<Texture2D, Rectangle>? previewSprite,
+        Action<LmhBreedingFemaleItemViewModel> open)
     {
         FemaleKey = femaleKey;
         ButtonText = buttonText;
         MetaText = metaText;
+        PreviewSprite = previewSprite;
         _open = open;
     }
     public string FemaleKey { get; }
     public string ButtonText { get; }
     public string MetaText { get; }
+    public Tuple<Texture2D, Rectangle>? PreviewSprite { get; }
+    public bool HasPreviewSprite => PreviewSprite is not null;
+    public bool MissingPreviewSprite => !HasPreviewSprite;
+    public string TooltipText => $"{ButtonText}\n{MetaText}";
     public void OpenFemale() => _open(this);
 }
 

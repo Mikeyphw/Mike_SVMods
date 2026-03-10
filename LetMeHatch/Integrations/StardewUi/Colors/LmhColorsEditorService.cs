@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using LetMeHatch.Config;
+using LetMeHatch.Core.Cloning;
 using LetMeHatch.Helpers;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
@@ -19,7 +20,7 @@ public sealed class LmhColorsEditorService
         ArgumentNullException.ThrowIfNull(config);
 
         var paletteGroups = GetPaletteColorGroups()
-            .Select(key => new LmhColorPaletteGroupRecord(key, ToDisplayName(key)))
+            .Select(entry => new LmhColorPaletteGroupRecord(entry.Key, ToDisplayName(entry.Key), entry.Value))
             .ToList();
 
         var eggs = GetEggOptions(helper, config)
@@ -28,10 +29,14 @@ public sealed class LmhColorsEditorService
                 egg.Label,
                 EnsureEggPalette(config, egg.Id, paletteGroups.Select(x => x.Key).ToList())
                     .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase),
-                config.EggColors_ColorObject.TryGetValue(egg.Id, out var color) ? color : Color.Transparent))
+                config.EggColors_ColorObject.TryGetValue(egg.Id, out var color) ? color : Color.Transparent,
+                CloneIdService.IsClonedEgg(egg.Id)))
             .ToList();
 
-        return new LmhColorsEditorCatalog(paletteGroups, eggs);
+        return new LmhColorsEditorCatalog(
+            paletteGroups,
+            eggs.Where(p => !p.IsClonedEgg).ToList(),
+            eggs.Where(p => p.IsClonedEgg).ToList());
     }
 
     public LmhColorsEditorDraft CreateDraft(LmhColorsEditorCatalog catalog)
@@ -39,11 +44,11 @@ public sealed class LmhColorsEditorService
         ArgumentNullException.ThrowIfNull(catalog);
 
         return new LmhColorsEditorDraft(
-            catalog.Overrides.ToDictionary(
+            catalog.SourceEggs.ToDictionary(
                 x => x.EggId,
                 x => new Dictionary<string, bool>(x.EnabledPaletteGroups, StringComparer.OrdinalIgnoreCase),
                 StringComparer.OrdinalIgnoreCase),
-            catalog.Overrides.ToDictionary(
+            catalog.ClonedEggs.ToDictionary(
                 x => x.EggId,
                 x => x.OverrideColor,
                 StringComparer.OrdinalIgnoreCase));
@@ -54,12 +59,15 @@ public sealed class LmhColorsEditorService
         ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(draft);
 
-        config.EggColors = draft.PaletteSelections.ToDictionary(
+        config.EggColors = draft.PaletteSelections
+            .Where(x => !CloneIdService.IsClonedEgg(x.Key))
+            .ToDictionary(
             x => x.Key,
             x => new Dictionary<string, bool>(x.Value, StringComparer.OrdinalIgnoreCase),
             StringComparer.OrdinalIgnoreCase);
 
         config.EggColors_ColorObject = draft.OverrideColors
+            .Where(x => CloneIdService.IsClonedEgg(x.Key))
             .Where(x => x.Value != Color.Transparent)
             .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase);
     }
@@ -159,12 +167,19 @@ public sealed class LmhColorsEditorService
             .ToList();
     }
 
-    private static IReadOnlyList<string> GetPaletteColorGroups()
+    private static IReadOnlyList<KeyValuePair<string, Color>> GetPaletteColorGroups()
     {
         var saved = new SavedColors();
-        return saved._colorDictionary.Keys
-            .Where(k => !string.Equals(k, "gold", StringComparison.OrdinalIgnoreCase))
-            .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+        return saved._colorDictionary
+            .Where(kvp => !string.Equals(kvp.Key, "gold", StringComparison.OrdinalIgnoreCase))
+            .Select(kvp =>
+            {
+                var hex = kvp.Value.Values.FirstOrDefault() ?? string.Empty;
+                return new KeyValuePair<string, Color>(
+                    kvp.Key,
+                    TryParseColor(hex, out var color) ? color : Color.Transparent);
+            })
+            .OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 

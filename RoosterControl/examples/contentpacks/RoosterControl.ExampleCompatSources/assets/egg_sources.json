@@ -1,21 +1,15 @@
 {
-  "SchemaVersion": 1,
-  "Sources": [
+  "SchemaVersion": 2,
+  "Eggs": [
     {
-      "SourceId": "farmanimal:brown-chicken:egg0",
-      "DisplayName": "Brown Chicken (EggItemIds[0])",
-      "EggKind": "BrownEgg",
-      "FarmAnimalRef": {
-        "FarmAnimalKey": "Brown Chicken",
-        "List": "EggItemIds",
-        "Index": 0
-      }
-    },
-    {
-      "SourceId": "itemid:custom-blue-egg",
-      "DisplayName": "My Custom Blue Egg",
       "EggKind": "BlueEgg",
-      "ItemId": "MyAuthor.MyMod/CustomBlueEgg"
+      "Eggs": [
+        {
+          "ModId": "Example.BlueEggs",
+          "DisplayName": "Example Blue Egg",
+          "ItemId": "Example.BlueEggs/BlueEgg"
+        }
+      ]
     }
   ]
 }

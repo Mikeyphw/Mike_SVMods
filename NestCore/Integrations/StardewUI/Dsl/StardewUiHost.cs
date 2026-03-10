@@ -218,7 +218,7 @@ public sealed class StardewUiHost
         return new StardewUiMenuHost(this);
     }
 
-#if WEGG_DEV
+#if NEST_DEV
     /// <summary>
     /// Enables hot reloading. Dev-only: do not ship in Release builds.
     /// </summary>

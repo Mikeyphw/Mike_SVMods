@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Mikew.NestCore.Helpers;
@@ -11,7 +12,6 @@ namespace LetMeHatch.Infrastructure.Smapi;
 /// </summary>
 internal static class EmbeddedJson
 {
-#if !LMH_DEV
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -19,7 +19,6 @@ internal static class EmbeddedJson
         ReadCommentHandling = JsonCommentHandling.Skip,
         Converters = { new JsonStringEnumConverter() },
     };
-#endif
 
     internal static T? ReadOrNull<T>(IModHelper helper, string relativePath)
         where T : class
@@ -27,7 +26,19 @@ internal static class EmbeddedJson
         if (helper is null) throw new ArgumentNullException(nameof(helper));
 
 #if LMH_DEV
-        return helper.Data.ReadJsonFile<T>(relativePath);
+        var fullPath = Path.Combine(helper.DirectoryPath, relativePath.Replace('/', Path.DirectorySeparatorChar));
+        if (!File.Exists(fullPath))
+            return null;
+
+        try
+        {
+            var json = File.ReadAllText(fullPath);
+            return JsonSerializer.Deserialize<T>(json, Options);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to deserialize dev JSON: {fullPath}", ex);
+        }
 #else
         var json = EmbeddedTextStore.GetOrThrow(
             LetMeHatch.Generated.EmbeddedTextFiles.Files,

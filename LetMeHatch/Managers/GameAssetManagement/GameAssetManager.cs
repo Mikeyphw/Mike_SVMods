@@ -30,6 +30,7 @@ namespace LetMeHatch.GameAssetManagement
         #region Fields and Properties
         // Dependencies
         private readonly IWildEggsApi _wildEggsAPI;
+        private readonly IRoosterControlApi? _roosterControlApi;
         public SavedItemsData SavedItemsData { get; private set; }
         public SavedColors SavedColors { get; private set; }
         public Dictionary<string, Dictionary<string, BreedingConfig>> BreedingConfigsByPack
@@ -83,9 +84,10 @@ namespace LetMeHatch.GameAssetManagement
 
         #region Constructor
 
-        public GameAssetManager(IWildEggsApi wildEggsApi)
+        public GameAssetManager(IWildEggsApi wildEggsApi, IRoosterControlApi? roosterControlApi = null)
         {
             _wildEggsAPI = wildEggsApi;
+            _roosterControlApi = roosterControlApi;
 
             SavedColors = LoadData<SavedColors>();
             SavedItemsData = LoadData<SavedItemsData>();
@@ -103,6 +105,7 @@ namespace LetMeHatch.GameAssetManagement
 
             BreedingDataLoader = new BreedingDataLoader(
                 _wildEggsAPI,
+                _roosterControlApi,
                 LoadedFemaleBreedingData,
                 LoadedContentPacks,
                 ClonedAnimalsInfoList,

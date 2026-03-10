@@ -27,14 +27,19 @@ public sealed class LmhItemMappingsEditorService
                     {
                         var configured = EnsureConfigMapping(config, row.Key, row.CloneType);
                         var items = row.Items ?? new Dictionary<ItemType, string>();
+                        var baseNormal = items.TryGetValue(ItemType.Normal, out var fallbackNormal) ? fallbackNormal : string.Empty;
+                        var baseLarge = items.TryGetValue(ItemType.Large, out var fallbackLarge) ? fallbackLarge : string.Empty;
+                        var configuredNormal = configured.TryGetValue(ItemType.Normal, out var normal) ? normal : string.Empty;
+                        var configuredLarge = configured.TryGetValue(ItemType.Large, out var large) ? large : string.Empty;
                         return new LmhItemMappingRecord(
                             row.Key,
-                            configured.TryGetValue(ItemType.Normal, out var normal) && !string.IsNullOrWhiteSpace(normal)
-                                ? normal
-                                : items.TryGetValue(ItemType.Normal, out var fallbackNormal) ? fallbackNormal : string.Empty,
-                            configured.TryGetValue(ItemType.Large, out var large) && !string.IsNullOrWhiteSpace(large)
-                                ? large
-                                : items.TryGetValue(ItemType.Large, out var fallbackLarge) ? fallbackLarge : string.Empty);
+                            row.Key,
+                            baseNormal,
+                            baseLarge,
+                            configuredNormal,
+                            configuredLarge,
+                            !string.IsNullOrWhiteSpace(configuredNormal) ? configuredNormal : baseNormal,
+                            !string.IsNullOrWhiteSpace(configuredLarge) ? configuredLarge : baseLarge);
                     })
                     .ToList()))
             .ToList();
@@ -51,7 +56,7 @@ public sealed class LmhItemMappingsEditorService
                 group => group.CloneType,
                 group => group.Mappings.ToDictionary(
                     row => row.AnimalKey,
-                    row => new LmhItemMappingDraftRow(row.NormalItemId, row.LargeItemId),
+                    row => new LmhItemMappingDraftRow(row.ConfiguredNormalItemId, row.ConfiguredLargeItemId),
                     StringComparer.OrdinalIgnoreCase)));
     }
 

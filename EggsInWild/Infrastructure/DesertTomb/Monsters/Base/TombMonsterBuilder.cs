@@ -27,7 +27,6 @@ internal static class TombMonsterBuilder
         monster.resilience.Value = monster.resilience.Value <= 0 ? 1 : monster.resilience.Value;
         monster.resilience.Value += multipliers.EnhancedMonsterResilienceIncrement;
 
-        monster.BuffForAdditionalDifficulty(difficulty);
         monster.Sprite.LoadTexture($"Characters\\Monsters\\{textureName.Replace(" ", "")}");
 
         // Phase 6: drop strings removed; drops are JSON-driven and applied by the factory.

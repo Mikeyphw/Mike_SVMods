@@ -1,29 +1,32 @@
 using System;
 using System.Collections.Generic;
 using LetMeHatch.GameAssetManagement;
+using LetMeHatch.Helpers;
+using LetMeHatch.Integrations.StardewUi;
 using LetMeHatch.Integrations.StardewUi.Advanced;
 using LetMeHatch.Integrations.StardewUi.Breeding;
 using LetMeHatch.Integrations.StardewUi.Colors;
+using LetMeHatch.Models;
 using Mikew.NestCore.Integrations.StardewUI;
 using Mikew.NestCore.Integrations.StardewUI.Dsl;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.GameData.Objects;
 
 namespace LetMeHatch.Application.Coordination;
 
 public sealed partial class LmhCoordinator
 {
-    private const string BreedingEditorMenuId = "lmh.breeding.editor";
-    private const string BreedingEditorViewFile = "LmhBreedingEditor";
-    private const string ColorsEditorMenuId = "lmh.colors.editor";
-    private const string ColorsEditorViewFile = "LmhColorsEditor";
-    private const string AdvancedMappingsEditorMenuId = "lmh.advancedMappings.editor";
-    private const string AdvancedMappingsEditorViewFile = "LmhAdvancedMappingsEditor";
+    private const string EditorHubMenuId = "lmh.editorHub";
+    private const string EditorHubViewFile = "LmhEditorHub";
 
     private StardewUiHost? _stardewUiHost;
-    private StardewUiMenuHost? _stardewUiMenuHost;
+    private StardewUI.Framework.IMenuController? _editorHubController;
     private bool _stardewUiLayoutReady;
+    private LmhEditorHubTab _requestedHubTab = LmhEditorHubTab.Breeding;
 
     public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
     {
@@ -51,7 +54,6 @@ public sealed partial class LmhCoordinator
     private void InitializeStardewUi()
     {
         _stardewUiHost ??= StardewUiHost.TryCreate(_core.Helper, _core.Manifest);
-        _stardewUiMenuHost ??= _stardewUiHost?.CreateMenuHost();
         RebuildStardewUiLayout();
     }
 
@@ -67,60 +69,34 @@ public sealed partial class LmhCoordinator
             define: layout =>
             {
                 layout.Menu(
-                    BreedingEditorMenuId,
+                    EditorHubMenuId,
                     menu =>
                     {
-                        menu.View("LmhBreedingEditor");
-                        menu.Context(() => new LmhBreedingEditorViewModel(
-                            new LmhBreedingEditorService(),
-                            LoadBreedingPacksSnapshot,
-                            TryLoadBreedingFemaleRecord,
-                            SaveBreedingDraft));
+                        menu.View(EditorHubViewFile);
+                        menu.Context(CreateEditorHubViewModel);
                         menu.ConfigureController(controller =>
                         {
                             controller.DimmingAmount = 0.45f;
                             controller.CloseOnOutsideClick = true;
                             controller.EnableCloseButton();
                         });
-                    });
-
-                layout.Menu(
-                    ColorsEditorMenuId,
-                    menu =>
-                    {
-                        menu.View(ColorsEditorViewFile);
-                        menu.Context(() => new LmhColorsEditorViewModel(
-                            new LmhColorsEditorService(),
-                            LoadColorsCatalog,
-                            SaveColorsDraft));
-                        menu.ConfigureController(controller =>
+                        menu.OnClosed(() =>
                         {
-                            controller.DimmingAmount = 0.45f;
-                            controller.CloseOnOutsideClick = true;
-                            controller.EnableCloseButton();
-                        });
-                    });
-
-                layout.Menu(
-                    AdvancedMappingsEditorMenuId,
-                    menu =>
-                    {
-                        menu.View(AdvancedMappingsEditorViewFile);
-                        menu.Context(() => new LmhItemMappingsEditorViewModel(
-                            new LmhItemMappingsEditorService(),
-                            LoadItemMappingsCatalog,
-                            SaveItemMappingsDraft));
-                        menu.ConfigureController(controller =>
-                        {
-                            controller.DimmingAmount = 0.45f;
-                            controller.CloseOnOutsideClick = true;
-                            controller.EnableCloseButton();
+                            _editorHubController = null;
                         });
                     });
             },
             assets: new StardewUiAssetsOptions(ViewsDir: "assets/views", SpritesDir: "assets/sprites"),
             preloadAssetsOnce: true,
-            preloadModels: new[] { typeof(LmhBreedingEditorViewModel), typeof(LmhColorsEditorViewModel), typeof(LmhItemMappingsEditorViewModel) });
+            preloadModels: new[]
+            {
+                typeof(LmhEditorHubViewModel),
+                typeof(LmhBreedingEditorViewModel),
+                typeof(LmhColorsEditorViewModel),
+                typeof(LmhItemMappingsEditorViewModel),
+                typeof(LmhSettingsEditorViewModel),
+                typeof(LmhDebugEditorViewModel),
+            });
 
         _stardewUiLayoutReady = true;
     }
@@ -130,22 +106,31 @@ public sealed partial class LmhCoordinator
 
     public string GetBreedingEditorAvailabilityText()
         => HasStardewUiAvailable()
-            ? "Duplicate StardewUI breeding editor is available."
-            : "Duplicate StardewUI breeding editor requires StardewUI.";
+            ? "StardewUI editor hub is available and can open the Breeding tab."
+            : "StardewUI editor hub requires StardewUI.";
 
     public string GetColorsEditorAvailabilityText()
         => HasStardewUiAvailable()
-            ? "Duplicate StardewUI colors editor is available."
-            : "Duplicate StardewUI colors editor requires StardewUI.";
+            ? "StardewUI editor hub is available and can open the Colors tab."
+            : "StardewUI editor hub requires StardewUI.";
 
     public string GetAdvancedMappingsEditorAvailabilityText()
         => HasStardewUiAvailable()
-            ? "Duplicate StardewUI item mappings editor is available."
-            : "Duplicate StardewUI item mappings editor requires StardewUI.";
+            ? "StardewUI editor hub is available and can open the Mappings tab."
+            : "StardewUI editor hub requires StardewUI.";
 
     public void OpenBreedingEditor()
+        => OpenEditorHub(LmhEditorHubTab.Breeding);
+
+    public void OpenColorsEditor()
+        => OpenEditorHub(LmhEditorHubTab.Colors);
+
+    public void OpenAdvancedMappingsEditor()
+        => OpenEditorHub(LmhEditorHubTab.Mappings);
+
+    private void OpenEditorHub(LmhEditorHubTab tab)
     {
-        if (!Context.IsWorldReady || ModEntry.CurrentAssetManager is null)
+        if (!Context.IsWorldReady)
             return;
 
         _stardewUiHost ??= StardewUiHost.TryCreate(_core.Helper, _core.Manifest);
@@ -158,53 +143,52 @@ public sealed partial class LmhCoordinator
         if (!_stardewUiLayoutReady)
             RebuildStardewUiLayout();
 
-        _stardewUiMenuHost ??= _stardewUiHost.CreateMenuHost();
-        var handle = _stardewUiMenuHost.OpenAsActiveMenu(BreedingEditorMenuId);
-        if (handle is null)
-            _log.Log("Failed to open StardewUI breeding editor.", LogLevel.Error);
-    }
-
-    public void OpenColorsEditor()
-    {
-        if (!Context.IsWorldReady)
+        _requestedHubTab = tab;
+        if (_editorHubController is not null)
             return;
 
-        _stardewUiHost ??= StardewUiHost.TryCreate(_core.Helper, _core.Manifest);
-        if (_stardewUiHost is null)
+        var controller = _stardewUiHost.CreateMenuController(EditorHubMenuId);
+        if (controller is null)
         {
-            _log.Log("StardewUI isn't installed; colors editor unavailable.", LogLevel.Warn);
+            _log.Log("Failed to open LetMeHatch StardewUI editor hub.", LogLevel.Error);
             return;
         }
 
-        if (!_stardewUiLayoutReady)
-            RebuildStardewUiLayout();
-
-        _stardewUiMenuHost ??= _stardewUiHost.CreateMenuHost();
-        var handle = _stardewUiMenuHost.OpenAsActiveMenu(ColorsEditorMenuId);
-        if (handle is null)
-            _log.Log("Failed to open StardewUI colors editor.", LogLevel.Error);
+        _editorHubController = controller;
+        Game1.activeClickableMenu = controller.Menu;
     }
 
-    public void OpenAdvancedMappingsEditor()
-    {
-        if (!Context.IsWorldReady || ModEntry.CurrentAssetManager is null)
-            return;
-
-        _stardewUiHost ??= StardewUiHost.TryCreate(_core.Helper, _core.Manifest);
-        if (_stardewUiHost is null)
-        {
-            _log.Log("StardewUI isn't installed; advanced mappings editor unavailable.", LogLevel.Warn);
-            return;
-        }
-
-        if (!_stardewUiLayoutReady)
-            RebuildStardewUiLayout();
-
-        _stardewUiMenuHost ??= _stardewUiHost.CreateMenuHost();
-        var handle = _stardewUiMenuHost.OpenAsActiveMenu(AdvancedMappingsEditorMenuId);
-        if (handle is null)
-            _log.Log("Failed to open StardewUI item mappings editor.", LogLevel.Error);
-    }
+    private LmhEditorHubViewModel CreateEditorHubViewModel()
+        => new(
+            new LmhBreedingEditorViewModel(
+                new LmhBreedingEditorService(),
+                LoadBreedingPacksSnapshot,
+                TryLoadBreedingFemaleRecord,
+                SaveBreedingDraft,
+                TryLoadFarmAnimalPreviewSprite),
+            new LmhColorsEditorViewModel(
+                new LmhColorsEditorService(),
+                LoadColorsCatalog,
+                SaveColorsDraft,
+                TryLoadEggPreviewSprite,
+                TryLoadEggTilePreviewSprite),
+            new LmhItemMappingsEditorViewModel(
+                new LmhItemMappingsEditorService(),
+                LoadItemMappingsCatalog,
+                SaveItemMappingsDraft,
+                TryLoadFarmAnimalPreviewSprite,
+                TryLoadObjectPreviewSprite),
+            new LmhSettingsEditorViewModel(
+                _config.Get,
+                SaveSettingsDraft,
+                LoadSettingsAnimals,
+                GetBreedingEditorAvailabilityText,
+                GetColorsEditorAvailabilityText,
+                GetAdvancedMappingsEditorAvailabilityText),
+            new LmhDebugEditorViewModel(
+                _config.Get,
+                SaveDebugDraft),
+            _requestedHubTab);
 
     private IReadOnlyList<LmhBreedingPackRecord> LoadBreedingPacksSnapshot()
     {
@@ -261,6 +245,65 @@ public sealed partial class LmhCoordinator
         InvalidateGameContentCache();
     }
 
+    private Tuple<Texture2D, Rectangle>? TryLoadEggPreviewSprite(string eggId, Color color)
+    {
+        try
+        {
+            var objects = _core.Helper.GameContent.Load<Dictionary<string, ObjectData>>(Mikew.NestCore.EnumsAndStrings.Strings.AssetNames.Objects);
+            if (!objects.TryGetValue(eggId, out var data))
+                return null;
+
+            var textureName = string.IsNullOrWhiteSpace(data.Texture) ? Mikew.NestCore.EnumsAndStrings.Strings.AssetNames.SpringObjects : data.Texture;
+            var texture = Game1.content.Load<Texture2D>(textureName);
+            var crop = new ItemTextureInfo(eggId, data.SpriteIndex, EnumsAndStrings.Enums.CloneItemType.Egg, textureName).GetCropRectangle(texture.Width);
+            var cropped = Colors.CropTexture(texture, crop);
+            var preview = color == Color.Transparent
+                ? Colors.CloneTexture(cropped)
+                : Colors.ColorImage(cropped, LmhColorsEditorService.FormatColor(color));
+            return Tuple.Create(preview, new Rectangle(0, 0, preview.Width, preview.Height));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private Tuple<Texture2D, Rectangle>? TryLoadEggTilePreviewSprite(string eggId)
+        => TryLoadEggPreviewSprite(eggId, Color.Transparent);
+
+    private Tuple<Texture2D, Rectangle>? TryLoadFarmAnimalPreviewSprite(string animalKey)
+    {
+        try
+        {
+            if (!Game1.farmAnimalData.TryGetValue(animalKey, out var data))
+                return null;
+
+            if (string.IsNullOrWhiteSpace(data.Texture) || data.SpriteWidth <= 0 || data.SpriteHeight <= 0)
+                return null;
+
+            var texture = Game1.content.Load<Texture2D>(data.Texture);
+            var rect = new Rectangle(0, 0, data.SpriteWidth, data.SpriteHeight);
+            return Tuple.Create(texture, rect);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private Tuple<Texture2D, Rectangle>? TryLoadObjectPreviewSprite(string itemId)
+    {
+        try
+        {
+            var itemData = ItemRegistry.GetDataOrErrorItem(itemId);
+            return Tuple.Create(itemData.GetTexture(), itemData.GetSourceRect());
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private LmhItemMappingsEditorCatalog LoadItemMappingsCatalog()
     {
         var manager = ModEntry.CurrentAssetManager;
@@ -279,5 +322,82 @@ public sealed partial class LmhCoordinator
         GameAssetManager.SaveData(manager.SavedItemsData);
         InvalidateAllContent();
         InvalidateGameContentCache();
+    }
+
+    private IReadOnlyList<LmhSettingsAnimalOption> LoadSettingsAnimals()
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        void Add(string key, string label)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return;
+            map.TryAdd(key, string.IsNullOrWhiteSpace(label) ? key : label);
+        }
+
+        try
+        {
+            var data = _core.Helper.GameContent.Load<Dictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData>>(Mikew.NestCore.EnumsAndStrings.Strings.AssetNames.FarmAnimals);
+            foreach (var (key, animal) in data)
+                Add(key, animal?.DisplayName ?? key);
+        }
+        catch
+        {
+        }
+
+        var cfg = _config.Get();
+        foreach (var key in cfg.EditedEggListsOptions.Keys)
+            Add(key, key);
+        foreach (var key in cfg.EditedBirthTextOptions.Keys)
+            Add(key, key);
+        foreach (var key in cfg.ClonedVanillaEggsOptions.Keys)
+            Add(key, key);
+
+        return map
+            .Select(kvp => new LmhSettingsAnimalOption(kvp.Key, kvp.Value))
+            .OrderBy(option => option.Label, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(option => option.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private void SaveSettingsDraft(LmhSettingsDraft draft)
+    {
+        _config.Update(cfg =>
+        {
+            cfg.EditEggListByName = draft.EditEggListByName;
+            cfg.EditBirthText = draft.EditBirthText;
+            cfg.AlternateBirthText = draft.AlternateBirthText;
+            cfg.CloneVanillaEggs = draft.CloneVanillaEggs;
+            cfg.DinoEggAsArtifact = draft.DinoEggAsArtifact;
+            cfg.CloneMachineRules = draft.CloneMachineRules;
+            cfg.UseDynamicCloneTextures = draft.UseDynamicCloneTextures;
+            cfg.DynamicCloneTintMode = draft.DynamicCloneTintMode;
+            cfg.OnlyFertilizedEggs = draft.OnlyFertilizedEggs;
+            cfg.ColorClonedMilk = draft.ColorClonedMilk;
+            cfg.ExclusiveRabbitWool = draft.ExclusiveRabbitWool;
+            cfg.BreedingSystemEnabled = draft.BreedingSystemEnabled;
+            cfg.DeterministicBreedingRng = draft.DeterministicBreedingRng;
+            cfg.DailyLuckBonus = float.Parse(draft.DailyLuckBonusText, System.Globalization.CultureInfo.InvariantCulture);
+            cfg.EggChances[LetMeHatch.EnumsAndStrings.Enums.ItemType.Normal] = float.Parse(draft.NormalEggChanceText, System.Globalization.CultureInfo.InvariantCulture);
+            cfg.EggChances[LetMeHatch.EnumsAndStrings.Enums.ItemType.Large] = float.Parse(draft.LargeEggChanceText, System.Globalization.CultureInfo.InvariantCulture);
+            cfg.EggChances[LetMeHatch.EnumsAndStrings.Enums.ItemType.FertilizedEgg] = float.Parse(draft.FertilizedEggChanceText, System.Globalization.CultureInfo.InvariantCulture);
+            cfg.EditedEggListsOptions = new Dictionary<string, bool>(draft.EditedEggListsOptions, StringComparer.OrdinalIgnoreCase);
+            cfg.EditedBirthTextOptions = new Dictionary<string, bool>(draft.EditedBirthTextOptions, StringComparer.OrdinalIgnoreCase);
+            cfg.ClonedVanillaEggsOptions = new Dictionary<string, bool>(draft.ClonedVanillaEggsOptions, StringComparer.OrdinalIgnoreCase);
+        }, save: true);
+
+        InvalidateAllContent();
+        InvalidateGameContentCache();
+    }
+
+    private void SaveDebugDraft(LmhDebugDraft draft)
+    {
+        _config.Update(cfg =>
+        {
+            cfg.ShowEdits = draft.ShowEdits;
+            cfg.ShowAnimalKeys = draft.ShowAnimalKeys;
+            cfg.VerboseLogging = draft.VerboseLogging;
+            cfg.TestingLogging = draft.TestingLogging;
+        }, save: true);
     }
 }

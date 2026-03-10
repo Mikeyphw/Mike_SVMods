@@ -34,8 +34,6 @@ internal static class CatalogMigrator
             }
 
             existing.FarmAnimalKey ??= def.FarmAnimalKey;
-            existing.DefaultFemaleKey ??= def.DefaultFemaleKey;
-            existing.AdditionalFemaleKeys ??= def.AdditionalFemaleKeys ?? new List<string>();
             existing.Eggs ??= def.Eggs ?? new EggCatalog();
         }
     }

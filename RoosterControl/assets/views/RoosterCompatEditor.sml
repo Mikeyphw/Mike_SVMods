@@ -28,11 +28,11 @@ Contract:
     <lane layout="stretch stretch" orientation="vertical" padding="24">
         <lane layout="stretch content" orientation="vertical">
             <banner text={Title} />
-            <label text={SummaryText} />
+            <label text={:SummaryText} />
             <label text="Save readiness is supplied by CanSave and CanDiscard in the future backing viewmodel." />
             <lane *if={HasValidation} orientation="vertical">
                 <label text="Validation" />
-                <label text={ValidationText} />
+                <label text={:ValidationText} />
             </lane>
         </lane>
 
@@ -40,11 +40,11 @@ Contract:
             <scrollable layout="360px stretch" peeking="48">
                 <lane orientation="vertical">
                     <label text="Egg groups" />
-                    <lane *repeat={EggGroups} orientation="vertical">
+                    <lane *repeat={:EggGroups} orientation="vertical">
                         <button layout="stretch content"
-                                text={ButtonText}
+                                text={:ButtonText}
                                 click=|SelectEggGroup()| />
-                        <label text={MetaText} />
+                        <label text={:MetaText} />
                     </lane>
                 </lane>
             </scrollable>
@@ -53,22 +53,22 @@ Contract:
                 <lane orientation="vertical">
                     <label text="Current group" />
                     <label text={SelectedEggGroupName} />
-                    <lane *if={HasSelectedEggGroup} *context={SelectedEggGroup} orientation="vertical">
-                        <lane *repeat={Kinds} orientation="vertical">
-                            <label text={DisplayName} />
+                    <lane *if={HasSelectedEggGroup} *context={:SelectedEggGroup} orientation="vertical">
+                        <lane *repeat={:Kinds} orientation="vertical">
+                            <label text={:DisplayName} />
                             <dropdown layout="stretch content"
-                                      options={^AvailableSources}
+                                      options={:AvailableSources}
                                       selected-option={<>SelectedSourceId} />
-                            <label text={ValidationNote} />
+                            <label text={:ValidationNote} />
                         </lane>
                     </lane>
                     <label text="Provider options" />
                     <button text="Use all providers" click=|UseAllProviders()| />
-                    <lane *repeat={ProviderOptions} orientation="vertical">
+                    <lane *repeat={:ProviderOptions} orientation="vertical">
                         <button layout="stretch content"
-                                text={ButtonText}
+                                text={:ButtonText}
                                 click=|SelectProvider()| />
-                        <label text={DescriptionText} />
+                        <label text={:DescriptionText} />
                     </lane>
                     <label text="Selected provider" />
                     <label text={SelectedProviderName} />

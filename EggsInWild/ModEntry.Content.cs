@@ -85,6 +85,12 @@ private void InstallHarmonyBootstrap()
                     enumAssetFolder: WeggAssetFolder.mines,
                     fileExt: ModAssetHandler.FileExtension.Png,
                     gamePath: "Maps/Mines"
+                ),
+                new(
+                    enumAssetType: typeof(WeggMonsterTexture),
+                    enumAssetFolder: WeggAssetFolder.mines,
+                    fileExt: ModAssetHandler.FileExtension.Png,
+                    gamePath: "Characters/Monsters"
                 )
             }
         );
@@ -118,8 +124,6 @@ private void InstallHarmonyBootstrap()
             invalidateAssets: InvalidateGameAssets);
 
         InitializeAnimalNotesRuntime(_contentLog);
-        Phase8HealthReporter.LogPhase8HealthReport(Helper, saveData, _config, _contentLog);
-
         _chosenEggAssignments = new ChosenEggAssignments(_contentDataLoader, Helper.ModRegistry, _contentLog);
         _contentPipeline = new AssetPipelineHost<ContentContext>(Helper, Monitor, CreateContentContext);
         if (_assetHandler is not null)
@@ -136,6 +140,32 @@ private void InstallHarmonyBootstrap()
         _contentPipeline.RegisterEditor(new SpecialOrdersEditor(), order: 90, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
         _contentPipeline.RegisterEditor(new WildEggIncubatorTextureEditor(), order: 100, shouldApply: (ctx, _) => ctx.Step >= ProgressionStep.PartI);
         _contentPipeline.Attach();
+
+        NestCorePipelineSnapshot.Set(
+            attached: true,
+            editorAssets: new[]
+            {
+                "Data/Monsters",
+                "Data/FarmAnimals",
+                "Data/Objects",
+                "Data/BigCraftables",
+                "Data/Machines",
+                "Data/CraftingRecipes",
+                "Data/Mail",
+                "Data/Quests",
+                "Data/SpecialOrders",
+                "TileSheets/craftables"
+            },
+            modAssetPaths: _assetHandler is null
+                ? Array.Empty<string>()
+                : new[]
+                {
+                    $"Mods/{Constants.ModId}/objects",
+                    $"Mods/{Constants.ModId}/bigcraftables",
+                    $"Mods/{Constants.ModId}/misc",
+                    "Maps/Mines",
+                    "Characters/Monsters"
+                });
     }
 
     private ContentContext CreateContentContext()

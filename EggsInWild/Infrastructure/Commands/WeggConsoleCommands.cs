@@ -23,42 +23,12 @@ public sealed class WeggConsoleCommands
     public void Register(IModHelper helper)
     {
         helper.ConsoleCommands.Add(
-            name: "wegg",
-            documentation: _i18n.GetOrDefault("command.wegg.documentation", "EggsInWild subcommands. Type `wegg help`."),
+            name: "we",
+            documentation: "EggsInWild commands. Type `we help`.",
             callback: (_, args) =>
             {
-                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Commands, $"wegg args={string.Join(" ", args)}", LogLevel.Trace);
+                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Commands, $"we args={string.Join(" ", args)}", LogLevel.Trace);
                 var result = _dispatcher.Execute(args);
-                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Commands, result.Message, result.Success ? LogLevel.Info : LogLevel.Warn);
-            });
-
-        helper.ConsoleCommands.Add(
-            name: "wegg_notes",
-            documentation: _i18n.GetOrDefault("command.wegg.notes.documentation", "EggsInWild AnimalNotes commands. Type `wegg_notes dump`."),
-            callback: (_, args) =>
-            {
-                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Commands, $"wegg_notes args={string.Join(" ", args)}", LogLevel.Trace);
-
-                var merged = new string[args.Length + 1];
-                merged[0] = "notes";
-                Array.Copy(args, 0, merged, 1, args.Length);
-
-                var result = _dispatcher.Execute(merged);
-                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Commands, result.Message, result.Success ? LogLevel.Info : LogLevel.Warn);
-            });
-
-        helper.ConsoleCommands.Add(
-            name: "wegg_schema",
-            documentation: _i18n.GetOrDefault("command.wegg.schema.documentation", "EggsInWild schema commands. Type `wegg_schema wipe --yes`."),
-            callback: (_, args) =>
-            {
-                LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Commands, $"wegg_schema args={string.Join(" ", args)}", LogLevel.Trace);
-
-                var merged = new string[args.Length + 1];
-                merged[0] = "schema";
-                Array.Copy(args, 0, merged, 1, args.Length);
-
-                var result = _dispatcher.Execute(merged);
                 LogScopedHelper.Log(_log, ScopedLogCatalog.ModWeCategory.Commands, result.Message, result.Success ? LogLevel.Info : LogLevel.Warn);
             });
     }

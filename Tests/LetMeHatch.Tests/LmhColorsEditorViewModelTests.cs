@@ -12,7 +12,8 @@ public sealed class LmhColorsEditorViewModelTests
     {
         var viewModel = CreateViewModel();
 
-        viewModel.OverrideRows[1].SelectOverrideRow();
+        viewModel.ShowClonedEggs();
+        viewModel.OverrideRows[0].SelectOverrideRow();
 
         Assert.Equal("Void Egg", viewModel.PreviewLabel);
         Assert.Contains("#223344", viewModel.PreviewStatusText);
@@ -27,12 +28,26 @@ public sealed class LmhColorsEditorViewModelTests
         viewModel.OverrideRows[0].SelectOverrideRow();
         viewModel.PaletteGroups[0].OpenPaletteGroup();
         viewModel.ToggleSelectedPaletteGroup();
-        viewModel.SelectedOverrideColorText = "#AABBCC";
         viewModel.Save();
 
         Assert.NotNull(saved);
         Assert.False(saved!.PaletteSelections["egg.white"]["blue"]);
-        Assert.Equal(new Color(0xAA, 0xBB, 0xCC), saved.OverrideColors["egg.white"]);
+        Assert.Equal(new Color(0x22, 0x33, 0x44), saved.OverrideColors["egg.void"]);
+    }
+
+    [Fact]
+    public void ClonedEggs_Save_PersistsManualOverrideOnly()
+    {
+        LmhColorsEditorDraft? saved = null;
+        var viewModel = CreateViewModel(draft => saved = draft);
+
+        viewModel.ShowClonedEggs();
+        viewModel.OverrideRows[0].SelectOverrideRow();
+        viewModel.SelectedOverrideColorText = "#AABBCC";
+        viewModel.Save();
+
+        Assert.NotNull(saved);
+        Assert.Equal(new Color(0xAA, 0xBB, 0xCC), saved!.OverrideColors["egg.void"]);
     }
 
     private static LmhColorsEditorViewModel CreateViewModel(Action<LmhColorsEditorDraft>? onSave = null)
@@ -41,8 +56,8 @@ public sealed class LmhColorsEditorViewModelTests
             () => new LmhColorsEditorCatalog(
                 new[]
                 {
-                    new LmhColorPaletteGroupRecord("blue", "Blue"),
-                    new LmhColorPaletteGroupRecord("green", "Green"),
+                    new LmhColorPaletteGroupRecord("blue", "Blue", new Color(0x44, 0x88, 0xCC)),
+                    new LmhColorPaletteGroupRecord("green", "Green", new Color(0x44, 0xAA, 0x66)),
                 },
                 new[]
                 {
@@ -54,7 +69,11 @@ public sealed class LmhColorsEditorViewModelTests
                             ["blue"] = true,
                             ["green"] = true,
                         },
-                        Color.Transparent),
+                        Color.Transparent,
+                        false),
+                },
+                new[]
+                {
                     new LmhColorOverrideRecord(
                         "egg.void",
                         "Void Egg",
@@ -63,7 +82,8 @@ public sealed class LmhColorsEditorViewModelTests
                             ["blue"] = false,
                             ["green"] = true,
                         },
-                        new Color(0x22, 0x33, 0x44)),
+                        new Color(0x22, 0x33, 0x44),
+                        true),
                 }),
             onSave ?? (_ => { }));
 }

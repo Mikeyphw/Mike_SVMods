@@ -77,6 +77,82 @@ public sealed class DesertTombSpawnPlannerTests
         Assert.Equal(2, totalMummies);
     }
 
+    [Fact]
+    public void BuildPlan_AllowsHurricaneInNonBossAreas()
+    {
+        var layout = new TombLayout(
+            new[]
+            {
+                new TombAreaLayout(
+                    area: new Microsoft.Xna.Framework.Rectangle(0, 0, 10, 10),
+                    type: TombAreaType.NormalArea,
+                    capacity: new CapacityRange(1, 1),
+                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Hurricane }
+                )
+            }
+        );
+
+        var config = SpawnConfiguration.Default;
+        var rng = new SequenceRandomProvider(ints: new[] { 1, 0 }, doubles: Array.Empty<double>());
+
+        var planner = new TombSpawnPlanner(rng);
+        var plan = planner.BuildPlan(layout, config, TombDifficulty.Moderate);
+
+        Assert.True(plan.TotalsByMonsterType.TryGetValue(TombMonsterType.Hurricane, out var total));
+        Assert.Equal(1, total);
+    }
+
+    [Fact]
+    public void BuildPlan_ExcludesHurricaneFromBossAreaWithoutBossStats()
+    {
+        var layout = new TombLayout(
+            new[]
+            {
+                new TombAreaLayout(
+                    area: new Microsoft.Xna.Framework.Rectangle(0, 0, 10, 10),
+                    type: TombAreaType.MummyArea,
+                    capacity: new CapacityRange(1, 1),
+                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Hurricane }
+                )
+            }
+        );
+
+        var config = SpawnConfiguration.Default;
+        var rng = new SequenceRandomProvider(ints: new[] { 1, 0 }, doubles: Array.Empty<double>());
+
+        var planner = new TombSpawnPlanner(rng);
+        var plan = planner.BuildPlan(layout, config, TombDifficulty.Hard);
+
+        Assert.False(plan.TotalsByMonsterType.ContainsKey(TombMonsterType.Hurricane));
+    }
+
+    [Fact]
+    public void BuildPlan_RespectsGlobalCapForHurricane()
+    {
+        var layout = new TombLayout(
+            new[]
+            {
+                new TombAreaLayout(
+                    area: new Microsoft.Xna.Framework.Rectangle(0, 0, 10, 10),
+                    type: TombAreaType.NormalArea,
+                    capacity: new CapacityRange(3, 3),
+                    allowedMonsters: new HashSet<TombMonsterType> { TombMonsterType.Hurricane }
+                )
+            }
+        );
+
+        var config = SpawnConfiguration.Default;
+        config.Global.MaxMonsterInTomb[TombMonsterType.Hurricane] = 1;
+
+        var rng = new SequenceRandomProvider(ints: new[] { 3, 0 }, doubles: Array.Empty<double>());
+
+        var planner = new TombSpawnPlanner(rng);
+        var plan = planner.BuildPlan(layout, config, TombDifficulty.Moderate);
+
+        Assert.True(plan.TotalsByMonsterType.TryGetValue(TombMonsterType.Hurricane, out var total));
+        Assert.Equal(1, total);
+    }
+
     private sealed class SequenceRandomProvider : IRandomProvider
     {
         private readonly Queue<int> _ints;

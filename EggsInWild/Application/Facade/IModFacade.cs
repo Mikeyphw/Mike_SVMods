@@ -39,6 +39,15 @@ public interface IModFacade
     FacadeResult WipeSchemaData(bool confirmed);
 
 #if WEGG_DEV
+    /// <summary>Dev-only: return a concise runtime diagnostics snapshot.</summary>
+    FacadeResult RuntimeStatus();
+
+    /// <summary>Dev-only: return content pipeline / mod asset diagnostics.</summary>
+    FacadeResult PipelineStatus();
+
+    /// <summary>Dev-only: write a JSON state dump under the mod data folder or a provided path.</summary>
+    FacadeResult WriteStateDump(string? pathArg);
+
     /// <summary>Dev-only: force-install DesertTomb Harmony patches immediately (bypasses config gating).</summary>
     FacadeResult ForceInstallDesertTombHarmonyPatches();
 
@@ -58,4 +67,3 @@ public interface IModFacade
     FacadeResult ValidateWildAnimalBulk(string wildAnimalKey, string rawOrPath);
 #endif
 }
-

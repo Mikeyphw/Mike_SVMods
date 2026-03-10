@@ -53,11 +53,11 @@ Contract:
             <scrollable layout="300px stretch" peeking="48">
                 <lane orientation="vertical">
                     <label text="Packs" />
-                    <lane *repeat={Packs} orientation="vertical">
+                    <lane *repeat={:Packs} orientation="vertical">
                         <button layout="stretch content"
-                                text={ButtonText}
+                                text={:ButtonText}
                                 click=|OpenPack()| />
-                        <label text={MetaText} />
+                        <label text={:MetaText} />
                     </lane>
                 </lane>
             </scrollable>
@@ -67,11 +67,11 @@ Contract:
                     <label text="Selected pack" />
                     <label text={SelectedPack} />
                     <label text="Females" />
-                    <lane *repeat={Females} orientation="vertical">
+                    <lane *repeat={:Females} orientation="vertical">
                         <button layout="stretch content"
-                                text={ButtonText}
+                                text={:ButtonText}
                                 click=|OpenFemale()| />
-                        <label text={MetaText} />
+                        <label text={:MetaText} />
                     </lane>
                 </lane>
             </scrollable>
@@ -88,11 +88,11 @@ Contract:
                         <label text={ApplyDailyLuckBoostLabel} />
                         <button text="Toggle daily boost" click=|ToggleApplyDailyLuckBoost()| />
                         <label text="Males" />
-                        <lane *repeat={Males} orientation="vertical">
+                        <lane *repeat={:Males} orientation="vertical">
                             <button layout="stretch content"
-                                    text={ButtonText}
+                                    text={:ButtonText}
                                     click=|OpenMale()| />
-                            <label text={MetaText} />
+                            <label text={:MetaText} />
                         </lane>
                     </lane>
                     <lane *if={IsRulesTab} orientation="vertical">

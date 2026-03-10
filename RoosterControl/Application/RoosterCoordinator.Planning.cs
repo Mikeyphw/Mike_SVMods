@@ -433,10 +433,10 @@ internal sealed partial class RoosterCoordinator
         if (verb.Equals("help", StringComparison.OrdinalIgnoreCase) || verb.Equals("-h", StringComparison.OrdinalIgnoreCase))
         {
             LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning,
-                "ra_plan usage:\n" +
-                "  ra_plan dump\n" +
+                "ra plan usage:\n" +
+                "  ra plan dump\n" +
                 "    - writes the current daily plan JSON to data/state-dumps (computes if missing).\n" +
-                "  ra_plan recompute\n" +
+                "  ra plan recompute\n" +
                 "    - DEV ONLY (EnableDebug=true). Host recomputes plan (new nonce) and invalidates assets.",
                 LogLevel.Info
             );
@@ -522,6 +522,6 @@ internal sealed partial class RoosterCoordinator
             return;
         }
 
-        LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Unknown subcommand '{verb}'. Run: ra_plan help", LogLevel.Warn);
+        LogScopedHelper.Log(_log, ModRoosterControlCategory.Planning, $"Unknown subcommand '{verb}'. Run: ra plan help", LogLevel.Warn);
     }
 }

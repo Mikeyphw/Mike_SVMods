@@ -136,14 +136,12 @@ public sealed class RoosterCompatEditorServiceTests
                     SourceId = "beta",
                     DisplayName = "Beta Provider",
                     FarmAnimalKeys = new List<RoosterFarmAnimalKeyDef> { new() { Key = "BetaRooster" } },
-                    RoosterEggItemId = "901",
                 },
                 new()
                 {
                     SourceId = "alpha",
                     DisplayName = "Alpha Provider",
                     FarmAnimalKeys = new List<RoosterFarmAnimalKeyDef> { new() { Key = "AlphaRooster" } },
-                    RoosterEggItemId = "900",
                 },
             },
         };

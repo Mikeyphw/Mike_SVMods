@@ -21,7 +21,7 @@ internal sealed class DevJsonTuningService
     private readonly ILog _log;
 
     private SpawnParametersJson? _spawnParameters;
-    private Dictionary<string, List<SpawnAreaRuleJson>>? _spawnAreas;
+    private Dictionary<string, WildEggSpawnLocationJson>? _wildEggSpawnDefinitions;
     private Dictionary<string, LocationPackJson>? _locationPacks;
 
     public DevJsonTuningService(IModHelper helper, ILog log)
@@ -34,7 +34,7 @@ internal sealed class DevJsonTuningService
     {
         EnsureLoaded();
         var spawnParameters = _spawnParameters!;
-        var spawnAreas = _spawnAreas!;
+        var wildEggSpawnDefinitions = _wildEggSpawnDefinitions!;
         var locationPacks = _locationPacks!;
 
         page.SectionLabel(() => "ModData/SpawnParameters.json");
@@ -145,20 +145,31 @@ internal sealed class DevJsonTuningService
 
         page.Separator(simple: true);
 
-        page.SectionLabel(() => "ModData/SpawnAreas.json");
-        foreach (var entry in spawnAreas)
+        page.SectionLabel(() => ModDataPaths.WildEggSpawnDefinitions);
+        foreach (var entry in wildEggSpawnDefinitions.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
         {
-            var key = entry.Key;
-            var rules = entry.Value ?? new List<SpawnAreaRuleJson>();
+            var locationKey = entry.Key;
+            var definition = entry.Value ?? new WildEggSpawnLocationJson();
+
+            AddVariantEditors(locationKey, "Normal.Common", definition.Normal?.Common);
+            AddVariantEditors(locationKey, "Normal.Magic", definition.Normal?.Magic);
+            AddVariantEditors(locationKey, "Large.Common", definition.Large?.Common);
+            AddVariantEditors(locationKey, "Large.Magic", definition.Large?.Magic);
+        }
+
+        void AddVariantEditors(string locationKey, string variantKey, IList<SpawnAreaRuleJson>? rules)
+        {
+            if (rules is null)
+                return;
 
             for (var i = 0; i < rules.Count; i++)
             {
                 var localIndex = i;
                 var area = rules[localIndex];
 
-                page.Float($"debug.json.spawn.areas.{key}.{localIndex}.randomChance",
+                page.Float($"debug.json.spawn.areas.{locationKey}.{variantKey}.{localIndex}.randomChance",
                     getValue: () => (float)area.RandomChance,
-                    setValue: v => UpdateSpawnAreas(() => area.RandomChance = Math.Clamp((double)v, 0.0, 1.0)),
+                    setValue: v => UpdateWildEggSpawnDefinitions(() => area.RandomChance = Math.Clamp((double)v, 0.0, 1.0)),
                     min: 0f,
                     max: 1f,
                     interval: 0.01f
@@ -186,13 +197,20 @@ internal sealed class DevJsonTuningService
 
     private void EnsureLoaded()
     {
-        if (_spawnParameters is not null && _spawnAreas is not null && _locationPacks is not null)
+        if (_spawnParameters is not null && _wildEggSpawnDefinitions is not null && _locationPacks is not null)
             return;
 
         var reader = new SmapiJsonFileReader(_helper);
 
         _spawnParameters = reader.ReadJsonFile<SpawnParametersJson>(ModDataPaths.SpawnParameters) ?? new SpawnParametersJson();
-        _spawnAreas = reader.ReadJsonFile<Dictionary<string, List<SpawnAreaRuleJson>>>(ModDataPaths.SpawnAreas) ?? new Dictionary<string, List<SpawnAreaRuleJson>>();
+        _wildEggSpawnDefinitions = reader.ReadJsonFile<Dictionary<string, WildEggSpawnLocationJson>>(ModDataPaths.WildEggSpawnDefinitions);
+        if (_wildEggSpawnDefinitions is null)
+        {
+            var legacy = reader.ReadJsonFile<Dictionary<string, List<SpawnAreaRuleJson>>>(ModDataPaths.LegacySpawnAreas);
+            _wildEggSpawnDefinitions = legacy is not null
+                ? new Dictionary<string, WildEggSpawnLocationJson>(WildEggSpawnDefinitionEggIds.FromLegacyFlat(legacy), StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, WildEggSpawnLocationJson>(StringComparer.OrdinalIgnoreCase);
+        }
         _locationPacks = reader.ReadJsonFile<Dictionary<string, LocationPackJson>>(ModDataPaths.LocationPacks) ?? new Dictionary<string, LocationPackJson>();
     }
 
@@ -215,22 +233,22 @@ internal sealed class DevJsonTuningService
         }
     }
 
-    private void UpdateSpawnAreas(Action update)
+    private void UpdateWildEggSpawnDefinitions(Action update)
     {
         EnsureLoaded();
         update();
-        SaveSpawnAreas();
+        SaveWildEggSpawnDefinitions();
     }
 
-    private void SaveSpawnAreas()
+    private void SaveWildEggSpawnDefinitions()
     {
         try
         {
-            _helper.Data.WriteJsonFile(ModDataPaths.SpawnAreas, _spawnAreas);
+            _helper.Data.WriteJsonFile(ModDataPaths.WildEggSpawnDefinitions, _wildEggSpawnDefinitions);
         }
         catch (Exception ex)
         {
-            _log.Log($"[DevJson] Failed writing {ModDataPaths.SpawnAreas}: {ex}", LogLevel.Warn);
+            _log.Log($"[DevJson] Failed writing {ModDataPaths.WildEggSpawnDefinitions}: {ex}", LogLevel.Warn);
         }
     }
 
