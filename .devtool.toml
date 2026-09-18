@@ -1,0 +1,98 @@
+# Mike_SVMods — Devtool configuration
+# Repository standardized on .NET 6.
+
+[project]
+runner = "dotnet"
+platform = "desktop"
+
+[workspace]
+default_target = "svmods"
+
+[execution]
+environment = "native-termux"
+
+
+# ============================================================
+# Canonical repository validation
+# ============================================================
+#
+# Tests/run-tests.sh is the repository's authoritative test entry point:
+#   1. LetMeHatch/Tools/validate-core.sh
+#   2. dotnet test Tests/Tests.sln -c Release
+#
+# solution/test_target are also declared so Devtool can resolve the
+# .NET target before dispatching the custom test command.
+
+[targets.svmods]
+runner = "dotnet"
+platform = "desktop"
+root = "."
+solution = "Tests/Tests.sln"
+test_target = "Tests/Tests.sln"
+test_command = "./Tests/run-tests.sh"
+
+[targets.svmods.validation]
+memory_guard_mb = 0
+max_workers = 4
+cpu_limit = 4
+low_priority = false
+
+
+# ============================================================
+# Fast portable validation
+# ============================================================
+
+[targets.pure]
+runner = "dotnet"
+platform = "desktop"
+root = "."
+solution = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+build_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+test_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+
+[targets.pure.validation]
+memory_guard_mb = 0
+max_workers = 4
+cpu_limit = 4
+low_priority = false
+
+
+# ============================================================
+# EmbedTextAsCode utility
+# ============================================================
+
+[targets.embed_tool]
+runner = "dotnet"
+platform = "desktop"
+root = "."
+solution = "tools/EmbedTextAsCode/EmbedTextAsCode.csproj"
+build_target = "tools/EmbedTextAsCode/EmbedTextAsCode.csproj"
+
+[targets.embed_tool.validation]
+memory_guard_mb = 0
+max_workers = 4
+cpu_limit = 4
+low_priority = false
+
+
+# ============================================================
+# .NET policy
+# ============================================================
+
+[dotnet]
+configuration = "Release"
+
+# dotnet test already performs restore/build when required.
+coalesce_validation = true
+explicit_restore = false
+
+# Reuse MSBuild servers between invocations.
+stop_after_run = false
+
+
+# ============================================================
+# Host resource policy
+# ============================================================
+
+[build]
+max_workers = 4

@@ -124,9 +124,9 @@ dotnet test
 ### Output
 
 Built mods are located in each mod's `bin/` directory:
-- `NestCore/bin/Debug/net8.0/NestCore.dll`
-- `LetMeHatch/bin/Debug/net8.0/LetMeHatch.dll`
-- `RoosterControl/bin/Debug/net8.0/RoosterControl.dll`
+- `NestCore/bin/Debug/net6.0/NestCore.dll`
+- `LetMeHatch/bin/Debug/net6.0/LetMeHatch.dll`
+- `RoosterControl/bin/Debug/net6.0/RoosterControl.dll`
 
 ## Shared Components
 
