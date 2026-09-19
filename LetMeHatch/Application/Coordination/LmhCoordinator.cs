@@ -1,3 +1,4 @@
+using LetMeHatch.Infrastructure.Breeding;
 using System;
 using System.IO;
 using System.Linq;
@@ -439,7 +440,7 @@ public void DebugBreedingDumpCoopIndex(string pathArg)
         return;
     }
 
-    var index = CoopBreedingIndex.Build(Game1.getFarm());
+    var index = SmapiCoopBreedingIndexFactory.Build(Game1.getFarm());
     var json = BreedingDumpJson.SerializeCoopIndex(index, indented: true);
     var defaultName = $"breeding_coop_index_{Game1.Date.Year}_{Game1.Date.Season}_{Game1.Date.DayOfMonth}.json";
     var path = ResolveOutputPath(pathArg, defaultName);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using LetMeHatch.Core.Breeding;
+using LetMeHatch.Infrastructure.Breeding;
 using StardewValley.GameData.FarmAnimals;
 using Xunit;
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using LetMeHatch.Core.Breeding;
 using Xunit;
 
@@ -22,4 +23,20 @@ public sealed class CoopBreedingIndexTests
         Assert.Equal(5, index.GetMaleQuantityForFemale("Rooster", "Duck"));
         Assert.Equal(0, index.GetMaleQuantityForFemale("Rooster", "Goat"));
     }
+    [Fact]
+    public void FromAdultCounts_NormalizesBoundaryInput_AndRemainsCaseInsensitive()
+    {
+        var adultCounts = new List<IDictionary<string, int>>
+        {
+            new Dictionary<string, int> { ["Chicken"] = 1, ["ROOSTER"] = 2, [""] = 9, ["Ignored"] = 0 },
+            new Dictionary<string, int> { ["chicken"] = 1, ["rooster"] = 3 }
+        };
+
+        var index = CoopBreedingIndex.FromAdultCounts(adultCounts);
+
+        Assert.Equal(5, index.GetMaleQuantityForFemale("Rooster", "CHICKEN"));
+        Assert.DoesNotContain(index.GetAdultCountsByCoop().SelectMany(x => x.Keys), key => string.IsNullOrWhiteSpace(key));
+        Assert.DoesNotContain(index.GetAdultCountsByCoop().SelectMany(x => x.Keys), key => string.Equals(key, "Ignored", System.StringComparison.OrdinalIgnoreCase));
+    }
+
 }

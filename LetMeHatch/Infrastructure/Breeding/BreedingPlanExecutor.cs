@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using LetMeHatch.Core.Breeding;
 using Mikew.NestCore.Helpers;
 using StardewModdingAPI;
 using StardewValley.GameData.FarmAnimals;
@@ -9,7 +10,7 @@ using StardewValley.GameData.FarmAnimals;
 using static LetMeHatch.ModEntry;
 using static Mikew.NestCore.EnumsAndStrings.Strings.ItemIds;
 
-namespace LetMeHatch.Core.Breeding;
+namespace LetMeHatch.Infrastructure.Breeding;
 
 /// <summary>
 /// Applies <see cref="BreedingPlan"/> mutations to the farm animal game-data dictionary.

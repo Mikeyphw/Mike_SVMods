@@ -7,6 +7,7 @@ using LetMeHatch.Helpers;
 using LetMeHatch.Integrations;
 using LetMeHatch.Models;
 using LetMeHatch.Infrastructure.Smapi;
+using LetMeHatch.Infrastructure.Breeding;
 using LetMeHatch.Core.Random;
 using LetMeHatch.Core.Breeding;
 using Mikew.NestCore.Helpers;
@@ -716,7 +717,7 @@ namespace LetMeHatch.Breeding
         {
             var validBreedingData = GetBreedingDataGroupedByFemale();
             var scopeKeys = BuildBreedingScopeKeys(validBreedingData);
-            var coopIndex = CoopBreedingIndex.Build(Game1.getFarm());
+            var coopIndex = SmapiCoopBreedingIndexFactory.Build(Game1.getFarm());
             var planner = new DefaultBreedingPlanner();
             var executor = new BreedingPlanExecutor(WildEggsIDs);
             var validator = new BreedingPlanValidator();
@@ -757,7 +758,6 @@ namespace LetMeHatch.Breeding
                         Rng: rng,
                         OnlyFertilizedEggs: config.OnlyFertilizedEggs,
                         DailyLuckBonus: config.DailyLuckBonus,
-                        FarmAnimals: farmAnimalsData,
                         ScopeAnimalKeys: scopeKeys,
                         FemaleKey: femaleKey,
                         Candidates: breedingDataList.ToList(),
@@ -788,7 +788,7 @@ namespace LetMeHatch.Breeding
             }
 
             var scopeKeys = BuildBreedingScopeKeys(validBreedingData);
-            var coopIndex = CoopBreedingIndex.Build(Game1.getFarm());
+            var coopIndex = SmapiCoopBreedingIndexFactory.Build(Game1.getFarm());
             var planner = new DefaultBreedingPlanner();
 
             var sharedRng = config.DeterministicBreedingRng ? null : new GameRandomProvider();
@@ -830,7 +830,6 @@ namespace LetMeHatch.Breeding
                         Rng: rng,
                         OnlyFertilizedEggs: config.OnlyFertilizedEggs,
                         DailyLuckBonus: config.DailyLuckBonus,
-                        FarmAnimals: farmAnimalsData,
                         ScopeAnimalKeys: scopeKeys,
                         FemaleKey: femaleKey,
                         Candidates: breedingDataList.ToList(),

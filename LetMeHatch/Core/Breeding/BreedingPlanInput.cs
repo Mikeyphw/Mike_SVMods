@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using LetMeHatch.Config;
 using LetMeHatch.Models;
 using Mikew.NestCore.Framework.Random;
-using StardewValley.GameData.FarmAnimals;
 
 namespace LetMeHatch.Core.Breeding;
 
@@ -15,7 +14,6 @@ public sealed record BreedingPlanInput(
     IRandomProvider Rng,
     bool OnlyFertilizedEggs,
     float DailyLuckBonus,
-    IDictionary<string, FarmAnimalData> FarmAnimals,
     IReadOnlyCollection<string> ScopeAnimalKeys,
     string FemaleKey,
     IReadOnlyList<(string ContentPackId, BreedingDataFemale BreedingData)> Candidates,
