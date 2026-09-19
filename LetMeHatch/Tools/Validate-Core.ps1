@@ -12,21 +12,29 @@ $core = Join-Path $root "Core"
 
 if (-not (Test-Path $core)) { Fail "Core folder missing: $core" }
 
-$forbidden = @(
-  "StardewValley",
-  "StardewModdingAPI",
-  "SMAPI",
-  "Microsoft.Xna.Framework"
-)
+# Core is a domain layer. Detect source-level references to runtime namespaces,
+# rather than arbitrary words in comments/documentation (for example "no SMAPI").
+# Report every violating file in one pass so remediation is deterministic.
+$usingPattern = '^\s*(?:global\s+)?using\s+(?:(?:static\s+)?|[A-Za-z_][A-Za-z0-9_]*\s*=\s*)(?:global::)?(?:StardewValley|StardewModdingAPI|Microsoft\.Xna\.Framework)(?:[.;\s]|$)'
+$qualifiedPattern = '(?:^|[^A-Za-z0-9_])(?:(?:global::)?(?:StardewValley|StardewModdingAPI|Microsoft\.Xna\.Framework))\.'
+$commentOnlyPattern = '^\s*(?://|///|\*)'
+$violations = [System.Collections.Generic.List[string]]::new()
 
-$csFiles = Get-ChildItem -Path $core -Recurse -Filter *.cs
+$csFiles = Get-ChildItem -Path $core -Recurse -Filter *.cs | Sort-Object FullName
 foreach ($f in $csFiles) {
-  $text = Get-Content -Path $f.FullName -Raw
-  foreach ($token in $forbidden) {
-    if ($text -match [regex]::Escape($token)) {
-      Fail "Core purity violation in $($f.FullName): contains '$token'"
+  $lineNumber = 0
+  foreach ($line in Get-Content -Path $f.FullName) {
+    $lineNumber++
+    if (($line -match $usingPattern) -or (($line -match $qualifiedPattern) -and ($line -notmatch $commentOnlyPattern))) {
+      $violations.Add("$($f.FullName):$lineNumber:$($line.Trim())")
     }
   }
+}
+
+if ($violations.Count -gt 0) {
+  Write-Host "ERROR: Core purity violations ($($violations.Count) reference(s)):"
+  foreach ($violation in $violations) { Write-Host "  - $violation" }
+  exit 1
 }
 
 $duplicateFiles = @(
@@ -38,12 +46,18 @@ $duplicateFiles = @(
   "GameAssets.cs"
 )
 
+$duplicateViolations = [System.Collections.Generic.List[string]]::new()
 foreach ($name in $duplicateFiles) {
   $hits = Get-ChildItem -Path $root -Recurse -Filter $name -ErrorAction SilentlyContinue
-  if ($hits) {
-    $paths = ($hits | ForEach-Object { $_.FullName }) -join "`n  - "
-    Fail "NestCore duplicate regression: found $name:`n  - $paths"
+  foreach ($hit in $hits) {
+    $duplicateViolations.Add("$name: $($hit.FullName)")
   }
+}
+
+if ($duplicateViolations.Count -gt 0) {
+  Write-Host "ERROR: NestCore duplicate regression ($($duplicateViolations.Count) file(s)):"
+  foreach ($violation in $duplicateViolations) { Write-Host "  - $violation" }
+  exit 1
 }
 
 Write-Host "OK: Core purity + NestCore duplicate checks passed."
