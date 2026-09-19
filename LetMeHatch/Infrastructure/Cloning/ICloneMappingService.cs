@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using LetMeHatch.Models;
 using StardewValley.GameData.FarmAnimals;
 
-namespace LetMeHatch.Core.Cloning;
+namespace LetMeHatch.Infrastructure.Cloning;
 
 /// <summary>Abstraction over clone purchase mapping rules for orchestration testing.</summary>
 public interface ICloneMappingService

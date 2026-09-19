@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Xna.Framework;
 
-namespace LetMeHatch.Core.ClonePipeline;
+namespace LetMeHatch.Infrastructure.ClonePipeline;
 
 /// <summary>
 /// Deterministic color resolution:

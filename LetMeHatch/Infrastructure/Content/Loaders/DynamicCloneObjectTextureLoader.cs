@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using LetMeHatch.Core.ClonePipeline;
+using LetMeHatch.Infrastructure.ClonePipeline;
 using LetMeHatch.Core.Cloning;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;

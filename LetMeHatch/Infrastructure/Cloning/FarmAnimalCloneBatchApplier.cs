@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using LetMeHatch.Cloning;
-using LetMeHatch.Core.Cloning;
 using LetMeHatch.Infrastructure.GameData;
 using LetMeHatch.Models;
 using StardewValley.GameData.FarmAnimals;

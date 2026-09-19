@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using LetMeHatch.Core.ClonePipeline;
+using LetMeHatch.Infrastructure.ClonePipeline;
 using Microsoft.Xna.Framework;
 using Xunit;
 

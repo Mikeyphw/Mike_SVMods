@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using LetMeHatch.Core.Cloning;
+using LetMeHatch.Infrastructure.Cloning;
 using StardewValley.GameData.FarmAnimals;
 using Xunit;
 using static Mikew.NestCore.EnumsAndStrings.Strings.ItemIds;

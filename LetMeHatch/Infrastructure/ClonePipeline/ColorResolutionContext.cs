@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
-namespace LetMeHatch.Core.ClonePipeline;
+namespace LetMeHatch.Infrastructure.ClonePipeline;
 
 /// <summary>
 /// Inputs for deterministic color resolution.

@@ -1,7 +1,7 @@
 using LetMeHatch.Core.Placeholders;
 using StardewValley.GameData.FarmAnimals;
 
-namespace LetMeHatch.Core.Cloning;
+namespace LetMeHatch.Infrastructure.Cloning;
 
 /// <summary>
 /// Placeholder-aware replacement policy for non-localized <see cref="FarmAnimalData"/> fields.

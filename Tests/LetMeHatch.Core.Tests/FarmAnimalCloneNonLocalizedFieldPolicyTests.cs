@@ -1,4 +1,4 @@
-using LetMeHatch.Core.Cloning;
+using LetMeHatch.Infrastructure.Cloning;
 using StardewValley.GameData.FarmAnimals;
 using Xunit;
 

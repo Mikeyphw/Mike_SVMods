@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using StardewValley.GameData.FarmAnimals;
 using static Mikew.NestCore.EnumsAndStrings.Strings.ItemIds;
 
-namespace LetMeHatch.Core.Cloning;
+namespace LetMeHatch.Infrastructure.Cloning;
 
 /// <summary>
 /// Applies non-localized clone rules to a farm animal clone (male clone data), keeping SMAPI- and Content Patcher-specific

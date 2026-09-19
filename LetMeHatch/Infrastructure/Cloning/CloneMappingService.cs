@@ -6,7 +6,7 @@ using Mikew.NestCore.Helpers;
 using StardewValley.GameData.FarmAnimals;
 using static Mikew.NestCore.EnumsAndStrings.Strings.ItemIds;
 
-namespace LetMeHatch.Core.Cloning;
+namespace LetMeHatch.Infrastructure.Cloning;
 
 /// <summary>
 /// Centralizes clone → purchase mapping rules (alternate purchase targets, original purchase animal resolution).

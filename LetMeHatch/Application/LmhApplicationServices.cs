@@ -2,6 +2,7 @@ using System;
 using LetMeHatch.Application.Gateways;
 using LetMeHatch.Application.UseCases;
 using LetMeHatch.Core.ClonePipeline;
+using LetMeHatch.Infrastructure.ClonePipeline;
 using Mikew.NestCore.Framework.Random;
 
 namespace LetMeHatch.Application;
