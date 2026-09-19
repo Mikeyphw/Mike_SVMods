@@ -5,7 +5,6 @@ using LetMeHatch.Config;
 using LetMeHatch.Models;
 using Mikew.NestCore.Helpers;
 using Mikew.NestCore.Framework.Random;
-using StardewValley.GameData.FarmAnimals;
 using static LetMeHatch.EnumsAndStrings.Enums;
 
 namespace LetMeHatch.Core.Breeding;

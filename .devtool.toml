@@ -96,3 +96,6 @@ stop_after_run = false
 
 [build]
 max_workers = 4
+
+[targets.svmods.env]
+GamePath = "/data/data/com.termux/files/home/stardew/game"
