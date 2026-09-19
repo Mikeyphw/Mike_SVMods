@@ -38,6 +38,98 @@ cpu_limit = 4
 low_priority = false
 
 
+
+# ============================================================
+# Per-project validation targets
+# ============================================================
+#
+# Use these for fast iteration on one mod. The aggregate `svmods`
+# target remains the canonical repository-wide integration/final gate.
+
+[targets.nestcore]
+runner = "dotnet"
+platform = "desktop"
+root = "."
+solution = "NestCore/NestCore.csproj"
+build_target = "NestCore/NestCore.csproj"
+
+[targets.nestcore.validation]
+memory_guard_mb = 0
+max_workers = 4
+cpu_limit = 4
+low_priority = false
+
+[targets.nestcore.env]
+GamePath = "/data/data/com.termux/files/home/stardew/game"
+
+[targets.letmehatch]
+runner = "dotnet"
+platform = "desktop"
+root = "."
+solution = "LetMeHatch/LetMeHatch.csproj"
+build_target = "LetMeHatch/LetMeHatch.csproj"
+test_target = "Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj"
+test_command = "./LetMeHatch/Tools/validate-core.sh && dotnet test Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj -c Release && dotnet test Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj -c Release"
+
+[targets.letmehatch.validation]
+memory_guard_mb = 0
+max_workers = 4
+cpu_limit = 4
+low_priority = false
+
+[targets.letmehatch.env]
+GamePath = "/data/data/com.termux/files/home/stardew/game"
+
+[targets.eggsinwild]
+runner = "dotnet"
+platform = "desktop"
+root = "."
+solution = "EggsInWild/EggsInWild.csproj"
+build_target = "EggsInWild/EggsInWild.csproj"
+test_target = "Tests/EggsInWild.Tests/EggsInWild.Tests.csproj"
+test_command = "dotnet test Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj -c Release && dotnet test Tests/EggsInWild.Tests/EggsInWild.Tests.csproj -c Release && dotnet test Tests/EggsInWild.Phase7.Tests/EggsInWild.Phase7.Tests.csproj -c Release"
+
+[targets.eggsinwild.validation]
+memory_guard_mb = 0
+max_workers = 4
+cpu_limit = 4
+low_priority = false
+
+[targets.eggsinwild.env]
+GamePath = "/data/data/com.termux/files/home/stardew/game"
+
+[targets.roostercontrol]
+runner = "dotnet"
+platform = "desktop"
+root = "."
+solution = "RoosterControl/RoosterControl.csproj"
+build_target = "RoosterControl/RoosterControl.csproj"
+test_target = "Tests/RoosterControl.Tests/RoosterControl.Tests.csproj"
+test_command = "dotnet test Tests/RoosterControl.Descriptors.Tests/RoosterControl.Descriptors.Tests.csproj -c Release && dotnet test Tests/RoosterControl.Tests/RoosterControl.Tests.csproj -c Release"
+
+[targets.roostercontrol.validation]
+memory_guard_mb = 0
+max_workers = 4
+cpu_limit = 4
+low_priority = false
+
+[targets.roostercontrol.env]
+GamePath = "/data/data/com.termux/files/home/stardew/game"
+
+[targets.roostercontrol_pure]
+runner = "dotnet"
+platform = "desktop"
+root = "."
+solution = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+build_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+test_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+
+[targets.roostercontrol_pure.validation]
+memory_guard_mb = 0
+max_workers = 4
+cpu_limit = 4
+low_priority = false
+
 # ============================================================
 # Fast portable validation
 # ============================================================
