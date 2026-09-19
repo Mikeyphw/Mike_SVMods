@@ -69,7 +69,7 @@ root = "."
 solution = "LetMeHatch/LetMeHatch.csproj"
 build_target = "LetMeHatch/LetMeHatch.csproj"
 test_target = "Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj"
-test_command = "./LetMeHatch/Tools/validate-core.sh && dotnet test Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj -c Release && dotnet test Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj -c Release"
+test_command = "./Tests/devtool/validate-letmehatch.sh"
 
 [targets.letmehatch.validation]
 memory_guard_mb = 0
@@ -79,6 +79,7 @@ low_priority = false
 
 [targets.letmehatch.env]
 GamePath = "/data/data/com.termux/files/home/stardew/game"
+DOTNET_ROLL_FORWARD = "Major"
 
 [targets.eggsinwild]
 runner = "dotnet"
@@ -87,7 +88,7 @@ root = "."
 solution = "EggsInWild/EggsInWild.csproj"
 build_target = "EggsInWild/EggsInWild.csproj"
 test_target = "Tests/EggsInWild.Tests/EggsInWild.Tests.csproj"
-test_command = "dotnet test Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj -c Release && dotnet test Tests/EggsInWild.Tests/EggsInWild.Tests.csproj -c Release && dotnet test Tests/EggsInWild.Phase7.Tests/EggsInWild.Phase7.Tests.csproj -c Release"
+test_command = "./Tests/devtool/validate-eggsinwild.sh"
 
 [targets.eggsinwild.validation]
 memory_guard_mb = 0
@@ -97,6 +98,7 @@ low_priority = false
 
 [targets.eggsinwild.env]
 GamePath = "/data/data/com.termux/files/home/stardew/game"
+DOTNET_ROLL_FORWARD = "Major"
 
 [targets.roostercontrol]
 runner = "dotnet"
@@ -105,7 +107,7 @@ root = "."
 solution = "RoosterControl/RoosterControl.csproj"
 build_target = "RoosterControl/RoosterControl.csproj"
 test_target = "Tests/RoosterControl.Tests/RoosterControl.Tests.csproj"
-test_command = "dotnet test Tests/RoosterControl.Descriptors.Tests/RoosterControl.Descriptors.Tests.csproj -c Release && dotnet test Tests/RoosterControl.Tests/RoosterControl.Tests.csproj -c Release"
+test_command = "./Tests/devtool/validate-roostercontrol.sh"
 
 [targets.roostercontrol.validation]
 memory_guard_mb = 0
@@ -115,6 +117,7 @@ low_priority = false
 
 [targets.roostercontrol.env]
 GamePath = "/data/data/com.termux/files/home/stardew/game"
+DOTNET_ROLL_FORWARD = "Major"
 
 [targets.roostercontrol_pure]
 runner = "dotnet"
@@ -123,6 +126,9 @@ root = "."
 solution = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 build_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 test_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+
+[targets.roostercontrol_pure.env]
+DOTNET_ROLL_FORWARD = "Major"
 
 [targets.roostercontrol_pure.validation]
 memory_guard_mb = 0
@@ -141,6 +147,9 @@ root = "."
 solution = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 build_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 test_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+
+[targets.pure.env]
+DOTNET_ROLL_FORWARD = "Major"
 
 [targets.pure.validation]
 memory_guard_mb = 0
@@ -191,3 +200,4 @@ max_workers = 4
 
 [targets.svmods.env]
 GamePath = "/data/data/com.termux/files/home/stardew/game"
+DOTNET_ROLL_FORWARD = "Major"
