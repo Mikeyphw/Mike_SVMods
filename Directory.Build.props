@@ -5,21 +5,22 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);CS9057</NoWarn>
-
-    <!-- Ensure Dev configuration exists solution-wide -->
     <Configurations>Debug;Release;Dev</Configurations>
   </PropertyGroup>
-
-  <!-- Dev = Release-like optimizations + symbols + global dev define -->
   <PropertyGroup Condition="'$(Configuration)'=='Dev'">
     <Optimize>true</Optimize>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
     <DefineConstants>$(DefineConstants);MIKE_DEV</DefineConstants>
   </PropertyGroup>
-
-  <!-- Local fallback for Linux dev environment when GamePath isn't provided explicitly. -->
   <PropertyGroup Condition="'$(GamePath)'=='' and Exists('/media/mike/HomeII/Games/gog/stardew-valley/game/StardewValley.dll')">
-    <GamePath>/media/mike/HomeII/Games/gog/stardew-valley/game</GamePath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_StardewHome Condition="'$(HOME)' != ''">$(HOME)/stardew/game</_StardewHome>
+    <GamePath Condition="'$(GamePath)' == ''         and '$(_StardewHome)' != ''         and Exists('$(_StardewHome)')">$(_StardewHome)</GamePath>
+    <GamePath Condition="'$(GamePath)' == ''         and '$(OS)' == 'Windows_NT'         and Exists('C:\Users\Mike\Documents\Stardew Valley')">C:\Users\Mike\Documents\Stardew Valley</GamePath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
   </PropertyGroup>
 </Project>

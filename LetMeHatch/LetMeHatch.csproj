@@ -1,27 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-  <LangVersion>12.0</LangVersion>
+    <LangVersion>12.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GamePath>C:\Users\Mike\Documents\Stardew Valley</GamePath>
   </PropertyGroup>
-  <!-- Dev config only: enables LMH_DEV (no Debug build define). -->
   <PropertyGroup Condition="'$(Configuration)'=='Dev'">
     <DefineConstants>$(DefineConstants);LMH_DEV</DefineConstants>
   </PropertyGroup>
-
-  
   <ItemGroup>
-    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="NestCore" HintPath="..\NestCore\bin\Debug\net6.0\NestCore.dll" Private="False" />
+    <Reference Include="ContentPatcher" HintPath="$(GameModsPath)\ContentPatcher\ContentPatcher.dll" Private="False" />
   </ItemGroup>
   <ItemGroup>
-  <Reference Include="ContentPatcher" HintPath="$(GameModsPath)\ContentPatcher\ContentPatcher.dll" Private="False" />
-</ItemGroup>
-<ItemGroup>
-  <None Include="data/**/*" CopyToOutputDirectory="PreserveNewest" /> <!-- Add the extra folder here -->
-</ItemGroup>
+    <None Include="data/**/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NestCore\NestCore.csproj" />
+  </ItemGroup>
 </Project>
