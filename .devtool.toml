@@ -13,6 +13,12 @@ mods = ["nestcore", "letmehatch", "eggsinwild", "roostercontrol"]
 tests = ["roostercontrol_pure", "pure"]
 tools = ["embed_tool"]
 all = ["svmods", "@mods", "@tests", "@tools"]
+
+[workspace.scheduler]
+parallel = true
+max_parallel_nodes = 3
+max_dotnet_nodes = 2
+max_gradle_nodes = 1
 [execution]
 environment = "native-termux"
 
@@ -67,6 +73,11 @@ low_priority = false
 # Use these for fast iteration on one mod. The aggregate `svmods`
 # target remains the canonical repository-wide integration/final gate.
 
+[targets.svmods.workflows]
+validate = [
+    {id = "core_purity", ref = "job:svmods-core-purity", depends_on = []},
+    {id = "tests_sln", ref = "job:svmods-tests-sln", depends_on = ["core_purity"]},
+]
 [targets.nestcore]
 runner = "dotnet"
 platform = "desktop"
@@ -121,6 +132,12 @@ low_priority = false
 GamePath = "/data/data/com.termux/files/home/stardew/game"
 DOTNET_ROLL_FORWARD = "Major"
 
+[targets.letmehatch.workflows]
+validate = [
+    {id = "core_purity", ref = "job:letmehatch-core-purity", depends_on = []},
+    {id = "core_tests", ref = "job:letmehatch-core-tests", depends_on = ["core_purity"]},
+    {id = "mod_tests", ref = "job:letmehatch-tests", depends_on = ["core_purity"]},
+]
 [targets.eggsinwild]
 runner = "dotnet"
 platform = "desktop"
@@ -151,6 +168,12 @@ low_priority = false
 GamePath = "/data/data/com.termux/files/home/stardew/game"
 DOTNET_ROLL_FORWARD = "Major"
 
+[targets.eggsinwild.workflows]
+validate = [
+    {id = "animalnotes", ref = "job:eggsinwild-animalnotes-tests", depends_on = []},
+    {id = "unit", ref = "job:eggsinwild-tests", depends_on = []},
+    {id = "phase7", ref = "job:eggsinwild-phase7-tests", depends_on = []},
+]
 [targets.roostercontrol]
 runner = "dotnet"
 platform = "desktop"
@@ -181,6 +204,11 @@ low_priority = false
 GamePath = "/data/data/com.termux/files/home/stardew/game"
 DOTNET_ROLL_FORWARD = "Major"
 
+[targets.roostercontrol.workflows]
+validate = [
+    {id = "descriptors", ref = "job:roostercontrol-descriptor-tests", depends_on = []},
+    {id = "unit", ref = "job:roostercontrol-tests", depends_on = []},
+]
 [targets.roostercontrol_pure]
 runner = "dotnet"
 platform = "desktop"
@@ -289,4 +317,137 @@ max_workers = 4
 
 [targets.svmods.env]
 GamePath = "/data/data/com.termux/files/home/stardew/game"
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.svmods-core-purity]
+runner = "command"
+root = "."
+command = ["./LetMeHatch/Tools/validate-core.sh"]
+inputs = [
+    "LetMeHatch/Core/**",
+    "LetMeHatch/Tools/validate-core.sh",
+]
+outputs = []
+
+[jobs.svmods-core-purity.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.svmods-tests-sln]
+runner = "command"
+root = "."
+command = ["dotnet", "test", "Tests/Tests.sln", "-c", "Release"]
+inputs = [
+    "Tests/**",
+    "LetMeHatch/**",
+    "EggsInWild/**",
+    "RoosterControl/**",
+    "NestCore/**",
+]
+outputs = ["Tests/**/bin/**", "Tests/**/obj/**"]
+
+[jobs.svmods-tests-sln.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.letmehatch-core-purity]
+runner = "command"
+root = "."
+command = ["./LetMeHatch/Tools/validate-core.sh"]
+inputs = [
+    "LetMeHatch/Core/**",
+    "LetMeHatch/Tools/validate-core.sh",
+]
+outputs = []
+
+[jobs.letmehatch-core-purity.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.letmehatch-core-tests]
+runner = "command"
+root = "."
+command = ["dotnet", "test", "Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj", "-c", "Release"]
+inputs = [
+    "LetMeHatch/**",
+    "Tests/LetMeHatch.Core.Tests/**",
+]
+outputs = ["Tests/LetMeHatch.Core.Tests/**/bin/**", "Tests/LetMeHatch.Core.Tests/**/obj/**"]
+
+[jobs.letmehatch-core-tests.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.letmehatch-tests]
+runner = "command"
+root = "."
+command = ["dotnet", "test", "Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj", "-c", "Release"]
+inputs = [
+    "LetMeHatch/**",
+    "Tests/LetMeHatch.Tests/**",
+]
+outputs = ["Tests/LetMeHatch.Tests/**/bin/**", "Tests/LetMeHatch.Tests/**/obj/**"]
+
+[jobs.letmehatch-tests.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.eggsinwild-animalnotes-tests]
+runner = "command"
+root = "."
+command = ["dotnet", "test", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "-c", "Release"]
+inputs = [
+    "EggsInWild/**",
+    "Tests/EggsInWild.AnimalNotes.Tests/**",
+]
+outputs = ["Tests/EggsInWild.AnimalNotes.Tests/**/bin/**", "Tests/EggsInWild.AnimalNotes.Tests/**/obj/**"]
+
+[jobs.eggsinwild-animalnotes-tests.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.eggsinwild-tests]
+runner = "command"
+root = "."
+command = ["dotnet", "test", "Tests/EggsInWild.Tests/EggsInWild.Tests.csproj", "-c", "Release"]
+inputs = [
+    "EggsInWild/**",
+    "Tests/EggsInWild.Tests/**",
+]
+outputs = ["Tests/EggsInWild.Tests/**/bin/**", "Tests/EggsInWild.Tests/**/obj/**"]
+
+[jobs.eggsinwild-tests.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.eggsinwild-phase7-tests]
+runner = "command"
+root = "."
+command = ["dotnet", "test", "Tests/EggsInWild.Phase7.Tests/EggsInWild.Phase7.Tests.csproj", "-c", "Release"]
+inputs = [
+    "EggsInWild/**",
+    "Tests/EggsInWild.Phase7.Tests/**",
+]
+outputs = ["Tests/EggsInWild.Phase7.Tests/**/bin/**", "Tests/EggsInWild.Phase7.Tests/**/obj/**"]
+
+[jobs.eggsinwild-phase7-tests.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.roostercontrol-descriptor-tests]
+runner = "command"
+root = "."
+command = ["dotnet", "test", "Tests/RoosterControl.Descriptors.Tests/RoosterControl.Descriptors.Tests.csproj", "-c", "Release"]
+inputs = [
+    "RoosterControl/**",
+    "Tests/RoosterControl.Descriptors.Tests/**",
+]
+outputs = ["Tests/RoosterControl.Descriptors.Tests/**/bin/**", "Tests/RoosterControl.Descriptors.Tests/**/obj/**"]
+
+[jobs.roostercontrol-descriptor-tests.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[jobs.roostercontrol-tests]
+runner = "command"
+root = "."
+command = ["dotnet", "test", "Tests/RoosterControl.Tests/RoosterControl.Tests.csproj", "-c", "Release"]
+inputs = [
+    "RoosterControl/**",
+    "Tests/RoosterControl.Tests/**",
+]
+outputs = ["Tests/RoosterControl.Tests/**/bin/**", "Tests/RoosterControl.Tests/**/obj/**"]
+
+[jobs.roostercontrol-tests.env]
 DOTNET_ROLL_FORWARD = "Major"
