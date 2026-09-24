@@ -35,6 +35,22 @@ root = "."
 solution = "Tests/Tests.sln"
 test_target = "Tests/Tests.sln"
 test_command = "./Tests/run-tests.sh"
+inputs = [
+    ".devtool.toml",
+    "Tests/**",
+    "LetMeHatch/**",
+    "EggsInWild/**",
+    "RoosterControl/**",
+    "NestCore/**",
+    "Shared/**",
+    "*.sln",
+    "*.props",
+    "*.targets",
+]
+outputs = [
+    "**/bin/**",
+    "**/obj/**",
+]
 
 [targets.svmods.validation]
 memory_guard_mb = 0
@@ -57,6 +73,14 @@ platform = "desktop"
 root = "."
 solution = "NestCore/NestCore.csproj"
 build_target = "NestCore/NestCore.csproj"
+inputs = [
+    "NestCore/**",
+    ".devtool.toml",
+]
+outputs = [
+    "NestCore/bin/**",
+    "NestCore/obj/**",
+]
 
 [targets.nestcore.validation]
 memory_guard_mb = 0
@@ -75,6 +99,17 @@ solution = "LetMeHatch/LetMeHatch.csproj"
 build_target = "LetMeHatch/LetMeHatch.csproj"
 test_target = "Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj"
 test_command = "./Tests/devtool/validate-letmehatch.sh"
+inputs = [
+    "LetMeHatch/**",
+    "Tests/LetMeHatch*/**",
+    ".devtool.toml",
+]
+outputs = [
+    "LetMeHatch/bin/**",
+    "LetMeHatch/obj/**",
+    "Tests/LetMeHatch*/**/bin/**",
+    "Tests/LetMeHatch*/**/obj/**",
+]
 
 [targets.letmehatch.validation]
 memory_guard_mb = 0
@@ -94,6 +129,17 @@ solution = "EggsInWild/EggsInWild.csproj"
 build_target = "EggsInWild/EggsInWild.csproj"
 test_target = "Tests/EggsInWild.Tests/EggsInWild.Tests.csproj"
 test_command = "./Tests/devtool/validate-eggsinwild.sh"
+inputs = [
+    "EggsInWild/**",
+    "Tests/EggsInWild*/**",
+    ".devtool.toml",
+]
+outputs = [
+    "EggsInWild/bin/**",
+    "EggsInWild/obj/**",
+    "Tests/EggsInWild*/**/bin/**",
+    "Tests/EggsInWild*/**/obj/**",
+]
 
 [targets.eggsinwild.validation]
 memory_guard_mb = 0
@@ -113,6 +159,17 @@ solution = "RoosterControl/RoosterControl.csproj"
 build_target = "RoosterControl/RoosterControl.csproj"
 test_target = "Tests/RoosterControl.Tests/RoosterControl.Tests.csproj"
 test_command = "./Tests/devtool/validate-roostercontrol.sh"
+inputs = [
+    "RoosterControl/**",
+    "Tests/RoosterControl*/**",
+    ".devtool.toml",
+]
+outputs = [
+    "RoosterControl/bin/**",
+    "RoosterControl/obj/**",
+    "Tests/RoosterControl*/**/bin/**",
+    "Tests/RoosterControl*/**/obj/**",
+]
 
 [targets.roostercontrol.validation]
 memory_guard_mb = 0
@@ -131,6 +188,15 @@ root = "."
 solution = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 build_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 test_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+inputs = [
+    "Tests/RoosterControl.PureTests/**",
+    "RoosterControl/**",
+    ".devtool.toml",
+]
+outputs = [
+    "Tests/RoosterControl.PureTests/**/bin/**",
+    "Tests/RoosterControl.PureTests/**/obj/**",
+]
 
 [targets.roostercontrol_pure.env]
 DOTNET_ROLL_FORWARD = "Major"
@@ -152,6 +218,15 @@ root = "."
 solution = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 build_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 test_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
+inputs = [
+    "Tests/**",
+    "RoosterControl/**",
+    ".devtool.toml",
+]
+outputs = [
+    "Tests/**/bin/**",
+    "Tests/**/obj/**",
+]
 
 [targets.pure.env]
 DOTNET_ROLL_FORWARD = "Major"
@@ -173,6 +248,15 @@ platform = "desktop"
 root = "."
 solution = "tools/EmbedTextAsCode/EmbedTextAsCode.csproj"
 build_target = "tools/EmbedTextAsCode/EmbedTextAsCode.csproj"
+inputs = [
+    "EmbeddingTool/**",
+    "Tests/**",
+    ".devtool.toml",
+]
+outputs = [
+    "EmbeddingTool/**/bin/**",
+    "EmbeddingTool/**/obj/**",
+]
 
 [targets.embed_tool.validation]
 memory_guard_mb = 0
