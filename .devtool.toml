@@ -8,6 +8,11 @@ platform = "desktop"
 [workspace]
 default_target = "svmods"
 
+[workspace.groups]
+mods = ["nestcore", "letmehatch", "eggsinwild", "roostercontrol"]
+tests = ["roostercontrol_pure", "pure"]
+tools = ["embed_tool"]
+all = ["svmods", "@mods", "@tests", "@tools"]
 [execution]
 environment = "native-termux"
 
