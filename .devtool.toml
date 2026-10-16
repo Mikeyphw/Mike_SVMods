@@ -78,6 +78,15 @@ validate = [
     {id = "core_purity", ref = "job:svmods-core-purity", depends_on = []},
     {id = "tests_sln", ref = "job:svmods-tests-sln", depends_on = ["core_purity"]},
 ]
+ci-preflight = [
+  { id = "source", ref = "job:ci-source", depends_on = [] },
+]
+ci-local = [
+  { id = "source", ref = "job:ci-source", depends_on = [] },
+  { id = "core", ref = "job:svmods-core-purity", depends_on = ["source"] },
+  { id = "tests", ref = "job:svmods-tests-sln", depends_on = ["core"] },
+]
+
 [targets.nestcore]
 runner = "dotnet"
 platform = "desktop"
@@ -451,3 +460,30 @@ outputs = ["Tests/RoosterControl.Tests/**/bin/**", "Tests/RoosterControl.Tests/*
 
 [jobs.roostercontrol-tests.env]
 DOTNET_ROLL_FORWARD = "Major"
+
+[targets.svmods.jobs.ci-source]
+runner = "command"
+command = ["python3", "scripts/devtool_actions_contract.py"]
+inputs = [".devtool.toml", "scripts/devtool_actions_contract.py", ".github/workflows/*.yml"]
+outputs = []
+[targets.svmods.jobs.ci-source.metadata]
+read_only = true
+
+[wrapper]
+schema = 2
+default_command = "ci-preflight"
+
+[wrapper.commands.ci-preflight]
+description = "Read-only .NET CI contract verification"
+workflow = "ci-preflight"
+target = "svmods"
+
+[wrapper.commands.ci-local]
+description = "Reuse existing .NET purity and test solution DAG"
+workflow = "ci-local"
+target = "svmods"
+
+[wrapper.commands.ci-letmehatch]
+description = "Run LetMeHatch existing DAG"
+workflow = "validate"
+target = "letmehatch"

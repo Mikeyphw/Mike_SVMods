@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -22,7 +23,7 @@ jobs:
           dotnet-version: 6.0.x
 
       - name: Restore
-        run: dotnet restore Mike_SVMods/Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj
+        run: dotnet restore Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj
 
       - name: Test
-        run: dotnet test Mike_SVMods/Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj -c Release --no-restore
+        run: dotnet test Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj -c Release --no-restore
