@@ -23,6 +23,22 @@ class PolicyTests(unittest.TestCase):
     def test_valid_policy(self):
         self.assertEqual([], self.issues())
 
+    def test_job_level_env_rejects_runner_temp_context(self):
+        altered = self.workflow.replace(
+            '${{ github.workspace }}/.ci-results/r05/nuget',
+            '${{ runner.temp }}/r05-nuget')
+        self.assertTrue(any('runner context' in issue for issue in self.issues(workflow=altered)))
+
+    def test_job_level_env_requires_isolated_cache(self):
+        altered = self.workflow.replace(
+            '${{ github.workspace }}/.ci-results/r05/nuget',
+            '/tmp/uncontrolled-cache')
+        self.assertTrue(any('isolated NuGet cache' in issue for issue in self.issues(workflow=altered)))
+
+    def test_job_level_env_must_exist(self):
+        altered = self.workflow.replace('    env:\n', '    missing_env:\n', 1)
+        self.assertTrue(any('job-level environment' in issue for issue in self.issues(workflow=altered)))
+
     def test_no_sdk_version_drift(self):
         self.assertTrue(self.issues(sdk=self.sdk.replace('10.0.100', '8.0.100')))
 

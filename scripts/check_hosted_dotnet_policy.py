@@ -24,6 +24,16 @@ def check_sources(workflow: str, sdk_json: str, ci: str) -> list[str]:
         issues.append('R05 workflow must be explicitly dispatched')
     if not re.search(r'(?m)^permissions:\s*\n\s+contents:\s*read\s*$', workflow):
         issues.append('R05 workflow must use read-only permissions')
+    # Job-level env expressions do not have the runner context.  Prevent
+    # validation-time HTTP 422 errors before dispatching hosted test jobs.
+    env_section = re.search(r'(?ms)^    env:\s*\n(.*?)(?=^    steps:\s*$)', workflow)
+    if not env_section:
+        issues.append('R05 workflow must retain a job-level environment')
+    else:
+        if re.search(r'\$\{\{\s*runner\.', env_section.group(1)):
+            issues.append('R05 job env cannot use runner context')
+        if not re.search(r'(?m)^      NUGET_PACKAGES:\s*\$\{\{\s*github\.workspace\s*\}\}/\.ci-results/r05/nuget\s*$', env_section.group(1)):
+            issues.append('R05 must use supported github.workspace for isolated NuGet cache')
     if not re.search(r'(?m)^\s+working-directory:\s*\.github/r05-sdk10\s*$', workflow):
         issues.append('R05 workflow must run from SDK10 policy directory')
     for version in ('6.0.x', '10.0.x'):

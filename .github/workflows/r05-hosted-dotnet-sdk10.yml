@@ -22,7 +22,7 @@ jobs:
     env:
       DOTNET_NOLOGO: '1'
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
-      NUGET_PACKAGES: ${{ runner.temp }}/r05-nuget
+      NUGET_PACKAGES: ${{ github.workspace }}/.ci-results/r05/nuget
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
