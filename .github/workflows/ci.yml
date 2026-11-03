@@ -27,3 +27,22 @@ jobs:
 
       - name: Test
         run: dotnet test Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj -c Release --no-restore
+
+  source-contracts:
+    name: SMAPI and Devtool source contracts
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check SMAPI manifests
+        run: python3 scripts/validate_mod_manifests.py
+      - name: Exercise contract fixtures
+        run: python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+      - name: Check Devtool and CI source contract
+        run: python3 scripts/devtool_actions_contract.py
