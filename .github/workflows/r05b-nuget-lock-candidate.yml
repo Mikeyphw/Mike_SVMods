@@ -1,0 +1,80 @@
+name: R05b NuGet lockfile candidate (hosted only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r05b-lock-candidate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  lock-candidate:
+    name: SDK10 net6 lock candidates + clean locked restore
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: .github/r05-sdk10
+    env:
+      DOTNET_NOLOGO: '1'
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      NUGET_PACKAGES: ${{ github.workspace }}/.ci-results/r05b/nuget-first
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install hosted .NET SDK 10 and net6 runtime
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            10.0.x
+      - name: Confirm SDK and net6 runtime
+        run: |
+          set -euo pipefail
+          sdk="$(dotnet --version)"
+          [[ "$sdk" == 10.0.* ]] || { echo "Unexpected SDK: $sdk" >&2; exit 1; }
+          dotnet --list-runtimes | grep -Eq '^Microsoft\.NETCore\.App 6\.'
+          printf 'Hosted SDK: %s\n' "$sdk"
+      - name: Generate two test-project lockfile candidates
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/.ci-results/r05b"
+          dotnet restore ../../Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj \
+            --use-lock-file --force-evaluate --no-http-cache
+          dotnet restore ../../Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj \
+            --use-lock-file --force-evaluate --no-http-cache
+      - name: Validate and stage lock candidates with hashes
+        run: |
+          set -euo pipefail
+          python3 ../../scripts/verify_nuget_locks.py stage \
+            --repo "$GITHUB_WORKSPACE" \
+            --output "$GITHUB_WORKSPACE/.ci-results/r05b" \
+            --source-sha "$GITHUB_SHA" \
+            --sdk-version "$(dotnet --version)"
+      - name: Verify reproducibility with fresh NuGet cache and locked restores
+        run: |
+          set -euo pipefail
+          export NUGET_PACKAGES="$GITHUB_WORKSPACE/.ci-results/r05b/nuget-second"
+          dotnet restore ../../Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj \
+            --locked-mode --force --no-http-cache
+          dotnet restore ../../Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj \
+            --locked-mode --force --no-http-cache
+          python3 ../../scripts/verify_nuget_locks.py verify \
+            --repo "$GITHUB_WORKSPACE" \
+            --output "$GITHUB_WORKSPACE/.ci-results/r05b" \
+            --source-sha "$GITHUB_SHA" \
+            --sdk-version "$(dotnet --version)"
+      - name: Publish qualified lockfile candidate and provenance
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r05b-lock-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .ci-results/r05b/qualified/
+          if-no-files-found: error
+          retention-days: 14

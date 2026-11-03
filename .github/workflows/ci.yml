@@ -50,5 +50,7 @@ jobs:
         run: python3 scripts/devtool_target_jobs.py --json
       - name: Verify hosted SDK 10 qualification workflow
         run: python3 scripts/check_hosted_dotnet_policy.py
+      - name: Verify R05b hosted NuGet lock candidate policy
+        run: python3 scripts/check_nuget_candidate_policy.py
       - name: Check Devtool and CI source contract
         run: python3 scripts/devtool_actions_contract.py
