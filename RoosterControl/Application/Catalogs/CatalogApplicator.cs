@@ -21,6 +21,12 @@ internal static class CatalogApplicator
         if (config is null) throw new ArgumentNullException(nameof(config));
         if (catalogs is null) throw new ArgumentNullException(nameof(catalogs));
 
+        // SeedOnly must never mutate an existing user configuration, even if
+        // it contains missing or invalid entries. The new-config path below
+        // still seeds values from the catalogs.
+        if (!isNewConfig && mode == CatalogApplyMode.SeedOnly)
+            return false;
+
         var changed = EnsureRequiredRoosters(config, catalogs, log);
 
         if (isNewConfig || mode == CatalogApplyMode.Authoritative)
@@ -131,31 +137,90 @@ internal static class CatalogApplicator
     private static bool ApplyHatchingDefaults(RoosterControlConfig config, HatchingCatalog hatching)
     {
         var changed = false;
-        config.General ??= new GeneralSettings();
+        if (config.General is null)
+        {
+            config.General = new GeneralSettings();
+            changed = true;
+        }
 
         var g = hatching?.General;
         if (g is not null)
         {
+            // A nullable catalog field means "no override". Only supplied
+            // values take precedence in Authoritative or new-config mode.
             if (Enum.TryParse<UpdateRateMode>(g.UpdateRate ?? string.Empty, true, out var updateRate))
-            {
-                config.General.UpdateRate = updateRate;
-                changed = true;
-            }
-
+                changed |= AssignIfChanged(config.General.UpdateRate, updateRate, v => config.General.UpdateRate = v);
             if (Enum.TryParse<HarvestType>(g.HarvestType ?? string.Empty, true, out var harvestType))
-            {
-                config.General.HarvestType = harvestType;
-                changed = true;
-            }
-
+                changed |= AssignIfChanged(config.General.HarvestType, harvestType, v => config.General.HarvestType = v);
             if (Enum.TryParse<HatchingMode>(g.HatchingMode ?? string.Empty, true, out var hatchingMode))
-            {
-                config.General.HatchingMode = hatchingMode;
-                changed = true;
-            }
+                changed |= AssignIfChanged(config.General.HatchingMode, hatchingMode, v => config.General.HatchingMode = v);
+
+            if (g.ChosenPercentageDailyLuckBonus is { } luck)
+                changed |= AssignIfChanged(config.General.ChosenPercentageDailyLuckBonus, Math.Clamp(luck, 0, 100), v => config.General.ChosenPercentageDailyLuckBonus = v);
+            if (g.EggProbability is { } egg)
+                changed |= AssignIfChanged(config.General.EggProbability, Math.Clamp(egg, 0, 100), v => config.General.EggProbability = v);
+            if (g.LargeEggProbability is { } large)
+                changed |= AssignIfChanged(config.General.LargeEggProbability, Math.Clamp(large, 0, 100), v => config.General.LargeEggProbability = v);
+            if (g.FertilizedEggProbability is { } fertile)
+                changed |= AssignIfChanged(config.General.FertilizedEggProbability, Math.Clamp(fertile, 0, 100), v => config.General.FertilizedEggProbability = v);
+            if (g.RoosterToChickenRatio is { } ratio)
+                changed |= AssignIfChanged(config.General.RoosterToChickenRatio, Math.Clamp(ratio, 0, 100), v => config.General.RoosterToChickenRatio = v);
+            if (g.BoostByRooster is { } boost)
+                changed |= AssignIfChanged(config.General.BoostByRooster, Math.Clamp(boost, 0f, 1000f), v => config.General.BoostByRooster = v);
+
+            if (g.BetterTrufflesCompat is { } compat)
+                changed |= AssignIfChanged(config.General.BetterTrufflesCompat, compat, v => config.General.BetterTrufflesCompat = v);
+            if (g.EnableStuckInside is { } stuck)
+                changed |= AssignIfChanged(config.General.EnableStuckInside, stuck, v => config.General.EnableStuckInside = v);
+            if (g.EnableEggProbability is { } enableEgg)
+                changed |= AssignIfChanged(config.General.EnableEggProbability, enableEgg, v => config.General.EnableEggProbability = v);
+            if (g.EnableLargeEggProbability is { } enableLarge)
+                changed |= AssignIfChanged(config.General.EnableLargeEggProbability, enableLarge, v => config.General.EnableLargeEggProbability = v);
+            if (g.EnableDebug is { } enableDebug)
+                changed |= AssignIfChanged(config.General.EnableDebug, enableDebug, v => config.General.EnableDebug = v);
+        }
+
+        if (hatching?.Roosters is null)
+            return changed;
+
+        foreach (var (type, settings) in config.Roosters)
+        {
+            if (settings is null || !hatching.Roosters.TryGetValue(type.ToString(), out var row) || row is null)
+                continue;
+
+            if (Enum.TryParse<RequiredBuilding>(row.BuildingRequired ?? string.Empty, true, out var building))
+                changed |= AssignIfChanged(settings.BuildingRequired, building, v => settings.BuildingRequired = v);
+            if (Enum.TryParse<ProduceMode>(row.ProduceOption ?? string.Empty, true, out var produceOption))
+                changed |= AssignIfChanged(settings.ProduceOption, produceOption, v => settings.ProduceOption = v);
+            if (Enum.TryParse<DeluxeProduceMode>(row.DeluxeProduceOption ?? string.Empty, true, out var deluxeOption))
+                changed |= AssignIfChanged(settings.DeluxeProduceOption, deluxeOption, v => settings.DeluxeProduceOption = v);
+
+            if (row.Buyable is { } buyable)
+                changed |= AssignIfChanged(settings.Buyable, buyable, v => settings.Buyable = v);
+            if (row.Price is { } price)
+                changed |= AssignIfChanged(settings.Price, Math.Max(0, price), v => settings.Price = v);
+            if (row.EnableRoosterHatching is { } enableHatching)
+                changed |= AssignIfChanged(settings.EnableRoosterHatching, enableHatching, v => settings.EnableRoosterHatching = v);
+            if (row.EditAllFemales is { } editAll)
+                changed |= AssignIfChanged(settings.EditAllFemales, editAll, v => settings.EditAllFemales = v);
+            if (row.MatureDays is { } mature)
+                changed |= AssignIfChanged(settings.MatureDays, Math.Max(0, mature), v => settings.MatureDays = v);
+            if (row.ProduceDays is { } produceDays)
+                changed |= AssignIfChanged(settings.ProduceDays, Math.Max(0, produceDays), v => settings.ProduceDays = v);
+            if (row.BypassBlueConditions is { } bypass)
+                changed |= AssignIfChanged(settings.BypassBlueConditions, bypass, v => settings.BypassBlueConditions = v);
         }
 
         return changed;
+    }
+
+    private static bool AssignIfChanged<T>(T oldValue, T newValue, Action<T> assign)
+    {
+        if (EqualityComparer<T>.Default.Equals(oldValue, newValue))
+            return false;
+
+        assign(newValue);
+        return true;
     }
 
     private static bool FixInvalidProduceTables(RoosterControlConfig config, ProduceCatalog produce, Action<CatalogLogLevel, string>? log)
@@ -169,6 +234,15 @@ internal static class CatalogApplicator
 
             settings.ProduceEntries ??= new List<ProduceEntry>();
             settings.DeluxeProduceEntries ??= new List<ProduceEntry>();
+
+            // An empty blue-egg key is invalid; valid custom keys must remain
+            // untouched outside Authoritative mode.
+            if (string.IsNullOrWhiteSpace(settings.BlueEggChoice) &&
+                !string.IsNullOrWhiteSpace(entry.BlueEggChoice))
+            {
+                settings.BlueEggChoice = entry.BlueEggChoice!;
+                changed = true;
+            }
 
             if (settings.ProduceOption == ProduceMode.CustomizeBelow && !HasAnyUsable(settings.ProduceEntries))
             {
