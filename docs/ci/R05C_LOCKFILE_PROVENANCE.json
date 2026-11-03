@@ -1,0 +1,40 @@
+{
+  "candidate_artifact_id": 13241868660,
+  "candidate_artifact_name": "r05b-lock-candidate-41663506662-1",
+  "candidate_artifact_sha256": "32573284145cac2e554ae6170790e3677edac88851c87430fb20cfe68a88469a",
+  "candidate_run_id": 41663506662,
+  "hosted_locked_restore_verified": true,
+  "hosted_sdk_version": "10.0.403",
+  "lockfiles": {
+    "Tests/EggsInWild.AnimalNotes.Tests/packages.lock.json": {
+      "bytes": 3974,
+      "direct_packages": [
+        "microsoft.net.test.sdk",
+        "xunit",
+        "xunit.runner.visualstudio"
+      ],
+      "hashed_packages": 14,
+      "project_references": [],
+      "resolved_entries": 14,
+      "sha256": "e4ad68d5c2af035f2b7f907344c99249407ea553f165309e8fcebccd10ca994c"
+    },
+    "Tests/RoosterControl.PureTests/packages.lock.json": {
+      "bytes": 4040,
+      "direct_packages": [
+        "microsoft.net.test.sdk",
+        "xunit",
+        "xunit.runner.visualstudio"
+      ],
+      "hashed_packages": 14,
+      "project_references": [
+        "roostercontrol.pure"
+      ],
+      "resolved_entries": 15,
+      "sha256": "11dca2eaa684b394c1c42d75820887bdac6481f41b45ae9ccd8a56946ee04f2a"
+    }
+  },
+  "note": "Exact lockfile bytes imported from successful R05b hosted artifact. This record is provenance, not an independent NuGet build qualification.",
+  "purpose": "R05C_COMMITTED_NUGET_LOCKS",
+  "schema_version": 1,
+  "source_commit": "24cee7e92111348ed834cad344f80f8d3c88a101"
+}
