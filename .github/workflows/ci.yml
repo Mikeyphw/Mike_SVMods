@@ -100,5 +100,7 @@ jobs:
         run: python3 scripts/check_nuget_candidate_policy.py
       - name: Verify committed NuGet locks and locked-mode CI
         run: python3 scripts/check_committed_nuget_locks.py
+      - name: Verify R06a hosted Devtool native gate source contract
+        run: python3 scripts/check_r06_source_contract.py
       - name: Check Devtool and CI source contract
         run: python3 scripts/devtool_actions_contract.py
