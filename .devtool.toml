@@ -20,7 +20,7 @@ max_parallel_nodes = 3
 max_dotnet_nodes = 2
 max_gradle_nodes = 1
 [execution]
-environment = "native-termux"
+environment = "auto"
 
 
 # ============================================================
@@ -108,9 +108,6 @@ max_workers = 4
 cpu_limit = 4
 low_priority = false
 
-[targets.nestcore.env]
-GamePath = "/data/data/com.termux/files/home/stardew/game"
-
 [targets.letmehatch]
 runner = "dotnet"
 platform = "desktop"
@@ -138,7 +135,6 @@ cpu_limit = 4
 low_priority = false
 
 [targets.letmehatch.env]
-GamePath = "/data/data/com.termux/files/home/stardew/game"
 DOTNET_ROLL_FORWARD = "Major"
 
 [targets.letmehatch.workflows]
@@ -174,7 +170,6 @@ cpu_limit = 4
 low_priority = false
 
 [targets.eggsinwild.env]
-GamePath = "/data/data/com.termux/files/home/stardew/game"
 DOTNET_ROLL_FORWARD = "Major"
 
 [targets.eggsinwild.workflows]
@@ -210,7 +205,6 @@ cpu_limit = 4
 low_priority = false
 
 [targets.roostercontrol.env]
-GamePath = "/data/data/com.termux/files/home/stardew/game"
 DOTNET_ROLL_FORWARD = "Major"
 
 [targets.roostercontrol.workflows]
@@ -325,7 +319,6 @@ stop_after_run = false
 max_workers = 4
 
 [targets.svmods.env]
-GamePath = "/data/data/com.termux/files/home/stardew/game"
 DOTNET_ROLL_FORWARD = "Major"
 
 [jobs.svmods-core-purity]
