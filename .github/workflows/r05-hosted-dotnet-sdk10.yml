@@ -1,0 +1,78 @@
+name: R05 hosted .NET 10 compatibility pilot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r05-dotnet10-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pure-net6-on-sdk10:
+    name: net6 tests via .NET 10 SDK (hosted only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+        working-directory: .github/r05-sdk10
+    env:
+      DOTNET_NOLOGO: '1'
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      NUGET_PACKAGES: ${{ runner.temp }}/r05-nuget
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install SDK 10 and net6 runtime
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            10.0.x
+      - name: Verify hosted SDK/runtime identity
+        run: |
+          set -euo pipefail
+          sdk="$(dotnet --version)"
+          [[ "$sdk" == 10.0.* ]] || { echo "Expected .NET 10 SDK; got $sdk" >&2; exit 1; }
+          dotnet --list-runtimes | grep -Eq '^Microsoft\.NETCore\.App 6\.'
+          dotnet --info
+      - name: Fresh restore without a shared NuGet cache
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/.ci-results/r05"
+          dotnet restore ../../Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj
+          dotnet restore ../../Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj
+      - name: Run RoosterControl pure tests and collect TRX
+        run: |
+          set -euo pipefail
+          dotnet test ../../Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj \
+            --configuration Release --no-restore \
+            --logger 'trx;LogFileName=roostercontrol-pure.trx' \
+            --results-directory "$GITHUB_WORKSPACE/.ci-results/r05"
+      - name: Run EggsInWild AnimalNotes tests and collect TRX
+        run: |
+          set -euo pipefail
+          dotnet test ../../Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj \
+            --configuration Release --no-restore \
+            --logger 'trx;LogFileName=eggsinwild-animalnotes.trx' \
+            --results-directory "$GITHUB_WORKSPACE/.ci-results/r05"
+      - name: Reject missing, empty, failed or skipped test receipts
+        run: |
+          set -euo pipefail
+          python3 ../../scripts/verify_dotnet_trx.py \
+            --file "$GITHUB_WORKSPACE/.ci-results/r05/roostercontrol-pure.trx" --min-executed 1
+          python3 ../../scripts/verify_dotnet_trx.py \
+            --file "$GITHUB_WORKSPACE/.ci-results/r05/eggsinwild-animalnotes.trx" --min-executed 1
+      - name: Upload test receipts, including on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r05-sdk10-net6-trx-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .ci-results/r05/*.trx
+          if-no-files-found: warn
+          retention-days: 14

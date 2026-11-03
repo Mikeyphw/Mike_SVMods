@@ -48,5 +48,7 @@ jobs:
         run: python3 scripts/devtool_target_ownership.py --json
       - name: Verify target-local Devtool job contract
         run: python3 scripts/devtool_target_jobs.py --json
+      - name: Verify hosted SDK 10 qualification workflow
+        run: python3 scripts/check_hosted_dotnet_policy.py
       - name: Check Devtool and CI source contract
         run: python3 scripts/devtool_actions_contract.py
