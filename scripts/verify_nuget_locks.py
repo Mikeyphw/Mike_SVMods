@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import hashlib
 import json
 from pathlib import Path
@@ -24,20 +26,25 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def project_dependencies(csproj: Path) -> set[str]:
+def project_dependencies(csproj: Path) -> tuple[set[str], set[str]]:
     try:
         root = ET.fromstring(csproj.read_bytes())
     except (OSError, ET.ParseError) as exc:
         raise LockError(f'Cannot parse project: {csproj}: {exc}') from exc
     packages: set[str] = set()
+    projects: set[str] = set()
     for element in root.iter():
         if element.tag.split('}')[-1] == 'PackageReference':
             name = element.attrib.get('Include', '').strip().lower()
             if name:
                 packages.add(name)
+        elif element.tag.split('}')[-1] == 'ProjectReference':
+            include = element.attrib.get('Include', '').strip().replace('\\', '/')
+            if include:
+                projects.add(Path(include).stem.lower())
     if not packages:
         raise LockError(f'Expected explicit PackageReference entries: {csproj}')
-    return packages
+    return packages, projects
 
 
 def verify_lock(path: Path, csproj: Path) -> dict:
@@ -55,6 +62,7 @@ def verify_lock(path: Path, csproj: Path) -> dict:
         raise LockError(f'Empty lock dependency groups: {path}')
     direct = set()
     hashed = 0
+    projects_found: set[str] = set()
     count = 0
     for framework, dependencies in groups.items():
         if not isinstance(framework, str) or not isinstance(dependencies, dict) or not dependencies:
@@ -62,26 +70,40 @@ def verify_lock(path: Path, csproj: Path) -> dict:
         for name, entry in dependencies.items():
             if not isinstance(name, str) or not isinstance(entry, dict):
                 raise LockError(f'Malformed lock package: {path}: {name}')
-            if not isinstance(entry.get('resolved'), str) or not entry['resolved'].strip():
-                raise LockError(f'Package missing resolved version: {path}: {name}')
             kind = str(entry.get('type', '')).lower()
             if kind not in {'direct', 'transitive', 'project', 'centraltransitive'}:
                 raise LockError(f'Unknown lock entry type: {path}: {name}: {kind}')
-            if kind == 'direct':
-                direct.add(name.lower())
-            if kind != 'project':
+            if kind == 'project':
+                # NuGet ProjectReference entries are not downloaded NuGet packages.
+                # Their lock entries generally have neither resolved nor contentHash.
+                # They are verified against the source project's ProjectReference list.
+                projects_found.add(name.lower())
+            else:
+                if not isinstance(entry.get('resolved'), str) or not entry['resolved'].strip():
+                    raise LockError(f'Package missing resolved version: {path}: {name}')
+                if kind == 'direct':
+                    direct.add(name.lower())
                 ch = entry.get('contentHash')
                 if not isinstance(ch, str) or not ch.strip():
                     raise LockError(f'Package missing contentHash: {path}: {name}')
+                try:
+                    package_hash = base64.b64decode(ch, validate=True)
+                except (binascii.Error, ValueError) as exc:
+                    raise LockError(f'Package invalid contentHash encoding: {path}: {name}') from exc
+                if len(package_hash) != 64:
+                    raise LockError(f'Package contentHash is not SHA-512: {path}: {name}')
                 hashed += 1
             count += 1
-    expected = project_dependencies(csproj)
-    if not expected.issubset(direct):
-        raise LockError(f'Direct dependencies absent from lock {path}: {sorted(expected - direct)}')
+    expected_packages, expected_projects = project_dependencies(csproj)
+    if not expected_packages.issubset(direct):
+        raise LockError(f'Direct dependencies absent from lock {path}: {sorted(expected_packages - direct)}')
+    if not expected_projects.issubset(projects_found):
+        raise LockError(f'Project references absent from lock {path}: {sorted(expected_projects - projects_found)}')
     if hashed == 0:
         raise LockError(f'Lock has no content-hashed dependencies: {path}')
     return {'sha256': digest(raw), 'bytes': len(raw), 'resolved_entries': count,
-            'hashed_packages': hashed, 'direct_packages': sorted(direct)}
+            'hashed_packages': hashed, 'direct_packages': sorted(direct),
+            'project_references': sorted(projects_found)}
 
 
 def run(mode: str, repo: Path, output: Path, source_sha: str, sdk_version: str) -> dict:

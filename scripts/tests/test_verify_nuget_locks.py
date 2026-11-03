@@ -26,7 +26,7 @@ class TestNugetLocks(unittest.TestCase):
             (d / (name + '.csproj')).write_text('<Project><ItemGroup><PackageReference Include="xunit" Version="2.7.0" /></ItemGroup></Project>')
             lock = d / 'packages.lock.json'
             lock.write_text(json.dumps({'version': 1, 'dependencies': {'net6.0': {
-                'xunit': {'type': 'Direct', 'requested': '[2.7.0, )', 'resolved': '2.7.0', 'contentHash': 'sha-base64'}}}}))
+                'xunit': {'type': 'Direct', 'requested': '[2.7.0, )', 'resolved': '2.7.0', 'contentHash': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='}}}}))
             self.lockpaths.append(lock)
 
     def test_stage_and_verify(self):
@@ -35,6 +35,57 @@ class TestNugetLocks(unittest.TestCase):
         second = run('verify', self.repo, self.output, SHA, SDK)
         self.assertTrue(second['locked_restore_verified'])
         self.assertEqual(sorted(PROJECTS), sorted(second['projects']))
+
+    def test_project_reference_without_resolved_version_accepted(self):
+        project = PROJECTS[0]
+        name = Path(project).name
+        csproj = self.repo / project / (name + '.csproj')
+        csproj.write_text('<Project><ItemGroup>'
+                          '<PackageReference Include="xunit" Version="2.7.0" />'
+                          '<ProjectReference Include="..\\..\\RoosterControl.Pure\\RoosterControl.Pure.csproj" />'
+                          '</ItemGroup></Project>')
+        lock = self.lockpaths[0]
+        obj = json.loads(lock.read_text())
+        obj['dependencies']['net6.0']['RoosterControl.Pure'] = {'type': 'Project'}
+        lock.write_text(json.dumps(obj))
+        receipt = run('stage', self.repo, self.output, SHA, SDK)
+        self.assertEqual(['roostercontrol.pure'], receipt['projects'][project]['project_references'])
+        self.assertTrue(run('verify', self.repo, self.output, SHA, SDK)['locked_restore_verified'])
+
+    def test_project_reference_missing_from_lock_rejected(self):
+        project = PROJECTS[0]
+        name = Path(project).name
+        csproj = self.repo / project / (name + '.csproj')
+        csproj.write_text('<Project><ItemGroup>'
+                          '<PackageReference Include="xunit" Version="2.7.0" />'
+                          '<ProjectReference Include="../../RoosterControl.Pure/RoosterControl.Pure.csproj" />'
+                          '</ItemGroup></Project>')
+        with self.assertRaisesRegex(LockError, 'Project references absent'):
+            run('stage', self.repo, self.output, SHA, SDK)
+
+    def test_reject_bad_package_content_hash_encoding(self):
+        lock = self.lockpaths[0]
+        obj = json.loads(lock.read_text())
+        obj['dependencies']['net6.0']['xunit']['contentHash'] = 'not-base64!!!!'
+        lock.write_text(json.dumps(obj))
+        with self.assertRaisesRegex(LockError, 'invalid contentHash encoding'):
+            run('stage', self.repo, self.output, SHA, SDK)
+
+    def test_reject_wrong_length_package_content_hash(self):
+        lock = self.lockpaths[0]
+        obj = json.loads(lock.read_text())
+        obj['dependencies']['net6.0']['xunit']['contentHash'] = 'YWJj'
+        lock.write_text(json.dumps(obj))
+        with self.assertRaisesRegex(LockError, 'not SHA-512'):
+            run('stage', self.repo, self.output, SHA, SDK)
+
+    def test_nonproject_package_without_resolved_version_rejected(self):
+        lock = self.lockpaths[0]
+        obj = json.loads(lock.read_text())
+        del obj['dependencies']['net6.0']['xunit']['resolved']
+        lock.write_text(json.dumps(obj))
+        with self.assertRaisesRegex(LockError, 'missing resolved version'):
+            run('stage', self.repo, self.output, SHA, SDK)
 
     def test_reject_missing_lock(self):
         self.lockpaths[0].unlink()
@@ -50,7 +101,7 @@ class TestNugetLocks(unittest.TestCase):
         with self.assertRaises(LockError):run('stage', self.repo, self.output, SHA, SDK)
 
     def test_reject_missing_content_hash(self):
-        text = self.lockpaths[0].read_text().replace('"contentHash": "sha-base64"', '"contentHash": ""')
+        text = self.lockpaths[0].read_text().replace('"contentHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="', '"contentHash": ""')
         self.lockpaths[0].write_text(text)
         with self.assertRaises(LockError):run('stage', self.repo, self.output, SHA, SDK)
 
