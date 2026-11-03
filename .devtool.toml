@@ -37,21 +37,17 @@ environment = "auto"
 [targets.svmods]
 runner = "dotnet"
 platform = "desktop"
-root = "."
+root = "Tests"
 solution = "Tests/Tests.sln"
 test_target = "Tests/Tests.sln"
-test_command = "./Tests/run-tests.sh"
+test_command = "./run-tests.sh"
 inputs = [
-    ".devtool.toml",
-    "Tests/**",
-    "LetMeHatch/**",
-    "EggsInWild/**",
-    "RoosterControl/**",
-    "NestCore/**",
-    "Shared/**",
-    "*.sln",
-    "*.props",
-    "*.targets",
+    "../.devtool.toml",
+    "../Directory.Build.props",
+    "../Directory.Build.targets",
+    "../Mike_SVMods.sln",
+    "../scripts/**",
+    "../.github/workflows/**",
 ]
 outputs = [
     "**/bin/**",
@@ -86,20 +82,31 @@ ci-local = [
   { id = "core", ref = "job:svmods-core-purity", depends_on = ["source"] },
   { id = "tests", ref = "job:svmods-tests-sln", depends_on = ["core"] },
 ]
+ownership-graph = [
+  {id = "dep_nestcore", ref = "target:nestcore#ownership-probe", depends_on = []},
+  {id = "dep_letmehatch", ref = "target:letmehatch#ownership-graph", depends_on = []},
+  {id = "dep_eggsinwild", ref = "target:eggsinwild#ownership-graph", depends_on = []},
+  {id = "dep_roostercontrol", ref = "target:roostercontrol#ownership-graph", depends_on = []},
+  {id = "dep_roostercontrol_pure", ref = "target:roostercontrol_pure#ownership-probe", depends_on = []},
+  {id = "dep_pure", ref = "target:pure#ownership-graph", depends_on = []},
+  {id = "dep_embed_tool", ref = "target:embed_tool#ownership-probe", depends_on = []},
+]
 
 [targets.nestcore]
 runner = "dotnet"
 platform = "desktop"
-root = "."
+root = "NestCore"
 solution = "NestCore/NestCore.csproj"
 build_target = "NestCore/NestCore.csproj"
 inputs = [
-    "NestCore/**",
-    ".devtool.toml",
+    "../.devtool.toml",
+    "../Directory.Build.props",
+    "../Directory.Build.targets",
+    "../.github/workflows/**",
 ]
 outputs = [
-    "NestCore/bin/**",
-    "NestCore/obj/**",
+    "bin/**",
+    "obj/**",
 ]
 
 [targets.nestcore.validation]
@@ -111,21 +118,26 @@ low_priority = false
 [targets.letmehatch]
 runner = "dotnet"
 platform = "desktop"
-root = "."
+root = "LetMeHatch"
 solution = "LetMeHatch/LetMeHatch.csproj"
 build_target = "LetMeHatch/LetMeHatch.csproj"
 test_target = "Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj"
 test_command = "./Tests/devtool/validate-letmehatch.sh"
 inputs = [
-    "LetMeHatch/**",
-    "Tests/LetMeHatch*/**",
-    ".devtool.toml",
+    "../.devtool.toml",
+    "../Directory.Build.props",
+    "../Directory.Build.targets",
+    "../.github/workflows/**",
+    "../Tests/LetMeHatch.Core.Tests/**",
+    "../Tests/LetMeHatch.Tests/**",
 ]
 outputs = [
-    "LetMeHatch/bin/**",
-    "LetMeHatch/obj/**",
-    "Tests/LetMeHatch*/**/bin/**",
-    "Tests/LetMeHatch*/**/obj/**",
+    "bin/**",
+    "obj/**",
+    "../Tests/LetMeHatch.Core.Tests/bin/**",
+    "../Tests/LetMeHatch.Core.Tests/obj/**",
+    "../Tests/LetMeHatch.Tests/bin/**",
+    "../Tests/LetMeHatch.Tests/obj/**",
 ]
 
 [targets.letmehatch.validation]
@@ -143,24 +155,37 @@ validate = [
     {id = "core_tests", ref = "job:letmehatch-core-tests", depends_on = ["core_purity"]},
     {id = "mod_tests", ref = "job:letmehatch-tests", depends_on = ["core_purity"]},
 ]
+ownership-graph = [
+  {id = "dep_nestcore", ref = "target:nestcore#ownership-probe", depends_on = []},
+  {id = "dep_embed_tool", ref = "target:embed_tool#ownership-probe", depends_on = []},
+]
+
 [targets.eggsinwild]
 runner = "dotnet"
 platform = "desktop"
-root = "."
+root = "EggsInWild"
 solution = "EggsInWild/EggsInWild.csproj"
 build_target = "EggsInWild/EggsInWild.csproj"
 test_target = "Tests/EggsInWild.Tests/EggsInWild.Tests.csproj"
 test_command = "./Tests/devtool/validate-eggsinwild.sh"
 inputs = [
-    "EggsInWild/**",
-    "Tests/EggsInWild*/**",
-    ".devtool.toml",
+    "../.devtool.toml",
+    "../Directory.Build.props",
+    "../Directory.Build.targets",
+    "../.github/workflows/**",
+    "../Tests/EggsInWild.AnimalNotes.Tests/**",
+    "../Tests/EggsInWild.Tests/**",
+    "../Tests/EggsInWild.Phase7.Tests/**",
 ]
 outputs = [
-    "EggsInWild/bin/**",
-    "EggsInWild/obj/**",
-    "Tests/EggsInWild*/**/bin/**",
-    "Tests/EggsInWild*/**/obj/**",
+    "bin/**",
+    "obj/**",
+    "../Tests/EggsInWild.AnimalNotes.Tests/bin/**",
+    "../Tests/EggsInWild.AnimalNotes.Tests/obj/**",
+    "../Tests/EggsInWild.Tests/bin/**",
+    "../Tests/EggsInWild.Tests/obj/**",
+    "../Tests/EggsInWild.Phase7.Tests/bin/**",
+    "../Tests/EggsInWild.Phase7.Tests/obj/**",
 ]
 
 [targets.eggsinwild.validation]
@@ -178,24 +203,34 @@ validate = [
     {id = "unit", ref = "job:eggsinwild-tests", depends_on = []},
     {id = "phase7", ref = "job:eggsinwild-phase7-tests", depends_on = []},
 ]
+ownership-graph = [
+  {id = "dep_nestcore", ref = "target:nestcore#ownership-probe", depends_on = []},
+  {id = "dep_embed_tool", ref = "target:embed_tool#ownership-probe", depends_on = []},
+]
+
 [targets.roostercontrol]
 runner = "dotnet"
 platform = "desktop"
-root = "."
+root = "RoosterControl"
 solution = "RoosterControl/RoosterControl.csproj"
 build_target = "RoosterControl/RoosterControl.csproj"
 test_target = "Tests/RoosterControl.Tests/RoosterControl.Tests.csproj"
 test_command = "./Tests/devtool/validate-roostercontrol.sh"
 inputs = [
-    "RoosterControl/**",
-    "Tests/RoosterControl*/**",
-    ".devtool.toml",
+    "../.devtool.toml",
+    "../Directory.Build.props",
+    "../Directory.Build.targets",
+    "../.github/workflows/**",
+    "../Tests/RoosterControl.Descriptors.Tests/**",
+    "../Tests/RoosterControl.Tests/**",
 ]
 outputs = [
-    "RoosterControl/bin/**",
-    "RoosterControl/obj/**",
-    "Tests/RoosterControl*/**/bin/**",
-    "Tests/RoosterControl*/**/obj/**",
+    "bin/**",
+    "obj/**",
+    "../Tests/RoosterControl.Descriptors.Tests/bin/**",
+    "../Tests/RoosterControl.Descriptors.Tests/obj/**",
+    "../Tests/RoosterControl.Tests/bin/**",
+    "../Tests/RoosterControl.Tests/obj/**",
 ]
 
 [targets.roostercontrol.validation]
@@ -212,21 +247,34 @@ validate = [
     {id = "descriptors", ref = "job:roostercontrol-descriptor-tests", depends_on = []},
     {id = "unit", ref = "job:roostercontrol-tests", depends_on = []},
 ]
+ownership-graph = [
+  {id = "dep_nestcore", ref = "target:nestcore#ownership-probe", depends_on = []},
+  {id = "dep_embed_tool", ref = "target:embed_tool#ownership-probe", depends_on = []},
+]
+
 [targets.roostercontrol_pure]
 runner = "dotnet"
 platform = "desktop"
-root = "."
+root = "RoosterControl.Pure"
 solution = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 build_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 test_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 inputs = [
-    "Tests/RoosterControl.PureTests/**",
-    "RoosterControl/**",
-    ".devtool.toml",
+    "../.devtool.toml",
+    "../Directory.Build.props",
+    "../Directory.Build.targets",
+    "../.github/workflows/**",
+    "../Tests/RoosterControl.PureTests/**",
+    "../RoosterControl/Application/Catalogs/**",
+    "../RoosterControl/Framework/Config/**",
+    "../RoosterControl/Constants.cs",
+    "../RoosterControl/Enums.cs",
 ]
 outputs = [
-    "Tests/RoosterControl.PureTests/**/bin/**",
-    "Tests/RoosterControl.PureTests/**/obj/**",
+    "bin/**",
+    "obj/**",
+    "../Tests/RoosterControl.PureTests/bin/**",
+    "../Tests/RoosterControl.PureTests/obj/**",
 ]
 
 [targets.roostercontrol_pure.env]
@@ -245,18 +293,24 @@ low_priority = false
 [targets.pure]
 runner = "dotnet"
 platform = "desktop"
-root = "."
+root = "Tests/RoosterControl.PureTests"
 solution = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 build_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 test_target = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 inputs = [
-    "Tests/**",
-    "RoosterControl/**",
-    ".devtool.toml",
+    "../../.devtool.toml",
+    "../../Directory.Build.props",
+    "../../Directory.Build.targets",
+    "../../.github/workflows/**",
+    "../../RoosterControl.Pure/**",
+    "../../RoosterControl/Application/Catalogs/**",
+    "../../RoosterControl/Framework/Config/**",
+    "../../RoosterControl/Constants.cs",
+    "../../RoosterControl/Enums.cs",
 ]
 outputs = [
-    "Tests/**/bin/**",
-    "Tests/**/obj/**",
+    "bin/**",
+    "obj/**",
 ]
 
 [targets.pure.env]
@@ -276,17 +330,18 @@ low_priority = false
 [targets.embed_tool]
 runner = "dotnet"
 platform = "desktop"
-root = "."
+root = "tools/EmbedTextAsCode"
 solution = "tools/EmbedTextAsCode/EmbedTextAsCode.csproj"
 build_target = "tools/EmbedTextAsCode/EmbedTextAsCode.csproj"
 inputs = [
-    "EmbeddingTool/**",
-    "Tests/**",
-    ".devtool.toml",
+    "../../.devtool.toml",
+    "../../Directory.Build.props",
+    "../../Directory.Build.targets",
+    "../../.github/workflows/**",
 ]
 outputs = [
-    "EmbeddingTool/**/bin/**",
-    "EmbeddingTool/**/obj/**",
+    "bin/**",
+    "obj/**",
 ]
 
 [targets.embed_tool.validation]
@@ -455,6 +510,7 @@ outputs = ["Tests/RoosterControl.Tests/**/bin/**", "Tests/RoosterControl.Tests/*
 DOTNET_ROLL_FORWARD = "Major"
 
 [targets.svmods.jobs.ci-source]
+root = ".."
 runner = "command"
 command = ["python3", "scripts/devtool_actions_contract.py"]
 inputs = [".devtool.toml", "scripts/devtool_actions_contract.py", ".github/workflows/*.yml"]
@@ -480,3 +536,27 @@ target = "svmods"
 description = "Run LetMeHatch existing DAG"
 workflow = "validate"
 target = "letmehatch"
+
+[targets.nestcore.workflows]
+ownership-probe = [{id = "source", ref = "job:target-ownership-contract", depends_on = []}]
+
+[targets.roostercontrol_pure.workflows]
+ownership-probe = [{id = "source", ref = "job:target-ownership-contract", depends_on = []}]
+
+[targets.pure.workflows]
+ownership-graph = [
+  {id = "dep_roostercontrol_pure", ref = "target:roostercontrol_pure#ownership-probe", depends_on = []},
+]
+
+[targets.embed_tool.workflows]
+ownership-probe = [{id = "source", ref = "job:target-ownership-contract", depends_on = []}]
+
+[jobs.target-ownership-contract]
+runner = "command"
+root = "."
+command = ["python3", "scripts/devtool_target_ownership.py", "--json"]
+inputs = [".devtool.toml", "scripts/devtool_target_ownership.py"]
+outputs = []
+
+[jobs.target-ownership-contract.metadata]
+read_only = true

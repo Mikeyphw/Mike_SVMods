@@ -12,6 +12,7 @@ CI = """jobs:
     steps:
       - run: python3 scripts/validate_mod_manifests.py
       - run: python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+      - run: python3 scripts/devtool_target_ownership.py --json
       - run: python3 scripts/devtool_actions_contract.py
   pure-tests:
     runs-on: ubuntu-latest
@@ -38,6 +39,10 @@ class ContractTests(unittest.TestCase):
     def test_disabled_source_job_is_forbidden(self):
         altered = CI.replace("    steps:", "    if: false\n    steps:", 1)
         self.assertTrue(any("cannot be disabled" in issue for issue in check_ci_source(altered)))
+
+    def test_cannot_remove_affected_contract_gate(self):
+        altered = CI.replace("      - run: python3 scripts/devtool_target_ownership.py --json\n", "")
+        self.assertTrue(any("devtool_target_ownership" in issue for issue in check_ci_source(altered)))
 
     def test_cannot_remove_baseline_ci(self):
         self.assertTrue(any("pure-tests" in issue for issue in check_ci_source(CI.split("  pure-tests:")[0])))

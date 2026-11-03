@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 COMMANDS = (
     "python3 scripts/validate_mod_manifests.py",
     "python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
+    "python3 scripts/devtool_target_ownership.py --json",
     "python3 scripts/devtool_actions_contract.py",
 )
 
@@ -56,10 +57,12 @@ def check_devtool(root: Path, cfg: dict) -> list[str]:
         if item.get("workflow") not in target.get("workflows", {}):
             issues.append(f"{name}: unresolved target/workflow")
     for name, target in targets.items():
-        target_root = root / target.get("root", ".")
+        # Devtool resolves solution/build_target/test_target from the repo root,
+        # independently of target.root (which scopes execution/ownership).
+        # Check the same paths the actual config parser resolves.
         for key in ("solution", "build_target", "test_target"):
             path = target.get(key)
-            if path and not (target_root / path).is_file():
+            if path and not (root / path).is_file():
                 issues.append(f"{name}: missing {key} {path}")
         for workflow, steps in target.get("workflows", {}).items():
             if not steps:
