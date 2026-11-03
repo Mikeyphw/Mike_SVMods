@@ -71,16 +71,16 @@ low_priority = false
 
 [targets.svmods.workflows]
 validate = [
-    {id = "core_purity", ref = "job:svmods-core-purity", depends_on = []},
-    {id = "tests_sln", ref = "job:svmods-tests-sln", depends_on = ["core_purity"]},
+    {id = "core_purity", ref = "job:core_purity", depends_on = []},
+    {id = "tests_sln", ref = "job:tests_sln", depends_on = ["core_purity"]},
 ]
 ci-preflight = [
   { id = "source", ref = "job:ci-source", depends_on = [] },
 ]
 ci-local = [
   { id = "source", ref = "job:ci-source", depends_on = [] },
-  { id = "core", ref = "job:svmods-core-purity", depends_on = ["source"] },
-  { id = "tests", ref = "job:svmods-tests-sln", depends_on = ["core"] },
+  { id = "core", ref = "job:core_purity", depends_on = ["source"] },
+  { id = "tests", ref = "job:tests_sln", depends_on = ["core"] },
 ]
 ownership-graph = [
   {id = "dep_nestcore", ref = "target:nestcore#ownership-probe", depends_on = []},
@@ -122,7 +122,7 @@ root = "LetMeHatch"
 solution = "LetMeHatch/LetMeHatch.csproj"
 build_target = "LetMeHatch/LetMeHatch.csproj"
 test_target = "Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj"
-test_command = "./Tests/devtool/validate-letmehatch.sh"
+test_command = "../Tests/devtool/validate-letmehatch.sh"
 inputs = [
     "../.devtool.toml",
     "../Directory.Build.props",
@@ -151,9 +151,9 @@ DOTNET_ROLL_FORWARD = "Major"
 
 [targets.letmehatch.workflows]
 validate = [
-    {id = "core_purity", ref = "job:letmehatch-core-purity", depends_on = []},
-    {id = "core_tests", ref = "job:letmehatch-core-tests", depends_on = ["core_purity"]},
-    {id = "mod_tests", ref = "job:letmehatch-tests", depends_on = ["core_purity"]},
+    {id = "core_purity", ref = "job:core_purity", depends_on = []},
+    {id = "core_tests", ref = "job:core_tests", depends_on = ["core_purity"]},
+    {id = "mod_tests", ref = "job:mod_tests", depends_on = ["core_purity"]},
 ]
 ownership-graph = [
   {id = "dep_nestcore", ref = "target:nestcore#ownership-probe", depends_on = []},
@@ -167,7 +167,7 @@ root = "EggsInWild"
 solution = "EggsInWild/EggsInWild.csproj"
 build_target = "EggsInWild/EggsInWild.csproj"
 test_target = "Tests/EggsInWild.Tests/EggsInWild.Tests.csproj"
-test_command = "./Tests/devtool/validate-eggsinwild.sh"
+test_command = "../Tests/devtool/validate-eggsinwild.sh"
 inputs = [
     "../.devtool.toml",
     "../Directory.Build.props",
@@ -199,9 +199,9 @@ DOTNET_ROLL_FORWARD = "Major"
 
 [targets.eggsinwild.workflows]
 validate = [
-    {id = "animalnotes", ref = "job:eggsinwild-animalnotes-tests", depends_on = []},
-    {id = "unit", ref = "job:eggsinwild-tests", depends_on = []},
-    {id = "phase7", ref = "job:eggsinwild-phase7-tests", depends_on = []},
+    {id = "animalnotes", ref = "job:animalnotes", depends_on = []},
+    {id = "unit", ref = "job:unit", depends_on = []},
+    {id = "phase7", ref = "job:phase7", depends_on = []},
 ]
 ownership-graph = [
   {id = "dep_nestcore", ref = "target:nestcore#ownership-probe", depends_on = []},
@@ -215,7 +215,7 @@ root = "RoosterControl"
 solution = "RoosterControl/RoosterControl.csproj"
 build_target = "RoosterControl/RoosterControl.csproj"
 test_target = "Tests/RoosterControl.Tests/RoosterControl.Tests.csproj"
-test_command = "./Tests/devtool/validate-roostercontrol.sh"
+test_command = "../Tests/devtool/validate-roostercontrol.sh"
 inputs = [
     "../.devtool.toml",
     "../Directory.Build.props",
@@ -244,8 +244,8 @@ DOTNET_ROLL_FORWARD = "Major"
 
 [targets.roostercontrol.workflows]
 validate = [
-    {id = "descriptors", ref = "job:roostercontrol-descriptor-tests", depends_on = []},
-    {id = "unit", ref = "job:roostercontrol-tests", depends_on = []},
+    {id = "descriptors", ref = "job:descriptors", depends_on = []},
+    {id = "unit", ref = "job:unit", depends_on = []},
 ]
 ownership-graph = [
   {id = "dep_nestcore", ref = "target:nestcore#ownership-probe", depends_on = []},
@@ -376,139 +376,6 @@ max_workers = 4
 [targets.svmods.env]
 DOTNET_ROLL_FORWARD = "Major"
 
-[jobs.svmods-core-purity]
-runner = "command"
-root = "."
-command = ["./LetMeHatch/Tools/validate-core.sh"]
-inputs = [
-    "LetMeHatch/Core/**",
-    "LetMeHatch/Tools/validate-core.sh",
-]
-outputs = []
-
-[jobs.svmods-core-purity.env]
-DOTNET_ROLL_FORWARD = "Major"
-
-[jobs.svmods-tests-sln]
-runner = "command"
-root = "."
-command = ["dotnet", "test", "Tests/Tests.sln", "-c", "Release"]
-inputs = [
-    "Tests/**",
-    "LetMeHatch/**",
-    "EggsInWild/**",
-    "RoosterControl/**",
-    "NestCore/**",
-]
-outputs = ["Tests/**/bin/**", "Tests/**/obj/**"]
-
-[jobs.svmods-tests-sln.env]
-DOTNET_ROLL_FORWARD = "Major"
-
-[jobs.letmehatch-core-purity]
-runner = "command"
-root = "."
-command = ["./LetMeHatch/Tools/validate-core.sh"]
-inputs = [
-    "LetMeHatch/Core/**",
-    "LetMeHatch/Tools/validate-core.sh",
-]
-outputs = []
-
-[jobs.letmehatch-core-purity.env]
-DOTNET_ROLL_FORWARD = "Major"
-
-[jobs.letmehatch-core-tests]
-runner = "command"
-root = "."
-command = ["dotnet", "test", "Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj", "-c", "Release"]
-inputs = [
-    "LetMeHatch/**",
-    "Tests/LetMeHatch.Core.Tests/**",
-]
-outputs = ["Tests/LetMeHatch.Core.Tests/**/bin/**", "Tests/LetMeHatch.Core.Tests/**/obj/**"]
-
-[jobs.letmehatch-core-tests.env]
-DOTNET_ROLL_FORWARD = "Major"
-
-[jobs.letmehatch-tests]
-runner = "command"
-root = "."
-command = ["dotnet", "test", "Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj", "-c", "Release"]
-inputs = [
-    "LetMeHatch/**",
-    "Tests/LetMeHatch.Tests/**",
-]
-outputs = ["Tests/LetMeHatch.Tests/**/bin/**", "Tests/LetMeHatch.Tests/**/obj/**"]
-
-[jobs.letmehatch-tests.env]
-DOTNET_ROLL_FORWARD = "Major"
-
-[jobs.eggsinwild-animalnotes-tests]
-runner = "command"
-root = "."
-command = ["dotnet", "test", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "-c", "Release"]
-inputs = [
-    "EggsInWild/**",
-    "Tests/EggsInWild.AnimalNotes.Tests/**",
-]
-outputs = ["Tests/EggsInWild.AnimalNotes.Tests/**/bin/**", "Tests/EggsInWild.AnimalNotes.Tests/**/obj/**"]
-
-[jobs.eggsinwild-animalnotes-tests.env]
-DOTNET_ROLL_FORWARD = "Major"
-
-[jobs.eggsinwild-tests]
-runner = "command"
-root = "."
-command = ["dotnet", "test", "Tests/EggsInWild.Tests/EggsInWild.Tests.csproj", "-c", "Release"]
-inputs = [
-    "EggsInWild/**",
-    "Tests/EggsInWild.Tests/**",
-]
-outputs = ["Tests/EggsInWild.Tests/**/bin/**", "Tests/EggsInWild.Tests/**/obj/**"]
-
-[jobs.eggsinwild-tests.env]
-DOTNET_ROLL_FORWARD = "Major"
-
-[jobs.eggsinwild-phase7-tests]
-runner = "command"
-root = "."
-command = ["dotnet", "test", "Tests/EggsInWild.Phase7.Tests/EggsInWild.Phase7.Tests.csproj", "-c", "Release"]
-inputs = [
-    "EggsInWild/**",
-    "Tests/EggsInWild.Phase7.Tests/**",
-]
-outputs = ["Tests/EggsInWild.Phase7.Tests/**/bin/**", "Tests/EggsInWild.Phase7.Tests/**/obj/**"]
-
-[jobs.eggsinwild-phase7-tests.env]
-DOTNET_ROLL_FORWARD = "Major"
-
-[jobs.roostercontrol-descriptor-tests]
-runner = "command"
-root = "."
-command = ["dotnet", "test", "Tests/RoosterControl.Descriptors.Tests/RoosterControl.Descriptors.Tests.csproj", "-c", "Release"]
-inputs = [
-    "RoosterControl/**",
-    "Tests/RoosterControl.Descriptors.Tests/**",
-]
-outputs = ["Tests/RoosterControl.Descriptors.Tests/**/bin/**", "Tests/RoosterControl.Descriptors.Tests/**/obj/**"]
-
-[jobs.roostercontrol-descriptor-tests.env]
-DOTNET_ROLL_FORWARD = "Major"
-
-[jobs.roostercontrol-tests]
-runner = "command"
-root = "."
-command = ["dotnet", "test", "Tests/RoosterControl.Tests/RoosterControl.Tests.csproj", "-c", "Release"]
-inputs = [
-    "RoosterControl/**",
-    "Tests/RoosterControl.Tests/**",
-]
-outputs = ["Tests/RoosterControl.Tests/**/bin/**", "Tests/RoosterControl.Tests/**/obj/**"]
-
-[jobs.roostercontrol-tests.env]
-DOTNET_ROLL_FORWARD = "Major"
-
 [targets.svmods.jobs.ci-source]
 root = ".."
 runner = "command"
@@ -542,11 +409,13 @@ ownership-probe = [{id = "source", ref = "job:target-ownership-contract", depend
 
 [targets.roostercontrol_pure.workflows]
 ownership-probe = [{id = "source", ref = "job:target-ownership-contract", depends_on = []}]
+validate = [{id = "unit", ref = "job:unit", depends_on = []}]
 
 [targets.pure.workflows]
 ownership-graph = [
   {id = "dep_roostercontrol_pure", ref = "target:roostercontrol_pure#ownership-probe", depends_on = []},
 ]
+validate = [{id = "canonical", ref = "target:roostercontrol_pure#validate", depends_on = []}]
 
 [targets.embed_tool.workflows]
 ownership-probe = [{id = "source", ref = "job:target-ownership-contract", depends_on = []}]
@@ -560,3 +429,143 @@ outputs = []
 
 [jobs.target-ownership-contract.metadata]
 read_only = true
+
+[targets.svmods.jobs.core_purity]
+runner = "command"
+root = ".."
+command = ["./LetMeHatch/Tools/validate-core.sh"]
+inputs = [
+    "LetMeHatch/Core/**",
+    "LetMeHatch/Tools/validate-core.sh",
+]
+outputs = []
+
+[targets.svmods.jobs.core_purity.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.svmods.jobs.tests_sln]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/Tests.sln", "-c", "Release"]
+inputs = [
+    "Tests/**",
+    "LetMeHatch/**",
+    "EggsInWild/**",
+    "RoosterControl/**",
+    "NestCore/**",
+]
+outputs = ["Tests/**/bin/**", "Tests/**/obj/**"]
+
+[targets.svmods.jobs.tests_sln.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.letmehatch.jobs.core_purity]
+runner = "command"
+root = ".."
+command = ["./LetMeHatch/Tools/validate-core.sh"]
+inputs = [
+    "LetMeHatch/Core/**",
+    "LetMeHatch/Tools/validate-core.sh",
+]
+outputs = []
+
+[targets.letmehatch.jobs.core_purity.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.letmehatch.jobs.core_tests]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/LetMeHatch.Core.Tests/LetMeHatch.Core.Tests.csproj", "-c", "Release"]
+inputs = [
+    "LetMeHatch/**",
+    "Tests/LetMeHatch.Core.Tests/**",
+]
+outputs = ["Tests/LetMeHatch.Core.Tests/**/bin/**", "Tests/LetMeHatch.Core.Tests/**/obj/**"]
+
+[targets.letmehatch.jobs.core_tests.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.letmehatch.jobs.mod_tests]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/LetMeHatch.Tests/LetMeHatch.Tests.csproj", "-c", "Release"]
+inputs = [
+    "LetMeHatch/**",
+    "Tests/LetMeHatch.Tests/**",
+]
+outputs = ["Tests/LetMeHatch.Tests/**/bin/**", "Tests/LetMeHatch.Tests/**/obj/**"]
+
+[targets.letmehatch.jobs.mod_tests.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.eggsinwild.jobs.animalnotes]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "-c", "Release"]
+inputs = [
+    "EggsInWild/**",
+    "Tests/EggsInWild.AnimalNotes.Tests/**",
+]
+outputs = ["Tests/EggsInWild.AnimalNotes.Tests/**/bin/**", "Tests/EggsInWild.AnimalNotes.Tests/**/obj/**"]
+
+[targets.eggsinwild.jobs.animalnotes.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.eggsinwild.jobs.unit]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/EggsInWild.Tests/EggsInWild.Tests.csproj", "-c", "Release"]
+inputs = [
+    "EggsInWild/**",
+    "Tests/EggsInWild.Tests/**",
+]
+outputs = ["Tests/EggsInWild.Tests/**/bin/**", "Tests/EggsInWild.Tests/**/obj/**"]
+
+[targets.eggsinwild.jobs.unit.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.eggsinwild.jobs.phase7]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/EggsInWild.Phase7.Tests/EggsInWild.Phase7.Tests.csproj", "-c", "Release"]
+inputs = [
+    "EggsInWild/**",
+    "Tests/EggsInWild.Phase7.Tests/**",
+]
+outputs = ["Tests/EggsInWild.Phase7.Tests/**/bin/**", "Tests/EggsInWild.Phase7.Tests/**/obj/**"]
+
+[targets.eggsinwild.jobs.phase7.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.roostercontrol.jobs.descriptors]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/RoosterControl.Descriptors.Tests/RoosterControl.Descriptors.Tests.csproj", "-c", "Release"]
+inputs = [
+    "RoosterControl/**",
+    "Tests/RoosterControl.Descriptors.Tests/**",
+]
+outputs = ["Tests/RoosterControl.Descriptors.Tests/**/bin/**", "Tests/RoosterControl.Descriptors.Tests/**/obj/**"]
+
+[targets.roostercontrol.jobs.descriptors.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.roostercontrol.jobs.unit]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/RoosterControl.Tests/RoosterControl.Tests.csproj", "-c", "Release"]
+inputs = [
+    "RoosterControl/**",
+    "Tests/RoosterControl.Tests/**",
+]
+outputs = ["Tests/RoosterControl.Tests/**/bin/**", "Tests/RoosterControl.Tests/**/obj/**"]
+
+[targets.roostercontrol.jobs.unit.env]
+DOTNET_ROLL_FORWARD = "Major"
+
+[targets.roostercontrol_pure.jobs.unit]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "-c", "Release"]
+inputs = ["RoosterControl.Pure/**", "RoosterControl/Application/Catalogs/**", "RoosterControl/Framework/Config/**", "Tests/RoosterControl.PureTests/**"]
+outputs = ["RoosterControl.Pure/bin/**", "RoosterControl.Pure/obj/**", "Tests/RoosterControl.PureTests/bin/**", "Tests/RoosterControl.PureTests/obj/**"]

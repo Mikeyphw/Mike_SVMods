@@ -8,12 +8,14 @@ import re
 import tomllib
 
 from validate_mod_manifests import validate as validate_manifests
+from devtool_target_jobs import validate as validate_local_jobs
 
 ROOT = Path(__file__).resolve().parents[1]
 COMMANDS = (
     "python3 scripts/validate_mod_manifests.py",
     "python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
     "python3 scripts/devtool_target_ownership.py --json",
+    "python3 scripts/devtool_target_jobs.py --json",
     "python3 scripts/devtool_actions_contract.py",
 )
 
@@ -85,6 +87,7 @@ def check_devtool(root: Path, cfg: dict) -> list[str]:
     source_job = targets.get("svmods", {}).get("jobs", {}).get("ci-source", {})
     if source_job.get("command") != ["python3", "scripts/devtool_actions_contract.py"]:
         issues.append("svmods source-contract job changed or missing")
+    issues.extend(validate_local_jobs(cfg))
     return issues
 
 
