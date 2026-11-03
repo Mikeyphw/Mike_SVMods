@@ -92,6 +92,14 @@ ownership-graph = [
   {id = "dep_embed_tool", ref = "target:embed_tool#ownership-probe", depends_on = []},
 ]
 
+
+ci-hosted-dotnet = [
+  {id = "source", ref = "job:ci-source", depends_on = []},
+  {id = "restore_pure", ref = "job:r06b_restore_pure", depends_on = ["source"]},
+  {id = "test_pure", ref = "job:r06b_test_pure", depends_on = ["restore_pure"]},
+  {id = "restore_animal", ref = "job:r06b_restore_animal", depends_on = ["test_pure"]},
+  {id = "test_animal", ref = "job:r06b_test_animal", depends_on = ["restore_animal"]},
+]
 [targets.nestcore]
 runner = "dotnet"
 platform = "desktop"
@@ -569,3 +577,31 @@ root = ".."
 command = ["dotnet", "test", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "-c", "Release"]
 inputs = ["RoosterControl.Pure/**", "RoosterControl/Application/Catalogs/**", "RoosterControl/Framework/Config/**", "Tests/RoosterControl.PureTests/**"]
 outputs = ["RoosterControl.Pure/bin/**", "RoosterControl.Pure/obj/**", "Tests/RoosterControl.PureTests/bin/**", "Tests/RoosterControl.PureTests/obj/**"]
+
+[targets.svmods.jobs.r06b_restore_pure]
+runner = "command"
+root = ".."
+command = ["dotnet", "restore", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "--locked-mode", "--no-http-cache"]
+inputs = [".devtool.toml", "Directory.Build.props", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "Tests/RoosterControl.PureTests/packages.lock.json", "RoosterControl.Pure/**"]
+outputs = ["RoosterControl.Pure/obj/**", "Tests/RoosterControl.PureTests/obj/**"]
+
+[targets.svmods.jobs.r06b_test_pure]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "-c", "Release", "--no-restore", "--logger", "trx;LogFileName=r06b-pure.trx", "--results-directory", ".ci-results/r06b"]
+inputs = [".devtool.toml", "Directory.Build.props", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "RoosterControl.Pure/**", "Tests/RoosterControl.PureTests/**"]
+outputs = ["RoosterControl.Pure/bin/**", "RoosterControl.Pure/obj/**", "Tests/RoosterControl.PureTests/bin/**", "Tests/RoosterControl.PureTests/obj/**", ".ci-results/r06b/r06b-pure.trx"]
+
+[targets.svmods.jobs.r06b_restore_animal]
+runner = "command"
+root = ".."
+command = ["dotnet", "restore", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "--locked-mode", "--no-http-cache"]
+inputs = [".devtool.toml", "Directory.Build.props", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "Tests/EggsInWild.AnimalNotes.Tests/packages.lock.json", "EggsInWild/Application/AnimalNotes/**"]
+outputs = ["Tests/EggsInWild.AnimalNotes.Tests/obj/**"]
+
+[targets.svmods.jobs.r06b_test_animal]
+runner = "command"
+root = ".."
+command = ["dotnet", "test", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "-c", "Release", "--no-restore", "--logger", "trx;LogFileName=r06b-animalnotes.trx", "--results-directory", ".ci-results/r06b"]
+inputs = [".devtool.toml", "Directory.Build.props", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "EggsInWild/Application/AnimalNotes/**", "Tests/EggsInWild.AnimalNotes.Tests/**"]
+outputs = ["Tests/EggsInWild.AnimalNotes.Tests/bin/**", "Tests/EggsInWild.AnimalNotes.Tests/obj/**", ".ci-results/r06b/r06b-animalnotes.trx"]

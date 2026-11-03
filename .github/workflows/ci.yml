@@ -102,5 +102,7 @@ jobs:
         run: python3 scripts/check_committed_nuget_locks.py
       - name: Verify R06a hosted Devtool native gate source contract
         run: python3 scripts/check_r06_source_contract.py
+      - name: Verify hosted R06b native locked .NET workflow policy
+        run: python3 scripts/check_r06b_source_contract.py
       - name: Check Devtool and CI source contract
         run: python3 scripts/devtool_actions_contract.py
