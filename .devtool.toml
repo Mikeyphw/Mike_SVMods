@@ -627,6 +627,16 @@ native = [
   { id = "test_animal", ref = "job:test_animal", depends_on = ["build_animal"] },
 ]
 
+
+native_r6 = [
+  { id = "restore_pure", ref = "job:restore_pure", depends_on = [] },
+  { id = "build_pure", ref = "job:build_pure", depends_on = ["restore_pure"] },
+  { id = "test_pure", ref = "job:test_pure", depends_on = ["build_pure"] },
+  { id = "restore_animal", ref = "job:restore_animal", depends_on = ["test_pure"] },
+  { id = "build_animal", ref = "job:build_animal", depends_on = ["restore_animal"] },
+  { id = "test_animal", ref = "job:test_animal", depends_on = ["build_animal"] },
+]
+
 [targets.dn03_r5.jobs.restore_pure]
 runner = "command"
 root = "."
