@@ -4,6 +4,7 @@ from pathlib import Path
 import json
 import sys
 import tomllib
+import subprocess
 import xml.etree.ElementTree as ET
 
 
@@ -18,8 +19,20 @@ def check(root: Path) -> None:
     assert [(v['id'],v['depends_on']) for v in nodes]==list(expected)
     jobs=target['jobs']
     assert set(jobs)=={node for node,_ in expected}
+    tracked_result=subprocess.run(['git','-C',str(root),'ls-files','-z'],
+                                  capture_output=True,check=True)
+    tracked={p.decode('utf8') for p in tracked_result.stdout.split(b'\0') if p}
+    owned_outputs={p for j in jobs.values() for p in j['outputs']}
     for ident,_ in expected:
         job=jobs[ident]
+        assert job['inputs'] and len(job['inputs'])==len(set(job['inputs']))
+        assert job['inputs']==sorted(job['inputs'])
+        for item in job['inputs']:
+            assert item in tracked and item not in owned_outputs
+            assert not any(c in item for c in '*?[]')
+        project_sources=('Tests/RoosterControl.PureTests/' if 'pure' in ident
+                         else 'Tests/EggsInWild.AnimalNotes.Tests/')
+        assert any(p.startswith(project_sources) and p.endswith('.csproj') for p in job['inputs'])
         assert job['runner']=='command'
         assert job['metadata']['ci_dotnet_allow_eol'] is True
         assert job['metadata']['ci_dotnet_selected_project_only'] is True

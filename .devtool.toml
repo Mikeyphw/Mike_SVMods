@@ -631,7 +631,7 @@ native = [
 runner = "command"
 root = "."
 command = ["dotnet", "restore", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "--locked-mode"]
-inputs = [".devtool.toml", "global.json", "RoosterControl.Pure/**", "Tests/RoosterControl.PureTests/**"]
+inputs = [".devtool.toml", "Directory.Build.props", "Directory.Build.targets", "RoosterControl.Pure/Directory.Build.props", "RoosterControl.Pure/Properties/AssemblyInfo.cs", "RoosterControl.Pure/README.md", "RoosterControl.Pure/RoosterControl.Pure.csproj", "RoosterControl.Pure/packages.lock.json", "RoosterControl/Application/Catalogs/CatalogApplicator.cs", "RoosterControl/Application/Catalogs/CatalogDefaults.cs", "RoosterControl/Application/Catalogs/CatalogMigration.cs", "RoosterControl/Application/Catalogs/CatalogModels.cs", "RoosterControl/Application/Catalogs/CatalogValidation.cs", "RoosterControl/Application/Catalogs/Console/CatalogCommandModels.cs", "RoosterControl/Application/Catalogs/Console/CatalogCommandService.cs", "RoosterControl/Application/Planning/LruCache.cs", "RoosterControl/Application/Planning/RoosterSeedKey.cs", "RoosterControl/Application/Planning/StableHash.cs", "RoosterControl/Application/Produces/RandomGroupProduceResolver.cs", "RoosterControl/Constants.cs", "RoosterControl/Enums.cs", "RoosterControl/Framework/Config/ConfigSchema.cs", "RoosterControl/Framework/Config/RoosterControlConfig.cs", "Tests/RoosterControl.PureTests/CatalogApplyModePolicyRegressionTests.cs", "Tests/RoosterControl.PureTests/CatalogApplyModeTests.cs", "Tests/RoosterControl.PureTests/CatalogValidationTests.cs", "Tests/RoosterControl.PureTests/Directory.Build.props", "Tests/RoosterControl.PureTests/ProduceOverrideApplicatorTests.cs", "Tests/RoosterControl.PureTests/ProduceOverrideRulesTests.cs", "Tests/RoosterControl.PureTests/README.md", "Tests/RoosterControl.PureTests/RaCatalogValidateFixTests.cs", "Tests/RoosterControl.PureTests/RandomGroupProduceResolverTests.cs", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "Tests/RoosterControl.PureTests/packages.lock.json", "Tests/RoosterControl.PureTests/runtimeconfig.template.json", "global.json"]
 outputs = []
 
 [targets.dn03_r5.jobs.restore_pure.metadata]
@@ -642,7 +642,7 @@ ci_dotnet_selected_project_only = true
 runner = "command"
 root = "."
 command = ["dotnet", "build", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "--configuration", "Release", "--no-restore"]
-inputs = [".devtool.toml", "global.json", "RoosterControl.Pure/**", "Tests/RoosterControl.PureTests/**"]
+inputs = [".devtool.toml", "Directory.Build.props", "Directory.Build.targets", "RoosterControl.Pure/Directory.Build.props", "RoosterControl.Pure/Properties/AssemblyInfo.cs", "RoosterControl.Pure/README.md", "RoosterControl.Pure/RoosterControl.Pure.csproj", "RoosterControl.Pure/packages.lock.json", "RoosterControl/Application/Catalogs/CatalogApplicator.cs", "RoosterControl/Application/Catalogs/CatalogDefaults.cs", "RoosterControl/Application/Catalogs/CatalogMigration.cs", "RoosterControl/Application/Catalogs/CatalogModels.cs", "RoosterControl/Application/Catalogs/CatalogValidation.cs", "RoosterControl/Application/Catalogs/Console/CatalogCommandModels.cs", "RoosterControl/Application/Catalogs/Console/CatalogCommandService.cs", "RoosterControl/Application/Planning/LruCache.cs", "RoosterControl/Application/Planning/RoosterSeedKey.cs", "RoosterControl/Application/Planning/StableHash.cs", "RoosterControl/Application/Produces/RandomGroupProduceResolver.cs", "RoosterControl/Constants.cs", "RoosterControl/Enums.cs", "RoosterControl/Framework/Config/ConfigSchema.cs", "RoosterControl/Framework/Config/RoosterControlConfig.cs", "Tests/RoosterControl.PureTests/CatalogApplyModePolicyRegressionTests.cs", "Tests/RoosterControl.PureTests/CatalogApplyModeTests.cs", "Tests/RoosterControl.PureTests/CatalogValidationTests.cs", "Tests/RoosterControl.PureTests/Directory.Build.props", "Tests/RoosterControl.PureTests/ProduceOverrideApplicatorTests.cs", "Tests/RoosterControl.PureTests/ProduceOverrideRulesTests.cs", "Tests/RoosterControl.PureTests/README.md", "Tests/RoosterControl.PureTests/RaCatalogValidateFixTests.cs", "Tests/RoosterControl.PureTests/RandomGroupProduceResolverTests.cs", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "Tests/RoosterControl.PureTests/packages.lock.json", "Tests/RoosterControl.PureTests/runtimeconfig.template.json", "global.json"]
 outputs = []
 
 [targets.dn03_r5.jobs.build_pure.metadata]
@@ -653,7 +653,7 @@ ci_dotnet_selected_project_only = true
 runner = "command"
 root = "."
 command = ["dotnet", "test", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "--configuration", "Release", "--no-restore", "--logger", "trx;LogFileName=results.trx", "--results-directory", "dist/pure"]
-inputs = [".devtool.toml", "global.json", "RoosterControl.Pure/**", "Tests/RoosterControl.PureTests/**"]
+inputs = [".devtool.toml", "Directory.Build.props", "Directory.Build.targets", "RoosterControl.Pure/Directory.Build.props", "RoosterControl.Pure/Properties/AssemblyInfo.cs", "RoosterControl.Pure/README.md", "RoosterControl.Pure/RoosterControl.Pure.csproj", "RoosterControl.Pure/packages.lock.json", "RoosterControl/Application/Catalogs/CatalogApplicator.cs", "RoosterControl/Application/Catalogs/CatalogDefaults.cs", "RoosterControl/Application/Catalogs/CatalogMigration.cs", "RoosterControl/Application/Catalogs/CatalogModels.cs", "RoosterControl/Application/Catalogs/CatalogValidation.cs", "RoosterControl/Application/Catalogs/Console/CatalogCommandModels.cs", "RoosterControl/Application/Catalogs/Console/CatalogCommandService.cs", "RoosterControl/Application/Planning/LruCache.cs", "RoosterControl/Application/Planning/RoosterSeedKey.cs", "RoosterControl/Application/Planning/StableHash.cs", "RoosterControl/Application/Produces/RandomGroupProduceResolver.cs", "RoosterControl/Constants.cs", "RoosterControl/Enums.cs", "RoosterControl/Framework/Config/ConfigSchema.cs", "RoosterControl/Framework/Config/RoosterControlConfig.cs", "Tests/RoosterControl.PureTests/CatalogApplyModePolicyRegressionTests.cs", "Tests/RoosterControl.PureTests/CatalogApplyModeTests.cs", "Tests/RoosterControl.PureTests/CatalogValidationTests.cs", "Tests/RoosterControl.PureTests/Directory.Build.props", "Tests/RoosterControl.PureTests/ProduceOverrideApplicatorTests.cs", "Tests/RoosterControl.PureTests/ProduceOverrideRulesTests.cs", "Tests/RoosterControl.PureTests/README.md", "Tests/RoosterControl.PureTests/RaCatalogValidateFixTests.cs", "Tests/RoosterControl.PureTests/RandomGroupProduceResolverTests.cs", "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj", "Tests/RoosterControl.PureTests/packages.lock.json", "Tests/RoosterControl.PureTests/runtimeconfig.template.json", "global.json"]
 outputs = ["dist/pure/results.trx"]
 
 [targets.dn03_r5.jobs.test_pure.metadata]
@@ -664,7 +664,7 @@ ci_dotnet_selected_project_only = true
 runner = "command"
 root = "."
 command = ["dotnet", "restore", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "--locked-mode"]
-inputs = [".devtool.toml", "global.json", "EggsInWild/Application/AnimalNotes/**", "Tests/EggsInWild.AnimalNotes.Tests/**"]
+inputs = [".devtool.toml", "Directory.Build.props", "Directory.Build.targets", "EggsInWild/Application/AnimalNotes/AnimalNoteIds.cs", "EggsInWild/Application/AnimalNotes/AnimalNotesFarmerState.cs", "EggsInWild/Application/AnimalNotes/AnimalNotesUnlockLogic.cs", "EggsInWild/Application/AnimalNotes/AnimalNotesValidationRules.cs", "EggsInWild/Constants.cs", "Tests/EggsInWild.AnimalNotes.Tests/AnimalNoteIdsTests.cs", "Tests/EggsInWild.AnimalNotes.Tests/AnimalNotesUnlockLogicTests.cs", "Tests/EggsInWild.AnimalNotes.Tests/AnimalNotesValidationRulesTests.cs", "Tests/EggsInWild.AnimalNotes.Tests/Directory.Build.props", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "Tests/EggsInWild.AnimalNotes.Tests/packages.lock.json", "Tests/EggsInWild.AnimalNotes.Tests/runtimeconfig.template.json", "global.json"]
 outputs = []
 
 [targets.dn03_r5.jobs.restore_animal.metadata]
@@ -675,7 +675,7 @@ ci_dotnet_selected_project_only = true
 runner = "command"
 root = "."
 command = ["dotnet", "build", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "--configuration", "Release", "--no-restore"]
-inputs = [".devtool.toml", "global.json", "EggsInWild/Application/AnimalNotes/**", "Tests/EggsInWild.AnimalNotes.Tests/**"]
+inputs = [".devtool.toml", "Directory.Build.props", "Directory.Build.targets", "EggsInWild/Application/AnimalNotes/AnimalNoteIds.cs", "EggsInWild/Application/AnimalNotes/AnimalNotesFarmerState.cs", "EggsInWild/Application/AnimalNotes/AnimalNotesUnlockLogic.cs", "EggsInWild/Application/AnimalNotes/AnimalNotesValidationRules.cs", "EggsInWild/Constants.cs", "Tests/EggsInWild.AnimalNotes.Tests/AnimalNoteIdsTests.cs", "Tests/EggsInWild.AnimalNotes.Tests/AnimalNotesUnlockLogicTests.cs", "Tests/EggsInWild.AnimalNotes.Tests/AnimalNotesValidationRulesTests.cs", "Tests/EggsInWild.AnimalNotes.Tests/Directory.Build.props", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "Tests/EggsInWild.AnimalNotes.Tests/packages.lock.json", "Tests/EggsInWild.AnimalNotes.Tests/runtimeconfig.template.json", "global.json"]
 outputs = []
 
 [targets.dn03_r5.jobs.build_animal.metadata]
@@ -686,7 +686,7 @@ ci_dotnet_selected_project_only = true
 runner = "command"
 root = "."
 command = ["dotnet", "test", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "--configuration", "Release", "--no-restore", "--logger", "trx;LogFileName=results.trx", "--results-directory", "dist/animal"]
-inputs = [".devtool.toml", "global.json", "EggsInWild/Application/AnimalNotes/**", "Tests/EggsInWild.AnimalNotes.Tests/**"]
+inputs = [".devtool.toml", "Directory.Build.props", "Directory.Build.targets", "EggsInWild/Application/AnimalNotes/AnimalNoteIds.cs", "EggsInWild/Application/AnimalNotes/AnimalNotesFarmerState.cs", "EggsInWild/Application/AnimalNotes/AnimalNotesUnlockLogic.cs", "EggsInWild/Application/AnimalNotes/AnimalNotesValidationRules.cs", "EggsInWild/Constants.cs", "Tests/EggsInWild.AnimalNotes.Tests/AnimalNoteIdsTests.cs", "Tests/EggsInWild.AnimalNotes.Tests/AnimalNotesUnlockLogicTests.cs", "Tests/EggsInWild.AnimalNotes.Tests/AnimalNotesValidationRulesTests.cs", "Tests/EggsInWild.AnimalNotes.Tests/Directory.Build.props", "Tests/EggsInWild.AnimalNotes.Tests/EggsInWild.AnimalNotes.Tests.csproj", "Tests/EggsInWild.AnimalNotes.Tests/packages.lock.json", "Tests/EggsInWild.AnimalNotes.Tests/runtimeconfig.template.json", "global.json"]
 outputs = ["dist/animal/results.trx"]
 
 [targets.dn03_r5.jobs.test_animal.metadata]
