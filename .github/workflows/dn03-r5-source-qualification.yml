@@ -1,0 +1,34 @@
+name: Mike_SVMods DN03-R5 source-only admission (non-release)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consumer-source-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout reviewed consumer Git commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Python 3.13 (source-only)
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.13'
+          check-latest: false
+      - name: Verify DN03-R5 consumer contract without dotnet
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 scripts/dn03_r5_source_contract.py "$GITHUB_WORKSPACE"
+          bash -n scripts/generate_dn03_r5.sh
+          git diff --exit-code

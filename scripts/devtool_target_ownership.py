@@ -228,7 +228,7 @@ EXPECTED_PATHS = {
     'LetMeHatch/ModEntry.cs': {'letmehatch', 'svmods'},
     'NestCore/NestCore.csproj': {'nestcore', 'letmehatch', 'eggsinwild', 'roostercontrol', 'svmods'},
     'tools/EmbedTextAsCode/Program.cs': {'embed_tool', 'letmehatch', 'eggsinwild', 'roostercontrol', 'svmods'},
-    'Tests/RoosterControl.PureTests/CatalogApplyModeTests.cs': {'svmods', 'pure', 'roostercontrol_pure'},
+    'Tests/RoosterControl.PureTests/CatalogApplyModeTests.cs': {'svmods', 'pure', 'roostercontrol_pure', 'dn03_r5'},
     'RoosterControl/ModEntry.cs': {'roostercontrol', 'svmods'},
 }
 
@@ -265,11 +265,20 @@ def validate(config: dict) -> list[str]:
             errors.append(f'{name}: wrong graph dependencies: {sorted(deps.get(name, set()))}')
     if not errors:
         for path, expected in EXPECTED_PATHS.items():
+            # R03 migration fixtures intentionally contain the original target
+            # set; real DN03-R5 consumer checkouts contain the additional target.
+            # Never expect a nonexistent target in an R03-only fixture, and
+            # never discard dn03_r5 when it is actually configured.
+            expected_for_config = (expected if 'dn03_r5' in targets
+                                   else expected - {'dn03_r5'})
             actual = select_affected(config, [path])
-            if actual != expected:
-                errors.append(f'{path}: selected {sorted(actual)} != expected {sorted(expected)}')
-        if select_affected(config, ['docs/unknown-unowned-file.md']) != set(ROOTS):
+            if actual != expected_for_config:
+                errors.append(f'{path}: selected {sorted(actual)} != expected {sorted(expected_for_config)}')
+        if select_affected(config, ['docs/unknown-unowned-file.md']) != set(targets):
             errors.append('unknown paths must fall back conservatively')
+        # The original R03 target set still owns this shared file.
+        # DN03-R5 must opt into the same ownership explicitly before
+        # this fixture can claim the new target is affected here.
         if select_affected(config, ['Directory.Build.targets']) != set(ROOTS):
             errors.append('shared MSBuild metadata must select every target')
     return sorted(set(errors))

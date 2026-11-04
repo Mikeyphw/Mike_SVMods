@@ -1,0 +1,31 @@
+{
+  "actual_host_checked": false,
+  "devtool_sha": "6416fd36cfcc815e1beb6e308f8d58ee28313042",
+  "expected_node_count": 6,
+  "generator": "DN03-R4 adds a verifier job to DN03-R3/RM-06 native projection",
+  "graph_sha256": "5bf9476adada34ebfd5ec7aa8ae22ca3ab6e511c405ca1faec6f8296798277de",
+  "host_profile": "ubuntu-24.04-x64",
+  "kind": "devtool.dn03-r4-cross-node-export",
+  "native_nodes": [
+    "dn03_r5.native.restore_pure",
+    "dn03_r5.native.build_pure",
+    "dn03_r5.native.test_pure",
+    "dn03_r5.native.restore_animal",
+    "dn03_r5.native.build_animal",
+    "dn03_r5.native.test_animal"
+  ],
+  "native_output_sha256_reverification": true,
+  "post_native_node_evidence_required": true,
+  "provider_plan_sha256": "2bb3c0ae66832b3ca7d88a5a4e861f4f8c62c94b4f9e9ba5c4980c391437da31",
+  "real_generated_workflow_executed": false,
+  "release_qualified": false,
+  "remote_authenticated": false,
+  "runtime_archive_sha512": "afb6018fcabec468ccd7ae2f1131d8c9de7f4de7645b8f0c223efbbdbfdc515fb0642a399ebfe372c02044416c4cae463c9c802cd156b9da4181efff0e33ee94",
+  "runtime_only_legacy": true,
+  "same_run_cross_node_verification_required": true,
+  "schema_version": 1,
+  "target": "dn03_r5",
+  "test_reports_independently_verified": false,
+  "workflow": "native",
+  "workflow_sha256": "37d9df89334f994037f953530e547b034b0e676a29d1684bc034912295ca1d1e"
+}

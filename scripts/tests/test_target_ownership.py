@@ -72,9 +72,15 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(self.cfg['targets']['embed_tool']['outputs'], ['bin/**', 'obj/**'])
 
     def test_fixtures_select_without_hiding_dependencies(self):
+        # This source-only fixture deliberately models the original R03 target
+        # set. The new dn03_r5 target is asserted in the real consumer contract,
+        # not added retroactively to an R03-only migration snapshot.
+        self.assertEqual(set(self.cfg['targets']), set(ROOTS))
+        self.assertNotIn('dn03_r5', self.cfg['targets'])
         for changed, expected in EXPECTED_PATHS.items():
             with self.subTest(path=changed):
-                self.assertEqual(select_affected(self.cfg, [changed]), expected)
+                self.assertEqual(select_affected(self.cfg, [changed]),
+                                 expected - {'dn03_r5'})
 
     def test_unknown_path_broadens_all(self):
         self.assertEqual(select_affected(self.cfg, ['docs/completely-unowned.md']), set(ROOTS))
