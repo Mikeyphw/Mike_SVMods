@@ -55,6 +55,21 @@ jobs:
             6.0.428
             10.0.100
           cache: false
+      - name: Pin exact SDK selection in ephemeral checkout
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $globalJson = Join-Path $env:GITHUB_WORKSPACE 'global.json'
+          if (Test-Path -LiteralPath $globalJson) {
+            throw 'Refusing to replace existing repository global.json'
+          }
+          $sdkPolicy = '{"sdk":{"version":"10.0.100","rollForward":"disable","allowPrerelease":false}}'
+          [System.IO.File]::WriteAllText($globalJson, $sdkPolicy + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
+          $parsed = Get-Content -LiteralPath $globalJson -Raw | ConvertFrom-Json
+          if ($parsed.sdk.version -ne '10.0.100' -or $parsed.sdk.rollForward -ne 'disable') {
+            throw 'Ephemeral SDK policy did not round-trip'
+          }
+          Write-Host 'DN03_FINAL_EXACT_SDK_SELECTION_PINNED'
       - name: Verify SDK, runtime, source and pinned Devtool
         shell: pwsh
         run: |

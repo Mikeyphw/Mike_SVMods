@@ -58,6 +58,18 @@ class SourceTests(unittest.TestCase):
         self.assertNotEqual(mutated, before, 'test must really mutate the SHA')
         self.bad(mutated)
 
+    def test_missing_ephemeral_sdk_pin(self):
+        self.bad(self.wf.read_text().replace('Pin exact SDK selection in ephemeral checkout',
+                                             'SDK policy removed'))
+
+    def test_sdk_roll_forward_forbidden(self):
+        self.bad(self.wf.read_text().replace('"rollForward":"disable"',
+                                             '"rollForward":"latestMajor"'))
+
+    def test_sdk_version_drift_forbidden(self):
+        self.bad(self.wf.read_text().replace('"version":"10.0.100"',
+                                             '"version":"10.0.101"'))
+
     def test_no_raw_trx_review(self):
         self.bad(self.wf.read_text().replace('review --source $env:GITHUB_SHA',
                                              'none --source $env:GITHUB_SHA'))

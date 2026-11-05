@@ -25,6 +25,10 @@ def check(root: Path) -> None:
     assert '      - name: Fail-closed hosted source contract' in s
     assert '      - name: Verify SDK, runtime, source and pinned Devtool' in s
     assert '10.0.100' in s and '6.0.428' in s and '6\\.0\\.36' in s
+    assert s.count('      - name: Pin exact SDK selection in ephemeral checkout') == 1, 'ephemeral SDK pin missing'
+    assert "Join-Path $env:GITHUB_WORKSPACE 'global.json'" in s, 'SDK pin must live only in checkout'
+    assert '"sdk":{"version":"10.0.100","rollForward":"disable","allowPrerelease":false}' in s, 'SDK selection must be exact'
+    assert 'if (Test-Path -LiteralPath $globalJson)' in s, 'do not overwrite global.json'
     assert 'dotnet restore $t.project --locked-mode --no-http-cache' in s
     assert '--no-restore' in s
     assert 'actions_ci_qualification.py' in s
