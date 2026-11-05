@@ -1,0 +1,130 @@
+name: DN03-R8 GitHub provenance (non-release)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/devtool-dn03-r8-provenance.yml'
+      - 'scripts/dn03_r8_source_contract.py'
+      - 'scripts/tests/test_dn03_r8_source_contract.py'
+      - 'docs/ci/DN03_R8_GITHUB_PROVENANCE.md'
+  workflow_run:
+    workflows: ['DN03-R7 native .NET CI (29 tests, non-release)']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      r7_run_id:
+        description: 'Completed R7 main push run ID to verify (non-release)'
+        required: true
+        type: string
+      r7_source_sha:
+        description: 'Exact R7 main commit SHA'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dn03-r8-${{ github.event_name }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  r8_verify:
+    name: DN03-R8 / authenticate GitHub run and artifact bytes (non-release)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    env:
+      R8_DEVTOOL_SHA: 'bd781dc4bca749362a9ce68f6cf4b1c1652775a1'
+      R8_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || (github.event_name == 'workflow_dispatch' && inputs.r7_run_id || '42030323139') }}
+      R8_EXPECTED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || (github.event_name == 'workflow_dispatch' && inputs.r7_source_sha || '5dc04f83acce009be8058e1ac5bab3d3aaaf6da2') }}
+    steps:
+      - name: Checkout exact R8 consumer source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Pinned Python interpreter
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.13'
+          check-latest: false
+      - name: Check source, trigger and required R8 source files
+        shell: bash
+        env:
+          R8_TRIGGER_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          R8_TRIGGER_EVENT: ${{ github.event.workflow_run.event }}
+          R8_TRIGGER_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$GITHUB_REPOSITORY" = 'Mikeyphw/Mike_SVMods'
+          if test "$GITHUB_EVENT_NAME" = 'workflow_run'; then
+            test "$R8_TRIGGER_CONCLUSION" = 'success'
+            test "$R8_TRIGGER_EVENT" = 'push'
+            test "$R8_TRIGGER_BRANCH" = 'main'
+            test "$GITHUB_REF" = 'refs/heads/main'
+          fi
+          python3 scripts/dn03_r8_source_contract.py
+      - name: Acquire exact R8 Devtool source (no mutable ref)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --no-checkout https://github.com/Mikeyphw/devtool.git "$RUNNER_TEMP/r8-devtool"
+          git -C "$RUNNER_TEMP/r8-devtool" checkout --detach "$R8_DEVTOOL_SHA"
+          test "$(git -C "$RUNNER_TEMP/r8-devtool" rev-parse HEAD)" = "$R8_DEVTOOL_SHA"
+          test -f "$RUNNER_TEMP/r8-devtool/devtool/actions_dn03_r8_provenance.py"
+      - name: Recheck remote R7 run and all fifteen GitHub artifact archives
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/r8-report"
+          python3 "$RUNNER_TEMP/r8-devtool/devtool/actions_dn03_r8_provenance.py" \
+            --repo "$GITHUB_REPOSITORY" \
+            --run-id "$R8_RUN_ID" \
+            --source-sha "$R8_EXPECTED_SHA" \
+            --output "$RUNNER_TEMP/r8-report/provenance.json"
+          python3 -m json.tool "$RUNNER_TEMP/r8-report/provenance.json" >/dev/null
+      - name: Upload independent GitHub API observation
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: dn03-r8-provenance-observation
+          path: ${{ runner.temp }}/r8-report/provenance.json
+          if-no-files-found: error
+          retention-days: 14
+
+  r8_attest:
+    name: DN03-R8 / Sigstore attest verified report (non-release)
+    if: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+    needs: [r8_verify]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download R8 verified report from same attempt
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: dn03-r8-provenance-observation
+          path: ${{ runner.temp }}/r8-report
+      - name: Create GitHub Sigstore attestation for R8 report only
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: ${{ runner.temp }}/r8-report/provenance.json
+          create-storage-record: false
+      - name: Independently verify report attestation
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh attestation verify "$RUNNER_TEMP/r8-report/provenance.json" -R "$GITHUB_REPOSITORY"
+          echo 'DN03_R8_SIGSTORE_REPORT_ATTESTATION_PASS'
