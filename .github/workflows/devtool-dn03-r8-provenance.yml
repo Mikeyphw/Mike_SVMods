@@ -39,7 +39,7 @@ jobs:
       contents: read
       actions: read
     env:
-      R8_DEVTOOL_SHA: 'bd781dc4bca749362a9ce68f6cf4b1c1652775a1'
+      R8_DEVTOOL_SHA: '2495a8e1a5f06d14433c2a25d18fd4878582f479'
       R8_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || (github.event_name == 'workflow_dispatch' && inputs.r7_run_id || '42030323139') }}
       R8_EXPECTED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || (github.event_name == 'workflow_dispatch' && inputs.r7_source_sha || '5dc04f83acce009be8058e1ac5bab3d3aaaf6da2') }}
     steps:
