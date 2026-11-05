@@ -106,3 +106,5 @@ jobs:
         run: python3 scripts/check_r06b_source_contract.py
       - name: Check Devtool and CI source contract
         run: python3 scripts/devtool_actions_contract.py
+      - name: Verify DN03 final cross-platform source contract
+        run: python3 scripts/dn03_final_source_contract.py
