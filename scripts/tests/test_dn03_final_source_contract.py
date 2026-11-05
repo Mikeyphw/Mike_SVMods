@@ -62,6 +62,22 @@ class SourceTests(unittest.TestCase):
         self.bad(self.wf.read_text().replace('Pin exact SDK selection in ephemeral checkout',
                                              'SDK policy removed'))
 
+    def test_temporary_sdk_directory_required(self):
+        self.bad(self.wf.read_text().replace("Join-Path $env:RUNNER_TEMP 'dn03-final-exact-sdk'",
+                                            "Join-Path $env:GITHUB_WORKSPACE 'dn03-final-exact-sdk'"))
+
+    def test_working_directory_binding_required(self):
+        self.bad(self.wf.read_text().replace('Push-Location $env:CI_SDK_POLICY_DIR',
+                                            'Set-Variable NO_SDK_SELECTION', 1))
+
+    def test_native_project_must_be_absolute(self):
+        self.bad(self.wf.read_text().replace('dotnet restore $projectPath --locked-mode',
+                                            'dotnet restore $t.project --locked-mode'))
+
+    def test_do_not_override_repo_sdk_policy(self):
+        self.bad(self.wf.read_text().replace("Join-Path $selectionDir 'global.json'",
+                                            "Join-Path $env:GITHUB_WORKSPACE 'global.json'"))
+
     def test_sdk_roll_forward_forbidden(self):
         self.bad(self.wf.read_text().replace('"rollForward":"disable"',
                                              '"rollForward":"latestMajor"'))

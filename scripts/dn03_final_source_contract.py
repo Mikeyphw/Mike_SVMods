@@ -26,10 +26,19 @@ def check(root: Path) -> None:
     assert '      - name: Verify SDK, runtime, source and pinned Devtool' in s
     assert '10.0.100' in s and '6.0.428' in s and '6\\.0\\.36' in s
     assert s.count('      - name: Pin exact SDK selection in ephemeral checkout') == 1, 'ephemeral SDK pin missing'
-    assert "Join-Path $env:GITHUB_WORKSPACE 'global.json'" in s, 'SDK pin must live only in checkout'
+    assert "Join-Path $env:GITHUB_WORKSPACE 'global.json'" in s, 'must inspect tracked repository SDK policy'
+    assert "Join-Path $env:RUNNER_TEMP 'dn03-final-exact-sdk'" in s, 'SDK pin must be isolated outside checkout'
+    assert "Join-Path $selectionDir 'global.json'" in s, 'temporary global.json must be separate'
     assert '"sdk":{"version":"10.0.100","rollForward":"disable","allowPrerelease":false}' in s, 'SDK selection must be exact'
-    assert 'if (Test-Path -LiteralPath $globalJson)' in s, 'do not overwrite global.json'
-    assert 'dotnet restore $t.project --locked-mode --no-http-cache' in s
+    assert 'if (Test-Path -LiteralPath $globalJson)' in s, 'do not overwrite temporary policy'
+    assert 'CI_SDK_POLICY_DIR=$selectionDir' in s, 'SDK selector must propagate between steps'
+    assert s.count('Push-Location $env:CI_SDK_POLICY_DIR') >= 3, 'verify, tests and receipts must use exact SDK selector'
+    assert 'Push-Location $selectionDir' in s, 'SDK pin must be tested from temporary directory'
+    assert 'dotnet restore $projectPath --locked-mode --no-http-cache' in s, 'restore must use absolute project path'
+    assert 'dotnet test $projectPath --configuration Release --no-restore' in s, 'test must use absolute project path'
+    assert '$projectPath = Join-Path $env:GITHUB_WORKSPACE $t.project' in s
+    assert "Refusing to replace existing repository global.json" not in s, 'existing global.json must be preserved, not rejected'
+    assert 'dotnet restore $projectPath --locked-mode --no-http-cache' in s
     assert '--no-restore' in s
     assert 'actions_ci_qualification.py' in s
     assert 'review --source $env:GITHUB_SHA' in s

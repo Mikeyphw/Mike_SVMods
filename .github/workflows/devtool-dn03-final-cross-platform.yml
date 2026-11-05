@@ -59,16 +59,39 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $globalJson = Join-Path $env:GITHUB_WORKSPACE 'global.json'
+          # Preserve the repository's tracked global.json (latestFeature).
+          # SDK resolution is based on the dotnet process working directory,
+          # so run the exact-version CLI from a dedicated temporary directory.
+          $repoPolicyPath = Join-Path $env:GITHUB_WORKSPACE 'global.json'
+          if (-not (Test-Path -LiteralPath $repoPolicyPath -PathType Leaf)) {
+            throw 'Repository global.json is required and must not be replaced'
+          }
+          $repoPolicy = Get-Content -LiteralPath $repoPolicyPath -Raw | ConvertFrom-Json
+          if ($repoPolicy.sdk.version -ne '10.0.100' -or $repoPolicy.sdk.allowPrerelease -ne $false) {
+            throw 'Unexpected checked-in SDK policy'
+          }
+          $selectionDir = Join-Path $env:RUNNER_TEMP 'dn03-final-exact-sdk'
+          New-Item -ItemType Directory -Path $selectionDir -Force | Out-Null
+          $globalJson = Join-Path $selectionDir 'global.json'
           if (Test-Path -LiteralPath $globalJson) {
-            throw 'Refusing to replace existing repository global.json'
+            throw 'Refusing to replace existing temporary SDK policy'
           }
           $sdkPolicy = '{"sdk":{"version":"10.0.100","rollForward":"disable","allowPrerelease":false}}'
           [System.IO.File]::WriteAllText($globalJson, $sdkPolicy + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
           $parsed = Get-Content -LiteralPath $globalJson -Raw | ConvertFrom-Json
           if ($parsed.sdk.version -ne '10.0.100' -or $parsed.sdk.rollForward -ne 'disable') {
-            throw 'Ephemeral SDK policy did not round-trip'
+            throw 'Temporary SDK policy did not round-trip'
           }
+          Push-Location $selectionDir
+          try {
+            $selected = (dotnet --version).Trim()
+            if ($LASTEXITCODE -ne 0 -or $selected -ne '10.0.100') {
+              throw "Exact CI-only SDK selection failed: $selected"
+            }
+          } finally {
+            Pop-Location
+          }
+          "CI_SDK_POLICY_DIR=$selectionDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host 'DN03_FINAL_EXACT_SDK_SELECTION_PINNED'
       - name: Verify SDK, runtime, source and pinned Devtool
         shell: pwsh
@@ -76,11 +99,17 @@ jobs:
           $ErrorActionPreference = 'Stop'
           if ((git rev-parse HEAD).Trim() -ne $env:GITHUB_SHA) { throw "Checkout/source mismatch" }
           if ($env:GITHUB_REPOSITORY -ne 'Mikeyphw/Mike_SVMods') { throw "Repository mismatch" }
-          $sdk = (dotnet --version).Trim()
-          if ($LASTEXITCODE -ne 0 -or $sdk -ne '10.0.100') { throw "SDK 10.0.100 required" }
-          $runtimes = (dotnet --list-runtimes) -join "`n"
-          if ($LASTEXITCODE -ne 0 -or $runtimes -notmatch 'Microsoft\.NETCore\.App 6\.0\.36') {
-            throw "Exact .NET 6.0.36 runtime required"
+          if (-not $env:CI_SDK_POLICY_DIR) { throw 'Temporary SDK selector unavailable' }
+          Push-Location $env:CI_SDK_POLICY_DIR
+          try {
+            $sdk = (dotnet --version).Trim()
+            if ($LASTEXITCODE -ne 0 -or $sdk -ne '10.0.100') { throw "SDK 10.0.100 required" }
+            $runtimes = (dotnet --list-runtimes) -join "`n"
+            if ($LASTEXITCODE -ne 0 -or $runtimes -notmatch 'Microsoft\.NETCore\.App 6\.0\.36') {
+              throw "Exact .NET 6.0.36 runtime required"
+            }
+          } finally {
+            Pop-Location
           }
           $source = Join-Path $env:RUNNER_TEMP 'dn03-final-devtool'
           git clone --no-checkout https://github.com/Mikeyphw/devtool.git $source
@@ -103,16 +132,38 @@ jobs:
           foreach ($t in $tests) {
             $dir = Join-Path $env:RUNNER_TEMP "dn03-final/$($t.id)"
             New-Item -ItemType Directory -Force -Path $dir | Out-Null
-            dotnet restore $t.project --locked-mode --no-http-cache
-            if ($LASTEXITCODE -ne 0) { throw "Locked restore failed: $($t.id)" }
-            dotnet test $t.project --configuration Release --no-restore `
-              --logger "trx;LogFileName=$($t.id).trx" --results-directory $dir
-            if ($LASTEXITCODE -ne 0) { throw "Native tests failed: $($t.id)" }
+            # Resolve SDK from the temporary policy, without changing the
+            # consumer's root global.json or its tracked NuGet lock files.
+            $projectPath = Join-Path $env:GITHUB_WORKSPACE $t.project
+            if (-not (Test-Path -LiteralPath $projectPath -PathType Leaf)) {
+              throw "Declared project missing: $($t.id)"
+            }
+            if (-not $env:CI_SDK_POLICY_DIR) { throw 'Temporary SDK selector unavailable' }
+            Push-Location $env:CI_SDK_POLICY_DIR
+            try {
+              $selected = (dotnet --version).Trim()
+              if ($LASTEXITCODE -ne 0 -or $selected -ne '10.0.100') {
+                throw "SDK drift during tests: $selected"
+              }
+              dotnet restore $projectPath --locked-mode --no-http-cache
+              if ($LASTEXITCODE -ne 0) { throw "Locked restore failed: $($t.id)" }
+              dotnet test $projectPath --configuration Release --no-restore `
+                --logger "trx;LogFileName=$($t.id).trx" --results-directory $dir
+              if ($LASTEXITCODE -ne 0) { throw "Native tests failed: $($t.id)" }
+            } finally {
+              Pop-Location
+            }
             $receiptDir = Join-Path $env:RUNNER_TEMP 'dn03-final/receipts'
             New-Item -ItemType Directory -Force -Path $receiptDir | Out-Null
             $receipt = Join-Path $receiptDir "$($env:CI_HOST_PROFILE)-$($t.id).json"
             $trxPath = Join-Path $dir "$($t.id).trx"
-            $sdk = (dotnet --version).Trim()
+            Push-Location $env:CI_SDK_POLICY_DIR
+            try {
+              $sdk = (dotnet --version).Trim()
+              if ($LASTEXITCODE -ne 0 -or $sdk -ne '10.0.100') { throw 'Evidence SDK identity drift' }
+            } finally {
+              Pop-Location
+            }
             python (Join-Path $env:CI_DEVTOOL_SOURCE 'devtool/actions_ci_qualification.py') `
               review --source $env:GITHUB_SHA --devtool-sha $env:CI_DEVTOOL_SHA `
               --run-id $env:GITHUB_RUN_ID --attempt $env:GITHUB_RUN_ATTEMPT `
