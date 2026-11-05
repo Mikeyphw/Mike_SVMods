@@ -1,0 +1,64 @@
+name: DN03-R7 negative evidence replay (non-release)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/dn03-r7-negative-qualification.yml'
+      - 'scripts/dn03_r7_negative_qualify.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  negative_replay:
+    name: DN03-R7 / negative evidence qualification (non-release)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout PR's test script (not the production R7 verifier)
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Install pinned Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.13'
+          check-latest: false
+      - name: Fetch exact original consumer source and immutable Devtool runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --no-checkout https://github.com/Mikeyphw/Mike_SVMods.git "$RUNNER_TEMP/dn03-r7-main-source"
+          git -C "$RUNNER_TEMP/dn03-r7-main-source" checkout --detach 5dc04f83acce009be8058e1ac5bab3d3aaaf6da2
+          test "$(git -C "$RUNNER_TEMP/dn03-r7-main-source" rev-parse HEAD)" = 5dc04f83acce009be8058e1ac5bab3d3aaaf6da2
+          git clone --no-checkout https://github.com/Mikeyphw/devtool.git "$RUNNER_TEMP/dn03-r7-pinned-devtool"
+          git -C "$RUNNER_TEMP/dn03-r7-pinned-devtool" checkout --detach 0ebd22c17ac3058704012a1e03ee3265328b0659
+          test "$(git -C "$RUNNER_TEMP/dn03-r7-pinned-devtool" rev-parse HEAD)" = 0ebd22c17ac3058704012a1e03ee3265328b0659
+          python3 -m venv "$RUNNER_TEMP/dn03-r7-venv"
+          "$RUNNER_TEMP/dn03-r7-venv/bin/python" -m pip install --disable-pip-version-check "$RUNNER_TEMP/dn03-r7-pinned-devtool"
+      - name: Download original successful R7 push node artifacts (read only)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 scripts/dn03_r7_negative_qualify.py fetch --evidence "$RUNNER_TEMP/dn03-r4"
+      - name: Recheck original source, bytes, receipts, and reject 28 negative mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/dn03-r7-venv/bin/python" scripts/dn03_r7_negative_qualify.py qualify \
+            --repo "$RUNNER_TEMP/dn03-r7-main-source" \
+            --evidence "$RUNNER_TEMP/dn03-r4" \
+            --runner-temp "$RUNNER_TEMP" \
+            --report "$RUNNER_TEMP/dn03-r7-negative-report.json"
+      - name: Upload non-release qualification report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: dn03-r7-negative-qualification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/dn03-r7-negative-report.json
+          if-no-files-found: warn
+          retention-days: 14
