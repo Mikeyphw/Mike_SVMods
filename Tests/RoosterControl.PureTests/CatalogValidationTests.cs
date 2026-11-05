@@ -92,3 +92,4 @@ public sealed class CatalogValidationTests
         Assert.Equal(new[] { 0, 100 }, probs);
     }
 }
+// DN03-R7 source-identity canary: comment only.
