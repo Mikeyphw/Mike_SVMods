@@ -1,0 +1,61 @@
+# W02 source-only graph qualification; does NOT run native .NET tests.
+name: M02 portable native .NET DAG source gate (non-release)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .devtool.toml
+      - scripts/devtool_w02_portable_graph_contract.py
+      - .github/workflows/devtool-w02-portable-dotnet-plan.yml
+  push:
+    branches: [main]
+    paths:
+      - .devtool.toml
+      - scripts/devtool_w02_portable_graph_contract.py
+      - .github/workflows/devtool-w02-portable-dotnet-plan.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qualify-native-graph:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DEVTOOL_SOURCE_SHA: 023978eb1a9dba282d32e8cb43693ca77c29b6c1
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout consumer source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+          check-latest: false
+      - name: Obtain exact Devtool W02 runtime (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git clone --no-checkout https://github.com/Mikeyphw/devtool.git "$RUNNER_TEMP/w02-devtool"
+          git -C "$RUNNER_TEMP/w02-devtool" checkout --detach "$DEVTOOL_SOURCE_SHA"
+          test "$(git -C "$RUNNER_TEMP/w02-devtool" rev-parse HEAD)" = "$DEVTOOL_SOURCE_SHA"
+          test -f "$RUNNER_TEMP/w02-devtool/devtool/actions_graph_export.py"
+      - name: Source-qualify both native host plans and frozen 12-node DAG
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH="$RUNNER_TEMP/w02-devtool" python3 -B \
+            scripts/devtool_w02_portable_graph_contract.py \
+            --devtool-sha "$DEVTOOL_SOURCE_SHA" \
+            --output "$RUNNER_TEMP/w02-m02-source.json"
+          python3 -B -m json.tool "$RUNNER_TEMP/w02-m02-source.json" >/dev/null
+          echo W02_M02_PORTABLE_DOTNET_SOURCE_ONLY_PASS
+      - name: Preserve source review JSON (not hosted test evidence)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: w02-m02-source-only-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/w02-m02-source.json
+          if-no-files-found: error
+          retention-days: 7
