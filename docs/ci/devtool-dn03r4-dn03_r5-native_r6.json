@@ -3,7 +3,7 @@
   "devtool_sha": "0ebd22c17ac3058704012a1e03ee3265328b0659",
   "expected_node_count": 6,
   "generator": "DN03-R4 adds a verifier job to DN03-R3/RM-06 native projection",
-  "graph_sha256": "da038b45350a1a6bac31752e5e3cdb7de8348a3cbb0ca35497adb0b11ec25494",
+  "graph_sha256": "1f0cca4f8e611069946d82cc37ba1f371a72e26cbbba7c03864386abb25c04c0",
   "host_profile": "ubuntu-24.04-x64",
   "kind": "devtool.dn03-r4-cross-node-export",
   "native_nodes": [
@@ -16,7 +16,7 @@
   ],
   "native_output_sha256_reverification": true,
   "post_native_node_evidence_required": true,
-  "provider_plan_sha256": "db7126cf7f8d031086cedee554f9e6b9833d9cf1d9877c54718d98643dc41bd9",
+  "provider_plan_sha256": "b81862d91869dc87b62583cb4ca39b8ee7c509cfa8e2ad0d934aedf5ae4675cf",
   "real_generated_workflow_executed": false,
   "release_qualified": false,
   "remote_authenticated": false,
@@ -27,5 +27,5 @@
   "target": "dn03_r5",
   "test_reports_independently_verified": false,
   "workflow": "native_r6",
-  "workflow_sha256": "138f5a26773f497571257b455cb16d0dbff43fe33488e3b480a3b3b0594a81d7"
+  "workflow_sha256": "f94f8877cb76496c71ef7325582886f38980c3f3eb1a3fb6cfe3b264e7873903"
 }

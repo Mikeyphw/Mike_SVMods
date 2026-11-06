@@ -203,7 +203,7 @@ def select_affected(config: dict, paths: list[str]) -> set[str]:
         matched: set[str] = set()
         for name, target in targets.items():
             root = target['root'].strip('/')
-            if path == root or path.startswith(root + '/'):
+            if target.get('affected_ownership', 'root-and-inputs') == 'root-and-inputs' and (path == root or path.startswith(root + '/')):
                 matched.add(name)
             for raw in target.get('inputs', []):
                 pattern = _normalize(root, raw)
@@ -252,6 +252,10 @@ def validate(config: dict) -> list[str]:
                 _normalize(expected_root, pattern)
             except ValueError as exc:
                 errors.append(str(exc))
+    if 'dn03_r5' in targets:
+        d = targets['dn03_r5']
+        if d.get('root') != '.' or d.get('affected_ownership') != 'inputs-only' or not d.get('inputs'):
+            errors.append('dn03_r5 must declare nonempty inputs-only ownership')
     job = config.get('jobs', {}).get('target-ownership-contract', {})
     if job.get('command') != ['python3', 'scripts/devtool_target_ownership.py', '--json'] or job.get('metadata', {}).get('read_only') is not True:
         errors.append('target-ownership-contract must be Python-only and read-only')
