@@ -613,6 +613,7 @@ outputs = ["Tests/EggsInWild.AnimalNotes.Tests/bin/**", "Tests/EggsInWild.Animal
 runner = "dotnet"
 platform = "desktop"
 root = "."
+affected_ownership = "inputs-only"
 solution = "Tests/RoosterControl.PureTests/RoosterControl.PureTests.csproj"
 inputs = [".devtool.toml", "global.json", "Tests/RoosterControl.PureTests/**", "Tests/EggsInWild.AnimalNotes.Tests/**", "RoosterControl.Pure/**"]
 outputs = ["dist/**"]
